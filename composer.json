@@ -1,5 +1,6 @@
 {
-  "name": "flyinghail/hail-framework",
+  "name": "hail/framework",
+  "version": "0.0.1",
   "type": "library",
   "description": "PHP 5 Framework",
   "keywords": ["hailframework", "framework", "mvc"],
