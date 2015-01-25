@@ -1,0 +1,28 @@
+{
+  "name": "flyinghail/hail-framework",
+  "type": "library",
+  "description": "PHP 5 Framework",
+  "keywords": ["hailframework", "framework", "mvc"],
+  "homepage": "http://framework.flyinghail.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "FlyingHail",
+      "homepage": "http://flyinghail.net"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.0"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/flyinghail/Hail-Framework.git"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Hail\\": "Hail/"
+    }
+  }
+}
