@@ -24,6 +24,61 @@ class Loader
     protected $prefixes = array();
 
     /**
+     * cache engine function setting
+     *
+     * @var array
+     */
+    protected $cache = array();
+
+    /**
+     * @var \Yac
+     */
+    protected $yac;
+
+    public function __construct($cacheType = 'auto')
+    {
+        if ($cacheType === 'auto') {
+            $cacheType = '';
+            foreach (array('yac', 'apcu', 'apc', 'xcache') as $v) {
+                if (extension_loaded($v)) {
+                    $cacheType = $v;
+                    break;
+                }
+            }
+        }
+
+        switch ($cacheType) {
+            case 'yac':
+                $this->yac = new \Yac();
+                $this->cache = array(
+                    'set' => array($this->yac, 'set'),
+                    'get' => array($this->yac, 'get'),
+                );
+                break;
+            case 'apcu':
+                $this->cache = array(
+                    'set' => 'apcu_store',
+                    'get' => 'apcu_fetch',
+                );
+                break;
+            case 'apc':
+                $this->cache = array(
+                    'set' => 'apc_store',
+                    'get' => 'apc_fetch',
+                );
+                break;
+            case 'xcache':
+                $this->cache = array(
+                    'set' => 'xcache_set',
+                    'get' => 'xcache_get',
+                );;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
      * Register loader with SPL autoloader stack.
      *
      * @return void
@@ -76,6 +131,13 @@ class Loader
      */
     public function findFile($class)
     {
+        if (isset($this->cache['get'])) {
+            $file = call_user_func($this->cache['get'], 'ClassLoader::' . $class);
+            if (false !== $file) {
+                return $file;
+            }
+        }
+
         $class = ltrim($class, '\\');
         foreach ($this->prefixes as $prefix => $baseDirs) {
             if (0 === strpos($class, $prefix)) {
@@ -88,6 +150,9 @@ class Loader
                 foreach ($baseDirs as $baseDir) {
                     $file = $baseDir . $classWithoutPrefix . '.php';
                     if (file_exists($file)) {
+                        if (isset($this->cache['set'])) {
+                            call_user_func($this->cache['set'], 'ClassLoader::' . $class, $file);
+                        }
                         return $file;
                     }
                 }
