@@ -2,19 +2,25 @@
 /**
  * Created by IntelliJ IDEA.
  * User: FlyingHail
- * Date: 2015/1/25 0025
- * Time: 20:04
+ * Date: 2015/6/25 0025
+ * Time: 10:33
  */
 
-namespace Hail;
+namespace Hail\Loader;
+
+use Hail\Cache\EmbeddedTrait;
 
 /**
  * PSR-4 Class Loader
  * https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader.md
  *
  */
-class Loader
+class PSR4
 {
+    use EmbeddedTrait;
+
+    const FILE_NOT_EXISTS = 'file_not_exists';
+
     /**
      * An associative array where the key is a namespace prefix and the value
      * is an array of base directories for classes in that namespace.
@@ -23,59 +29,9 @@ class Loader
      */
     protected $prefixes = array();
 
-    /**
-     * cache engine function setting
-     *
-     * @var array
-     */
-    protected $cache = array();
-
-    /**
-     * @var \Yac
-     */
-    protected $yac;
-
-    public function __construct($cacheType = 'auto')
+    public function __construct($di)
     {
-        if ($cacheType === 'auto') {
-            $cacheType = '';
-            foreach (array('yac', 'apcu', 'apc', 'xcache') as $v) {
-                if (extension_loaded($v)) {
-                    $cacheType = $v;
-                    break;
-                }
-            }
-        }
-
-        switch ($cacheType) {
-            case 'yac':
-                $this->yac = new \Yac();
-                $this->cache = array(
-                    'set' => array($this->yac, 'set'),
-                    'get' => array($this->yac, 'get'),
-                );
-                break;
-            case 'apcu':
-                $this->cache = array(
-                    'set' => 'apcu_store',
-                    'get' => 'apcu_fetch',
-                );
-                break;
-            case 'apc':
-                $this->cache = array(
-                    'set' => 'apc_store',
-                    'get' => 'apc_fetch',
-                );
-                break;
-            case 'xcache':
-                $this->cache = array(
-                    'set' => 'xcache_set',
-                    'get' => 'xcache_get',
-                );;
-                break;
-            default:
-                break;
-        }
+        $this->initCache($di);
     }
 
     /**
@@ -85,7 +41,7 @@ class Loader
      */
     public function register()
     {
-        spl_autoload_register(array($this, 'loadClass'));
+        spl_autoload_register([$this, 'loadClass']);
     }
 
     /**
@@ -110,8 +66,8 @@ class Loader
      */
     public function addPrefix($prefix, $baseDir)
     {
-        $prefix = trim($prefix, '\\').'\\';
-        $baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = trim($prefix, '\\') . '\\';
+        $baseDir = rtrim($baseDir, '/') . '/';
 
         if (isset($this->prefixes[$prefix])) {
             $this->prefixes[$prefix] = array_merge(
@@ -131,33 +87,30 @@ class Loader
      */
     public function findFile($class)
     {
-        if (isset($this->cache['get'])) {
-            $file = call_user_func($this->cache['get'], 'ClassLoader::' . $class);
-            if (false !== $file) {
-                return $file;
-            }
+        $file = $this->getCache($class);
+        if (is_string($file)) {
+            return $file;
         }
 
         $class = ltrim($class, '\\');
         foreach ($this->prefixes as $prefix => $baseDirs) {
             if (0 === strpos($class, $prefix)) {
                 $classWithoutPrefix = str_replace(
-                    '\\',
-                    DIRECTORY_SEPARATOR,
+                    '\\', '/',
                     substr($class, strlen($prefix))
                 );
 
                 foreach ($baseDirs as $baseDir) {
                     $file = $baseDir . $classWithoutPrefix . '.php';
                     if (file_exists($file)) {
-                        if (isset($this->cache['set'])) {
-                            call_user_func($this->cache['set'], 'ClassLoader::' . $class, $file);
-                        }
+                        $this->setCache($class, $file);
                         return $file;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     /**
@@ -169,10 +122,11 @@ class Loader
     public function loadClass($class)
     {
         $file = $this->findFile($class);
-        if (null !== $file) {
+        if (false !== $file) {
             require $file;
             return true;
         }
         return false;
     }
+
 }
