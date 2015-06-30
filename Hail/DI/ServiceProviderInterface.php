@@ -9,7 +9,7 @@
 
 namespace Hail\DI;
 
-if (interface_exists('Pimple\\ServiceProviderInterface')) {
+if (interface_exists('Pimple\\ServiceProviderInterface', false)) {
     interface ServiceProviderInterface extends Pimple\ServiceProviderInterface
     {
 

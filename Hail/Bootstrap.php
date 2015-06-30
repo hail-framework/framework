@@ -26,7 +26,7 @@ class Bootstrap
         define('AJAX_REQUEST', isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
 
         // The current TLD address, scheme, and port
-        define('DOMAIN', (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on' ? 'https' : 'http') . '://'
+        define('DOMAIN', (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 'on' ? 'https' : 'http') . '://'
             . $_SERVER['HTTP_HOST'] . (($p = $_SERVER['SERVER_PORT']) != 80 AND $p != 443 ? ":$p" : ''));
 
         define('METHOD', isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET');
@@ -49,12 +49,16 @@ class Bootstrap
     /**
      * Dependency Injection Container init
      *
-     * @return DI\Pimple
+     * @return DI\PimplePhp
      */
     public static function di()
     {
 	    require HAIL_PATH . 'Cache/EmbeddedTrait.php';
-        require HAIL_PATH . 'DI/Pimple.php';
+	    if (class_exists('Pimple\\Container', false)) {
+		    require HAIL_PATH . 'DI/Pimple.php';
+	    } else {
+		    require HAIL_PATH . 'DI/PimplePhp.php';
+	    }
 
         return new DI\Pimple([
             'EmbeddedCache' => function($c) {
