@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/25 0025
- * Time: 12:01
- */
-
 // System Start Time
 define('START_TIME', microtime(true));
 

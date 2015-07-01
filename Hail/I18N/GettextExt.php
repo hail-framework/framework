@@ -1,14 +1,10 @@
 <?php
 /**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 15:04
+ * @from https://github.com/Ashrey/PHP-Gettext
+ * @Copyright (c) 2014 David Soria Parra Modifiend by Alberto Berroteran and FlyingHail
  */
 
 namespace Hail\I18N;
-
-require __DIR__ . '/Helper.php';
 
 /**
  * Class Gettext

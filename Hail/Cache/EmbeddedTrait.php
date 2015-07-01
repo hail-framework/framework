@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/26 0026
- * Time: 16:59
- */
-
 namespace Hail\Cache;
 
 trait EmbeddedTrait

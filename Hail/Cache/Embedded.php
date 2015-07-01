@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/25 0025
- * Time: 10:47
- */
-
 namespace Hail\Cache;
 
 /**

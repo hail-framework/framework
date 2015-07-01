@@ -1,10 +1,4 @@
 <?php
-/**
- *
- * @package  Hail
- * @author   FlyingHail <flyinghail@msn.com>
- */
-
 require __DIR__ . '/../bootstrap.php';
 
 

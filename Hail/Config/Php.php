@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 15:07
- */
-
 namespace Hail\Config;
 
 use Hail\Cache\EmbeddedTrait;
@@ -64,14 +57,14 @@ class Php
 		}
 
 		$key = explode('.', $key);
-		$space = array_shift($key);
-
-		$array = $this->load($space);
+		$array = $this->load(
+			array_shift($key)
+		);
 		return $this->array_get($array, $key, $default);
 	}
 
 	/**
-	 * Read config array from file
+	 * Read config array from cache or file
 	 *
 	 * @param string $space
 	 * @return array|mixed|null
@@ -103,11 +96,11 @@ class Php
 			return null;
 		}
 
-		$this->items[$space] = require $file;
-		$this->setCache($space, $this->items[$space]);
+		$array = require $file;
+		$this->setCache($space, $array);
 		$this->setTime($space, $file);
 
-		return $this->items[$space];
+		return $this->items[$space] = $array;
 	}
 
 	protected function array_get($array, $key, $default)

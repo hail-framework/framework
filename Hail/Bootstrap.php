@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/25 0025
- * Time: 12:01
- */
-
 namespace Hail;
 
 /**
@@ -49,16 +42,12 @@ class Bootstrap
     /**
      * Dependency Injection Container init
      *
-     * @return DI\PimplePhp
+     * @return DI\Pimple
      */
     public static function di()
     {
 	    require HAIL_PATH . 'Cache/EmbeddedTrait.php';
-	    if (class_exists('Pimple\\Container', false)) {
-		    require HAIL_PATH . 'DI/Pimple.php';
-	    } else {
-		    require HAIL_PATH . 'DI/PimplePhp.php';
-	    }
+	    require HAIL_PATH . 'DI/Pimple.php';
 
         return new DI\Pimple([
             'EmbeddedCache' => function($c) {
@@ -98,11 +87,7 @@ class Bootstrap
 	        },
 
 	        'Gettext' => function($c) {
-		        if (extension_loaded('gettext')) {
-			        return new I18N\Gettext();
-		        } else {
-			        return new I18N\GettextPhp($c);
-		        }
+		        return new I18N\Gettext();
 	        }
         ]);
     }

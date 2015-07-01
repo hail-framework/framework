@@ -1,9 +1,7 @@
 <?php
 /**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 21:32
+ * @from https://github.com/silexphp/Pimple
+ * @Copyright (c) 2009 Fabien Potencier Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\DI;
@@ -11,7 +9,7 @@ namespace Hail\DI;
 /*
  * This file is part of Pimple.
  *
- * Copyright (c) 2009 Fabien Potencier
+ *
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +35,7 @@ namespace Hail\DI;
  *
  * @author  Fabien Potencier
  */
-class PimplePhp implements \ArrayAccess
+class Pimple implements \ArrayAccess
 {
 	private $values = array();
 	private $factories;

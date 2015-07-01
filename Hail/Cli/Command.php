@@ -1,17 +1,14 @@
 <?php
 /**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 23:50
  * @from https://github.com/nategood/commando
+ * @Copyright (c) 2012 Nate Good <me@nategood.com> Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Cli;
 
-/**
- * @author Nate Good <me@nategood.com>
- */
+	/**
+	 * @author Nate Good <me@nategood.com>
+	 */
 
 /**
  * @method Command option($name = null)
@@ -62,9 +59,11 @@ class Command implements \ArrayAccess, \Iterator
 	const OPTION_TYPE_ARGUMENT = 1; // e.g. foo
 	const OPTION_TYPE_SHORT = 2; // e.g. -u
 	const OPTION_TYPE_VERBOSE = 4; // e.g. --username
+	const OPTION_TYPE_MAGNITUDE = 8; // e.g. -vvvvv
 	private
 		$current_option = null,
 		$name = null,
+		$subCommands = array(),
 		$arguments = array(),
 		$nameless_option_counter = 0,
 		$tokens = array(),
@@ -124,6 +123,10 @@ class Command implements \ArrayAccess, \Iterator
 		// 'mustBeAFile' => 'file',
 		'default' => 'default',
 		'defaultsTo' => 'default',
+
+		'magnitude' => 'magnitude',
+		'mag' => 'magnitude',
+		'm' => 'magnitude',
 	);
 
 	/**
@@ -142,6 +145,19 @@ class Command implements \ArrayAccess, \Iterator
 		if (!$this->parsed) {
 			$this->parse();
 		}
+	}
+
+	/**
+	 * @param $commandStr string Name of this sub-command
+	 * @param string $description For help message
+	 * @return mixed
+	 */
+	public function subCommand($commandStr, $description = '')
+	{
+		$this->subCommands[$commandStr] = new \stdClass();
+		$this->subCommands[$commandStr]->description = $description;
+		$this->subCommands[$commandStr]->cmd = new SubCommand($this->tokens, $commandStr);
+		return $this->subCommands[$commandStr]->cmd;
 	}
 
 	/**
@@ -200,7 +216,11 @@ class Command implements \ArrayAccess, \Iterator
 			if (!isset($name)) {
 				$name = $this->nameless_option_counter++;
 			}
-			$this->current_option = $this->options[$name] = new Option($name);
+			$newOption = new Option($name);
+			if ($newOption->isMagnitude()) {
+				$name = $name{0};
+			}
+			$this->current_option = $this->options[$name] = $newOption;
 		}
 		return $this->current_option;
 	}
@@ -262,9 +282,9 @@ class Command implements \ArrayAccess, \Iterator
 	/**
 	 * Set a requirement on an option
 	 *
-	 * @param \Commando\Option $option Current option
+	 * @param Option $option Current option
 	 * @param string $name Name of option
-	 * @return \Commando\Option instance
+	 * @return Option instance
 	 */
 	private function _needs(Option $option, $name)
 	{
@@ -333,6 +353,16 @@ class Command implements \ArrayAccess, \Iterator
 	}
 
 	/**
+	 * @return Option
+	 * @param $option Option
+	 * @param $magnitude
+	 */
+	private function _magnitude(Option $option, $value = 2)
+	{
+		return $option->setMagnitude($value);
+	}
+
+	/**
 	 * @param Option $option
 	 * @param bool $require_exists
 	 * @param bool $allow_globbing
@@ -365,6 +395,14 @@ class Command implements \ArrayAccess, \Iterator
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getTokens()
+	{
+		return $this->tokens;
+	}
+
+	/**
 	 * @throws \Exception
 	 */
 	private function parseIfNotParsed()
@@ -376,13 +414,59 @@ class Command implements \ArrayAccess, \Iterator
 	}
 
 	/**
+	 *
+	 * @return null|string Determines which subcommand is being called from the args
+	 */
+	public function calledSubCommand()
+	{
+		$tokens = $this->getTokens();
+		if (isset($tokens[1])) {
+			// find the proper one...
+			foreach ($this->subCommands as $name => $cmdDef) {
+				if ($name === $tokens[1]) {
+					// found us, so lets continue with our subs parser
+					return $name;
+				}
+			}
+		}
+		$this->parseIfNotParsed();
+		return null;
+	}
+
+	/**
+	 * Retrieves the SubCommand object
+	 * @param string $cmdName Name of the subcommand
+	 * @return null:SubCommand
+	 */
+	public function getSubCommand($cmdName)
+	{
+		return isset($this->subCommands[$cmdName]) ? $this->subCommands[$cmdName]->cmd : null;
+	}
+
+	/**
 	 * @throws \Exception
 	 */
 	public function parse()
 	{
 		$this->parsed = true;
+		$tokens = $this->tokens;
+		// a list of subcommands, lets iterate and find who we are supposed to be parsing...
+		if (count($this->subCommands) > 0) {
+			if (count($tokens) > 1) // at least 2 required (filename, subcommand ...)
+			{
+				// find the proper one...
+				if ($cmd = $this->getSubCommand($tokens[1])) {
+					// found us, so lets continue with our subs parser
+					return $cmd->parse();
+				}
+			}
+			// didn't find? rut roh..
+			// lets stop, with help?
+			$this->printHelp();
+			exit;
+		}
+
 		try {
-			$tokens = $this->tokens;
 			// the executed filename
 			$this->name = array_shift($tokens);
 			$keyvals = array();
@@ -406,9 +490,11 @@ class Command implements \ArrayAccess, \Iterator
 						$this->printHelp();
 						exit;
 					}
-					$option = $this->getOption($name);
+					$option = $this->getOption(($type === self::OPTION_TYPE_MAGNITUDE) ? $name{0} : $name);
 					if ($option->isBoolean()) {
 						$keyvals[$name] = !$option->getDefault();// inverse of the default, as expected
+					} elseif ($option->isMagnitude()) {
+						$keyvals[$name{0}] = strlen($name);
 					} else {
 						// the next token MUST be an "argument" and not another flag/option
 						$token = array_shift($tokens);
@@ -445,7 +531,7 @@ class Command implements \ArrayAccess, \Iterator
 			// at run time.  okay because option values are
 			// not mutable after parsing.
 			foreach ($this->options as $k => $v) {
-				if (is_numeric($k)) {
+				if (is_int($k)) { // check for int, in case we get a -{num} option. ints are on arrays (our args), strings are on options
 					$this->arguments[$k] = $v;
 				} else {
 					$this->flags[$k] = $v;
@@ -500,9 +586,14 @@ class Command implements \ArrayAccess, \Iterator
 			throw new \InvalidArgumentException(sprintf('Unable to parse option %s: Invalid syntax', $token));
 		}
 		if (!empty($matches['hyphen'])) {
-			$type = (strlen($matches['hyphen']) === 1) ?
-				self::OPTION_TYPE_SHORT :
-				self::OPTION_TYPE_VERBOSE;
+			$nameLen = strlen($matches['name']);
+			if (strlen($matches['hyphen']) === 1 && $nameLen > 1 && $matches['name'] == str_repeat($matches['name']{0}, $nameLen)) {
+				$type = self::OPTION_TYPE_MAGNITUDE;
+			} else {
+				$type = (strlen($matches['hyphen']) === 1) ?
+					self::OPTION_TYPE_SHORT :
+					self::OPTION_TYPE_VERBOSE;
+			}
 			return array($matches['name'], $type);
 		}
 		return array($token, self::OPTION_TYPE_ARGUMENT);
@@ -670,22 +761,37 @@ class Command implements \ArrayAccess, \Iterator
 		$color = new Color();
 		$help = '';
 		$help .= $color(Terminal::header(' ' . $this->name))
-				->white()->bg('green')->bold() . PHP_EOL;
+				->yellow()->bg('black')->bold() . PHP_EOL;
+//				->white()->bg('green')->bold() . PHP_EOL;
 		if (!empty($this->help)) {
 			$help .= PHP_EOL . Terminal::wrap($this->help)
 				. PHP_EOL;
 		}
 		$help .= PHP_EOL;
-		$seen = array();
-		$keys = array_keys($this->options);
-		natsort($keys);
-		foreach ($keys as $key) {
-			$option = $this->getOption($key);
-			if (in_array($option, $seen)) {
-				continue;
+        // if we are the main command object, we should be handling just the description for the subcommand...
+        // ... each subcommand will handle their own options help..
+        if(count($this->subCommands) > 0) {
+            foreach($this->subCommands as $name => $cmd) {
+                // just get short description - don't overload user with too much...
+                $help .=
+                    $color(Terminal::header(' ' . $name))->bold() . PHP_EOL // cmd name
+                        . Terminal::wrap($cmd->description, 5, 1) . PHP_EOL // description
+                        . Terminal::wrap($color->colorize("<bold>--help</bold> For more details"), 5, 1)
+                        .PHP_EOL.PHP_EOL;
+            }
+        } else {
+            // build each options help message..
+            $seen = array();
+            $keys = array_keys($this->options);
+            natsort($keys);
+            foreach ($keys as $key) {
+                $option = $this->getOption($key);
+                if (in_array($option, $seen)) {
+                    continue;
+                }
+                $help .= $option->getHelp() . PHP_EOL;
+                $seen[] = $option;
 			}
-			$help .= $option->getHelp() . PHP_EOL;
-			$seen[] = $option;
 		}
 		return $help;
 	}

@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/25 0025
- * Time: 10:33
- */
-
 namespace Hail\Loader;
 
 use Hail\Cache\EmbeddedTrait;
@@ -13,7 +6,6 @@ use Hail\Cache\EmbeddedTrait;
 /**
  * PSR-4 Class Loader
  * https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader.md
- *
  */
 class PSR4
 {
@@ -67,15 +59,15 @@ class PSR4
     public function addPrefix($prefix, $baseDir)
     {
         $prefix = trim($prefix, '\\') . '\\';
-        $baseDir = rtrim($baseDir, '/') . '/';
+        $baseDir = array(rtrim($baseDir, '/') . '/');
 
         if (isset($this->prefixes[$prefix])) {
             $this->prefixes[$prefix] = array_merge(
                 $this->prefixes[$prefix],
-                (array) $baseDir
+                $baseDir
             );
         } else {
-            $this->prefixes[$prefix] = (array) $baseDir;
+            $this->prefixes[$prefix] = $baseDir;
         }
     }
 
@@ -87,12 +79,15 @@ class PSR4
      */
     public function findFile($class)
     {
+	    if ($class[0] == '\\') {
+		    $class = substr($class, 1);
+	    }
+
         $file = $this->getCache($class);
         if (is_string($file)) {
             return $file;
         }
 
-        $class = ltrim($class, '\\');
         foreach ($this->prefixes as $prefix => $baseDirs) {
             if (0 === strpos($class, $prefix)) {
                 $classWithoutPrefix = str_replace(

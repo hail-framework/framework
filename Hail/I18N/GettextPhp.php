@@ -1,23 +1,19 @@
 <?php
 /**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 15:29
+ * @from https://github.com/Ashrey/PHP-Gettext
+ * @Copyright (c) 2014 David Soria Parra Modifiend by Alberto Berroteran and FlyingHail
  */
 
 namespace Hail\I18N;
 
 use Hail\Cache\EmbeddedTrait;
 
-require __DIR__ . '/Helper.php';
-
 function _($msg)
 {
 	return \Gettext::gettext($msg);
 }
 
-class GettextPhp
+class Gettext
 {
 	use EmbeddedTrait;
 

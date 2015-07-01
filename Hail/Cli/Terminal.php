@@ -1,10 +1,7 @@
 <?php
 /**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/30 0030
- * Time: 23:42
  * @from https://github.com/nategood/commando
+ * @Copyright (c) 2012 Nate Good <me@nategood.com> Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Cli;

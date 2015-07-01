@@ -1,12 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/6/29 0029
- * Time: 11:30
- * @from https://github.com/silexphp/Pimple
- */
-
 namespace Hail\DI;
 
 class Pimple extends Pimple\Container
