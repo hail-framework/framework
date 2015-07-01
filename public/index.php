@@ -3,8 +3,9 @@ require __DIR__ . '/../bootstrap.php';
 
 $result = Router::dispatch(METHOD, ROUTE_PATH);
 
+var_dump($result);
+
 if (!isset($result['error'])) {
-    var_dump($result);
 } else {
     switch ($result['error']['code']) {
         case 404 :
