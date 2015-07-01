@@ -59,6 +59,18 @@ class Tree
         }
     }
 
+	/**
+	 * @param array $config
+	 */
+	public function addRoutes($config)
+	{
+		foreach ($config as $handle => $routes) {
+			foreach ($routes as list($methods, $route)) {
+				$this->addRoute($methods, $route, $handle);
+			}
+		}
+	}
+
     public function addRoute($methods, $route, $handler)
     {
         if (is_string($methods)) {

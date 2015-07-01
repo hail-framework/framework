@@ -1,8 +1,11 @@
 <?php
 namespace Hail;
 
-
-class Botstrap
+/**
+ * Class Bootstrap
+ * @package Hail
+ */
+class Bootstrap
 {
 	public static function di()
 	{
@@ -60,5 +63,22 @@ class Botstrap
 	{
 		$di['Loader']->register();
 		$di['Alias']->register();
+		\DI::swap($di);
+	}
+
+	public static function path()
+	{
+		$path = str_replace(
+			parse_url(
+				\Config::get('env.url'),
+				PHP_URL_PATH
+			), '', REQUEST_URI
+		);
+
+		if ($path === '/index.php') {
+			$path = '/';
+		}
+
+		return $path;
 	}
 }

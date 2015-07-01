@@ -1,17 +1,10 @@
 <?php
 require __DIR__ . '/../bootstrap.php';
 
-
-Router::addRoute(['GET', 'POST'], '/pcp/', function() {
-    echo _('Hello World!');
-});
-
-$result = Router::dispatch(METHOD, PATH);
+$result = Router::dispatch(METHOD, ROUTE_PATH);
 
 if (!isset($result['error'])) {
-    $handler = $result['handler'];
-    $params = $result['params'];
-    call_user_func_array($handler, $params);
+    var_dump($result);
 } else {
     switch ($result['error']['code']) {
         case 404 :

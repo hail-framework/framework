@@ -1,12 +1,14 @@
 <?php
 return [
-	'timezone' => 'Asia/Shanghai',
+	'debug' => true,
+	'url' => 'http://localhost/pcp',
 
+	'timezone' => 'Asia/Shanghai',
 	'locale' => 'zh_CN',
-	'lang_file' => 'default',
+	'domain' => 'default',
 
     'autoload' => [
-        '\Hail' => HAIL_PATH, // Hal Framework Root
+        'Hail' => HAIL_PATH, // Hal Framework Root
     ],
 
     'alias' => [
