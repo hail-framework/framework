@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../bootstrap.php';
 
-$result = Router::dispatch(METHOD, ROUTE_PATH);
+$result = Router::dispatch(METHOD, ROUTE_REQUEST);
 
 var_dump($result);
 

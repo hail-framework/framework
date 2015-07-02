@@ -39,14 +39,14 @@ $di = require HAIL_PATH . 'Bootstrap.php';
 $di = Hail\Bootstrap::di();
 Hail\Bootstrap::autoload($di);
 
-define('ROUTE_PATH', Hail\Bootstrap::path());
+define('ROUTE_REQUEST', Hail\Bootstrap::path());
 
 date_default_timezone_set(
-	Config::get('env.timezone')
+	Config::get('app.timezone')
 );
 
 Gettext::init(LANG_PATH, LANG_DOMAIN,
-	Config::get('env.locale')
+	Config::get('app.locale')
 );
 
 Router::addRoutes(

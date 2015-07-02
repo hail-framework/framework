@@ -70,7 +70,7 @@ class Bootstrap
 	{
 		$path = str_replace(
 			parse_url(
-				\Config::get('env.url'),
+				\Config::get('app.url'),
 				PHP_URL_PATH
 			), '', REQUEST_URI
 		);

@@ -1,11 +1,6 @@
 <?php
 return [
 	'debug' => true,
-	'url' => 'http://localhost/hail',
-
-	'timezone' => 'Asia/Shanghai',
-	'locale' => 'zh_CN',
-	'domain' => 'default',
 
     'autoload' => [
         'Hail' => HAIL_PATH, // Hal Framework Root
