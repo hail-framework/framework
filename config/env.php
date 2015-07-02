@@ -13,5 +13,6 @@ return [
         'Loader'    => 'Hail\\Facades\\Loader',
 	    'Router'    => 'Hail\\Facades\\Router',
 	    'Gettext'   => 'Hail\\Facades\\Gettext',
+	    'Debugger'  => 'Hail\\Tracy\\Debugger',
     ],
 ];

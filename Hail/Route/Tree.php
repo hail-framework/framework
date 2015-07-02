@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/baryshev/TreeRoute
- * @Copyright (c) 2015, Vadim Baryshev Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2015, Vadim Baryshev Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Route;
@@ -79,7 +79,7 @@ class Tree
 
         $parts = explode('?', $route, 1);
         $parts = explode('/', preg_replace(static::SEPARATOR_REGEXP, '', $parts[0]));
-        $length = sizeof($parts);
+        $length = count($parts);
 
         if ($length === 1 && $parts[0] === '') {
             $parts = [];

@@ -2,8 +2,7 @@
 require __DIR__ . '/../bootstrap.php';
 
 $result = Router::dispatch(METHOD, ROUTE_REQUEST);
-
-var_dump($result);
+dump($result);
 
 if (!isset($result['error'])) {
 } else {
@@ -20,5 +19,3 @@ if (!isset($result['error'])) {
             break;
     }
 }
-
-echo '<br>', sprintf('%f', microtime(true) - START_TIME);

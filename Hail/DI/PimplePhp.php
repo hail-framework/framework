@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/silexphp/Pimple
- * @Copyright (c) 2009 Fabien Potencier Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2009 Fabien Potencier Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\DI;
@@ -72,6 +72,11 @@ class Pimple implements \ArrayAccess
 			$this->extend($func, $args[0]);
 		}
 		return $this->offsetGet($func);
+	}
+
+	public function __get($id)
+	{
+		return $this->offsetGet($id);
 	}
 
 	/**

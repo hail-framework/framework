@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/laravel/framework/blob/5.1/src/Illuminate/Foundation/AliasLoader.php
- * @Copyright (c) <Taylor Otwell> Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) <Taylor Otwell> Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Loader;

@@ -15,4 +15,9 @@ class Pimple extends Pimple\Container
         }
         return $this->offsetGet($func);
     }
+
+	public function __get($id)
+	{
+		return $this->offsetGet($id);
+	}
 }

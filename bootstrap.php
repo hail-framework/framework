@@ -1,6 +1,6 @@
 <?php
 // System Start Time
-define('START_TIME', microtime(true));
+define('START_TIME', isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(true));
 
 // Absolute path to the system folder
 define('SYSTEM_PATH', __DIR__ . '/');
@@ -38,6 +38,10 @@ define('LANG_DOMAIN', 'default');
 $di = require HAIL_PATH . 'Bootstrap.php';
 $di = Hail\Bootstrap::di();
 Hail\Bootstrap::autoload($di);
+
+Debugger::enable(
+	Config::get('env.debug') ? Debugger::DEVELOPMENT : Debugger::PRODUCTION
+);
 
 define('ROUTE_REQUEST', Hail\Bootstrap::path());
 

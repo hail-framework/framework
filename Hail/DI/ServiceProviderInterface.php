@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/silexphp/Pimple
- * @Copyright (c) 2009 Fabien Potencier Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2009 Fabien Potencier Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\DI;

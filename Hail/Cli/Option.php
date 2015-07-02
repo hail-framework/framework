@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/nategood/commando
- * @Copyright (c) 2012 Nate Good <me@nategood.com> Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2012 Nate Good <me@nategood.com> Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Cli;
