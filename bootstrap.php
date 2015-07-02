@@ -21,7 +21,7 @@ define('DOMAIN', (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) === 
 define('METHOD', isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET');
 
 // The current site path
-define('REQUEST_URI', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+define('URI_PATH', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
 // Embedded cache engine: 'auto', 'apcu', 'apc', 'xcache', 'yac', 'pcache', 'wincache', 'none'
 define('EMBEDDED_CACHE_ENGINE', 'auto');

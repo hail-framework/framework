@@ -72,7 +72,7 @@ class Bootstrap
 			parse_url(
 				\Config::get('app.url'),
 				PHP_URL_PATH
-			), '', REQUEST_URI
+			), '', URI_PATH
 		);
 
 		if ($path === '/index.php') {

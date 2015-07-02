@@ -18,7 +18,7 @@ class Bar
 	/** @deprecated */
 	public $info = array();
 
-	/** @var BarPanelInterface[] */
+	/** @var Bar\PanelInterface[] */
 	private $panels = array();
 
 
@@ -28,7 +28,7 @@ class Bar
 	 * @param  string
 	 * @return self
 	 */
-	public function addPanel(BarPanelInterface $panel, $id = NULL)
+	public function addPanel(Bar\PanelInterface $panel, $id = NULL)
 	{
 		if ($id === NULL) {
 			$c = 0;
