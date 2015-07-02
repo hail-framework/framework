@@ -1,0 +1,61 @@
+<?php
+namespace Hail\Tracy;
+?>
+<style class="tracy-debug">
+    #tracy-debug .nette-RoutingPanel table {
+        font: 9pt/1.5 Consolas, monospace;
+    }
+
+    #tracy-debug .nette-RoutingPanel .yes td {
+        color: green;
+    }
+
+    #tracy-debug .nette-RoutingPanel .may td {
+        color: #67F;
+    }
+
+    #tracy-debug .nette-RoutingPanel pre, #tracy-debug .nette-RoutingPanel code {
+        display: inline;
+    }
+</style>
+
+<div class="nette-RoutingPanel">
+    <h1>
+        <?=$router['title']?>
+    </h1>
+
+    <div class="tracy-inner">
+        <p><code><?=$this->dump($url)?></code></p>
+
+
+        <table>
+            <thead>
+            <tr>
+                <?php foreach($sorted as $k):?>
+                    <?php if (isset($router[$k])): ?>
+                    <th><?=ucfirst($k)?></th>
+                    <?php endif ?>
+                <?php endforeach ?>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr class="<?= $router['matched'] ?>">
+                <?php foreach($sorted as $k):?>
+                    <?php if (isset($router[$k])): ?>
+                        <td>
+                            <?php if (is_array($router[$k])): ?>
+                            <?php foreach ($router[$k] as $key => $value): ?>
+                                <?=$this->dump($key), "&nbsp;=&nbsp;", $this->dump($value, true)?>
+                            <?php endforeach ?>
+                            <?php else: ?>
+                                <?=$this->dump($router[$k])?>
+                            <?php endif ?>
+                        </td>
+                    <?php endif ?>
+                <?php endforeach ?>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

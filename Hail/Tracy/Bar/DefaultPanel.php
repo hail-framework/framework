@@ -35,7 +35,7 @@ class DefaultPanel implements PanelInterface
 	{
 		ob_start();
 		$data = $this->data;
-		require __DIR__ . "/../assets/Bar/{$this->id}.tab.phtml";
+		require __DIR__ . "/templates/{$this->id}.tab.phtml";
 		return ob_get_clean();
 	}
 
@@ -47,9 +47,9 @@ class DefaultPanel implements PanelInterface
 	public function getPanel()
 	{
 		ob_start();
-		if (is_file(__DIR__ . "/../assets/Bar/{$this->id}.panel.phtml")) {
+		if (is_file(__DIR__ . "/templates/{$this->id}.panel.phtml")) {
 			$data = $this->data;
-			require __DIR__ . "/../assets/Bar/{$this->id}.panel.phtml";
+			require __DIR__ . "/templates/{$this->id}.panel.phtml";
 		}
 		return ob_get_clean();
 	}

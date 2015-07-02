@@ -111,9 +111,9 @@ class Debugger
 
 	/**
 	 * Enables displaying or logging errors and exceptions.
-	 * @param  mixed   production, development mode, autodetection or IP address(es) whitelist.
-	 * @param  string  error log directory
-	 * @param  string  administrator email; enables email sending in production mode
+	 * @param  mixed   $mode production, development mode, autodetection or IP address(es) whitelist.
+	 * @param  string  $logDirectory error log directory
+	 * @param  string  $email administrator email; enables email sending in production mode
 	 * @return void
 	 */
 	public static function enable($mode = NULL, $logDirectory = NULL, $email = NULL)
@@ -158,7 +158,6 @@ class Debugger
 		}
 	}
 
-
 	/**
 	 * @return bool
 	 */
@@ -166,7 +165,6 @@ class Debugger
 	{
 		return self::$enabled;
 	}
-
 
 	/**
 	 * Shutdown handler to catch fatal errors and execute of the planned activities.
@@ -190,7 +188,6 @@ class Debugger
 			self::getBar()->render();
 		}
 	}
-
 
 	/**
 	 * Handler to catch uncaught exception.
@@ -263,7 +260,6 @@ class Debugger
 		}
 	}
 
-
 	/**
 	 * Handler to catch warnings and notices.
 	 * @return bool   FALSE to call normal error handler, NULL otherwise
@@ -328,7 +324,6 @@ class Debugger
 		}
 	}
 
-
 	private static function isHtmlMode()
 	{
 		return empty($_SERVER['HTTP_X_REQUESTED_WITH']) && PHP_SAPI !== 'cli' &&
@@ -355,7 +350,6 @@ class Debugger
 		return self::$blueScreen;
 	}
 
-
 	/**
 	 * @return Bar
 	 */
@@ -363,12 +357,12 @@ class Debugger
 	{
 		if (!self::$bar) {
 			self::$bar = new Bar;
-			self::$bar->addPanel(new DefaultBarPanel('info'), 'Tracy:info');
-			self::$bar->addPanel(new DefaultBarPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
+			self::$bar->addPanel(new Bar\DefaultPanel('info'), 'Tracy:info');
+			self::$bar->addPanel(new Bar\DefaultPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
+			self::$bar->addPanel(new Bar\RoutePanel(), 'Hail:route');
 		}
 		return self::$bar;
 	}
-
 
 	/**
 	 * @return void
@@ -377,7 +371,6 @@ class Debugger
 	{
 		self::$logger = $logger;
 	}
-
 
 	/**
 	 * @return LoggerInterface
@@ -392,7 +385,6 @@ class Debugger
 		return self::$logger;
 	}
 
-
 	/**
 	 * @return LoggerInterface
 	 */
@@ -403,7 +395,6 @@ class Debugger
 		}
 		return self::$fireLogger;
 	}
-
 
 	/********************* useful tools ****************d*g**/
 
@@ -436,7 +427,6 @@ class Debugger
 		return $var;
 	}
 
-
 	/**
 	 * Starts/stops stopwatch.
 	 * @param  string  name
@@ -451,13 +441,12 @@ class Debugger
 		return $delta;
 	}
 
-
 	/**
 	 * Dumps information about a variable in Tracy Debug Bar.
 	 * @tracySkipLocation
-	 * @param  mixed  variable to dump
-	 * @param  string optional title
-	 * @param  array  dumper options
+	 * @param  mixed  $var variable to dump
+	 * @param  string $title optional title
+	 * @param  array  $options dumper options
 	 * @return mixed  variable itself
 	 */
 	public static function barDump($var, $title = NULL, array $options = NULL)
@@ -465,7 +454,7 @@ class Debugger
 		if (!self::$productionMode) {
 			static $panel;
 			if (!$panel) {
-				self::getBar()->addPanel($panel = new DefaultBarPanel('dumps'));
+				self::getBar()->addPanel($panel = new Bar\DefaultPanel('dumps'));
 			}
 			$panel->data[] = array('title' => $title, 'dump' => Dumper::toHtml($var, (array)$options + array(
 					Dumper::DEPTH => self::$maxDepth,
@@ -475,7 +464,6 @@ class Debugger
 		}
 		return $var;
 	}
-
 
 	/**
 	 * Logs message or exception.
@@ -490,7 +478,7 @@ class Debugger
 
 	/**
 	 * Sends message to FireLogger console.
-	 * @param  mixed   message to log
+	 * @param  mixed   $message message to log
 	 * @return bool    was successful?
 	 */
 	public static function fireLog($message)
@@ -500,7 +488,6 @@ class Debugger
 		}
 	}
 
-
 	/**
 	 * Detects debug mode by IP address.
 	 * @param  string|array IP addresses or computer names whitelist detection
@@ -508,20 +495,13 @@ class Debugger
 	 */
 	public static function detectDebugMode($list = NULL)
 	{
-		$addr = isset($_SERVER['REMOTE_ADDR'])
-			? $_SERVER['REMOTE_ADDR']
-			: php_uname('n');
-		$secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET])
-			? $_COOKIE[self::COOKIE_SECRET]
-			: NULL;
-		$list = is_string($list)
-			? preg_split('#[,\s]+#', $list)
-			: (array)$list;
+		$addr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : php_uname('n');
+		$secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET]) ? $_COOKIE[self::COOKIE_SECRET] : NULL;
+		$list = is_string($list) ? preg_split('#[,\s]+#', $list) : (array) $list;
 		if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 			$list[] = '127.0.0.1';
 			$list[] = '::1';
 		}
 		return in_array($addr, $list, TRUE) || in_array("$secret@$addr", $list, TRUE);
 	}
-
 }

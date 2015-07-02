@@ -9,8 +9,5 @@ namespace Hail\Tracy;
               fill-opacity=".5" fill="#d86b01"/>
     </svg>
 
-    <span class="tracy-label">
-        <?php if (empty($request)): ?>no route
-        <?php else: echo htmlSpecialChars($request->getPresenterName() . ':' . (isset($request->parameters[Presenter::ACTION_KEY]) ? $request->parameters[Presenter::ACTION_KEY] : Presenter::DEFAULT_ACTION) . (isset($request->parameters[Presenter::SIGNAL_KEY]) ? " {$request->parameters[Presenter::SIGNAL_KEY]}!" : ''), ENT_NOQUOTES, 'UTF-8'); endif ?>
-    </span>
+    <span class="tracy-label"><?=$title?></span>
 </span>

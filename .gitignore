@@ -4,5 +4,4 @@
 
 *.iml
 .idea/
-web.config
-
+public/web.config

@@ -15,6 +15,7 @@ class Tree
     const PARAM_REGEXP = '/^{((([^:]+):(.+))|(.+))}$/';
     const SEPARATOR_REGEXP = '/^[\s\/]+|[\s\/]+$/';
     private $routes = ['childs' => [], 'regexps' => []];
+	private $result = [];
 
     private function match($url)
     {
@@ -132,7 +133,7 @@ class Tree
     {
         $route = $this->match($url);
         if (!$route) {
-            return [
+            return $this->result = [
                 'error' => [
                     'code' => 404,
                     'message' => 'Not Found'
@@ -142,7 +143,7 @@ class Tree
             ];
         } else {
             if (isset($route['methods'][$method])) {
-                return [
+                return $this->result = [
                     'method' => $method,
                     'url' => $url,
                     'route' => $route['route'],
@@ -150,7 +151,7 @@ class Tree
                     'handler' => $route['methods'][$method]
                 ];
             } else {
-                return [
+                return $this->result = [
                     'error' => [
                         'code' => 405,
                         'message' => 'Method Not Allowed'
@@ -164,6 +165,11 @@ class Tree
             }
         }
     }
+
+	public function getResult()
+	{
+		return $this->result;
+	}
 
     public function getRoutes()
     {

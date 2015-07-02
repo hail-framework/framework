@@ -2,7 +2,6 @@
 require __DIR__ . '/../bootstrap.php';
 
 $result = Router::dispatch(METHOD, ROUTE_REQUEST);
-dump($result);
 
 if (!isset($result['error'])) {
 } else {
