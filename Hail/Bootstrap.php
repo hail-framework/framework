@@ -59,7 +59,11 @@ class Bootstrap
 
 			'Request' => function ($c) {
 				return Bootstrap::httpRequest();
-			}
+			},
+
+			'Response' => function ($c) {
+				return new Http\Response();
+			},
 		]);
 	}
 
@@ -91,10 +95,21 @@ class Bootstrap
 		}
 
 		// path & query
-		$requestUrl = isset($_SERVER['REQUEST_URI']) ? preg_replace('#/{2,}#', '/', $_SERVER['REQUEST_URI']) : '/';
-		$path = strstr($requestUrl, '?', true);
+		if (isset($_SERVER['REQUEST_URI'])) {
+			$path = $_SERVER['REQUEST_URI'];
+			if (strpos($path, '?') !== false) {
+				$path = strstr($_SERVER['REQUEST_URI'], '?', true);
+			}
+			if (strpos($path, '//') !== false) {
+				$path = preg_replace('#/{2,}#', '/', $path);
+			}
+		} else {
+			$path = '/';
+		}
 		$path = Http\Url::unescape($path, '%/?#');
-		$path = htmlspecialchars_decode(htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES);
+		$path = htmlspecialchars_decode(
+			htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES
+		);
 		$url->setPath($path);
 
 		// detect script path
@@ -104,7 +119,7 @@ class Bootstrap
 			if ($lpath !== $script) {
 				$tmp = explode('/', $path);
 				$script = explode('/', $script);
-				$path = '/';
+				$path = '';
 				foreach (explode('/', $lpath) as $k => $v) {
 					if ($v !== $script[$k]) {
 						break;
@@ -112,7 +127,6 @@ class Bootstrap
 					$path .= $tmp[$k] . '/';
 				}
 			}
-			unset($lpath, $script, $tmp);
 			$url->setScriptPath($path);
 		}
 

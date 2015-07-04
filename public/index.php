@@ -6,6 +6,8 @@ $result = Router::dispatch(
 	Request::getUrl()->getPathInfo()
 );
 
+dump(Response::getHeaders());
+
 if (isset($result['error'])) {
 	switch ($result['error']['code']) {
 		case 404 :

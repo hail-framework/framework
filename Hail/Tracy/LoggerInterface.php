@@ -13,7 +13,8 @@ namespace Hail\Tracy;
  */
 interface LoggerInterface
 {
-	const DEBUG = Debugger::DEBUG,
+	const
+		DEBUG = Debugger::DEBUG,
 		INFO = Debugger::INFO,
 		WARNING = Debugger::WARNING,
 		ERROR = Debugger::ERROR,

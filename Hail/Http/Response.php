@@ -7,11 +7,11 @@
 
 namespace Hail\Http;
 
+use Hail\Utils\DateTime;
+use Hail\Utils\Random;
 
 /**
  * HttpResponse class.
- *
- * @author     David Grudl
  *
  * @property   int $code
  * @property-read bool $sent
@@ -19,6 +19,57 @@ namespace Hail\Http;
  */
 class Response
 {
+	/** @var int cookie expiration: forever (23.1.2037) */
+	const PERMANENT = 2116333333;
+
+	/** @var int cookie expiration: until the browser is closed */
+	const BROWSER = 0;
+
+	/** HTTP 1.1 response code */
+	const
+		S100_CONTINUE = 100,
+		S101_SWITCHING_PROTOCOLS = 101,
+		S200_OK = 200,
+		S201_CREATED = 201,
+		S202_ACCEPTED = 202,
+		S203_NON_AUTHORITATIVE_INFORMATION = 203,
+		S204_NO_CONTENT = 204,
+		S205_RESET_CONTENT = 205,
+		S206_PARTIAL_CONTENT = 206,
+		S300_MULTIPLE_CHOICES = 300,
+		S301_MOVED_PERMANENTLY = 301,
+		S302_FOUND = 302,
+		S303_SEE_OTHER = 303,
+		S303_POST_GET = 303,
+		S304_NOT_MODIFIED = 304,
+		S305_USE_PROXY = 305,
+		S307_TEMPORARY_REDIRECT= 307,
+		S400_BAD_REQUEST = 400,
+		S401_UNAUTHORIZED = 401,
+		S402_PAYMENT_REQUIRED = 402,
+		S403_FORBIDDEN = 403,
+		S404_NOT_FOUND = 404,
+		S405_METHOD_NOT_ALLOWED = 405,
+		S406_NOT_ACCEPTABLE = 406,
+		S407_PROXY_AUTHENTICATION_REQUIRED = 407,
+		S408_REQUEST_TIMEOUT = 408,
+		S409_CONFLICT = 409,
+		S410_GONE = 410,
+		S411_LENGTH_REQUIRED = 411,
+		S412_PRECONDITION_FAILED = 412,
+		S413_REQUEST_ENTITY_TOO_LARGE = 413,
+		S414_REQUEST_URI_TOO_LONG = 414,
+		S415_UNSUPPORTED_MEDIA_TYPE = 415,
+		S416_REQUESTED_RANGE_NOT_SATISFIABLE = 416,
+		S417_EXPECTATION_FAILED = 417,
+		S426_UPGRADE_REQUIRED = 426,
+		S500_INTERNAL_SERVER_ERROR = 500,
+		S501_NOT_IMPLEMENTED = 501,
+		S502_BAD_GATEWAY = 502,
+		S503_SERVICE_UNAVAILABLE = 503,
+		S504_GATEWAY_TIMEOUT = 504,
+		S505_HTTP_VERSION_NOT_SUPPORTED = 505;
+
 	/** @var bool  Send invisible garbage for IE 6? */
 	private static $fixIE = TRUE;
 
@@ -43,16 +94,13 @@ class Response
 
 	public function __construct()
 	{
-		if (PHP_VERSION_ID >= 50400) {
-			if (is_int($code = http_response_code())) {
-				$this->code = $code;
-			}
+		if (is_int($code = http_response_code())) {
+			$this->code = $code;
 		}
 
-		if (PHP_VERSION_ID >= 50401) { // PHP bug #61106
-			$rm = new \ReflectionMethod('Nette\Http\Helpers::removeDuplicateCookies');
-			header_register_callback($rm->getClosure()); // requires closure due PHP bug #66375
-		}
+		// PHP bug #61106
+		$rm = new \ReflectionMethod('Hail\Http\Helpers::removeDuplicateCookies');
+		header_register_callback($rm->getClosure()); // requires closure due PHP bug #66375
 	}
 
 
@@ -60,14 +108,14 @@ class Response
 	 * Sets HTTP response code.
 	 * @param  int
 	 * @return self
-	 * @throws Nette\InvalidArgumentException  if code is invalid
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \InvalidArgumentException  if code is invalid
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setCode($code)
 	{
 		$code = (int) $code;
 		if ($code < 100 || $code > 599) {
-			throw new Nette\InvalidArgumentException("Bad HTTP response '$code'.");
+			throw new \InvalidArgumentException("Bad HTTP response '$code'.");
 		}
 		self::checkHeaders();
 		$this->code = $code;
@@ -92,7 +140,7 @@ class Response
 	 * @param  string  header name
 	 * @param  string  header value
 	 * @return self
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setHeader($name, $value)
 	{
@@ -113,7 +161,7 @@ class Response
 	 * @param  string  header name
 	 * @param  string  header value
 	 * @return self
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function addHeader($name, $value)
 	{
@@ -128,7 +176,7 @@ class Response
 	 * @param  string  mime-type
 	 * @param  string  charset
 	 * @return self
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setContentType($type, $charset = NULL)
 	{
@@ -142,7 +190,7 @@ class Response
 	 * @param  string  URL
 	 * @param  int     HTTP code
 	 * @return void
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function redirect($url, $code = self::S302_FOUND)
 	{
@@ -159,7 +207,7 @@ class Response
 	 * Sets the number of seconds before a page cached on a browser expires.
 	 * @param  string|int|\DateTime  time, value 0 means "until the browser is closed"
 	 * @return self
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setExpiration($time)
 	{
@@ -238,7 +286,7 @@ class Response
 			&& in_array($this->code, array(400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505), TRUE)
 			&& preg_match('#^text/html(?:;|$)#', $this->getHeader('Content-Type', 'text/html'))
 		) {
-			echo Nette\Utils\Random::generate(2e3, " \t\r\n"); // sends invisible garbage for IE
+			echo Random::generate(2e3, " \t\r\n"); // sends invisible garbage for IE
 			self::$fixIE = FALSE;
 		}
 	}
@@ -254,7 +302,7 @@ class Response
 	 * @param  bool
 	 * @param  bool
 	 * @return self
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setCookie($name, $value, $time, $path = NULL, $domain = NULL, $secure = NULL, $httpOnly = NULL)
 	{
@@ -280,19 +328,13 @@ class Response
 	 * @param  string
 	 * @param  bool
 	 * @return void
-	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function deleteCookie($name, $path = NULL, $domain = NULL, $secure = NULL)
 	{
 		$this->setCookie($name, FALSE, 0, $path, $domain, $secure);
 	}
 
-
-	/** @internal @deprecated */
-	public function removeDuplicateCookies()
-	{
-		trigger_error('Use Nette\Http\Helpers::removeDuplicateCookies()', E_USER_WARNING);
-	}
 
 
 	private function checkHeaders()

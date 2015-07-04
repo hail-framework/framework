@@ -12,6 +12,7 @@ return [
         'Alias'     => 'Hail\\Facades\\Alias',
         'Loader'    => 'Hail\\Facades\\Loader',
 	    'Request'   => 'Hail\\Facades\\Request',
+	    'Response'  => 'Hail\\Facades\\Response',
 	    'Router'    => 'Hail\\Facades\\Router',
 	    'Gettext'   => 'Hail\\Facades\\Gettext',
 	    'Debugger'  => 'Hail\\Tracy\\Debugger',

@@ -12,7 +12,6 @@ namespace Hail\Tracy;
  * FireLogger console logger.
  *
  * @see http://firelogger.binaryage.com
- * @author     David Grudl
  */
 class FireLogger implements LoggerInterface
 {

@@ -10,8 +10,6 @@ namespace Hail\Tracy\Bar;
 
 /**
  * IBarPanel implementation helper.
- *
- * @author     David Grudl
  * @internal
  */
 class DefaultPanel implements PanelInterface

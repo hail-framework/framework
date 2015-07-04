@@ -36,7 +36,7 @@ class RoutePanel implements PanelInterface
 	{
 		ob_start();
 		$router = $this->router;
-		$url = $_SERVER['REQUEST_URI'];
+		$url = (string) \Request::getUrl();
 		$sorted = array(
 			'matched', 'url', 'error', 'allowed', 'route', 'params', 'handler'
 		);

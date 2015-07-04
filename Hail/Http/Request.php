@@ -10,7 +10,6 @@ namespace Hail\Http;
 /**
  * HttpRequest provides access scheme for request sent via HTTP.
  *
- * @author     David Grudl
  */
 class Request
 {
@@ -74,7 +73,7 @@ class Request
 	/**
 	 * Returns variable provided to the script via URL query ($_GET).
 	 * If no key is passed, returns the entire array.
-	 * @param  string $key key
+	 * @param  string $key
 	 * @return mixed
 	 */
 	public function getQuery($key = NULL)
@@ -82,81 +81,25 @@ class Request
 		return $this->url->getQuery($key);
 	}
 
-
 	/**
 	 * Returns variable provided to the script via POST method ($_POST).
 	 * If no key is passed, returns the entire array.
-	 * @param  string key
+	 * @param  string $key
 	 * @return mixed
 	 */
 	public function getPost($key = NULL)
 	{
-		if (NULL === $key) {
-			return empty($_POST) ? array() : $this->post = Helpers::getParams($_POST);
-		} elseif (isset($this->post[$key])) {
-			return false === $this->post[$key] ? NULL : $this->post[$key];
-		} elseif (isset($_POST[$key])) {
-			if (Helpers::keyCheck($key)) {
-				$this->post[$key] = false;
-				return NULL;
-			}
-			return $this->post[$key] = Helpers::getParam($_POST[$key]);
-		} else {
-			$this->post[$key] = false;
-			return NULL;
-		}
+		return Helpers::getParams($this->post, '_POST', $key);
 	}
-
 
 	/**
 	 * Returns uploaded file.
-	 * @param  string key
+	 * @param  string $key
 	 * @return FileUpload|NULL
 	 */
 	public function getFile($key = NULL)
 	{
-		// FILES and create FileUpload objects
-//		$files = array();
-//		$list = array();
-//		if (!empty($_FILES)) {
-//			foreach ($_FILES as $k => $v) {
-//				if (is_string($k) && (!preg_match($reChars, $k) || preg_last_error())) {
-//					continue;
-//				}
-//				$v['@'] = & $files[$k];
-//				$list[] = $v;
-//			}
-//		}
-//
-//		while (list(, $v) = each($list)) {
-//			if (!isset($v['name'])) {
-//				continue;
-//
-//			} elseif (!is_array($v['name'])) {
-//				if ((!preg_match($reChars, $v['name']) || preg_last_error())) {
-//					$v['name'] = '';
-//				}
-//				if ($v['error'] !== UPLOAD_ERR_NO_FILE) {
-//					$v['@'] = new FileUpload($v);
-//				}
-//				continue;
-//			}
-//
-//			foreach ($v['name'] as $k => $foo) {
-//				if (is_string($k) && (!preg_match($reChars, $k) || preg_last_error())) {
-//					continue;
-//				}
-//				$list[] = array(
-//					'name' => $v['name'][$k],
-//					'type' => $v['type'][$k],
-//					'size' => $v['size'][$k],
-//					'tmp_name' => $v['tmp_name'][$k],
-//					'error' => $v['error'][$k],
-//					'@' => & $v['@'][$k],
-//				);
-//			}
-//		}
-		return isset($this->files[$key]) ? $this->files[$key] : NULL;
+		return Helpers::getParams($this->files, '_FILES', $key);
 	}
 
 	/**
@@ -166,20 +109,7 @@ class Request
 	 */
 	public function getCookie($key = NULL)
 	{
-		if (NULL === $key) {
-			return empty($_COOKIE) ? array() : $this->cookies = Helpers::getParams($_COOKIE);
-		} elseif (isset($this->cookies[$key])) {
-			return false === $this->cookies[$key] ? NULL : $this->cookies[$key];
-		} elseif (isset($_COOKIE[$key])) {
-			if (Helpers::keyCheck($key)) {
-				$this->cookies[$key] = false;
-				return NULL;
-			}
-			return $this->cookies[$key] = Helpers::getParam($_COOKIE[$key]);
-		} else {
-			$this->cookies[$key] = false;
-			return NULL;
-		}
+		return Helpers::getParams($this->cookies, '_COOKIE', $key);
 	}
 
 	/********************* method & headers ****************d*g**/
@@ -218,8 +148,8 @@ class Request
 	/**
 	 * Return the value of the HTTP header. Pass the header name as the
 	 * plain, HTTP-specified header name (e.g. 'Accept-Encoding').
-	 * @param  string
-	 * @param  mixed
+	 * @param  string $header
+	 * @param  mixed $default
 	 * @return mixed
 	 */
 	public function getHeader($header, $default = NULL)
@@ -229,17 +159,22 @@ class Request
 			return false === $this->headers[$header] ? $default : $this->headers[$header];
 		}
 
-		$key = strtr($header, '-', '_');
-		$contentHeaders = array('CONTENT_LENGTH' => true, 'CONTENT_MD5' => true, 'CONTENT_TYPE' => true);
-		if (!isset($contentHeaders[$key])) {
-			$key = 'HTTP_' . $key;
-		}
-
+		$key = 'HTTP_' . strtr($header, '-', '_');
 		if (isset($_SERVER[$key])) {
 			return $this->headers[$header] = $_SERVER[$key];
 		} else {
-			$this->headers[$header] = false;
-			return $default;
+			$contentHeaders = [
+				'CONTENT-LENGTH' => 'CONTENT_LENGTH',
+				'CONTENT-MD5' => 'CONTENT_MD5',
+				'CONTENT-TYPE' => 'CONTENT_TYPE'
+			];
+
+			if (isset($contentHeaders[$header], $_SERVER[$contentHeaders[$header]])) {
+				return $this->headers[$header] = $_SERVER[$contentHeaders[$header]];
+			} else {
+				$this->headers[$header] = false;
+				return $default;
+			}
 		}
 	}
 

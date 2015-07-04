@@ -16,10 +16,11 @@ require __DIR__ . '/shortcuts.php';
  */
 class Debugger
 {
-	const VERSION = '2.3.2';
+	const VERSION = '2.3.3';
 
 	/** server modes {@link Debugger::enable()} */
-	const DEVELOPMENT = FALSE,
+	const
+		DEVELOPMENT = FALSE,
 		PRODUCTION = TRUE,
 		DETECT = NULL;
 
@@ -71,7 +72,8 @@ class Debugger
 	public static $email;
 
 	/** {@link Debugger::log()} and {@link Debugger::fireLog()} */
-	const DEBUG = 'debug',
+	const
+		DEBUG = 'debug',
 		INFO = 'info',
 		WARNING = 'warning',
 		ERROR = 'error',
@@ -146,7 +148,7 @@ class Debugger
 		} elseif (ini_get('display_errors') != !self::$productionMode // intentionally ==
 			&& ini_get('display_errors') !== (self::$productionMode ? 'stderr' : 'stdout')
 		) {
-			self::exceptionHandler(new \RuntimeException('Unable to set \'display_errors\' because function ini_set() is disabled.'));
+			self::exceptionHandler(new \RuntimeException("Unable to set 'display_errors' because function ini_set() is disabled."));
 		}
 
 		if (!self::$enabled) {
@@ -191,10 +193,11 @@ class Debugger
 
 	/**
 	 * Handler to catch uncaught exception.
+	 * @param  \Exception|\Throwable
 	 * @return void
 	 * @internal
 	 */
-	public static function exceptionHandler(\Exception $exception, $exit = TRUE)
+	public static function exceptionHandler($exception, $exit = TRUE)
 	{
 		if (self::$done) {
 			return;
@@ -326,8 +329,9 @@ class Debugger
 
 	private static function isHtmlMode()
 	{
-		return empty($_SERVER['HTTP_X_REQUESTED_WITH']) && PHP_SAPI !== 'cli' &&
-			!preg_match('#^Content-Type: (?!text/html)#im', implode("\n", headers_list()));
+		return empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+			&& PHP_SAPI !== 'cli'
+			&& !preg_match('#^Content-Type: (?!text/html)#im', implode("\n", headers_list()));
 	}
 
 
@@ -456,18 +460,18 @@ class Debugger
 			if (!$panel) {
 				self::getBar()->addPanel($panel = new Bar\DefaultPanel('dumps'));
 			}
-			$panel->data[] = array('title' => $title, 'dump' => Dumper::toHtml($var, (array)$options + array(
-					Dumper::DEPTH => self::$maxDepth,
-					Dumper::TRUNCATE => self::$maxLen,
-					Dumper::LOCATION => self::$showLocation,
-				)));
+			$panel->data[] = array('title' => $title, 'dump' => Dumper::toHtml($var, (array) $options + array(
+				Dumper::DEPTH => self::$maxDepth,
+				Dumper::TRUNCATE => self::$maxLen,
+				Dumper::LOCATION => self::$showLocation,
+			)));
 		}
 		return $var;
 	}
 
 	/**
 	 * Logs message or exception.
-	 * @param  string|Exception
+	 * @param  string|\Exception|\Throwable
 	 * @return mixed
 	 */
 	public static function log($message, $priority = self::INFO)
@@ -495,9 +499,15 @@ class Debugger
 	 */
 	public static function detectDebugMode($list = NULL)
 	{
-		$addr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : php_uname('n');
-		$secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET]) ? $_COOKIE[self::COOKIE_SECRET] : NULL;
-		$list = is_string($list) ? preg_split('#[,\s]+#', $list) : (array) $list;
+		$addr = isset($_SERVER['REMOTE_ADDR'])
+			? $_SERVER['REMOTE_ADDR']
+			: php_uname('n');
+		$secret = isset($_COOKIE[self::COOKIE_SECRET]) && is_string($_COOKIE[self::COOKIE_SECRET])
+			? $_COOKIE[self::COOKIE_SECRET]
+			: NULL;
+		$list = is_string($list)
+			? preg_split('#[,\s]+#', $list)
+			: (array) $list;
 		if (!isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 			$list[] = '127.0.0.1';
 			$list[] = '::1';

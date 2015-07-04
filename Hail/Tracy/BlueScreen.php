@@ -10,8 +10,6 @@ namespace Hail\Tracy;
 
 /**
  * Red BlueScreen.
- *
- * @author     David Grudl
  */
 class BlueScreen
 {
@@ -49,10 +47,10 @@ class BlueScreen
 
 	/**
 	 * Renders blue screen.
-	 * @param  \Exception
+	 * @param  \Exception|\Throwable
 	 * @return void
 	 */
-	public function render(\Exception $exception)
+	public function render($exception)
 	{
 		$panels = $this->panels;
 		$info = array_filter($this->info);
@@ -74,11 +72,11 @@ class BlueScreen
 	 * @param  string
 	 * @param  int
 	 * @param  int
-	 * @return string
+	 * @return string|NULL
 	 */
 	public static function highlightFile($file, $line, $lines = 15, array $vars = NULL)
 	{
-		$source = @file_get_contents($file); // intentionally @
+		$source = @file_get_contents($file); // @ file may not exist
 		if ($source) {
 			$source = static::highlightPhp($source, $line, $lines, $vars);
 			if ($editor = Helpers::editorUri($file, $line)) {
@@ -113,7 +111,7 @@ class BlueScreen
 		$out .= static::highlightLine($source, $line, $lines);
 
 		if ($vars) {
-			$out = preg_replace_callback('#">\$(\w+)(&nbsp;)?</span>#', function($m) use ($vars) {
+			$out = preg_replace_callback('#">\$(\w+)(&nbsp;)?</span>#', function ($m) use ($vars) {
 				return array_key_exists($m[1], $vars)
 					? '" title="'
 						. str_replace('"', '&quot;', trim(strip_tags(Dumper::toHtml($vars[$m[1]], array(Dumper::DEPTH => 1)))))

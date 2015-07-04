@@ -27,8 +27,6 @@ namespace Hail\Http;
  * - baseUrl:     http://user:password@nette.org:8042/en/
  * - relativeUrl: manual.php
  *
- * @author     David Grudl
- *
  * @property   string $scheme
  * @property   string $user
  * @property   string $password
@@ -50,8 +48,8 @@ class Url
 		'nntp' => 119,
 	);
 
-	/** @var string */
-	protected $url = array(
+	/** @var array */
+	private $url = array(
 		'scheme' => '',
 		'port' => '',
 		'host' => '',
@@ -99,15 +97,12 @@ class Url
 	 */
 	public function get($key)
 	{
-		switch ($key) {
-			case 'query':
-				return http_build_query(
-					$this->getQuery(), '', '&', PHP_QUERY_RFC3986
-				);
-			default:
-				if (isset($this->url[$key])) {
-					return $this->url[$key];
-				};
+		if (isset($this->url[$key])) {
+			return $this->url[$key];
+		} elseif ($key === 'query') {
+			return http_build_query(
+				$this->getQuery(), '', '&', PHP_QUERY_RFC3986
+			);
 		}
 
 		return null;
@@ -179,13 +174,12 @@ class Url
 	public function setPath($value)
 	{
 		$value = (string) $value;
-		if ($this->url['host'] && substr($value, 0, 1) !== '/') {
+		if ($this->url['host'] && strncmp($value, '/', 1) !== 0) {
 			$value = '/' . $value;
 		}
 		$this->url['path'] = $value;
 		return $this;
 	}
-
 
 	/**
 	 * Sets the query part of URI.
@@ -207,7 +201,7 @@ class Url
 	{
 		$this->query = is_array($value)
 			? $value + $this->query
-			: self::parseQuery($this->get('query') . '&' . $value);
+			: self::parseQuery($this->getQuery() . '&' . $value);
 		return $this;
 	}
 
@@ -318,20 +312,7 @@ class Url
 	 */
 	public function getQuery($key = NULL)
 	{
-		if (NULL === $key) {
-			return empty($_GET) ? array() : $this->query = Helpers::getParams($_GET);
-		} elseif (isset($this->query[$key])) {
-			return false === $this->query[$key] ? NULL : $this->query[$key];
-		} elseif (isset($_GET[$key])) {
-			if (Helpers::keyCheck($key)) {
-				$this->query[$key] = false;
-				return NULL;
-			}
-			return $this->query[$key] = Helpers::getParam($_GET[$key]);
-		} else {
-			$this->query[$key] = false;
-			return NULL;
-		}
+		return Helpers::getParams($this->post, '_GET', $key);
 	}
 
 	/**
@@ -370,8 +351,8 @@ class Url
 
 	/**
 	 * Similar to rawurldecode, but preserves reserved chars encoded.
-	 * @param  string to decode
-	 * @param  string reserved characters
+	 * @param  string $s to decode
+	 * @param  string $reserved reserved characters
 	 * @return string
 	 */
 	public static function unescape($s, $reserved = '%;/?:@&=+$,')

@@ -5,13 +5,12 @@
  * Copyright (c) 2004 David Grudl (http://davidgrudl.com)
  */
 
-namespace Hail;
+namespace Hail\Utils;
 
 
 /**
  * DateTime.
  *
- * @author     David Grudl
  */
 class DateTime extends \DateTime
 {

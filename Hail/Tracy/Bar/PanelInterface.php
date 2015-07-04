@@ -9,8 +9,6 @@ namespace Hail\Tracy\Bar;
 
 /**
  * Custom output for Debugger.
- *
- * @author     David Grudl
  */
 interface PanelInterface
 {
