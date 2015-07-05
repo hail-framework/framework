@@ -1,0 +1,8 @@
+<div class="xdbgpanel">
+    <h1>XDebugTrace</h1>
+
+    <div class="nette-inner">
+        <p>XDebugTrace error occured<?php if (isset($errFile, $errLine)): ?> in file <a href="editor://open/?file=<?=$errFile?>&amp;line=<?=$errLine?>"><?=$errFile?></a> (<?=$errLine?>)<?php endif ?></p>
+        <p style="color:red"><?=$errMessage?></p>
+    </div>
+</div>

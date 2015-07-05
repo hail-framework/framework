@@ -9,8 +9,9 @@ return [
     'alias' => [
         'DI'        => 'Hail\\Facades\\DI',
         'Config'    => 'Hail\\Facades\\Config',
+	    'Loader'    => 'Hail\\Facades\\Loader',
         'Alias'     => 'Hail\\Facades\\Alias',
-        'Loader'    => 'Hail\\Facades\\Loader',
+	    'Trace'     => 'Hail\\Facades\\Trace',
 	    'Request'   => 'Hail\\Facades\\Request',
 	    'Response'  => 'Hail\\Facades\\Response',
 	    'Router'    => 'Hail\\Facades\\Router',

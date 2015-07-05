@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/7/5 0005
- * Time: 13:15
- */
-
 namespace Hail\Tracy\Bar;
 
 
