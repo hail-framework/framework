@@ -26,7 +26,7 @@ define('CONFIG_PATH', SYSTEM_PATH . 'config/');
 define('LANG_PATH', SYSTEM_PATH . 'lang/');
 define('LANG_DOMAIN', 'default');
 
-$di = require HAIL_PATH . 'Bootstrap.php';
+require HAIL_PATH . 'Bootstrap.php';
 $di = Hail\Bootstrap::di();
 Hail\Bootstrap::autoload($di);
 
