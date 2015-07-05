@@ -366,7 +366,7 @@ class Debugger
 			self::$bar->addPanel(new Bar\RoutePanel(), 'Hail:route');
 			self::$bar->addPanel(new Bar\SessionPanel(), 'Session');
 			if (extension_loaded('xdebug') && \ini_get('xdebug.auto_trace') !== 'on') {
-				self::$bar->addPanel(\Di::Trace(), 'Hail:XDebug');
+				self::$bar->addPanel(\Di::Trace(), 'Hail:Trace');
 			}
 		}
 		return self::$bar;

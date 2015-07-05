@@ -14,7 +14,7 @@ namespace Hail\Tracy\Bar;
  * @see      http://github.com/milo/XDebugTracePanel
  * @licence  LGPL
  */
-class XDebugPanel implements PanelInterface
+class TracePanel implements PanelInterface
 {
 	/** Tracing states */
 	const
@@ -358,7 +358,7 @@ class XDebugPanel implements PanelInterface
 		$errLine = $this->errLine;
 
 		ob_start();
-		require __DIR__ . '/templates/xdebug.error.phtml';
+		require __DIR__ . '/templates/trace.error.phtml';
 		return ob_get_clean();
 	}
 
@@ -369,7 +369,7 @@ class XDebugPanel implements PanelInterface
 	public function getTab()
 	{
 		ob_start();
-		require __DIR__ . '/templates/xdebug.tab.phtml';
+		require __DIR__ . '/templates/trace.tab.phtml';
 		return ob_get_clean();
 	}
 
@@ -465,7 +465,9 @@ class XDebugPanel implements PanelInterface
 			return $this->renderError();
 		}
 
-		$traces = $this->traces;
+		$traces = new \CachingIterator(
+			new \ArrayIterator($this->trace)
+		);
 		$indents = $this->indents;
 		$titles = $this->titles;
 		$parsingTime = microtime(TRUE) - $parsingStart;
@@ -475,7 +477,7 @@ class XDebugPanel implements PanelInterface
 		}
 
 		ob_start();
-		require __DIR__ . '/templates/xdebug.panel.phtml';
+		require __DIR__ . '/templates/trace.panel.phtml';
 		return ob_get_clean();
 	}
 

@@ -36,7 +36,7 @@
 <div class="xdbgpanel">
     <h1>XDebugTrace</h1>
 
-    <?php foreach($traces as $traceNo => $trace): ?>
+    <?php foreach( as $traceNo => $trace): ?>
     <div class="nette-inner">
         <table style="width:100%">
             <?php $indent = $indents[$traceNo]?>
@@ -96,7 +96,9 @@
         </table>
         <?php endif ?>
     </div>
+    <?php if ($traces->hasNext()): ?>
     <br>
+    <?php endif ?>
     <?php endforeach ?>
     <p>
         Trace file size <b><?=$this->bytes($traceFileSize, 2)?></b> parsed in <b><?=$this->time($parsingTime, 3)?></b>

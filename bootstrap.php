@@ -36,7 +36,7 @@ date_default_timezone_set(
 
 if (Config::get('env.debug')) {
 	DI::set('Trace', function ($c) {
-		return new Hail\Tracy\Bar\XDebugPanel(
+		return new Hail\Tracy\Bar\TracePanel(
 			TEMP_PATH . 'xdebugTrace.xt'
 		);
 	});
