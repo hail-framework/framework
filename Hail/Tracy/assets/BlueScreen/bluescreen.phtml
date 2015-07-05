@@ -23,7 +23,7 @@ namespace Hail\Tracy;
 <head>
 	<meta charset="utf-8">
 	<meta name="robots" content="noindex">
-	<meta name="generator" content="Tracy by Nette Framework">
+	<meta name="generator" content="Tracy by Hail Framework">
 
 	<title><?php echo htmlspecialchars($title, ENT_NOQUOTES, 'UTF-8') ?></title><!-- <?php
 		$ex = $exception; echo htmlspecialchars($ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_IGNORE, 'UTF-8');
@@ -224,19 +224,19 @@ namespace Hail\Tracy;
 			<?php else: ?>
 			<table>
 			<?php
-			foreach ($_SESSION as $k => $v) echo '<tr><th>', htmlspecialchars($k, ENT_IGNORE, 'UTF-8'), '</th><td>', $k === '__NF' ? '<i>Nette Session</i>' : Dumper::toHtml($v, array(Dumper::LOCATION => Dumper::LOCATION_CLASS, Dumper::LIVE => TRUE)), "</td></tr>\n";
+			foreach ($_SESSION as $k => $v) echo '<tr><th>', htmlspecialchars($k, ENT_IGNORE, 'UTF-8'), '</th><td>', $k === '__HF' ? '<i>Hail Session</i>' : Dumper::toHtml($v, array(Dumper::LOCATION => Dumper::LOCATION_CLASS, Dumper::LIVE => TRUE)), "</td></tr>\n";
 			?>
 			</table>
 			<?php endif ?>
 			</div>
 
 
-			<?php if (!empty($_SESSION['__NF']['DATA'])):?>
-			<h3><a data-tracy-ref="^+" class="tracy-toggle">Nette Session</a></h3>
+			<?php if (!empty($_SESSION['__HF']['DATA'])):?>
+			<h3><a data-tracy-ref="^+" class="tracy-toggle">Hail Session</a></h3>
 			<div class="outer">
 			<table>
 			<?php
-			foreach ($_SESSION['__NF']['DATA'] as $k => $v) echo '<tr><th>', htmlspecialchars($k, ENT_IGNORE, 'UTF-8'), '</th><td>', Dumper::toHtml($v, array(Dumper::LOCATION => Dumper::LOCATION_CLASS, Dumper::LIVE => TRUE)), "</td></tr>\n";
+			foreach ($_SESSION['__HF']['DATA'] as $k => $v) echo '<tr><th>', htmlspecialchars($k, ENT_IGNORE, 'UTF-8'), '</th><td>', Dumper::toHtml($v, array(Dumper::LOCATION => Dumper::LOCATION_CLASS, Dumper::LIVE => TRUE)), "</td></tr>\n";
 			?>
 			</table>
 			</div>

@@ -364,6 +364,7 @@ class Debugger
 			self::$bar->addPanel(new Bar\DefaultPanel('info'), 'Tracy:info');
 			self::$bar->addPanel(new Bar\DefaultPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
 			self::$bar->addPanel(new Bar\RoutePanel(), 'Hail:route');
+			self::$bar->addPanel(new Bar\SessionPanel(), 'Session');
 		}
 		return self::$bar;
 	}
