@@ -3,7 +3,7 @@ require __DIR__ . '/../bootstrap.php';
 
 $result = Router::dispatch(
 	Request::getMethod(),
-	Request::getUrl()->getPathInfo()
+	Request::getPathInfo()
 );
 
 if (isset($result['error'])) {

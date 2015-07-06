@@ -1,5 +1,7 @@
 <?php
 return [
+	'version' => '0.0.1',
+
 	'debug' => true,
 
     'autoload' => [
@@ -17,6 +19,6 @@ return [
 	    'Router'    => 'Hail\\Facades\\Router',
 	    'Gettext'   => 'Hail\\Facades\\Gettext',
 	    'Debugger'  => 'Hail\\Tracy\\Debugger',
-	    'CLI'       => 'Hail\\Facades\\CLI',
+	    'Console'   => 'Hail\\Facades\\Console',
     ],
 ];

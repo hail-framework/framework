@@ -36,7 +36,7 @@ date_default_timezone_set(
 );
 
 //Debugger::enable(
-//	Debugger::PRODUCTION,
+//	Debugger::DEVELOPMENT,
 //	TEMP_PATH . 'log/'
 //);
 
@@ -44,49 +44,11 @@ Gettext::init(LANG_PATH, LANG_DOMAIN,
 	Config::get('app.locale')
 );
 
-DI::set('CLI', function($c) {
-	return new Hail\CLImate\CLImate();
+DI::set('Console', function($c) {
+	return new Hail\Console\Application(
+            'Hail Framework',
+            Config::get('env.version')
+    );
 });
 
-$cli = DI::CLI();
-
-$cli->arguments->add([
-        'user' => [
-                'prefix'       => 'u',
-                'longPrefix'   => 'user',
-                'description'  => 'Username',
-                'defaultValue' => 'me_myself_i',
-        ],
-        'password' => [
-                'prefix'      => 'p',
-                'longPrefix'  => 'password',
-                'description' => 'Password',
-                'required'    => true,
-        ],
-        'iterations' => [
-                'prefix'      => 'i',
-                'longPrefix'  => 'iterations',
-                'description' => 'Number of iterations',
-                'castTo'      => 'int',
-        ],
-        'verbose' => [
-                'prefix'      => 'v',
-                'longPrefix'  => 'verbose',
-                'description' => 'Verbose output',
-                'noValue'     => true,
-        ],
-        'help' => [
-                'longPrefix'  => 'help',
-                'description' => 'Prints a usage statement',
-                'noValue'     => true,
-        ],
-        'path' => [
-                'description' => 'The path to push',
-        ],
-]);
-
-$cli->description('Hail Framework Console Tools');
-
-//$cli->arguments->parse();
-$cli->usage();
-
+Console::run();

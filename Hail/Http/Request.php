@@ -66,6 +66,13 @@ class Request
 		return clone $this->url;
 	}
 
+	/**
+	 * @return string
+	 */
+	public function getPathInfo()
+	{
+		return $this->url->getPathInfo();
+	}
 
 	/********************* query, post, files & cookies ****************d*g**/
 
