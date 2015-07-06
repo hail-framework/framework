@@ -98,9 +98,9 @@ class Response
 			$this->code = $code;
 		}
 
-		// PHP bug #61106
-		$rm = new \ReflectionMethod('Hail\Http\Helpers::removeDuplicateCookies');
-		header_register_callback($rm->getClosure()); // requires closure due PHP bug #66375
+		header_register_callback(
+			['Hail\Http\Helpers', 'removeDuplicateCookies']
+		);
 	}
 
 
@@ -316,7 +316,7 @@ class Response
 			$secure === NULL ? $this->cookieSecure : (bool) $secure,
 			$httpOnly === NULL ? $this->cookieHttpOnly : (bool) $httpOnly
 		);
-		Helpers::removeDuplicateCookies();
+//		Helpers::removeDuplicateCookies();
 		return $this;
 	}
 
