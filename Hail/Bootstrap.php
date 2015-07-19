@@ -76,59 +76,7 @@ class Bootstrap
 
 	public static function httpRequest()
 	{
-		// DETECTS URI, base path and script path of the request.
-		$url = new Http\Url;
-		$url->setScheme(!empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http');
-		$url->setUser(isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '');
-		$url->setPassword(isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '');
-
-		// host & port
-		if ((isset($_SERVER[$tmp = 'HTTP_HOST']) || isset($_SERVER[$tmp = 'SERVER_NAME']))
-			&& preg_match('#^([a-z0-9_.-]+|\[[a-f0-9:]+\])(:\d+)?\z#i', $_SERVER[$tmp], $pair)
-		) {
-			$url->setHost(strtolower($pair[1]));
-			if (isset($pair[2])) {
-				$url->setPort(substr($pair[2], 1));
-			} elseif (isset($_SERVER['SERVER_PORT'])) {
-				$url->setPort($_SERVER['SERVER_PORT']);
-			}
-		}
-
-		// path & query
-		if (isset($_SERVER['REQUEST_URI'])) {
-			$path = $_SERVER['REQUEST_URI'];
-			if (strpos($path, '?') !== false) {
-				$path = strstr($_SERVER['REQUEST_URI'], '?', true);
-			}
-			if (strpos($path, '//') !== false) {
-				$path = preg_replace('#/{2,}#', '/', $path);
-			}
-		} else {
-			$path = '/';
-		}
-		$path = Http\Url::unescape($path, '%/?#');
-		$path = htmlspecialchars_decode(
-			htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES
-		);
-		$url->setPath($path);
-
-		// detect script path
-		if ($path !== '/') {
-			$lpath = strtolower($path);
-			$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
-			if ($lpath !== $script) {
-				$tmp = explode('/', $path);
-				$script = explode('/', $script);
-				$path = '';
-				foreach (explode('/', $lpath) as $k => $v) {
-					if ($v !== $script[$k]) {
-						break;
-					}
-					$path .= $tmp[$k] . '/';
-				}
-			}
-			$url->setScriptPath($path);
-		}
+		$url = new Http\UrlScript();
 
 		$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : NULL;
 		if ($method === 'POST' && isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])
