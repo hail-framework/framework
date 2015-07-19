@@ -76,7 +76,7 @@ class TracePanel implements PanelInterface
 	/**
 	 * @var stdClass[]
 	 */
-	protected $traces = array();
+	protected $traces = [];
 
 	/**
 	 * @var reference to $this->traces
@@ -86,12 +86,12 @@ class TracePanel implements PanelInterface
 	/**
 	 * @var string[]  trace titles
 	 */
-	protected $titles = array();
+	protected $titles = [];
 
 	/**
 	 * @var array[level => indent size]
 	 */
-	protected $indents = array();
+	protected $indents = [];
 
 	/**
 	 * @var reference to $this->indents
@@ -101,7 +101,7 @@ class TracePanel implements PanelInterface
 	/**
 	 * @var array[function => stdClass]
 	 */
-	protected $statistics = array();
+	protected $statistics = [];
 
 	/**
 	 * @var reference to $this->statistics
@@ -131,24 +131,24 @@ class TracePanel implements PanelInterface
 	/**
 	 * @var callback[]  called when entry record from trace file is parsed
 	 */
-	protected $filterEntryCallbacks = array();
+	protected $filterEntryCallbacks = [];
 
 	/**
 	 * @var callback[]  called when exit record from trace file is parsed
 	 */
-	protected $filterExitCallbacks = array();
+	protected $filterExitCallbacks = [];
 
 	/**
 	 * @var array[setting => bool]  default filter setting
 	 */
-	protected $skipOver = array(
+	protected $skipOver = [
 		'phpInternals' => TRUE,
 		'XDebugTrace' => TRUE,
 		'Hail' => TRUE,
 		'Composer' => TRUE,
 		'callbacks' => TRUE,
 		'includes' => TRUE,
-	);
+	];
 
 
 	/**
@@ -168,7 +168,7 @@ class TracePanel implements PanelInterface
 			$this->traceFile = $traceFile;
 		}
 
-		$this->addFilterCallback(array($this, 'defaultFilterCb'));
+		$this->addFilterCallback([$this, 'defaultFilterCb']);
 	}
 
 
@@ -184,14 +184,12 @@ class TracePanel implements PanelInterface
 	 *
 	 * @param  bool  enable statistics
 	 * @param  string  sort by column 'count', 'deltaTime' or 'averageTime'
-	 * @return XdebugPanel
+	 * @return TracePanel
 	 * @throws \InvalidArgumentException
 	 */
-	public function enableStatistics($enable = TRUE, $sortBy = NULL)
+	public function enableStatistics($enable = TRUE, $sortBy = 'averageTime')
 	{
-		$sortBy = $sortBy ?: 'averageTime';
-
-		if (!in_array($sortBy, array('count', 'deltaTime', 'averageTime'), true)) {
+		if (!in_array($sortBy, ['count', 'deltaTime', 'averageTime'], true)) {
 			throw new \InvalidArgumentException("Cannot sort statistics by '$sortBy' column.");
 		}
 
@@ -217,7 +215,7 @@ class TracePanel implements PanelInterface
 			}
 
 			if ($this->state === self::STATE_STOP) {
-				$this->titles = array($title);
+				$this->titles = [$title];
 				xdebug_start_trace($this->traceFile, XDEBUG_TRACE_COMPUTERIZED);
 			} elseif ($this->state === self::STATE_PAUSE) {
 				$this->titles[] = $title;
@@ -316,7 +314,7 @@ class TracePanel implements PanelInterface
 	public function bytes($bytes, $precision = 2)
 	{
 		$bytes = round($bytes);
-		$units = array('B', 'kB', 'MB', 'GB', 'TB', 'PB');
+		$units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB'];
 		foreach ($units as $unit) {
 			if (abs($bytes) < 1024 || $unit === end($units)) {
 				break;
@@ -415,16 +413,16 @@ class TracePanel implements PanelInterface
 					$cols = explode("\t", $line);
 					if (!strlen($cols[0]) && count($cols) === 5) {    // last line before TRACE END
 						/*
-												$record = (object) array(
+												$record = (object) [
 													'time' => (float) $cols[3],
 													'memory' => (float) $cols[4],
-												);
+												];
 												$this->addRecord($record, TRUE);
 						*/
 						continue;
 
 					} else {
-						$record = (object)array(
+						$record = (object) [
 							'level' => (int)$cols[0],
 							'id' => (float)$cols[1],
 							'isEntry' => !$cols[2],
@@ -435,7 +433,7 @@ class TracePanel implements PanelInterface
 							'memory' => (float)$cols[4],
 							'exitMemory' => NULL,
 							'deltaMemory' => NULL,
-						);
+						];
 
 						if ($record->isEntry) {
 							$record->function = $cols[5];
@@ -489,14 +487,14 @@ class TracePanel implements PanelInterface
 	{
 		$index = count($this->traces);
 
-		$this->traces[$index] = array();
+		$this->traces[$index] = [];
 		$this->trace =& $this->traces[$index];
 
-		$this->indents[$index] = array();
+		$this->indents[$index] = [];
 		$this->indent =& $this->indents[$index];
 
 		if ($this->performStatistics) {
-			$this->statistics[$index] = array();
+			$this->statistics[$index] = [];
 			$this->statistic =& $this->statistics[$index];
 		}
 	}
@@ -531,7 +529,7 @@ class TracePanel implements PanelInterface
 				$this->indent[$record->level] = 1;
 			}
 
-			if (count($this->indent)) {
+			if (null !== $this->indent) {
 				ksort($this->indent);
 				$this->indent = array_combine(array_keys($this->indent), range(0, count($this->indent) - 1));
 			}
@@ -616,10 +614,10 @@ class TracePanel implements PanelInterface
 
 			} elseif ($this->performStatistics) {
 				if (!isset($this->statistic[$entryRecord->function])) {
-					$this->statistic[$entryRecord->function] = (object)array(
+					$this->statistic[$entryRecord->function] = (object) [
 						'count' => 1,
 						'deltaTime' => $entryRecord->deltaTime,
-					);
+					];
 
 				} else {
 					$this->statistic[$entryRecord->function]->count += 1;
@@ -637,7 +635,7 @@ class TracePanel implements PanelInterface
 	 *
 	 * @param  string $type
 	 * @param  bool $skip skip or not
-	 * @return XdebugPanel
+	 * @return TracePanel
 	 * @throws \InvalidArgumentException
 	 */
 	public function skip($type, $skip)
@@ -655,7 +653,8 @@ class TracePanel implements PanelInterface
 	 * Shortcut to self::skip('phpInternals', bool)
 	 *
 	 * @param  bool $skip skip PHP internal functions?
-	 * @return XdebugPanel
+	 * @return TracePanel
+	 * @throws \InvalidArgumentException
 	 */
 	public function skipInternals($skip)
 	{
@@ -685,28 +684,20 @@ class TracePanel implements PanelInterface
 			}
 		}
 
-		if ($this->skipOver['Hail']) {
-			if (strncmp($record->function, 'Hail\\', 5) === 0) {
-				return self::SKIP;
-			}
+		if ($this->skipOver['Hail'] && strncmp($record->function, 'Hail\\', 5) === 0) {
+			return self::SKIP;
 		}
 
-		if ($this->skipOver['Composer']) {
-			if (strncmp($record->function, 'Composer\\', 9) === 0) {
-				return self::SKIP;
-			}
+		if ($this->skipOver['Composer'] && strncmp($record->function, 'Composer\\', 9) === 0) {
+			return self::SKIP;
 		}
 
-		if ($this->skipOver['callbacks']) {
-			if ($record->function === 'callback' || $record->function === '{closure}') {
-				return self::SKIP;
-			}
+		if ($this->skipOver['callbacks'] && ($record->function === 'callback' || $record->function === '{closure}')) {
+			return self::SKIP;
 		}
 
-		if ($this->skipOver['includes']) {
-			if ($record->includeFile !== NULL) {
-				return self::SKIP;
-			}
+		if ($this->skipOver['includes'] && $record->includeFile !== NULL) {
+			return self::SKIP;
 		}
 	}
 
@@ -722,11 +713,11 @@ class TracePanel implements PanelInterface
 		$flags = (int)$flags;
 
 		if ($flags & self::FILTER_REPLACE_ENTRY) {
-			$this->filterEntryCallbacks = array();
+			$this->filterEntryCallbacks = [];
 		}
 
 		if ($flags & self::FILTER_REPLACE_EXIT) {
-			$this->filterExitCallbacks = array();
+			$this->filterExitCallbacks = [];
 		}
 
 		// Called when entry records came
@@ -760,7 +751,7 @@ class TracePanel implements PanelInterface
 	public function setFilterCallback($callback, $flags = NULL)
 	{
 		$flags = ((int)$flags) | self::FILTER_REPLACE;
-		return $this->addFilterCallback($callback, $flags);
+		$this->addFilterCallback($callback, $flags);
 	}
 
 
@@ -771,17 +762,17 @@ class TracePanel implements PanelInterface
 	 */
 	public function traceAll()
 	{
-		$this->filterEntryCallbacks = array();
-		$this->filterExitCallbacks = array();
+		$this->filterEntryCallbacks = [];
+		$this->filterExitCallbacks = [];
 	}
 
 
 	/**
 	 * Trace function by name.
 	 *
-	 * @param  string|array name of function or pair array(class, method)
-	 * @param  bool  show inside function trace too
-	 * @param  bool  show internals in inside function trace
+	 * @param  string|array $name name of function or pair [class, method]
+	 * @param  bool  $deep show inside function trace too
+	 * @param  bool  $showInternals show internals in inside function trace
 	 */
 	public function traceFunction($name, $deep = FALSE, $showInternals = FALSE)
 	{
@@ -810,9 +801,9 @@ class TracePanel implements PanelInterface
 	/**
 	 * Trace function which name is expressed by PCRE reqular expression.
 	 *
-	 * @param  string regular expression
-	 * @param  bool show inside function trace too
-	 * @param  bool show internals in inside function trace
+	 * @param  string $re regular expression
+	 * @param  bool $deep show inside function trace too
+	 * @param  bool $showInternals show internals in inside function trace
 	 */
 	public function traceFunctionRe($re, $deep = FALSE, $showInternals = FALSE)
 	{
@@ -834,18 +825,18 @@ class TracePanel implements PanelInterface
 	/**
 	 * Trace functions running over/under the time.
 	 *
-	 * @param  float  delta time
-	 * @param  bool  TRUE = over the delta time, FALSE = under the delta time
+	 * @param  float|string  $delta delta time
+	 * @param  bool  $over TRUE = over the delta time, FALSE = under the delta time
 	 */
 	public function traceDeltaTime($delta, $over = TRUE)
 	{
 		if (is_string($delta)) {
-			static $units = array(
+			static $units = [
 				'ns' => 1e-9,
 				'us' => 1e-6,
 				'ms' => 1e-3,
 				's' => 1,
-			);
+			];
 
 			foreach ($units as $unit => $multipler) {
 				$length = strlen($unit);
@@ -876,17 +867,17 @@ class TracePanel implements PanelInterface
 	/**
 	 * Trace functions which consumes over/under the memory.
 	 *
-	 * @param  float  delta memory
-	 * @param  bool  TRUE = over the delta memory, FALSE = under the delta memory
+	 * @param  float|string $delta delta memory
+	 * @param  bool  $over TRUE = over the delta memory, FALSE = under the delta memory
 	 */
 	public function traceDeltaMemory($delta, $over = TRUE)
 	{
 		if (is_string($delta)) {
-			static $units = array(
+			static $units = [
 				'MB' => 1048576, // 1024 * 1024
 				'kB' => 1024,
 				'B' => 1,
-			);
+			];
 
 			foreach ($units as $unit => $multipler) {
 				$length = strlen($unit);

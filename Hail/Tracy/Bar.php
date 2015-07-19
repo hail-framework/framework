@@ -13,11 +13,8 @@ namespace Hail\Tracy;
  */
 class Bar
 {
-	/** @deprecated */
-	public $info = array();
-
 	/** @var Bar\PanelInterface[] */
-	private $panels = array();
+	private $panels = [];
 
 
 	/**
@@ -65,21 +62,21 @@ class Bar
 		}
 
 		$obLevel = ob_get_level();
-		$panels = array();
+		$panels = [];
 		foreach ($this->panels as $id => $panel) {
 			$idHtml = preg_replace('#[^a-z0-9]+#i', '-', $id);
 			try {
 				$tab = (string) $panel->getTab();
 				$panelHtml = $tab ? (string) $panel->getPanel() : NULL;
-				$panels[] = array('id' => $idHtml, 'tab' => $tab, 'panel' => $panelHtml);
+				$panels[] = ['id' => $idHtml, 'tab' => $tab, 'panel' => $panelHtml];
 
 			} catch (\Exception $e) {
-				$panels[] = array(
+				$panels[] = [
 					'id' => "error-$idHtml",
 					'tab' => "Error in $id",
 					'panel' => '<h1>Error: ' . $id . '</h1><div class="tracy-inner">'
 						. nl2br(htmlSpecialChars($e, ENT_IGNORE, 'UTF-8')) . '</div>',
-				);
+				];
 				while (ob_get_level() > $obLevel) { // restore ob-level if broken
 					ob_end_clean();
 				}
@@ -87,18 +84,18 @@ class Bar
 		}
 
 		if ($redirect) {
-			$session[] = array('panels' => $panels, 'liveData' => Dumper::fetchLiveData());
+			$session[] = ['panels' => $panels, 'liveData' => Dumper::fetchLiveData()];
 			return;
 		}
 
 		$liveData = Dumper::fetchLiveData();
 
 		foreach (array_reverse((array) $session) as $reqId => $info) {
-			$panels[] = array(
+			$panels[] = [
 				'tab' => '<span title="Previous request before redirect">previous</span>',
 				'panel' => NULL,
 				'previous' => TRUE,
-			);
+			];
 			foreach ($info['panels'] as $panel) {
 				$panel['id'] .= '-' . $reqId;
 				$panels[] = $panel;
