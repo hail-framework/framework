@@ -44,7 +44,7 @@ class FireLogger implements LoggerInterface
 			'template' => '',
 			'message' => '',
 			'style' => 'background:#767ab6',
-		);
+		];
 
 		$args = func_get_args();
 		if (isset($args[0]) && is_string($args[0])) {
