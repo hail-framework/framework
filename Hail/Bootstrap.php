@@ -64,6 +64,10 @@ class Bootstrap
 			'Response' => function ($c) {
 				return new Http\Response();
 			},
+
+			'Event' => function ($c) {
+				return new Event\Emitter();
+			},
 		]);
 	}
 
