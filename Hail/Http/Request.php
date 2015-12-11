@@ -19,7 +19,7 @@ class Request
 	/** @var string */
 	private $method;
 
-	/** @var Url */
+	/** @var UrlScript */
 	private $url;
 
 	/** @var array */
@@ -85,7 +85,7 @@ class Request
 	 */
 	public function getQuery($key = NULL)
 	{
-		return $this->url->getQuery($key);
+		return $this->url->getQueryParameter($key);
 	}
 
 	/**
@@ -226,7 +226,7 @@ class Request
 	 */
 	public function isSecured()
 	{
-		return $this->url->get('scheme') === 'https';
+		return $this->url->getScheme() === 'https';
 	}
 
 
@@ -299,7 +299,8 @@ class Request
 		foreach ($matches[1] as $key => $value) {
 			$q = $matches[2][$key] === '' ? 1.0 : (float) $matches[2][$key];
 			if ($q > $max) {
-				$max = $q; $lang = $value;
+				$max = $q;
+				$lang = $value;
 			}
 		}
 

@@ -283,7 +283,7 @@ class Response
 	public function __destruct()
 	{
 		if (self::$fixIE && isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== FALSE
-			&& in_array($this->code, array(400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505), TRUE)
+			&& in_array($this->code, [400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505], TRUE)
 			&& preg_match('#^text/html(?:;|$)#', $this->getHeader('Content-Type', 'text/html'))
 		) {
 			echo Random::generate(2e3, " \t\r\n"); // sends invisible garbage for IE

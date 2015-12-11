@@ -37,7 +37,7 @@ class Logger implements LoggerInterface
 		$this->directory = $directory;
 		$this->email = $email;
 		$this->blueScreen = $blueScreen;
-		$this->mailer = array($this, 'defaultMailer');
+		$this->mailer = [$this, 'defaultMailer'];
 	}
 
 
@@ -69,7 +69,7 @@ class Logger implements LoggerInterface
 			$this->logException($message, $exceptionFile);
 		}
 
-		if (in_array($priority, array(self::ERROR, self::EXCEPTION, self::CRITICAL), TRUE)) {
+		if (in_array($priority, [self::ERROR, self::EXCEPTION, self::CRITICAL], TRUE)) {
 			$this->sendEmail($message);
 		}
 
@@ -107,12 +107,12 @@ class Logger implements LoggerInterface
 	 */
 	protected function formatLogLine($message, $exceptionFile = NULL)
 	{
-		return implode(' ', array(
+		return implode(' ', [
 			@date('[Y-m-d H-i-s]'), // @ timezone may not be set
 			preg_replace('#\s*\r?\n\s*#', ' ', $this->formatMessage($message)),
 			' @  ' . Helpers::getSource(),
 			$exceptionFile ? ' @@  ' . basename($exceptionFile) : NULL,
-		));
+		]);
 	}
 
 
@@ -123,13 +123,13 @@ class Logger implements LoggerInterface
 	public function getExceptionFile($exception)
 	{
 		$dir = strtr($this->directory . '/', '\\/', DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR);
-		$hash = md5(preg_replace('~(Resource id #)\d+~', '$1', $exception));
+		$hash = substr(md5(preg_replace('~(Resource id #)\d+~', '$1', $exception)), 0, 10);
 		foreach (new \DirectoryIterator($this->directory) as $file) {
 			if (strpos($file, $hash)) {
 				return $dir . $file;
 			}
 		}
-		return $dir . 'exception-' . @date('Y-m-d-H-i-s') . "-$hash.html"; // @ timezone may not be set
+		return $dir . 'exception--' . @date('Y-m-d--H-i') . "--$hash.html"; // @ timezone may not be set
 	}
 
 
@@ -184,18 +184,18 @@ class Logger implements LoggerInterface
 	{
 		$host = preg_replace('#[^\w.-]+#', '', isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : php_uname('n'));
 		$parts = str_replace(
-			array("\r\n", "\n"),
-			array("\n", PHP_EOL),
-			array(
-				'headers' => implode("\n", array(
+			["\r\n", "\n"],
+			["\n", PHP_EOL],
+			[
+				'headers' => implode("\n", [
 					'From: ' . ($this->fromEmail ?: "noreply@$host"),
 					'X-Mailer: Tracy',
 					'Content-Type: text/plain; charset=UTF-8',
 					'Content-Transfer-Encoding: 8bit',
-				)) . "\n",
+				]) . "\n",
 				'subject' => "PHP: An error occurred on the server $host",
 				'body' => $this->formatMessage($message) . "\n\nsource: " . Helpers::getSource(),
-			)
+			]
 		);
 
 		mail($email, $parts['subject'], $parts['body'], $parts['headers']);

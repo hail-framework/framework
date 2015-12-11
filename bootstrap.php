@@ -6,7 +6,7 @@ define('START_TIME', isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_T
 define('NOW', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
 
 // Absolute path to the system folder
-define('SYSTEM_PATH', __DIR__ . '/');
+!defined('SYSTEM_PATH') && define('SYSTEM_PATH', __DIR__ . '/');
 
 // Path to the Hail namespace root folder
 define('HAIL_PATH', SYSTEM_PATH . 'Hail/');
@@ -34,7 +34,7 @@ date_default_timezone_set(
 	Config::get('app.timezone')
 );
 
-if (Config::get('env.debug')) {
+if (PHP_SAPI !== 'cli' && Config::get('env.debug')) {
 	DI::set('Trace', function ($c) {
 		return new Hail\Tracy\Bar\TracePanel(
 			TEMP_PATH . 'xdebugTrace.xt'

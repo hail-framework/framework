@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-class Config extends Facade
+class Event extends Facade
 {
 
 }

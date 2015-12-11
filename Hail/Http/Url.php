@@ -35,32 +35,48 @@ namespace Hail\Http;
  * @property   string $path
  * @property   string $query
  * @property   string $fragment
- * @property   string $scriptPath
+ * @property-read string $absoluteUrl
+ * @property-read string $authority
+ * @property-read string $hostUrl
+ * @property-read string $basePath
+ * @property-read string $baseUrl
+ * @property-read string $relativeUrl
+ * @property-read array $queryParameters
  */
 class Url
 {
 	/** @var array */
-	public static $defaultPorts = array(
+	public static $defaultPorts = [
 		'http' => 80,
 		'https' => 443,
 		'ftp' => 21,
 		'news' => 119,
 		'nntp' => 119,
-	);
+	];
+
+	/** @var string */
+	private $scheme = '';
+
+	/** @var string */
+	private $user = '';
+
+	/** @var string */
+	private $password = '';
+
+	/** @var string */
+	private $host = '';
+
+	/** @var int */
+	private $port;
+
+	/** @var string */
+	private $path = '';
 
 	/** @var array */
-	private $url = array(
-		'scheme' => '',
-		'port' => '',
-		'host' => '',
-		'user' => '',
-		'password' => '',
-		'path' => '',
-		'fragment' => '',
-		'scriptPath' => ''
-	);
+	private $query = [];
 
-	protected $query = [];
+	/** @var string */
+	private $fragment = '';
 
 	/**
 	 * @param  string|null $url
@@ -77,35 +93,19 @@ class Url
 			throw new \InvalidArgumentException("Malformed or unsupported URI '$url'.");
 		}
 
-		$this->url['scheme'] = isset($p['scheme']) ? $p['scheme'] : '';
-		$this->url['port'] = isset($p['port']) ? $p['port'] : (isset(self::$defaultPorts[$p['scheme']]) ? self::$defaultPorts[$p['scheme']] : '');
-		$this->url['host'] = isset($p['host']) ? rawurldecode($p['host']) : '';
-		$this->url['user'] = isset($p['user']) ? rawurldecode($p['user']) : '';
-		$this->url['password'] = isset($p['pass']) ? rawurldecode($p['pass']) : '';
+		$this->scheme = isset($p['scheme']) ? $p['scheme'] : '';
+		$this->port = isset($p['port']) ? $p['port'] : NULL;
+		$this->host = isset($p['host']) ? rawurldecode($p['host']) : '';
+		$this->user = isset($p['user']) ? rawurldecode($p['user']) : '';
+		$this->password = isset($p['pass']) ? rawurldecode($p['pass']) : '';
 		$this->setPath(isset($p['path']) ? $p['path'] : '');
-		$this->setQuery(isset($p['query']) ? $p['query'] : array());
-		$this->url['fragment'] = isset($p['fragment']) ? rawurldecode($p['fragment']) : '';
+		$this->setQuery(isset($p['query']) ? $p['query'] : []);
+		$this->fragment = isset($p['fragment']) ? rawurldecode($p['fragment']) : '';
 	}
 
 	public function __get($key) {
-		return $this->get($key);
-	}
-
-	/**
-	 * @param string $key
-	 * @return mixed
-	 */
-	public function get($key)
-	{
-		if (isset($this->url[$key])) {
-			return $this->url[$key];
-		} elseif ($key === 'query') {
-			return http_build_query(
-				$this->getQuery(), '', '&', PHP_QUERY_RFC3986
-			);
-		}
-
-		return null;
+		$fun = 'get' . ucfirst($key);
+		return $this->$fun();
 	}
 
 	/**
@@ -115,10 +115,18 @@ class Url
 	 */
 	public function setScheme($value)
 	{
-		$this->url['scheme'] = (string) $value;
+		$this->scheme = (string) $value;
 		return $this;
 	}
 
+	/**
+	 * Returns the scheme part of URI.
+	 * @return string
+	 */
+	public function getScheme()
+	{
+		return $this->scheme;
+	}
 
 	/**
 	 * Sets the user name part of URI.
@@ -127,10 +135,19 @@ class Url
 	 */
 	public function setUser($value)
 	{
-		$this->url['user'] = (string) $value;
+		$this->user = (string) $value;
 		return $this;
 	}
 
+
+	/**
+	 * Returns the user name part of URI.
+	 * @return string
+	 */
+	public function getUser()
+	{
+		return $this->user;
+	}
 
 	/**
 	 * Sets the password part of URI.
@@ -139,8 +156,17 @@ class Url
 	 */
 	public function setPassword($value)
 	{
-		$this->url['password'] = (string) $value;
+		$this->password = (string) $value;
 		return $this;
+	}
+
+	/**
+	 * Returns the password part of URI.
+	 * @return string
+	 */
+	public function getPassword()
+	{
+		return $this->password;
 	}
 
 	/**
@@ -150,9 +176,18 @@ class Url
 	 */
 	public function setHost($value)
 	{
-		$this->url['host'] = (string) $value;
-		$this->setPath($this->url['path']);
+		$this->host = (string) $value;
+		$this->setPath($this->path);
 		return $this;
+	}
+
+	/**
+	 * Returns the host part of URI.
+	 * @return string
+	 */
+	public function getHost()
+	{
+		return $this->host;
 	}
 
 	/**
@@ -162,8 +197,17 @@ class Url
 	 */
 	public function setPort($value)
 	{
-		$this->url['port'] = (int) $value;
+		$this->port = (int) $value;
 		return $this;
+	}
+
+	/**
+	 * Returns the port part of URI.
+	 * @return int|null
+	 */
+	public function getPort()
+	{
+		return $this->port ?: (isset(self::$defaultPorts[$this->scheme]) ? self::$defaultPorts[$this->scheme] : NULL);
 	}
 
 	/**
@@ -174,11 +218,20 @@ class Url
 	public function setPath($value)
 	{
 		$value = (string) $value;
-		if ($this->url['host'] && strncmp($value, '/', 1) !== 0) {
+		if ($this->host && strncmp($value, '/', 1) !== 0) {
 			$value = '/' . $value;
 		}
-		$this->url['path'] = $value;
+		$this->path = $value;
 		return $this;
+	}
+
+	/**
+	 * Returns the path part of URI.
+	 * @return string
+	 */
+	public function getPath()
+	{
+		return $this->path;
 	}
 
 	/**
@@ -206,6 +259,36 @@ class Url
 	}
 
 	/**
+	 * Returns the query part of URI.
+	 * @return string
+	 */
+	public function getQuery()
+	{
+		return http_build_query($this->query, '', '&', PHP_QUERY_RFC3986);
+	}
+
+
+	/**
+	 * @return array
+	 */
+	public function getQueryParameters()
+	{
+		return $this->query;
+	}
+
+
+	/**
+	 * @param string
+	 * @param mixed
+	 * @return mixed
+	 */
+	public function getQueryParameter($name)
+	{
+		return isset($this->query[$name]) ? $this->query[$name] : NULL;
+	}
+
+
+	/**
 	 * @param string
 	 * @param mixed NULL unsets the parameter
 	 * @return self
@@ -223,19 +306,17 @@ class Url
 	 */
 	public function setFragment($value)
 	{
-		$this->url['fragment'] = (string) $value;
+		$this->fragment = (string) $value;
 		return $this;
 	}
 
 	/**
-	 * Sets the script-path part of URI.
-	 * @param  string
-	 * @return self
+	 * Returns the fragment part of URI.
+	 * @return string
 	 */
-	public function setScriptPath($value)
+	public function getFragment()
 	{
-		$this->url['scriptPath'] = (string) $value;
-		return $this;
+		return $this->fragment;
 	}
 
 	/**
@@ -244,9 +325,9 @@ class Url
 	 */
 	public function getAbsoluteUrl()
 	{
-		return $this->getHostUrl() . $this->url['path']
-			. (($tmp = $this->get('query')) ? '?' . $tmp : '')
-			. ($this->url['fragment'] === '' ? '' : '#' . $this->url['fragment']);
+		return $this->getHostUrl() . $this->path
+			. (($tmp = $this->getQuery()) ? '?' . $tmp : '')
+			. ($this->fragment === '' ? '' : '#' . $this->fragment);
 	}
 
 
@@ -256,13 +337,14 @@ class Url
 	 */
 	public function getAuthority()
 	{
-		return $this->url['host'] === '' ? ''
-			: ($this->url['user'] !== '' && $this->url['scheme'] !== 'http' && $this->url['scheme'] !== 'https'
-				? rawurlencode($this->url['user']) . ($this->url['password'] === '' ? '' : ':' . rawurlencode($this->url['password'])) . '@'
+		return $this->host === ''
+			? ''
+			: ($this->user !== '' && $this->scheme !== 'http' && $this->scheme !== 'https'
+				? rawurlencode($this->user) . ($this->password === '' ? '' : ':' . rawurlencode($this->password)) . '@'
 				: '')
-			. $this->url['host']
-			. ($this->url['port'] && (!isset(self::$defaultPorts[$this->url['scheme']]) || $this->url['port'] !== self::$defaultPorts[$this->url['scheme']])
-				? ':' . $this->url['port']
+			. $this->host
+			. ($this->port && (!isset(self::$defaultPorts[$this->scheme]) || $this->port !== self::$defaultPorts[$this->scheme])
+				? ':' . $this->port
 				: '');
 	}
 
@@ -273,7 +355,7 @@ class Url
 	 */
 	public function getHostUrl()
 	{
-		return ($this->url['scheme'] ? $this->url['scheme'] . ':' : '') . '//' . $this->getAuthority();
+		return ($this->scheme ? $this->scheme . ':' : '') . '//' . $this->getAuthority();
 	}
 
 	/**
@@ -282,17 +364,8 @@ class Url
 	 */
 	public function getBasePath()
 	{
-		$pos = strrpos(empty($this->url['scriptPath']) ? $this->url['scriptPath'] : $this->url['path'], '/');
-		return $pos === FALSE ? '' : substr($this->url['path'], 0, $pos + 1);
-	}
-
-	/**
-	 * Returns the additional path information.
-	 * @return string
-	 */
-	public function getPathInfo()
-	{
-		return (string) substr($this->url['path'], strlen($this->url['scriptPath']));
+		$pos = strrpos($this->path, '/');
+		return $pos === FALSE ? '' : substr($this->path, 0, $pos + 1);
 	}
 
 	/**
@@ -305,17 +378,6 @@ class Url
 	}
 
 	/**
-	 * Returns variable provided to the script via URL query ($_GET).
-	 * If no key is passed, returns the entire array.
-	 * @param  string $key key
-	 * @return mixed
-	 */
-	public function getQuery($key = NULL)
-	{
-		return Helpers::getParams($this->post, '_GET', $key);
-	}
-
-	/**
 	 * Returns the relative-URI.
 	 * @return string
 	 */
@@ -324,18 +386,43 @@ class Url
 		return (string) substr($this->getAbsoluteUrl(), strlen($this->getBaseUrl()));
 	}
 
+
+	/**
+	 * URL comparison.
+	 * @param  string|self
+	 * @return bool
+	 */
+	public function isEqual($url)
+	{
+		$url = new self($url);
+		$query = $url->query;
+		ksort($query);
+		$query2 = $this->query;
+		ksort($query2);
+		$http = in_array($this->scheme, ['http', 'https'], TRUE);
+		return $url->scheme === $this->scheme
+			&& !strcasecmp($url->host, $this->host)
+			&& $url->getPort() === $this->getPort()
+			&& ($http || $url->user === $this->user)
+			&& ($http || $url->password === $this->password)
+			&& self::unescape($url->path, '%/') === self::unescape($this->path, '%/')
+			&& $query === $query2
+			&& $url->fragment === $this->fragment;
+	}
+
+
 	/**
 	 * Transforms URL to canonical form.
 	 * @return self
 	 */
 	public function canonicalize()
 	{
-		$this->url['path'] = preg_replace_callback(
+		$this->path = preg_replace_callback(
 			'#[^!$&\'()*+,/:;=@%]+#',
 			function($m) { return rawurlencode($m[0]); },
-			self::unescape($this->url['path'], '%/')
+			self::unescape($this->path, '%/')
 		);
-		$this->url['host'] = strtolower($this->url['host']);
+		$this->host = strtolower($this->host);
 		return $this;
 	}
 
@@ -363,7 +450,7 @@ class Url
 		if ($reserved !== '') {
 			$s = preg_replace_callback(
 				'#%(' . substr(chunk_split(bin2hex($reserved), 2, '|'), 0, -1) . ')#i',
-				function($m) { return '%25' . strtoupper($m[1]); },
+				function ($m) { return '%25' . strtoupper($m[1]); },
 				$s
 			);
 		}

@@ -20,5 +20,6 @@ return [
 	    'Gettext'   => 'Hail\\Facades\\Gettext',
 	    'Debugger'  => 'Hail\\Tracy\\Debugger',
 	    'Console'   => 'Hail\\Facades\\Console',
+	    'Event'     => 'Hail\\Facades\\Event',
     ],
 ];
