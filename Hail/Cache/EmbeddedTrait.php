@@ -13,7 +13,7 @@ trait EmbeddedTrait
     public function initCache($di = null)
     {
         if (null === $di) {
-            $cache = DI::EmbeddedCahce();
+            $cache = \DI::EmbeddedCahce();
         } else {
             $cache = $di['EmbeddedCache'];
         }
@@ -58,6 +58,10 @@ trait EmbeddedTrait
 
 	public function updateCheck($key, $file)
 	{
+		if (EMBEDDED_CACHE_CHECK_DELAY === 0) {
+			return true;
+		}
+
 		$check = $this->getCache($key . '/time');
 		if ($check) {
 			if (NOW >= ($check[0] + EMBEDDED_CACHE_CHECK_DELAY)) {

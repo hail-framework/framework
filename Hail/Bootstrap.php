@@ -10,12 +10,11 @@ class Bootstrap
 	public static function di()
 	{
 		require HAIL_PATH . 'Cache/EmbeddedTrait.php';
-		require HAIL_PATH . 'DI/Pimple.php';
+		require HAIL_PATH . 'DI.php';
 
-		return new DI\Pimple([
+		return new DI([
 			'EmbeddedCache' => function($c) {
 				require HAIL_PATH . 'Cache/Embedded.php';
-
 				return new Cache\Embedded(
 					EMBEDDED_CACHE_ENGINE
 				);
@@ -50,7 +49,7 @@ class Bootstrap
 			},
 
 			'Router' => function ($c) {
-				return new Route\Tree();
+				return new Router();
 			},
 
 			'Gettext' => function($c) {
