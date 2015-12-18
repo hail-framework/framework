@@ -40,7 +40,7 @@ class Output
 			throw new \RuntimeException('Output Type Node Defined');
 		}
 
-		$class = 'Output\\' . $type[$name];
-		return new $class;
+		$class = __NAMESPACE__ . '\\Output\\' . $type[$name];
+		return new $class();
 	}
 }

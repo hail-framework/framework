@@ -6,7 +6,7 @@
  * Time: 15:06
  */
 
-namespace App\Panel\Controller;
+namespace App\Panel;
 
 use Hail\Controller;
 

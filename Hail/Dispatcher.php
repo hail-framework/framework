@@ -55,7 +55,7 @@ class Dispatcher
 	{
 		$class = $this->class($class);
 		if (!isset($this->controller[$class])) {
-			if (!is_subclass_of($class, 'Hail\\Controller')) {
+			if (!is_subclass_of($class, __NAMESPACE__ . '\\Controller')) {
 				throw new BadRequest('Controller Not Defined', 404);
 			}
 			return $this->controller[$class] = new $class($this);
