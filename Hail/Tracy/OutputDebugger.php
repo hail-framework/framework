@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
@@ -33,7 +33,7 @@ class OutputDebugger
 				$this->list[] = [$file, 1, self::BOM];
 			}
 		}
-		ob_start([$this, 'handler'], 1);
+		ob_start([$this, 'handler'], 1, 0);
 	}
 
 

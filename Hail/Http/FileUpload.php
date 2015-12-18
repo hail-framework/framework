@@ -18,8 +18,6 @@ namespace Hail\Http;
  * @property-read string $temporaryFile
  * @property-read int $error
  * @property-read bool $ok
- * @property-read bool $image
- * @property-read array|NULL $imageSize
  * @property-read string|NULL $contents
  */
 class FileUpload

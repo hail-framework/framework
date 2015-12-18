@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
@@ -235,7 +235,7 @@ class Dumper
 			. ($editor ? Helpers::formatHtml(
 				' title="Declared in file % on line %" data-tracy-href="%"', $rc->getFileName(), $rc->getStartLine(), $editor
 			) : '')
-			. '>' . get_class($var) . '</span> <span class="tracy-dump-hash">#' . substr(md5(spl_object_hash($var)), 0, 4) . '</span>';
+			. '>' . htmlspecialchars(Helpers::getClass($var)) . '</span> <span class="tracy-dump-hash">#' . substr(md5(spl_object_hash($var)), 0, 4) . '</span>';
 
 		static $list = [];
 
@@ -293,8 +293,13 @@ class Dumper
 	 */
 	private static function toJson(& $var, $options, $level = 0)
 	{
-		if (is_bool($var) || is_null($var) || is_int($var) || is_float($var)) {
-			return is_finite($var) ? $var : ['type' => (string) $var];
+		if (is_bool($var) || is_null($var) || is_int($var)) {
+			return $var;
+
+		} elseif (is_float($var)) {
+			return is_finite($var)
+				? (strpos($tmp = json_encode($var), '.') ? $var : ['number' => "$tmp.0"])
+				: ['type' => (string) $var];
 
 		} elseif (is_string($var)) {
 			return self::encodeString($var, $options[self::TRUNCATE]);
@@ -331,7 +336,7 @@ class Dumper
 			static $counter = 1;
 			$obj = $obj ?: [
 				'id' => self::$livePrefix . '0' . $counter++, // differentiate from resources
-				'name' => get_class($var),
+				'name' => Helpers::getClass($var),
 				'editor' => empty($editor) ? NULL : ['file' => $rc->getFileName(), 'line' => $rc->getStartLine(), 'url' => $editor],
 				'level' => $level,
 				'object' => $var,
@@ -367,7 +372,7 @@ class Dumper
 			return ['resource' => $obj['id']];
 
 		} else {
-			return 'unknown type';
+			return ['type' => 'unknown type'];
 		}
 	}
 

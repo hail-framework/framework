@@ -77,6 +77,12 @@ class Request
 	/********************* query, post, files & cookies ****************d*g**/
 
 
+	public function getParam($key)
+	{
+		$return = $this->getPost($key);
+		return $return ?: $this->getQuery($key);
+	}
+
 	/**
 	 * Returns variable provided to the script via URL query ($_GET).
 	 * If no key is passed, returns the entire array.
@@ -195,7 +201,7 @@ class Request
 		if (function_exists('apache_request_headers')) {
 			$headers = apache_request_headers();
 		} else {
-			$headers = array();
+			$headers = [];
 			foreach ($_SERVER as $k => $v) {
 				if (strncmp($k, 'HTTP_', 5) == 0) {
 					$k = substr($k, 5);

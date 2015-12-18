@@ -7,6 +7,7 @@
 
 namespace Hail\Http;
 
+use Hail\DITrait;
 use Hail\Utils\DateTime;
 
 /**
@@ -23,8 +24,8 @@ class Helpers
 
 	/**
 	 * Attempts to cache the sent entity by its last modification date.
-	 * @param  string|int|\DateTime  last modified time
-	 * @param  string  strong entity tag validator
+	 * @param  string|int|\DateTime $lastModified last modified time
+	 * @param  string $etag strong entity tag validator
 	 * @return bool
 	 */
 	public static function isModified($lastModified = NULL, $etag = NULL)
@@ -94,10 +95,10 @@ class Helpers
 		$ip = implode('', array_map($tmp, unpack('N*', inet_pton($ip))));
 		$mask = implode('', array_map($tmp, unpack('N*', inet_pton($mask))));
 		$max = strlen($ip);
-		if (!$max || $max !== strlen($mask) || $size < 0 || $size > $max) {
+		if (!$max || $max !== strlen($mask) || (int) $size < 0 || (int) $size > $max) {
 			return FALSE;
 		}
-		return strncmp($ip, $mask, $size === '' ? $max : $size) === 0;
+		return strncmp($ip, $mask, $size === '' ? $max : (int) $size) === 0;
 	}
 
 
@@ -131,7 +132,7 @@ class Helpers
 				return [];
 			}
 
-			foreach($GLOBALS[$type] as $k => $v) {
+			foreach ($GLOBALS[$type] as $k => $v) {
 				if (isset($vars[$k]) || static::keyCheck($k)) {
 					continue;
 				} elseif ($type === '_FILES') {
@@ -190,7 +191,7 @@ class Helpers
 			}
 			return $val;
 		} else {
-			return (string) preg_replace(self::VAL_CHARS, '', $val);
+			return (string)preg_replace(self::VAL_CHARS, '', $val);
 		}
 	}
 
@@ -239,9 +240,9 @@ class Helpers
 
 	/**
 	 * Converts to web safe characters [a-z0-9-] text.
-	 * @param  string  UTF-8 encoding
-	 * @param  string  allowed characters
-	 * @param  bool
+	 * @param  string $s UTF-8 encoding
+	 * @param  string $charlist allowed characters
+	 * @param  bool $lower
 	 * @return string
 	 */
 	public static function webalize($s, $charlist = NULL, $lower = TRUE)
@@ -265,16 +266,16 @@ class Helpers
 		$s = preg_replace('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{2FF}\x{370}-\x{10FFFF}]#u', '', $s);
 		$s = strtr($s, '`\'"^~?', "\x01\x02\x03\x04\x05\x06");
 		$s = str_replace(
-			array("\xE2\x80\x9E", "\xE2\x80\x9C", "\xE2\x80\x9D", "\xE2\x80\x9A", "\xE2\x80\x98", "\xE2\x80\x99", "\xC2\xB0"),
-			array("\x03", "\x03", "\x03", "\x02", "\x02", "\x02", "\x04"), $s
+			["\xE2\x80\x9E", "\xE2\x80\x9C", "\xE2\x80\x9D", "\xE2\x80\x9A", "\xE2\x80\x98", "\xE2\x80\x99", "\xC2\xB0"],
+			["\x03", "\x03", "\x03", "\x02", "\x02", "\x02", "\x04"], $s
 		);
 		if (class_exists('Transliterator', false) && $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII')) {
 			$s = $transliterator->transliterate($s);
 		}
 		if (ICONV_IMPL === 'glibc') {
 			$s = str_replace(
-				array("\xC2\xBB", "\xC2\xAB", "\xE2\x80\xA6", "\xE2\x84\xA2", "\xC2\xA9", "\xC2\xAE"),
-				array('>>', '<<', '...', 'TM', '(c)', '(R)'), $s
+				["\xC2\xBB", "\xC2\xAB", "\xE2\x80\xA6", "\xE2\x84\xA2", "\xC2\xA9", "\xC2\xAE"],
+				['>>', '<<', '...', 'TM', '(c)', '(R)'], $s
 			);
 			$s = @iconv('UTF-8', 'WINDOWS-1250//TRANSLIT//IGNORE', $s); // intentionally @
 			$s = strtr($s, "\xa5\xa3\xbc\x8c\xa7\x8a\xaa\x8d\x8f\x8e\xaf\xb9\xb3\xbe\x9c\x9a\xba\x9d\x9f\x9e"

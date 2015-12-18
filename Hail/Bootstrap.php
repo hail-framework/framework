@@ -13,67 +13,68 @@ class Bootstrap
 		require HAIL_PATH . 'DI.php';
 
 		return new DI([
-			'EmbeddedCache' => function($c) {
+			'embedded' => function ($c) {
 				require HAIL_PATH . 'Cache/Embedded.php';
 				return new Cache\Embedded(
 					EMBEDDED_CACHE_ENGINE
 				);
 			},
 
-			'Config' => function($c) {
-				if (defined('CONFIG_ENABLE_YACONF') && CONFIG_ENABLE_YACONF &&
-					extension_loaded('yaconf')
-				) {
-					require HAIL_PATH . 'Config/Yaconf.php';
-					return new Config\Yaconf();
-				} else {
-					require HAIL_PATH . 'Config/Php.php';
-					return new Config\Php($c);
-				}
+			'config' => function ($c) {
+				require HAIL_PATH . 'Config.php';
+				return new Config($c);
 			},
 
-			'Loader' => function($c) {
+			'loader' => function ($c) {
 				require HAIL_PATH . 'Loader/PSR4.php';
 				$loader = new Loader\PSR4($c);
 				$loader->addPrefixes(
-					$c['Config']->get('env.autoload')
+					$c['config']->get('env.autoload')
 				);
 				return $loader;
 			},
 
 			// After here, no need add require
-			'Alias' => function($c) {
+			'alias' => function ($c) {
 				return new Loader\Alias(
-					$c['Config']->get('env.alias')
+					$c['config']->get('env.alias')
 				);
 			},
 
-			'Router' => function ($c) {
-				return new Router();
+			'router' => function ($c) {
+				return new Router($c);
 			},
 
-			'Gettext' => function($c) {
+			'gettext' => function ($c) {
 				return new I18N\Gettext();
 			},
 
-			'Request' => function ($c) {
+			'request' => function ($c) {
 				return Bootstrap::httpRequest();
 			},
 
-			'Response' => function ($c) {
+			'response' => function ($c) {
 				return new Http\Response();
 			},
 
-			'Event' => function ($c) {
+			'event' => function ($c) {
 				return new Event\Emitter();
 			},
+
+			'app' => function ($c) {
+				return new Application();
+			},
+
+			'output' => function ($c) {
+				return new Output();
+			}
 		]);
 	}
 
 	public static function autoload($di)
 	{
-		$di['Loader']->register();
-		$di['Alias']->register();
+		$di['loader']->register();
+		$di['alias']->register();
 		\DI::swap($di);
 	}
 

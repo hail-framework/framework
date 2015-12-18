@@ -44,9 +44,9 @@ class UrlScript extends Url
 		) {
 			$this->setHost(strtolower($pair[1]));
 			if (isset($pair[2])) {
-				$this->setPort(substr($pair[2], 1));
+				$this->setPort((int) substr($pair[2], 1));
 			} elseif (isset($_SERVER['SERVER_PORT'])) {
-				$this->setPort($_SERVER['SERVER_PORT']);
+				$this->setPort((int) $_SERVER['SERVER_PORT']);
 			}
 		}
 

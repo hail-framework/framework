@@ -3,8 +3,8 @@
 /**
  * Debugger bluescreen template.
  *
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  *
  * @param  array $exception
  * @param  array $panels
@@ -18,6 +18,8 @@
 
 namespace Hail\Tracy;
 
+$code = $exception->getCode() ? ' #' . $exception->getCode() : '';
+
 ?><!DOCTYPE html><!-- "' --></script></style></pre></xmp></table></a></abbr></address></article></aside></audio></b></bdi></bdo></blockquote></button></canvas></caption></cite></code></datalist></del></details></dfn></div></dl></em></fieldset></figcaption></figure></footer></form></h1></h2></h3></h4></h5></h6></header></hgroup></i></iframe></ins></kbd></label></legend></map></mark></menu></meter></nav></noscript></object></ol></optgroup></output></progress></q></rp></rt></ruby></s></samp></section></select></small></span></strong></sub></summary></sup></textarea></time></title></tr></u></ul></var></video>
 <html>
 <head>
@@ -25,10 +27,10 @@ namespace Hail\Tracy;
 	<meta name="robots" content="noindex">
 	<meta name="generator" content="Tracy by Hail Framework">
 
-	<title><?= htmlspecialchars($title, ENT_NOQUOTES, 'UTF-8') ?></title><!-- <?php
-		$ex = $exception; echo htmlspecialchars($ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_IGNORE, 'UTF-8');
-		while ($ex = $ex->getPrevious()) echo htmlspecialchars('; caused by ' . get_class($ex) . ' ' . $ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_IGNORE, 'UTF-8');
-	?> -->
+	<title><?= htmlspecialchars($title . ': ' . $exception->getMessage() . $code, ENT_IGNORE, 'UTF-8') ?></title>
+	<?php if ($ex = $exception->getPrevious()): ?>
+<!--<?php do { echo str_replace('--', '- ', htmlspecialchars("\n\tcaused by " . Helpers::getClass($ex) . ': ' . $ex->getMessage() . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_IGNORE, 'UTF-8')); } while ($ex = $ex->getPrevious()); ?> -->
+	<?php endif ?>
 
 	<style type="text/css" class="tracy-debug">
 	<?= preg_replace('#[\r\n\t ]+#', ' ', file_get_contents(__DIR__ . '/bluescreen.css')) ?>
@@ -42,16 +44,17 @@ namespace Hail\Tracy;
 	<a id="tracy-bs-toggle" href="#" class="tracy-toggle"></a>
 	<div>
 		<div id="tracy-bs-error" class="panel">
-			<h1><?= htmlspecialchars($title, ENT_NOQUOTES, 'UTF-8'), ($exception->getCode() ? ' #' . $exception->getCode() : '') ?></h1>
+			<?php if ($exception->getMessage()): ?><p><?= htmlspecialchars($title . $code, ENT_IGNORE, 'UTF-8') ?></p><?php endif ?>
 
-			<p><?= htmlspecialchars($exception->getMessage(), ENT_IGNORE, 'UTF-8') ?>
+
+			<h1><?= htmlspecialchars($exception->getMessage() ?: $title . $code, ENT_IGNORE, 'UTF-8') ?>
 			<a href="https://www.google.com/search?sourceid=tracy&amp;q=<?= urlencode($title . ' ' . preg_replace('#\'.*\'|".*"#Us', '', $exception->getMessage())) ?>" rel="noreferrer">search&#x25ba;</a>
-			<?php if ($skipError): ?><a href="<?= htmlSpecialChars($skipError, ENT_IGNORE | ENT_QUOTES, 'UTF-8') ?>">skip error&#x25ba;</a><?php endif ?></p>
+			<?php if ($skipError): ?><a href="<?= htmlSpecialChars($skipError, ENT_IGNORE | ENT_QUOTES, 'UTF-8') ?>">skip error&#x25ba;</a><?php endif ?></h1>
 		</div>
 
 		<?php if ($prev = $exception->getPrevious()): ?>
 		<div class="caused">
-			<a href="#tracyCaused">Caused by <?= get_class($prev) ?></a>
+			<a href="#tracyCaused">Caused by <?= htmlspecialchars(Helpers::getClass($prev), ENT_NOQUOTES, 'UTF-8') ?></a>
 		</div>
 		<?php endif ?>
 
@@ -65,9 +68,9 @@ namespace Hail\Tracy;
 
 			<div class="<?= $collapsed ? 'tracy-collapsed ' : '' ?>inner">
 				<div class="panel">
-					<h1><?= htmlspecialchars(get_class($ex) . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_NOQUOTES, 'UTF-8') ?></h1>
+					<h2><?= htmlspecialchars(Helpers::getClass($ex) . ($ex->getCode() ? ' #' . $ex->getCode() : ''), ENT_NOQUOTES, 'UTF-8') ?></h2>
 
-					<p><b><?= htmlspecialchars($ex->getMessage(), ENT_IGNORE, 'UTF-8') ?></b></p>
+					<h2><?= htmlspecialchars($ex->getMessage(), ENT_IGNORE, 'UTF-8') ?></h2>
 				</div>
 			<?php endif ?>
 
@@ -100,7 +103,7 @@ namespace Hail\Tracy;
 			</div></div>
 
 
-			<?php if (isset($stack[0]['class']) && $stack[0]['class'] === 'Hail\Tracy\Debugger' && ($stack[0]['function'] === 'shutdownHandler' || $stack[0]['function'] === 'errorHandler')) unset($stack[0]) ?>
+			<?php if (isset($stack[0]['class']) && $stack[0]['class'] === Debugger::class && ($stack[0]['function'] === 'shutdownHandler' || $stack[0]['function'] === 'errorHandler')) unset($stack[0]) ?>
 			<?php if ($stack): ?>
 			<div class="panel">
 				<h2><a data-tracy-ref="^+" class="tracy-toggle">Call stack</a></h2>
@@ -118,12 +121,12 @@ namespace Hail\Tracy;
 
 					<?php if (isset($row['file']) && is_file($row['file'])): ?><a data-tracy-ref="^p + .file" class="tracy-toggle<?php if ($expanded !== $key) echo ' tracy-collapsed' ?>">source</a>&nbsp; <?php endif ?>
 
-					<?php if (isset($row['object'])) echo "<a data-tracy-ref='^p + .object' class='tracy-toggle tracy-collapsed'>" ?>
-					<?php if (isset($row['class'])) echo htmlspecialchars($row['class'] . $row['type'], ENT_NOQUOTES, 'UTF-8') ?>
-					<?php if (isset($row['object'])) echo '</a>' ?>
-					<?= htmlspecialchars($row['function'], ENT_NOQUOTES, 'UTF-8') ?>
-
-					(<?php if (!empty($row['args'])): ?><a data-tracy-ref="^p + .args" class="tracy-toggle tracy-collapsed">arguments</a><?php endif ?>)
+					<?php
+						if (isset($row['object'])) echo "<a data-tracy-ref='^p + .object' class='tracy-toggle tracy-collapsed'>";
+						if (isset($row['class'])) echo htmlspecialchars($row['class'] . $row['type'], ENT_NOQUOTES, 'UTF-8');
+						if (isset($row['object'])) echo '</a>';
+						echo htmlspecialchars($row['function'], ENT_NOQUOTES, 'UTF-8'), '(';
+						if (!empty($row['args'])): ?><a data-tracy-ref="^p + .args" class="tracy-toggle tracy-collapsed">arguments</a><?php endif ?>)
 					</p>
 
 					<?php if (isset($row['file']) && is_file($row['file'])): ?>
@@ -343,7 +346,7 @@ namespace Hail\Tracy;
 			<?php foreach ($info as $item): ?><li><?= htmlSpecialChars($item, ENT_NOQUOTES, 'UTF-8') ?></li><?php endforeach ?>
 		</ul>
 
-		<div id="tracy-bs-logo"><a href="http://tracy.nette.org" rel="noreferrer"></a></div>
+		<div id="tracy-bs-logo"><a href="https://tracy.nette.org" rel="noreferrer"></a></div>
 	</div>
 </div>
 
@@ -353,12 +356,15 @@ namespace Hail\Tracy;
 		document.getElementById('tracy-bs-error').innerHTML += '<div id=tracy-bs-ie-warning>Warning: Tracy requires IE 10+<\/div>';
 		return;
 	}
+	<?php readfile(__DIR__ . '/../Toggle/toggle.js') ?>
 	<?php readfile(__DIR__ . '/../Dumper/dumper.js') ?>
-	<?php readfile(__DIR__ . '/bluescreen.js') ?>
 })();
 </script>
 <script>
 Tracy && Tracy.Dumper.init(<?= json_encode(Dumper::fetchLiveData()) ?>);
+</script>
+<script>
+Tracy && <?php readfile(__DIR__ . '/bluescreen.js') ?>
 </script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
@@ -54,7 +54,7 @@ class Bar
 	public function render()
 	{
 		@session_start(); // @ session may be already started or it is not possible to start session
-		$session = & $_SESSION['__HF']['debuggerbar'];
+		$session = &$_SESSION['__HF']['debuggerbar'];
 		$redirect = preg_match('#^Location:#im', implode("\n", headers_list()));
 		if ($redirect) {
 			Dumper::fetchLiveData();
@@ -66,11 +66,14 @@ class Bar
 		foreach ($this->panels as $id => $panel) {
 			$idHtml = preg_replace('#[^a-z0-9]+#i', '-', $id);
 			try {
-				$tab = (string) $panel->getTab();
-				$panelHtml = $tab ? (string) $panel->getPanel() : NULL;
+				$tab = (string)$panel->getTab();
+				$panelHtml = $tab ? (string)$panel->getPanel() : NULL;
 				$panels[] = ['id' => $idHtml, 'tab' => $tab, 'panel' => $panelHtml];
 
+			} catch (\Throwable $e) {
 			} catch (\Exception $e) {
+			}
+			if (isset($e)) {
 				$panels[] = [
 					'id' => "error-$idHtml",
 					'tab' => "Error in $id",

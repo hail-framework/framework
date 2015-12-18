@@ -8,170 +8,99 @@
 
 namespace Hail;
 
+use Hail\Exception\Application as ApplicationException;
+use Hail\Exception\BadRequest;
+use Hail\Tracy\Debugger;
+
 /**
  * Front Controller.
  *
- * @property-read Http\Request $request
- * @property-read IPresenter $presenter
- * @property-read IRouter $router
- * @property-read IPresenterFactory $presenterFactory
  */
 class Application
 {
-	/** @var int */
-	public static $maxLoop = 20;
+	use DITrait;
+	private $dispatcher = [];
 
-	/** @var bool enable fault barrier? */
-	public $catchExceptions;
-
-	/** @var string */
-	public $errorPresenter;
-
-	/** @var callable[]  function (Application $sender); Occurs before the application loads presenter */
-	public $onStartup;
-
-	/** @var callable[]  function (Application $sender, \Exception $e = NULL); Occurs before the application shuts down */
-	public $onShutdown;
-
-	/** @var callable[]  function (Application $sender, Request $request); Occurs when a new request is received */
-	public $onRequest;
-
-	/** @var callable[]  function (Application $sender, Presenter $presenter); Occurs when a presenter is created */
-	public $onPresenter;
-
-	/** @var callable[]  function (Application $sender, IResponse $response); Occurs when a new response is ready for dispatch */
-	public $onResponse;
-
-	/** @var callable[]  function (Application $sender, \Exception $e); Occurs when an unhandled exception occurs in the application */
-	public $onError;
-
-	/** @var Request[] */
-	private $requests = array();
-
-	/** @var IPresenter */
-	private $presenter;
-
-	/** @var Http\Request */
-	private $httpRequest;
-
-	/** @var Http\Response */
-	private $httpResponse;
-
-	/** @var IPresenterFactory */
-	private $presenterFactory;
-
-	/** @var IRouter */
-	private $router;
-	private $di;
-
-
-	public function __construct($di)
-	{
-		$this->di = $di;
-	}
-
-	/**
-	 * Dispatch a HTTP request to a front controller.
-	 * @return void
-	 */
 	public function run()
 	{
 		try {
-			$this->onStartup($this);
-			$this->processRequest($this->createInitialRequest());
-			$this->onShutdown($this);
-
+			$this->event->emit('startup');
+			$this->process();
 		} catch (\Exception $e) {
-			$this->onError($this, $e);
-			if ($this->catchExceptions && $this->errorPresenter) {
-				try {
-					$this->processException($e);
-					$this->onShutdown($this, $e);
-					return;
-
-				} catch (\Exception $e) {
-					$this->onError($this, $e);
-				}
-			}
-			$this->onShutdown($this, $e);
-			throw $e;
+			$this->event->emit('error', $e);
+			$this->processException($e);
+		} finally {
+			$this->event->emit('shutdown');
 		}
 	}
 
-
-	/**
-	 * @return Request
-	 */
-	public function createInitialRequest()
+	private function process()
 	{
-		$request = $this->router->match($this->httpRequest);
+		$result = $this->router->dispatch(
+			$this->request->getMethod(),
+			$this->request->getPathInfo()
+		);
 
-		if (!$request instanceof Request) {
-			throw new BadRequestException('No route for HTTP request.');
-
-		} elseif (strcasecmp($request->getPresenterName(), $this->errorPresenter) === 0) {
-			throw new BadRequestException('Invalid request. Presenter is not achievable.');
+		if (isset($result['error'])) {
+			throw new BadRequest('Router Error', $result['error']);
 		}
 
-		try {
-			$name = $request->getPresenterName();
-			$this->presenterFactory->getPresenterClass($name);
-		} catch (InvalidPresenterException $e) {
-			throw new BadRequestException($e->getMessage(), 0, $e);
-		}
+		$app = $result['handler']['app'] ?? '';
+		$controller = $result['handler']['controller'] ?? '';
+		$action= $result['handler']['action'] ?? '';
 
-		return $request;
+		$dispatcher = $this->getDispatcher($app);
+		$dispatcher->run($controller, $action, $result['params']);
 	}
 
-
 	/**
-	 * @return void
+	 * @param string $app
+	 * @return Dispatcher
+	 * @throws BadRequest
 	 */
-	public function processRequest(Request $request)
+	private function getDispatcher($app)
 	{
-		if (count($this->requests) > self::$maxLoop) {
-			throw new ApplicationException('Too many loops detected in application life cycle.');
+		if (!isset($this->dispatcher[$app])) {
+			return $this->dispatcher[$app] = new Dispatcher($app);
 		}
-
-		$this->requests[] = $request;
-		$this->onRequest($this, $request);
-
-		$this->presenter = $this->presenterFactory->createPresenter($request->getPresenterName());
-		$this->onPresenter($this, $this->presenter);
-		$response = $this->presenter->run($request);
-
-		if ($response instanceof Responses\ForwardResponse) {
-			$this->processRequest($response->getRequest());
-
-		} elseif ($response) {
-			$this->onResponse($this, $response);
-			$response->send($this->httpRequest, $this->httpResponse);
-		}
+		return $this->dispatcher[$app];
 	}
 
-
-	/**
-	 * @return void
-	 */
 	public function processException(\Exception $e)
 	{
-		if (!$e instanceof BadRequestException && $this->httpResponse instanceof Nette\Http\Response) {
-			$this->httpResponse->warnOnBuffer = FALSE;
-		}
-		if (!$this->httpResponse->isSent()) {
-			$this->httpResponse->setCode($e instanceof BadRequestException ? ($e->getCode() ?: 404) : 500);
+		$debuggerEnabled = Debugger::isEnabled();
+		if ($debuggerEnabled && !$e instanceof ApplicationException) {
+			throw $e;
 		}
 
-		$args = array('exception' => $e, 'request' => end($this->requests) ?: NULL);
-		if ($this->presenter instanceof UI\Presenter) {
-			try {
-				$this->presenter->forward(":$this->errorPresenter:", $args);
-			} catch (AbortException $foo) {
-				$this->processRequest($this->presenter->getLastCreatedRequest());
-			}
+		if (!$e instanceof BadRequest) {
+			$this->response->warnOnBuffer = FALSE;
+		}
+
+		$code = $e instanceof BadRequest ? ($e->getCode() ?: 404) : 500;
+		if (!$this->response->isSent()) {
+			$this->response->setCode($code);
+		}
+
+		if (!$debuggerEnabled) {
+			$msg = [
+				403 => 'Access Denied',
+				404 => 'Not Found',
+				405 => 'Method Not Allowed',
+				410 => 'Gone',
+				500 => 'Server Error'
+			];
+
+			$msg = $msg[$code] ?? $e->getMessage();
 		} else {
-			$this->processRequest(new Request($this->errorPresenter, Request::FORWARD, $args));
+			$msg = $e->getMessage();
 		}
-	}
 
+		$this->output->json->send([
+			'ret' => $code,
+			'msg' => $msg
+		]);
+
+		!$debuggerEnabled && Debugger::log($e, Debugger::EXCEPTION);
+	}
 }

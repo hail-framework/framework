@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
@@ -58,7 +58,7 @@ class BlueScreen
 		$sourceIsUrl = preg_match('#^https?://#', $source);
 		$title = $exception instanceof \ErrorException
 			? Helpers::errorTypeToString($exception->getSeverity())
-			: get_class($exception);
+			: Helpers::getClass($exception);
 		$skipError = $sourceIsUrl && $exception instanceof \ErrorException && !empty($exception->skippable)
 			? $source . (strpos($source, '?') ? '&' : '?') . '_tracy_skip_error'
 			: NULL;

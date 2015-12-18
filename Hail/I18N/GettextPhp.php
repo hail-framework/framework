@@ -30,11 +30,11 @@ class Gettext
 	protected $dir;
 	protected $domain;
 	protected $locale;
-	protected $translationTable = array();
-	protected $parsed = array();
+	protected $translationTable = [];
+	protected $parsed = [];
 
 	/**
-	 * @param null|\Hail\DI\Pimple $di
+	 * @param null|\Hail\DI $di
 	 */
 	public function __construct($di = null)
 	{
@@ -78,7 +78,7 @@ class Gettext
 			}
 		}
 
-		$this->translationTable[$locale][$domain] = array();
+		$this->translationTable[$locale][$domain] = [];
 		if (!file_exists($mo) || filesize($mo) < 4 * 7) {
 			//nothing
 		} else {
@@ -132,9 +132,9 @@ class Gettext
 	private function parseOffsetTable($fp, $offset, $num)
 	{
 		if (fseek($fp, $offset, SEEK_SET) < 0) {
-			return array();
+			return [];
 		}
-		$table = array();
+		$table = [];
 		for ($i = 0; $i < $num; $i++) {
 			$data    = fread($fp, 8);
 			$table[] = unpack('lsize/loffset', $data);
@@ -196,7 +196,7 @@ class Gettext
 	 */
 	private function generateTables($fp, $locale, $domain, Array $table, Array $offsets)
 	{
-		$transTable = array();
+		$transTable = [];
 		foreach ($table as $idx => $entry) {
 			$transTable[$idx] = $this->parseEntry($fp, $entry);
 		}

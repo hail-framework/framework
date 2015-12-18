@@ -25,9 +25,9 @@ class Embedded
             return;
         }
 
-        $check = array('apcu', 'apc', 'xcache', 'yac', 'pcache', 'wincache');
+        $check = ['apcu', 'xcache', 'yac', 'pcache', 'wincache'];
         if (in_array($ext, $check, true)) {
-            $check = array($ext);
+            $check = [$ext];
         }
 
         foreach ($check as $v) {
@@ -42,12 +42,6 @@ class Embedded
                 $this->fun = [
                     'set' => 'apcu_store',
                     'get' => 'apcu_fetch',
-                ];
-                return;
-            case 'apc':
-                $this->fun = [
-                    'set' => 'apc_store',
-                    'get' => 'apc_fetch',
                 ];
                 return;
             case 'xcache':

@@ -13,9 +13,6 @@ use Hail\Utils\Random;
 /**
  * HttpResponse class.
  *
- * @property   int $code
- * @property-read bool $sent
- * @property-read array $headers
  */
 class Response
 {
@@ -79,10 +76,10 @@ class Response
 	/** @var string The path in which the cookie will be available */
 	public $cookiePath = '/';
 
-	/** @var string Whether the cookie is available only through HTTPS */
+	/** @var bool Whether the cookie is available only through HTTPS */
 	public $cookieSecure = FALSE;
 
-	/** @var string Whether the cookie is hidden from client-side */
+	/** @var bool Whether the cookie is hidden from client-side */
 	public $cookieHttpOnly = TRUE;
 
 	/** @var bool Whether warn on possible problem with data in output buffer */
@@ -259,7 +256,7 @@ class Response
 	 */
 	public function getHeaders()
 	{
-		$headers = array();
+		$headers = [];
 		foreach (headers_list() as $header) {
 			$a = strpos($header, ':');
 			$headers[substr($header, 0, $a)] = (string) substr($header, $a + 2);
@@ -310,7 +307,7 @@ class Response
 		setcookie(
 			$name,
 			$value,
-			$time ? DateTime::from($time)->format('U') : 0,
+			$time ? (int) DateTime::from($time)->format('U') : 0,
 			$path === NULL ? $this->cookiePath : (string) $path,
 			$domain === NULL ? $this->cookieDomain : (string) $domain,
 			$secure === NULL ? $this->cookieSecure : (bool) $secure,
@@ -319,7 +316,6 @@ class Response
 //		Helpers::removeDuplicateCookies();
 		return $this;
 	}
-
 
 	/**
 	 * Deletes a cookie.
@@ -335,13 +331,10 @@ class Response
 		$this->setCookie($name, FALSE, 0, $path, $domain, $secure);
 	}
 
-
-
 	private function checkHeaders()
 	{
 		if (headers_sent($file, $line)) {
 			throw new \RuntimeException('Cannot send header after HTTP headers have been sent' . ($file ? " (output started at $file:$line)." : '.'));
-
 		} elseif ($this->warnOnBuffer && ob_get_length() && !array_filter(ob_get_status(TRUE), function($i) { return !$i['chunk_size']; })) {
 			trigger_error('Possible problem: you are sending a HTTP header while already having some data in output buffer. Try Tracy\OutputDebugger or start session earlier.', E_USER_NOTICE);
 		}

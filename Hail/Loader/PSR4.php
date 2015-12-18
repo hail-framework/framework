@@ -19,7 +19,7 @@ class PSR4
      *
      * @var array
      */
-    protected $prefixes = array();
+    protected $prefixes = [];
 
     public function __construct($di)
     {
@@ -59,7 +59,7 @@ class PSR4
     public function addPrefix($prefix, $baseDir)
     {
         $prefix = trim($prefix, '\\') . '\\';
-        $baseDir = array(rtrim($baseDir, '/') . '/');
+        $baseDir = [rtrim($baseDir, '/') . '/'];
 
         if (isset($this->prefixes[$prefix])) {
             $this->prefixes[$prefix] = array_merge(

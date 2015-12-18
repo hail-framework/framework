@@ -9,6 +9,8 @@ namespace Hail\Facades;
 
 abstract class Facade
 {
+	protected static $name = '';
+
     /**
      * The resolved object instances.
      *

@@ -43,7 +43,7 @@ namespace Hail\Http;
  * @property-read string $relativeUrl
  * @property-read array $queryParameters
  */
-class Url
+class Url implements \JsonSerializable
 {
 	/** @var array */
 	public static $defaultPorts = [
@@ -66,7 +66,7 @@ class Url
 	/** @var string */
 	private $host = '';
 
-	/** @var int */
+	/** @var int|NULL */
 	private $port;
 
 	/** @var string */
@@ -435,6 +435,13 @@ class Url
 		return $this->getAbsoluteUrl();
 	}
 
+	/**
+	 * @return string
+	 */
+	public function jsonSerialize()
+	{
+		return $this->getAbsoluteUrl();
+	}
 
 	/**
 	 * Similar to rawurldecode, but preserves reserved chars encoded.

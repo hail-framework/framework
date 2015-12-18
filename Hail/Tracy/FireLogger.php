@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Tracy (http://tracy.nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Tracy (https://tracy.nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modifiend by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
@@ -51,24 +51,24 @@ class FireLogger implements LoggerInterface
 			$item['template'] = array_shift($args);
 		}
 
-		if (isset($args[0]) && $args[0] instanceof \Exception) {
+		if (isset($args[0]) && ($args[0] instanceof \Exception || $args[0] instanceof \Throwable)) {
 			$e = array_shift($args);
 			$trace = $e->getTrace();
-			if (isset($trace[0]['class']) && $trace[0]['class'] === 'Hail\Tracy\Debugger'
+			if (isset($trace[0]['class']) && $trace[0]['class'] === Debugger::class
 				&& ($trace[0]['function'] === 'shutdownHandler' || $trace[0]['function'] === 'errorHandler')
 			) {
 				unset($trace[0]);
 			}
 
 			$file = str_replace(dirname(dirname(dirname($e->getFile()))), "\xE2\x80\xA6", $e->getFile());
-			$item['template'] = ($e instanceof \ErrorException ? '' : get_class($e) . ': ')
+			$item['template'] = ($e instanceof \ErrorException ? '' : Helpers::getClass($e) . ': ')
 				. $e->getMessage() . ($e->getCode() ? ' #' . $e->getCode() : '') . ' in ' . $file . ':' . $e->getLine();
 			$item['pathname'] = $e->getFile();
 			$item['lineno'] = $e->getLine();
 
 		} else {
 			$trace = debug_backtrace();
-			if (isset($trace[1]['class']) && $trace[1]['class'] === 'Hail\Tracy\Debugger'
+			if (isset($trace[1]['class']) && $trace[1]['class'] === Debugger::class
 				&& ($trace[1]['function'] === 'fireLog')
 			) {
 				unset($trace[0]);
@@ -151,7 +151,7 @@ class FireLogger implements LoggerInterface
 
 			} elseif ($level < $this->maxDepth || !$this->maxDepth) {
 				$list[] = $var;
-				$res = ["\x00" => '(object) ' . get_class($var)];
+				$res = ["\x00" => '(object) ' . Helpers::getClass($var)];
 				foreach ($arr as $k => & $v) {
 					if ($k[0] === "\x00") {
 						$k = substr($k, strrpos($k, "\x00") + 1);
