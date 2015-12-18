@@ -19,25 +19,28 @@ namespace Hail;
  */
 class Output
 {
+	const TYPE = [
+		'json' => 'Json',
+		'jsonp' => 'JsonP',
+		'file' => 'File',
+		'text' => 'Text',
+	];
+
+	private $output = false;
+
 	public function __get($name)
 	{
-		return $this->$name();
-	}
+		if ($this->output) {
+			throw new \RuntimeException("Response Already Output");
+		}
+		$this->output = true;
 
-	public function json() {
-		return new Output\Json();
-	}
+		$type = self::TYPE;
+		if (!isset($type[$name])) {
+			throw new \RuntimeException('Output Type Node Defined');
+		}
 
-
-	public function jsonp() {
-		return new Output\JsonP();
-	}
-
-	public function file() {
-		return new Output\File();
-	}
-
-	public function text() {
-		return new Output\Text();
+		$class = 'Output\\' . $type[$name];
+		return new $class;
 	}
 }

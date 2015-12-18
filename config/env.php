@@ -23,5 +23,6 @@ return [
 		'Console'   => 'Hail\\Facades\\Console',
 		'Event'     => 'Hail\\Facades\\Event',
 		'App'       => 'Hail\\Facades\\App',
+		'Output'    => 'Hail\\Facades\\Output',
 	],
 ];

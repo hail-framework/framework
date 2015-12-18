@@ -12,7 +12,7 @@ use Hail\Controller;
 
 class Index extends Controller
 {
-	public function IndexAction() {
+	public function indexAction() {
 		
 	}
 }
