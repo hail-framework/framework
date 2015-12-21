@@ -30,6 +30,7 @@ use MongoDate;
  *
  * @since  1.1
  * @author Jeremy Mikola <jmikola@gmail.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class MongoDB extends Driver
 {

@@ -31,6 +31,7 @@ use Hail\Cache\Driver;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author David Abdemoulaie <dave@hobodave.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class Xcache extends Driver
 {

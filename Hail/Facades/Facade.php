@@ -36,7 +36,12 @@ abstract class Facade
      */
     public static function Instance()
     {
-        $name = static::class;
+	    if (static::$name !== '') {
+		    $name = __NAMESPACE__ . '\\' . static::$name;
+	    } else {
+		    $name = static::class;
+	    }
+
         if (isset(static::$resolvedInstance[$name])) {
             return static::$resolvedInstance[$name];
         }

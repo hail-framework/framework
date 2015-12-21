@@ -31,6 +31,7 @@ use Hail\Cache\Driver;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author David Abdemoulaie <dave@hobodave.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class WinCache extends Driver
 {
@@ -40,67 +41,81 @@ class WinCache extends Driver
 	}
 
 	/**
-     * {@inheritdoc}
-     */
-    protected function doFetch($id)
-    {
-        return wincache_ucache_get($id);
-    }
+	 * {@inheritdoc}
+	 */
+	protected function doFetch($id)
+	{
+		return wincache_ucache_get($id);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doContains($id)
-    {
-        return wincache_ucache_exists($id);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doContains($id)
+	{
+		return wincache_ucache_exists($id);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doSave($id, $data, $lifetime = 0)
-    {
-        return wincache_ucache_set($id, $data, $lifetime);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doSave($id, $data, $lifetime = 0)
+	{
+		return wincache_ucache_set($id, $data, $lifetime);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doDelete($id)
-    {
-        return wincache_ucache_delete($id);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	{
+		$result = wincache_ucache_set($keysAndValues, null, $lifetime);
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFlush()
-    {
-        return wincache_ucache_clear();
-    }
+		if ($result === false || count($result)) {
+			return false;
+		}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFetchMultiple(array $keys)
-    {
-        return wincache_ucache_get($keys);
-    }
+		return true;
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doGetStats()
-    {
-        $info    = wincache_ucache_info();
-        $meminfo = wincache_ucache_meminfo();
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doDelete($id)
+	{
+		return wincache_ucache_delete($id);
+	}
 
-        return array(
-	        Driver::STATS_HITS             => $info['total_hit_count'],
-	        Driver::STATS_MISSES           => $info['total_miss_count'],
-	        Driver::STATS_UPTIME           => $info['total_cache_uptime'],
-	        Driver::STATS_MEMORY_USAGE     => $meminfo['memory_total'],
-	        Driver::STATS_MEMORY_AVAILABLE => $meminfo['memory_free'],
-        );
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doFlush()
+	{
+		return wincache_ucache_clear();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doFetchMultiple(array $keys)
+	{
+		return wincache_ucache_get($keys);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doGetStats()
+	{
+		$info = wincache_ucache_info();
+		$meminfo = wincache_ucache_meminfo();
+
+		return array(
+			Driver::STATS_HITS => $info['total_hit_count'],
+			Driver::STATS_MISSES => $info['total_miss_count'],
+			Driver::STATS_UPTIME => $info['total_cache_uptime'],
+			Driver::STATS_MEMORY_USAGE => $meminfo['memory_total'],
+			Driver::STATS_MEMORY_AVAILABLE => $meminfo['memory_free'],
+		);
+	}
 }

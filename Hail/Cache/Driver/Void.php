@@ -21,72 +21,61 @@ namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
 
-
 /**
- * Zend Data Cache cache driver.
+ * Void cache driver. The cache could be of use in tests where you don`t need to cache anything.
  *
  * @link   www.doctrine-project.org
- * @since  2.0
- * @author Ralph Schindler <ralph.schindler@zend.com>
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @since  1.5
+ * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
  * @author FlyingHail <flyinghail@msn.com>
  */
-class ZendData extends Driver
+class Void extends Driver
 {
 	public function __construct($params)
 	{
 		parent::__construct($params);
 	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFetch($id)
-    {
-        return zend_shm_cache_fetch($id);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doContains($id)
-    {
-        return (false !== zend_shm_cache_fetch($id));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doSave($id, $data, $lifetime = 0)
-    {
-        return zend_shm_cache_store($id, $data, $lifetime);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doDelete($id)
-    {
-        return zend_shm_cache_delete($id);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFlush()
-    {
-        $namespace = $this->getNamespace();
-        if (empty($namespace)) {
-            return zend_shm_cache_clear();
-        }
-        return zend_shm_cache_clear($namespace);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function doGetStats()
-    {
-        return null;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doFetch($id)
+	{
+		return false;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doContains($id)
+	{
+		return false;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doSave($id, $data, $lifeTime = 0)
+	{
+		return true;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doDelete($id)
+	{
+		return true;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doFlush()
+	{
+		return true;
+	}
+	/**
+	 * {@inheritDoc}
+	 */
+	protected function doGetStats()
+	{
+		return;
+	}
 }

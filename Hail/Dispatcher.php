@@ -19,7 +19,7 @@ class Dispatcher
 
 	public function __construct($app)
 	{
-		$this->namespace = 'App\\' . $app;
+		$this->namespace = 'App\\Controller\\' . $app;
 	}
 
 	public function run($controller, $action, $params)
@@ -40,9 +40,27 @@ class Dispatcher
 		}
 
 		if (isset($params['param'])) {
-			$object->$method($params['param']);
+			$return = $object->$method($params['param']);
 		} else {
-			$object->$method();
+			$return = $object->$method();
+		}
+
+		if (!empty($return)) {
+			switch ($this->config->get('env.output')) {
+				case 'json':
+					if (!is_array($return)) {
+						$return = ['ret' => 0, 'msg' => is_string($return) ? $return : 'OK'];
+					} else if (!isset($return['ret'])) {
+						$return['ret'] = 0;
+						$return['msg'] = '';
+					}
+
+					$this->output->json->send($return);
+					break;
+				case 'text':
+					$this->output->text->send($return);
+					break;
+			}
 		}
 	}
 
@@ -93,32 +111,5 @@ class Dispatcher
 		}
 
 		return [$controllerClass, $action . 'Action'];
-	}
-
-	/**
-	 * __get
-	 * @param string $name
-	 * @return mixed
-	 */
-	protected function __getProperty($name)
-	{
-//		return $this->model($name);
-	}
-
-	/**
-	 * @param string $name
-	 * @return mixed
-	 */
-	protected function model($name)
-	{
-		if (!isset($this->model[$name])) {
-			$class = $this->class('Model\\' . $name);
-			if (!class_exists($class)) {
-				throw new \RuntimeException("Model $name Not Defined");
-			}
-			return $this->model[$name] = new $class();
-		}
-
-		return $this->model[$name];
 	}
 }

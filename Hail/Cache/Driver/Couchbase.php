@@ -28,6 +28,7 @@ use \Couchbase as CB;
  * @link   www.doctrine-project.org
  * @since  2.4
  * @author Michael Nitschinger <michael@nitschinger.at>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class Couchbase extends Driver
 {

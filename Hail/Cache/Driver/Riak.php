@@ -32,6 +32,7 @@ use Riak\Object;
  * @link   www.doctrine-project.org
  * @since  1.1
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class Riak extends Driver
 {

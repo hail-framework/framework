@@ -28,6 +28,7 @@ namespace Hail\Cache;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 abstract class Driver
 {
@@ -57,7 +58,7 @@ abstract class Driver
 	public function __construct($params)
 	{
 		$lifetime = $params['lifetime'] ?? 0;
-		$this->lifetime = (int)$lifetime;
+		$this->lifetime = (int) $lifetime;
 
 		$this->setNamespace($params['namespace'] ?? '');
 	}
@@ -138,6 +139,25 @@ abstract class Driver
 	{
 		return $this->doContains($this->getNamespacedId($id));
 	}
+
+    /**
+     * Returns a boolean value indicating if the operation succeeded.
+     *
+     * @param array $keysAndValues  Array of keys and values to save in cache
+     * @param int   $lifetime       The lifetime. If != 0, sets a specific lifetime for these
+     *                              cache entries (0 => infinite lifeTime).
+     *
+     * @return bool TRUE if the operation was successful, FALSE if it wasn't.
+     */
+    public function saveMultiple(array $keysAndValues, $lifetime = 0)
+    {
+        $namespacedKeysAndValues = array();
+        foreach ($keysAndValues as $key => $value) {
+            $namespacedKeysAndValues[$this->getNamespacedId($key)] = $value;
+        }
+
+        return $this->doSaveMultiple($namespacedKeysAndValues, $lifetime);
+    }
 
 	/**
 	 * Puts data into the cache.
@@ -244,7 +264,7 @@ abstract class Driver
 	protected function getNamespacedId($id)
 	{
 		$version = $this->getNamespaceVersion();
-		return "{$this->namespace}/$version/$id/";
+		return "{$this->namespace}[$version][$id]";
 	}
 
 	/**
@@ -254,7 +274,7 @@ abstract class Driver
 	 */
 	private function getNamespaceCacheKey()
 	{
-		return $this->namespace . '/' . self::CACHEKEY;
+		return $this->namespace . '[' . self::CACHEKEY . ']';
 	}
 
 	/**
@@ -271,6 +291,28 @@ abstract class Driver
 		$namespaceCacheKey = $this->getNamespaceCacheKey();
 		return $this->namespaceVersion = $this->doFetch($namespaceCacheKey) ?: 1;
 	}
+
+	/**
+     * Default implementation of doSaveMultiple. Each driver that supports multi-put should overwrite it.
+     *
+     * @param array $keysAndValues  Array of keys and values to save in cache
+     * @param int   $lifetime       The lifetime. If != 0, sets a specific lifetime for these
+     *                              cache entries (0 => infinite lifeTime).
+     *
+     * @return bool TRUE if the operation was successful, FALSE if it wasn't.
+     */
+    protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+    {
+        $success = true;
+
+        foreach ($keysAndValues as $key => $value) {
+            if (!$this->doSave($key, $value, $lifetime)) {
+                $success = false;
+            }
+        }
+
+        return $success;
+    }
 
 	/**
 	 * Default implementation of doFetchMultiple. Each driver that supports multi-get should owerwrite it.

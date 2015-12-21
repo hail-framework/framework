@@ -9,7 +9,7 @@
 namespace Hail\Facades;
 
 
-class App extends Facade
+class Application extends Facade
 {
-
+	protected static $name = 'App';
 }

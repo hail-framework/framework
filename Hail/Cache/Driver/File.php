@@ -27,6 +27,7 @@ use Hail\Cache\Driver;
  * @since  2.3
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Tobias Schultze <http://tobion.de>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class File extends Driver
 {
@@ -94,8 +95,8 @@ class File extends Driver
 		// YES, this needs to be *after* createPathIfNeeded()
 		$this->directory = realpath($directory);
 
-		$extension = $params['directory'] ?? self::EXTENSION;
-		$this->extension = (string)$extension;
+		$extension = $params['extension'] ?? self::EXTENSION;
+		$this->extension = (string) $extension;
 
 		$this->directoryStringLength = strlen($this->directory);
 		$this->extensionStringLength = strlen($this->extension);
@@ -137,10 +138,11 @@ class File extends Driver
 		if (
 			'' === $id
 			|| ((strlen($id) * 2 + $this->extensionStringLength) > 255)
-			|| (($this->isRunningOnWindows && $this->directoryStringLength + 4 + strlen($id) * 2 + $this->extensionStringLength) > 259)
+			|| ($this->isRunningOnWindows && ($this->directoryStringLength + 4 + strlen($id) * 2 + $this->extensionStringLength) > 258)
 		) {
 			// Most filesystems have a limit of 255 chars for each path component. On Windows the the whole path is limited
 			// to 260 chars (including terminating null char). Using long UNC ("\\?\" prefix) does not work with the PHP API.
+			// And there is a bug in PHP (https://bugs.php.net/bug.php?id=70943) with path lengths of 259.
 			// So if the id in hex representation would surpass the limit, we use the hash instead. The prefix prevents
 			// collisions between the hash and bin2hex.
 			$filename = '_' . $hash;

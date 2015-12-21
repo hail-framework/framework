@@ -41,6 +41,12 @@ class Bootstrap
 				);
 			},
 
+			'cache' => function ($c) {
+				return new Cache(
+					$c['config']->get('app.cache')
+				);
+			},
+
 			'router' => function ($c) {
 				return new Router($c);
 			},
@@ -67,7 +73,15 @@ class Bootstrap
 
 			'output' => function ($c) {
 				return new Output();
-			}
+			},
+
+			'model' => function ($c) {
+				return new Utils\ObjectFactory('Model');
+			},
+
+			'lib' => function ($c) {
+				return new Utils\ObjectFactory('Library');
+			},
 		]);
 	}
 

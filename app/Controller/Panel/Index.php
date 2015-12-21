@@ -6,13 +6,14 @@
  * Time: 15:06
  */
 
-namespace App\Panel;
+namespace App\Controller\Panel;
 
 use Hail\Controller;
 
 class Index extends Controller
 {
-	public function indexAction() {
-
+	public function indexAction()
+	{
+		return 'test';
 	}
 }

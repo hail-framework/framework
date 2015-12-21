@@ -17,7 +17,8 @@ class Json
 	use DITrait;
 
 	public function send($content) {
-		$contentType = Debugger::isEnabled() ? 'text/html' : 'application/json';
+
+		$contentType = Debugger::isEnabled() && !$this->request->isAjax() ? 'text/html' : 'application/json';
 		$this->response->setContentType($contentType, 'utf-8');
 		$this->response->setExpiration(false);
 		echo json_encode($content);

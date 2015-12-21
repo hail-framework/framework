@@ -20,7 +20,6 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
-use \Memcache as MC;
 
 /**
  * Memcache cache provider.
@@ -32,101 +31,110 @@ use \Memcache as MC;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author David Abdemoulaie <dave@hobodave.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class Memcache extends Driver
 {
-    /**
-     * @var Memcache|null
-     */
-    private $memcache;
+	/**
+	 * @var \Memcache|null
+	 */
+	private $memcache;
 
 	public function __construct($params)
 	{
+		if (!class_exists('Memcache', false)) {
+			throw new \RuntimeException('No memcache extension available.');
+		}
+
+		$memcache = new \Memcache();
+
+		if (isset($params['servers'])) {
+			$paramServers = (array) $params['servers'];
+			unset($params['servers']);
+
+			foreach ($paramServers as $server) {
+				$host = $server['host'] ?? $server[0] ?? '127.0.0.1';
+				$port = $server['port'] ?? $server[1] ?? 11211;
+				$weight = $server['weight'] ?? $server[2] ?? null;
+
+				if (is_integer($weight)) {
+					$memcache->addServer($host, $port, true, $weight);
+				} else {
+					$memcache->addServer($host, $port);
+				}
+			}
+		} else {
+			$memcache->addServer('127.0.0.1', 11211);
+		}
+
+		$this->memcache = $memcache;
+
 		parent::__construct($params);
 	}
 
-    /**
-     * Sets the memcache instance to use.
-     *
-     * @param Memcache $memcache
-     *
-     * @return void
-     */
-    public function setMemcache(MC $memcache)
-    {
-        $this->memcache = $memcache;
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doFetch($id)
+	{
+		return $this->memcache->get($id);
+	}
 
-    /**
-     * Gets the memcache instance used by the cache.
-     *
-     * @return Memcache|null
-     */
-    public function getMemcache()
-    {
-        return $this->memcache;
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doContains($id)
+	{
+		$flags = null;
+		$this->memcache->get($id, $flags);
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFetch($id)
-    {
-        return $this->memcache->get($id);
-    }
+		//if memcache has changed the value of "flags", it means the value exists
+		return ($flags !== null);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doContains($id)
-    {
-        $flags = null;
-        $this->memcache->get($id, $flags);
-        
-        //if memcache has changed the value of "flags", it means the value exists
-        return ($flags !== null);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doSave($id, $data, $lifetime = 0)
+	{
+		if ($lifetime > 30 * 24 * 3600) {
+			$lifetime = NOW + $lifetime;
+		}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doSave($id, $data, $lifetime = 0)
-    {
-        if ($lifetime > 30 * 24 * 3600) {
-            $lifetime = time() + $lifetime;
-        }
-        return $this->memcache->set($id, $data, 0, (int) $lifetime);
-    }
+		return $this->memcache->set($id, $data, 0, (int)$lifetime);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doDelete($id)
-    {
-        // Memcache::delete() returns false if entry does not exist
-        return $this->memcache->delete($id) || ! $this->doContains($id);
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doDelete($id)
+	{
+		// Memcache::delete() returns false if entry does not exist
+		return $this->memcache->delete($id) || !$this->doContains($id);
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doFlush()
-    {
-        return $this->memcache->flush();
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doFlush()
+	{
+		return $this->memcache->flush();
+	}
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doGetStats()
-    {
-        $stats = $this->memcache->getStats();
-        return [
-	        Driver::STATS_HITS   => $stats['get_hits'],
-	        Driver::STATS_MISSES => $stats['get_misses'],
-	        Driver::STATS_UPTIME => $stats['uptime'],
-	        Driver::STATS_MEMORY_USAGE     => $stats['bytes'],
-	        Driver::STATS_MEMORY_AVAILABLE => $stats['limit_maxbytes'],
-        ];
-    }
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doGetStats()
+	{
+		$stats = $this->memcache->getStats();
+
+		return [
+			Driver::STATS_HITS => $stats['get_hits'],
+			Driver::STATS_MISSES => $stats['get_misses'],
+			Driver::STATS_UPTIME => $stats['uptime'],
+			Driver::STATS_MEMORY_USAGE => $stats['bytes'],
+			Driver::STATS_MEMORY_AVAILABLE => $stats['limit_maxbytes'],
+		];
+
+	}
 }

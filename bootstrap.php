@@ -14,9 +14,6 @@ define('HAIL_PATH', SYSTEM_PATH . 'Hail/');
 // Absolute path to the temp folder
 define('TEMP_PATH', SYSTEM_PATH . 'temp/');
 
-// Absolute path to the cache folder
-define('CACHE_PATH', TEMP_PATH . 'cache/');
-
 // Embedded cache engine: 'auto', 'apcu', 'xcache', 'yac', 'pcache', 'wincache', 'none'
 define('EMBEDDED_CACHE_ENGINE', 'auto');
 define('EMBEDDED_CACHE_CHECK_DELAY', 5);

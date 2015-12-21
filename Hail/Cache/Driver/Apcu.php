@@ -27,6 +27,7 @@ use Hail\Cache\Driver;
  * @link   www.doctrine-project.org
  * @since  1.6
  * @author Kévin Dunglas <dunglas@gmail.com>
+ * @author FlyingHail <flyinghail@msn.com>
  */
 class Apcu extends Driver
 {
@@ -75,6 +76,20 @@ class Apcu extends Driver
     {
         return apcu_clear_cache();
     }
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	{
+		$result = apc_store($keysAndValues, null, $lifetime);
+
+		if ($result === false || count($result)) {
+			return false;
+		}
+
+		return true;
+	}
 
     /**
      * {@inheritdoc}

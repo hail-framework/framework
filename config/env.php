@@ -22,7 +22,11 @@ return [
 		'Debugger'  => 'Hail\\Tracy\\Debugger',
 		'Console'   => 'Hail\\Facades\\Console',
 		'Event'     => 'Hail\\Facades\\Event',
-		'App'       => 'Hail\\Facades\\App',
+		'App'       => 'Hail\\Facades\\Application',
 		'Output'    => 'Hail\\Facades\\Output',
+		'Model'     => 'Hail\\Facades\\Model',
+		'Lib'       => 'Hail\\Facades\\Library',
 	],
+
+	'output' => 'json',
 ];
