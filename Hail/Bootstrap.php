@@ -47,6 +47,12 @@ class Bootstrap
 				);
 			},
 
+			'db' => function ($c) {
+				return new DB\Medoo(
+					$c['config']->get('app.database')
+				);
+			},
+
 			'router' => function ($c) {
 				return new Router($c);
 			},

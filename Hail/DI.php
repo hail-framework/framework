@@ -36,7 +36,7 @@ class DI extends Container
 			$this->extend($func, $args[0]);
 		}
 		return $this->offsetGet(
-			lcfirst($func)
+			strtolower($func)
 		);
 	}
 
