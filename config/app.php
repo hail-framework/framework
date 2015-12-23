@@ -4,8 +4,8 @@ return [
 	'locale' => 'zh_CN',
 	'database' => [
 		// required
-		'database_type' => 'mysql',
-		'database_name' => 'admin_panel',
+		'type' => 'mysql',
+		'database' => 'admin_panel',
 		'server' => '192.168.1.179',
 		'username' => 'root',
 		'password' => 'w12345',

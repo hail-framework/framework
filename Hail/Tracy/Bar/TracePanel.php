@@ -1,6 +1,6 @@
 <?php
 /**
- * Modifiend by FlyingHail <flyinghail@msn.com>
+ * Modified by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy\Bar;

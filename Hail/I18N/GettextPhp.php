@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/Ashrey/PHP-Gettext
- * Copyright (c) 2014 David Soria Parra Modifiend by Alberto Berroteran and FlyingHail
+ * Copyright (c) 2014 David Soria Parra Modified by Alberto Berroteran and FlyingHail
  */
 
 namespace Hail\I18N;

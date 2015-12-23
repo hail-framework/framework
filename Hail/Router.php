@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/baryshev/TreeRoute
- * Copyright (c) 2015, Vadim Baryshev Modifiend by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2015, Vadim Baryshev Modified by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail;
