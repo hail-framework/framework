@@ -13,7 +13,7 @@ trait EmbeddedTrait
     public function initCache($di = null)
     {
         if (null === $di) {
-            $cache = \DI::Embedded();
+            $cache = \DI::embedded();
         } else {
             $cache = $di['embedded'];
         }

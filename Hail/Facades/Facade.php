@@ -34,7 +34,7 @@ abstract class Facade
      *
      * @return mixed
      */
-    public static function Instance()
+    public static function instance()
     {
 	    if (static::$name !== '') {
 		    $name = __NAMESPACE__ . '\\' . static::$name;

@@ -32,7 +32,7 @@ Trait DITrait
 	public function __get($name)
 	{
 		if ($this->di === null) {
-			$this->di = \DI::Instance();
+			$this->di = \DI::instance();
 		}
 
 		if ($name === 'di') {

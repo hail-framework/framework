@@ -7,12 +7,12 @@ namespace Hail;
  */
 class Bootstrap
 {
-	public static function di()
+	public static function di($start = [])
 	{
 		require HAIL_PATH . 'Cache/EmbeddedTrait.php';
 		require HAIL_PATH . 'DI.php';
 
-		return new DI([
+		$set = [
 			'embedded' => function ($c) {
 				require HAIL_PATH . 'Cache/Embedded.php';
 				return new Cache\Embedded(
@@ -40,6 +40,29 @@ class Bootstrap
 					$c['config']->get('env.alias')
 				);
 			},
+		];
+
+		$optional = self::diOptional();
+		if (empty($start)) {
+			$set = array_merge($set, $optional);
+		} else {
+			$set = [];
+			foreach ($start as $v) {
+				if (isset($optional[$v])) {
+					$set[$v] = $optional[$v];
+				}
+			}
+		}
+
+		return new DI($set);
+	}
+
+	public static function diOptional()
+	{
+		return [
+			'gettext' => function ($c) {
+				return new I18N\Gettext();
+			},
 
 			'cache' => function ($c) {
 				return new Cache(
@@ -55,10 +78,6 @@ class Bootstrap
 
 			'router' => function ($c) {
 				return new Router($c);
-			},
-
-			'gettext' => function ($c) {
-				return new I18N\Gettext();
 			},
 
 			'request' => function ($c) {
@@ -88,7 +107,7 @@ class Bootstrap
 			'lib' => function ($c) {
 				return new Utils\ObjectFactory('Library');
 			},
-		]);
+		];
 	}
 
 	public static function autoload($di)
@@ -96,6 +115,8 @@ class Bootstrap
 		$di['loader']->register();
 		$di['alias']->register();
 		\DI::swap($di);
+
+		DB\Model::init($di);
 	}
 
 	public static function httpRequest()

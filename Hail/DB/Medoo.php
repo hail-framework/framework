@@ -46,15 +46,11 @@ class Medoo
 	 */
 	protected $pdo;
 
-	public function __construct($options = null)
+	public function __construct(array $options)
 	{
 		try {
-			if (is_array($options)) {
-				foreach ($options as $option => $value) {
-					$this->$option = $value;
-				}
-			} else {
-				return false;
+			foreach ($options as $option => $value) {
+				$this->$option = $value;
 			}
 
 			if (
@@ -64,8 +60,7 @@ class Medoo
 				$port = $this->port;
 			}
 
-			$type = strtolower($this->type);
-			$is_port = isset($port);
+			$this->type = $type = strtolower($this->type);
 
 			$dsn = '';
 			$commands = [];
@@ -75,7 +70,7 @@ class Medoo
 					if ($this->socket) {
 						$dsn = $type . ':unix_socket=' . $this->socket . ';dbname=' . $this->database;
 					} else {
-						$dsn = $type . ':host=' . $this->server . ($is_port ? ';port=' . $port : '') . ';dbname=' . $this->database;
+						$dsn = $type . ':host=' . $this->server . ';port=' . ($port ?? '3306') . ';dbname=' . $this->database;
 					}
 
 					// Make MySQL using standard quoted identifier
@@ -83,16 +78,16 @@ class Medoo
 					break;
 
 				case 'pgsql':
-					$dsn = $type . ':host=' . $this->server . ($is_port ? ';port=' . $port : '') . ';dbname=' . $this->database;
+					$dsn = $type . ':host=' . $this->server . ';port=' . ($port ?? '5432') . ';dbname=' . $this->database;
 					break;
 
 				case 'sybase':
-					$dsn = 'dblib:host=' . $this->server . ($is_port ? ':' . $port : '') . ';dbname=' . $this->database;
+					$dsn = 'dblib:host=' . $this->server . ':' . ($port ?? '5000') . ';dbname=' . $this->database;
 					break;
 
 				case 'oracle':
 					$dbname = $this->server ?
-						'//' . $this->server . ($is_port ? ':' . $port : ':1521') . '/' . $this->database :
+						'//' . $this->server . ':' . ($port ?? '1521') . '/' . $this->database :
 						$this->database;
 
 					$dsn = 'oci:dbname=' . $dbname . ($this->charset ? ';charset=' . $this->charset : '');
@@ -100,8 +95,8 @@ class Medoo
 
 				case 'mssql':
 					$dsn = strstr(PHP_OS, 'WIN') ?
-						'sqlsrv:server=' . $this->server . ($is_port ? ',' . $port : '') . ';database=' . $this->database :
-						'dblib:host=' . $this->server . ($is_port ? ':' . $port : '') . ';dbname=' . $this->database;
+						'sqlsrv:server=' . $this->server . ',' . ($port ?? '1433') . ';database=' . $this->database :
+						'dblib:host=' . $this->server . ':' . ($port ?? '1433') . ';dbname=' . $this->database;
 
 					// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
 					$commands[] = 'SET QUOTED_IDENTIFIER ON';
@@ -115,8 +110,9 @@ class Medoo
 			}
 
 			if (
-				in_array($type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql']) &&
-				$this->charset
+				$this->charset &&
+				in_array($type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql'], true)
+
 			) {
 				$commands[] = "SET NAMES '" . $this->charset . "'";
 			}
@@ -393,18 +389,33 @@ class Medoo
 		return implode($conjunctor . ' ', $wheres);
 	}
 
+	protected function suffixClause($struct)
+	{
+		$where = $struct['WHERE'] ?? [];
+		foreach (['GROUP', 'ORDER', 'LIMIT'] as $v) {
+			if (isset($struct[$v]) && !isset($where[$v])) {
+				$where[$v] = $struct[$v];
+			}
+		}
+
+		return $this->whereClause($where);
+	}
+
 	protected function whereClause($where)
 	{
-		$clause = '';
+		if (empty($where)) {
+			return '';
+		}
 
+		$clause = '';
 		if (is_array($where)) {
 			$whereKeys = array_keys($where);
 			$whereAND = preg_grep("/^AND\s*#?$/i", $whereKeys);
 			$whereOR = preg_grep("/^OR\s*#?$/i", $whereKeys);
 
-			$single_condition = array_diff_key($where, array_flip(
-				explode(' ', 'AND OR GROUP ORDER HAVING LIMIT LIKE MATCH')
-			));
+			$single_condition = array_diff($whereKeys,
+				['AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH']
+			);
 
 			if ($single_condition != []) {
 				$clause = ' WHERE ' . $this->dataImplode($single_condition, '');
@@ -424,7 +435,7 @@ class Medoo
 				$MATCH = $where['MATCH'];
 
 				if (is_array($MATCH) && isset($MATCH['columns'], $MATCH['keyword'])) {
-					$clause .= ($clause != '' ? ' AND ' : ' WHERE ') . ' MATCH ("' . str_replace('.', '"."', implode('", "', $MATCH['columns'])) . '") AGAINST (' . $this->quote($MATCH['keyword']) . ')';
+					$clause .= ($clause != '' ? ' AND ' : ' WHERE ') . ' MATCH (' . implode(', ', array_map([$this, 'quoteColumn'], $MATCH['columns'])) . ') AGAINST (' . $this->quote($MATCH['keyword']) . ')';
 				}
 			}
 
@@ -479,10 +490,8 @@ class Medoo
 					}
 				}
 			}
-		} else {
-			if ($where != null) {
-				$clause .= ' ' . $where;
-			}
+		} else if ($where !== null) {
+			$clause .= ' ' . $where;
 		}
 
 		return $clause;
@@ -490,7 +499,18 @@ class Medoo
 
 	protected function selectContext($struct)
 	{
-		$table = '"' . $this->prefix . $struct['SELECT'] . '"';
+		if (isset($struct['FROM'])) {
+			$table = $struct['FROM'];
+			$columns = $struct['SELECT'] ?? $struct['COLUMNS'] ?? '*';
+		} else if (isset($struct['TABLE'])) {
+			$table = $struct['TABLE'];
+			$columns = $struct['SELECT'] ?? $struct['COLUMNS'] ?? '*';
+		} else {
+			$table = $struct['SELECT'];
+			$columns = $struct['COLUMNS'] ?? '*';
+		}
+
+		$table = '"' . $this->prefix . $table . '"';
 		if (isset($struct['JOIN'])) {
 			$join = [];
 			$joinSign = [
@@ -540,20 +560,17 @@ class Medoo
 		}
 
 		if (isset($struct['FUN'])) {
-			if (($fn = $struct['FUN']) == 1) {
+			$fn = $struct['FUN'];
+			if ($fn == 1) {
 				$column = '1';
 			} else {
-				$columns = $struct['COLUMNS'] ?? '*';
 				$column = $fn . '(' . $this->columnPush($columns) . ')';
 			}
 		} else {
-			$columns = $struct['COLUMNS'] ?? '*';
 			$column = $this->columnPush($columns);
 		}
 
-		$where = isset($struct['WHERE']) ? $this->whereClause($struct['WHERE']) : '';
-
-		return 'SELECT ' . $column . ' FROM ' . $table . $where;
+		return 'SELECT ' . $column . ' FROM ' . $table . $this->suffixClause($struct);
 	}
 
 	public function headers($table)
@@ -568,15 +585,22 @@ class Medoo
 		return $headers;
 	}
 
-	public function select(array $struct, $fetch = PDO::FETCH_ASSOC)
+	public function select(array $struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
-		return $query ? $query->fetchAll($fetch) : false;
+		return $query ? $query->fetchAll($fetch, $fetchArgs) : false;
 	}
 
-	public function insert($table, $datas)
+	public function insert($table, $datas = [])
 	{
+		if (is_array($table)) {
+			$datas = $table['VALUES'] ?? $table['SET'];
+			$table = $table['FROM'] ?? $table['TABLE'] ?? $table['INSERT'];
+		}
+
 		$lastId = [];
 
 		// Check indexed or associative array
@@ -601,8 +625,16 @@ class Medoo
 		return count($lastId) > 1 ? $lastId : $lastId[0];
 	}
 
-	public function update($table, $data, $where = null)
+	public function update($table, $data = [], $where = null)
 	{
+		if (is_array($table)) {
+			$data = $table['SET'] ?? $table['VALUES'];
+			$where = $this->suffixClause($table);
+			$table = $table['FROM'] ?? $table['TABLE'] ?? $table['UPDATE'];
+		} else {
+			$where = $this->whereClause($where);
+		}
+
 		$fields = [];
 
 		foreach ($data as $key => $value) {
@@ -618,12 +650,19 @@ class Medoo
 			}
 		}
 
-		return $this->exec('UPDATE "' . $this->prefix . $table . '" SET ' . implode(', ', $fields) . $this->whereClause($where));
+		return $this->exec('UPDATE "' . $this->prefix . $table . '" SET ' . implode(', ', $fields) . $where);
 	}
 
-	public function delete($table, $where)
+	public function delete($table, $where = null)
 	{
-		return $this->exec('DELETE FROM "' . $this->prefix . $table . '"' . $this->whereClause($where));
+		if (is_array($table)) {
+			$where = $this->suffixClause($table);
+			$table = $table['FROM'] ?? $table['TABLE'] ?? $table['DELETE'];
+		} else {
+			$where = $this->whereClause($where);
+		}
+
+		return $this->exec('DELETE FROM "' . $this->prefix . $table . '"' . $where);
 	}
 
 	public function replace($table, $columns, $search = null, $replace = null, $where = null)
@@ -653,26 +692,37 @@ class Medoo
 		return $this->exec('UPDATE "' . $this->prefix . $table . '" SET ' . $replace_query . $this->whereClause($where));
 	}
 
-	public function get(array $struct)
+	public function get(array $struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
-		$query = $this->query($this->selectContext($struct) . ' LIMIT 1');
+		$query = $this->query(
+			$this->selectContext($struct) . ' LIMIT 1'
+		);
 
 		if ($query) {
-			$data = $query->fetchAll(PDO::FETCH_ASSOC);
+			if (empty($fetchArgs)) {
+				$data = $query->fetch($fetch);
+			} else {
+				$fetchArgs = (array) $fetchArgs;
+				array_unshift($fetchArgs, $fetch);
+				call_user_func_array([$query, 'setFetchMode'], $fetchArgs);
+				$data = $query->fetch($fetch);
+			}
 
-			if (isset($data[0])) {
-				$column = $struct['SELECT'] ?? null;
+			if (is_object($data)) {
+				return $data;
+			} else if (!empty($data)) {
+				$column = $struct['COLUMNS'] ?? null;
 				if (is_string($column) && $column !== '*' && strpos($column, ',') !== false) {
-					return $data[0][$column];
+					return $data[$column];
 				}
 
-				return $data[0];
-			} else {
-				return [];
+				return $data;
 			}
-		} else {
-			return false;
+
+			return [];
 		}
+
+		return false;
 	}
 
 	public function has(array $struct)
@@ -682,7 +732,9 @@ class Medoo
 		}
 		$struct['FUN'] = 1;
 
-		$query = $this->query('SELECT EXISTS(' . $this->selectContext($struct) . ')');
+		$query = $this->query(
+			'SELECT EXISTS(' . $this->selectContext($struct) . ')'
+		);
 
 		return $query ? $query->fetchColumn() === '1' : false;
 	}
@@ -690,7 +742,9 @@ class Medoo
 	public function count(array $struct)
 	{
 		$struct['FUN'] = 'COUNT';
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
 		return $query ? (int) $query->fetchColumn() : false;
 	}
@@ -698,7 +752,9 @@ class Medoo
 	public function max(array $struct)
 	{
 		$struct['FUN'] = 'MAX';
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
 		if ($query) {
 			$max = $query->fetchColumn();
@@ -712,11 +768,12 @@ class Medoo
 	public function min(array $struct)
 	{
 		$struct['FUN'] = 'MIN';
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
 		if ($query) {
 			$min = $query->fetchColumn();
-
 			return is_numeric($min) ? (int) $min : $min;
 		} else {
 			return false;
@@ -726,7 +783,9 @@ class Medoo
 	public function avg(array $struct)
 	{
 		$struct['FUN'] = 'AVG';
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
 		return $query ? (int) $query->fetchColumn() : false;
 	}
@@ -734,7 +793,9 @@ class Medoo
 	public function sum(array $struct)
 	{
 		$struct['FUN'] = 'SUM';
-		$query = $this->query($this->selectContext($struct));
+		$query = $this->query(
+			$this->selectContext($struct)
+		);
 
 		return $query ? (int) $query->fetchColumn() : false;
 	}
