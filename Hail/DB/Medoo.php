@@ -7,9 +7,9 @@ use PDO;
 /*!
  * Medoo database framework
  * http://medoo.in
- * Version 1.0
+ * Version 1.0.1
  *
- * Copyright 2015, Angel Lai
+ * Copyright 2016, Angel Lai
  * Released under the MIT license
  * Modified by FlyingHail <flyinghail@msn.com>
  */
@@ -190,12 +190,16 @@ class Medoo
 
 	protected function columnPush($columns)
 	{
-		if ($columns == '*') {
+		if ($columns === '*') {
 			return $columns;
 		}
 
 		if (is_string($columns)) {
-			$columns = [$columns];
+			if (strpos($columns, ',') !== false) {
+				$columns = array_map('trim', explode(',', $columns));
+			} else {
+				$columns = [$columns];
+			}
 		}
 
 		$stack = [];
@@ -207,10 +211,10 @@ class Medoo
 
 			if (isset($match[1], $match[2])) {
 				$value = $this->quoteColumn($match[1]);
-				$stack[] = ($special ? $key . "(" . $value . ")" : $value) . ' AS ' . $this->quoteColumn($match[2]);
+				$stack[] = ($special ? $key . '(' . $value . ')' : $value) . ' AS ' . $this->quoteColumn($match[2]);
 			} else {
 				$value = $this->quoteColumn($value);
-				$stack[] = $special ? $key . "(" . $value . ")" : $value;
+				$stack[] = $special ? $key . '(' . $value . ')' : $value;
 			}
 		}
 
@@ -233,7 +237,7 @@ class Medoo
 	{
 		$haystack = [];
 		foreach ($data as $value) {
-			$haystack[] = '(' . $this->data_implode($value, $conjunctor) . ')';
+			$haystack[] = '(' . $this->dataImplode($value, $conjunctor) . ')';
 		}
 		return implode($outerConjunctor . ' ', $haystack);
 	}
@@ -286,7 +290,7 @@ class Medoo
 				if (isset($match[4])) {
 					$operator = $match[4];
 
-					if ($operator == '!') {
+					if ($operator === '!') {
 						switch ($type) {
 							case 'NULL':
 								$wheres[] = $column . ' IS NOT NULL';
@@ -311,9 +315,9 @@ class Medoo
 						}
 					}
 
-					if ($operator == '<>' || $operator == '><') {
-						if ($type == 'array') {
-							if ($operator == '><') {
+					if ($operator === '<>' || $operator === '><') {
+						if ($type === 'array') {
+							if ($operator === '><') {
 								$column .= ' NOT';
 							}
 
@@ -325,32 +329,32 @@ class Medoo
 						}
 					}
 
-					if ($operator == '~' || $operator == '!~') {
-						if ($type == 'string') {
+					if ($operator === '~' || $operator === '!~') {
+						if ($type !== 'array') {
 							$value = [$value];
 						}
 
-						if (!empty($value)) {
-							$like = [];
 
-							foreach ($value as $item) {
-								$suffix = substr($item, -1, 1);
-								if ($suffix === '_') {
-									$item = substr_replace($item, '%', -1);
-								} else if ($suffix === '%') {
-									$item = '%' . substr_replace($item, '', -1, 1);
-								} else if (preg_match('/^(?!%).+(?<!%)$/', $item)) {
-									$item = '%' . $item . '%';
-								}
+						$like = [];
 
-								$like[] = $column . ($operator === '!~' ? ' NOT' : '') . ' LIKE ' . $this->quoteFn($key, $item);
+						foreach ($value as $item) {
+							$item = (string) $item;
+							$suffix = mb_substr($item, -1, 1);
+							if ($suffix === '_') {
+								$item = substr_replace($item, '%', -1);
+							} else if ($suffix === '%') {
+								$item = '%' . substr_replace($item, '', -1, 1);
+							} else if (preg_match('/^(?!%).+(?<!%)$/', $item)) {
+								$item = '%' . $item . '%';
 							}
 
-							$wheres[] = implode(' OR ', $like);
+							$like[] = $column . ($operator === '!~' ? ' NOT' : '') . ' LIKE ' . $this->quoteFn($key, $item);
 						}
+
+						$wheres[] = implode(' OR ', $like);
 					}
 
-					if (in_array($operator, ['>', '>=', '<', '<='])) {
+					if (in_array($operator, ['>', '>=', '<', '<='], true)) {
 						if (is_numeric($value)) {
 							$wheres[] = $column . ' ' . $operator . ' ' . $value;
 						} elseif (strpos($key, '#') === 0) {
@@ -413,12 +417,15 @@ class Medoo
 			$whereAND = preg_grep("/^AND\s*#?$/i", $whereKeys);
 			$whereOR = preg_grep("/^OR\s*#?$/i", $whereKeys);
 
-			$single_condition = array_diff($whereKeys,
-				['AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH']
+			$single_condition = array_diff_key($where,
+				array_flip(['AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH'])
 			);
 
-			if ($single_condition != []) {
-				$clause = ' WHERE ' . $this->dataImplode($single_condition, '');
+			if ($single_condition !== []) {
+				$condition = $this->dataImplode($single_condition, '');
+				if ($condition !== '') {
+					$clause = ' WHERE ' . $condition;
+				}
 			}
 
 			if (!empty($whereAND)) {
@@ -591,7 +598,15 @@ class Medoo
 			$this->selectContext($struct)
 		);
 
-		return $query ? $query->fetchAll($fetch, $fetchArgs) : false;
+		if (!$query) {
+			return false;
+		}
+
+		if ($fetchArgs === false) {
+			return $query->fetchAll($fetch);
+		} else {
+			return $query->fetchAll($fetch, $fetchArgs);
+		}
 	}
 
 	public function insert($table, $datas = [])
@@ -692,6 +707,13 @@ class Medoo
 		return $this->exec('UPDATE "' . $this->prefix . $table . '" SET ' . $replace_query . $this->whereClause($where));
 	}
 
+	/**
+	 * @param array $struct
+	 * @param int $fetch
+	 * @param null $fetchArgs
+	 *
+	 * @return array|bool|mixed
+	 */
 	public function get(array $struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
 		$query = $this->query(
@@ -699,12 +721,12 @@ class Medoo
 		);
 
 		if ($query) {
-			if (empty($fetchArgs)) {
+			if ($fetchArgs === null) {
 				$data = $query->fetch($fetch);
 			} else {
 				$fetchArgs = (array) $fetchArgs;
 				array_unshift($fetchArgs, $fetch);
-				call_user_func_array([$query, 'setFetchMode'], $fetchArgs);
+				$query->setFetchMode(...$fetchArgs);
 				$data = $query->fetch($fetch);
 			}
 

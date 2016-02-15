@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by IntelliJ IDEA.
- * User: Hao
+ * User: FlyingHail
  * Date: 2015/12/16 0016
  * Time: 10:42
  */
@@ -10,8 +10,13 @@ namespace Hail\Output;
 
 use Hail\DITrait;
 use Hail\Exception\BadRequest;
+use Hail\Utils\Json as Js;
 
-class JsonP extends Json
+/**
+ * Class Jsonp
+ * @package Hail\Output
+ */
+class Jsonp extends Json
 {
 	use DITrait;
 
@@ -26,6 +31,6 @@ class JsonP extends Json
 		$this->response->setContentType('text/javascript', 'utf-8');
 		$this->response->setExpiration(false);
 
-		echo $callback . '(' . json_encode($content) . ')';
+		echo $callback . '(' . Js::encode($content) . ')';
 	}
 }

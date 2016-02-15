@@ -13,9 +13,6 @@ namespace Hail\Http;
  */
 class Request
 {
-	/** @internal */
-	const CHARS = '\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}';
-
 	/** @var string */
 	private $method;
 
@@ -24,6 +21,9 @@ class Request
 
 	/** @var array */
 	private $post;
+
+	/** @var null|array */
+	private $json;
 
 	/** @var array */
 	private $files;
@@ -34,13 +34,16 @@ class Request
 	/** @var array */
 	private $headers;
 
+	/** @var null|string */
+	private $content;
+
 	/** @var string|NULL */
 	private $remoteAddress;
 
 	/** @var string|NULL */
 	private $remoteHost;
 
-	public function __construct(Url $url, $method = NULL, $remoteAddress = NULL, $remoteHost = NULL)
+	public function __construct(Url $url, $method = null, $remoteAddress = null, $remoteHost = null)
 	{
 		$this->url = $url;
 		$this->method = $method ?: 'GET';
@@ -77,19 +80,37 @@ class Request
 	/********************* query, post, files & cookies ****************d*g**/
 
 
+	/**
+	 * @param $key
+	 *
+	 * @return mixed
+	 */
 	public function getParam($key)
 	{
-		$return = $this->getPost($key);
+		$type = $this->getHeader('CONTENT_TYPE');
+
+		$return = null;
+		if ($type === 'application/json') {
+			$return = $this->getJson($key);
+		} else if ($type === 'application/x-www-form-urlencoded') {
+			$return = $this->getPost($key);
+		} else if ($type === 'multipart/form-data') {
+			$return = $this->getFile($key);
+			$return = $return ?: $this->getPost($key);
+		}
+
 		return $return ?: $this->getQuery($key);
 	}
 
 	/**
 	 * Returns variable provided to the script via URL query ($_GET).
 	 * If no key is passed, returns the entire array.
+	 *
 	 * @param  string $key
+	 *
 	 * @return mixed
 	 */
-	public function getQuery($key = NULL)
+	public function getQuery($key = null)
 	{
 		return $this->url->getQueryParameter($key);
 	}
@@ -97,30 +118,50 @@ class Request
 	/**
 	 * Returns variable provided to the script via POST method ($_POST).
 	 * If no key is passed, returns the entire array.
+	 *
 	 * @param  string $key
+	 *
 	 * @return mixed
 	 */
-	public function getPost($key = NULL)
+	public function getPost($key = null)
 	{
 		return Helpers::getParams($this->post, '_POST', $key);
 	}
 
+	public function getJson($key = null)
+	{
+		if ($this->json === null) {
+			$body = $this->getRawBody();
+			$this->json = json_decode($body);
+		}
+
+		if ($key === null) {
+			return $this->json;
+		} else {
+			return $this->json[$key] ?? null;
+		}
+	}
+
 	/**
 	 * Returns uploaded file.
+	 *
 	 * @param  string $key
+	 *
 	 * @return FileUpload|NULL
 	 */
-	public function getFile($key = NULL)
+	public function getFile($key = null)
 	{
 		return Helpers::getParams($this->files, '_FILES', $key);
 	}
 
 	/**
 	 * Returns variable provided to the script via HTTP cookies.
+	 *
 	 * @param  string|NULL $key
+	 *
 	 * @return mixed
 	 */
-	public function getCookie($key = NULL)
+	public function getCookie($key = null)
 	{
 		return Helpers::getParams($this->cookies, '_COOKIE', $key);
 	}
@@ -140,7 +181,9 @@ class Request
 
 	/**
 	 * Checks if the request method is the given one.
+	 *
 	 * @param  string
+	 *
 	 * @return bool
 	 */
 	public function isMethod($method)
@@ -148,28 +191,20 @@ class Request
 		return strcasecmp($this->method, $method) === 0;
 	}
 
-
-	/**
-	 * @deprecated
-	 */
-	public function isPost()
-	{
-		return $this->isMethod('POST');
-	}
-
-
 	/**
 	 * Return the value of the HTTP header. Pass the header name as the
 	 * plain, HTTP-specified header name (e.g. 'Accept-Encoding').
+	 *
 	 * @param  string $header
 	 * @param  mixed $default
+	 *
 	 * @return mixed
 	 */
-	public function getHeader($header, $default = NULL)
+	public function getHeader($header, $default = null)
 	{
 		$header = strtoupper($header);
 		if (isset($this->headers[$header])) {
-			return false === $this->headers[$header] ? $default : $this->headers[$header];
+			return $this->headers[$header] === false ? $default : $this->headers[$header];
 		}
 
 		$key = 'HTTP_' . strtr($header, '-', '_');
@@ -179,7 +214,7 @@ class Request
 			$contentHeaders = [
 				'CONTENT-LENGTH' => 'CONTENT_LENGTH',
 				'CONTENT-MD5' => 'CONTENT_MD5',
-				'CONTENT-TYPE' => 'CONTENT_TYPE'
+				'CONTENT-TYPE' => 'CONTENT_TYPE',
 			];
 
 			if (isset($contentHeaders[$header], $_SERVER[$contentHeaders[$header]])) {
@@ -208,7 +243,7 @@ class Request
 				} elseif (strncmp($k, 'CONTENT_', 8)) {
 					continue;
 				}
-				$headers[ strtr($k, '_', '-') ] = $v;
+				$headers[strtr($k, '_', '-')] = $v;
 			}
 		}
 		return $this->headers = $headers;
@@ -222,7 +257,7 @@ class Request
 	public function getReferer()
 	{
 		$referre = $this->getHeader('referer');
-		return NULL === $referre ? NULL : new Url($referre);
+		return null === $referre ? null : new Url($referre);
 	}
 
 
@@ -242,7 +277,7 @@ class Request
 	 */
 	public function isAjax()
 	{
-		return $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
+		return !empty($this->getHeader('Origin')) || $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
 	}
 
 
@@ -262,7 +297,7 @@ class Request
 	 */
 	public function getRemoteHost()
 	{
-		if ($this->remoteHost === NULL && $this->remoteAddress !== NULL) {
+		if ($this->remoteHost === null && $this->remoteAddress !== null) {
 			$this->remoteHost = gethostbyaddr($this->remoteAddress);
 		}
 		return $this->remoteHost;
@@ -275,20 +310,25 @@ class Request
 	 */
 	public function getRawBody()
 	{
-		return file_get_contents('php://input');
+		if ($this->content === null) {
+			$this->content = file_get_contents('php://input');
+		}
+		return $this->content;
 	}
 
 
 	/**
 	 * Parse Accept-Language header and returns preferred language.
+	 *
 	 * @param  string[] supported languages
+	 *
 	 * @return string|NULL
 	 */
 	public function detectLanguage(array $langs)
 	{
 		$header = $this->getHeader('Accept-Language');
 		if (!$header) {
-			return NULL;
+			return null;
 		}
 
 		$s = strtolower($header);  // case insensitive
@@ -297,11 +337,11 @@ class Request
 		preg_match_all('#(' . implode('|', $langs) . ')(?:-[^\s,;=]+)?\s*(?:;\s*q=([0-9.]+))?#', $s, $matches);
 
 		if (!$matches[0]) {
-			return NULL;
+			return null;
 		}
 
 		$max = 0;
-		$lang = NULL;
+		$lang = null;
 		foreach ($matches[1] as $key => $value) {
 			$q = $matches[2][$key] === '' ? 1.0 : (float) $matches[2][$key];
 			if ($q > $max) {

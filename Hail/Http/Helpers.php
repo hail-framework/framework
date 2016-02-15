@@ -24,11 +24,13 @@ class Helpers
 
 	/**
 	 * Attempts to cache the sent entity by its last modification date.
+	 *
 	 * @param  string|int|\DateTime $lastModified last modified time
 	 * @param  string $etag strong entity tag validator
+	 *
 	 * @return bool
 	 */
-	public static function isModified($lastModified = NULL, $etag = NULL)
+	public static function isModified($lastModified = null, $etag = null)
 	{
 		if ($lastModified) {
 			\Response::setHeader('Last-Modified', self::formatDate($lastModified));
@@ -39,39 +41,41 @@ class Helpers
 
 		$ifNoneMatch = \Request::getHeader('If-None-Match');
 		if ($ifNoneMatch === '*') {
-			$match = TRUE; // match, check if-modified-since
-		} elseif ($ifNoneMatch !== NULL) {
+			$match = true; // match, check if-modified-since
+		} elseif ($ifNoneMatch !== null) {
 			$etag = \Response::getHeader('ETag');
 
-			if ($etag == NULL || strpos(' ' . strtr($ifNoneMatch, ",\t", '  '), ' ' . $etag) === FALSE) {
-				return TRUE;
+			if ($etag == null || strpos(' ' . strtr($ifNoneMatch, ",\t", '  '), ' ' . $etag) === false) {
+				return true;
 			} else {
-				$match = TRUE; // match, check if-modified-since
+				$match = true; // match, check if-modified-since
 			}
 		}
 
 		$ifModifiedSince = \Request::getHeader('If-Modified-Since');
-		if ($ifModifiedSince !== NULL) {
+		if ($ifModifiedSince !== null) {
 			$lastModified = \Response::getHeader('Last-Modified');
-			if ($lastModified != NULL && strtotime($lastModified) <= strtotime($ifModifiedSince)) {
-				$match = TRUE;
+			if ($lastModified != null && strtotime($lastModified) <= strtotime($ifModifiedSince)) {
+				$match = true;
 			} else {
-				return TRUE;
+				return true;
 			}
 		}
 
 		if (empty($match)) {
-			return TRUE;
+			return true;
 		}
 
 		\Response::setCode(Response::S304_NOT_MODIFIED);
-		return FALSE;
+		return false;
 	}
 
 
 	/**
 	 * Returns HTTP valid date format.
+	 *
 	 * @param  string|int|\DateTime
+	 *
 	 * @return string
 	 */
 	public static function formatDate($time)
@@ -96,7 +100,7 @@ class Helpers
 		$mask = implode('', array_map($tmp, unpack('N*', inet_pton($mask))));
 		$max = strlen($ip);
 		if (!$max || $max !== strlen($mask) || (int) $size < 0 || (int) $size > $max) {
-			return FALSE;
+			return false;
 		}
 		return strncmp($ip, $mask, $size === '' ? $max : (int) $size) === 0;
 	}
@@ -125,19 +129,21 @@ class Helpers
 		}
 	}
 
-	public static function getParams(&$vars, $type, $key = NULL)
+	public static function getParams(&$vars, $type, $key = null)
 	{
-		if (NULL === $key) {
-			if (empty($GLOBALS[$type])) {
+		if ($key === null) {
+			if ($type === null) {
+				return $vars;
+			} else if (empty($GLOBALS[$type])) {
 				return [];
 			}
 
 			foreach ($GLOBALS[$type] as $k => $v) {
 				if (isset($vars[$k]) || static::keyCheck($k)) {
 					continue;
-				} elseif ($type === '_FILES') {
+				} else if ($type === '_FILES') {
 					$vars[$k] = static::getFile($v);
-					if (NULL === $vars[$k]) {
+					if ($vars[$k] === null) {
 						$vars[$k] = false;
 					}
 				} else {
@@ -146,28 +152,29 @@ class Helpers
 			}
 
 			return array_filter($vars);
-		} elseif (isset($var[$key])) {
-			return false === $var[$key] ? NULL : $var[$key];
-		} elseif (isset($GLOBALS[$type][$key])) {
+		} else if (isset($var[$key])) {
+			return $var[$key] === false ? null : $var[$key];
+		} else if (isset($GLOBALS[$type][$key])) {
 			if (self::keyCheck($key)) {
 				$var[$key] = false;
-				return NULL;
+				return null;
 			}
 			if ($type === '_FILES') {
 				$file = self::getFile($GLOBALS[$type][$key]);
-				$vars[$key] = NULL === $file ? false : $file;
+				$vars[$key] = $file === null ? false : $file;
 				return $file;
 			} else {
 				return $var[$key] = self::getParam($GLOBALS[$type][$key]);
 			}
 		} else {
 			$var[$key] = false;
-			return NULL;
+			return null;
 		}
 	}
 
 	/**
 	 * @param string $k
+	 *
 	 * @return bool
 	 */
 	public static function keyCheck($k)
@@ -177,6 +184,7 @@ class Helpers
 
 	/**
 	 * @param array|string $val
+	 *
 	 * @return array|string
 	 */
 	public static function getParam($val)
@@ -191,12 +199,13 @@ class Helpers
 			}
 			return $val;
 		} else {
-			return (string)preg_replace(self::VAL_CHARS, '', $val);
+			return (string) preg_replace(self::VAL_CHARS, '', $val);
 		}
 	}
 
 	/**
 	 * @param array $v
+	 *
 	 * @return array|FileUpload|null
 	 */
 	public static function getFile($v)
@@ -208,15 +217,15 @@ class Helpers
 					continue;
 				}
 
-				$file = self::getFile(array(
+				$file = self::getFile([
 					'name' => $v['name'][$k],
 					'type' => $v['type'][$k],
 					'size' => $v['size'][$k],
 					'tmp_name' => $v['tmp_name'][$k],
 					'error' => $v['error'][$k],
-				));
+				]);
 
-				if (NULL === $file) {
+				if (null === $file) {
 					continue;
 				}
 
@@ -234,18 +243,20 @@ class Helpers
 				}
 			}
 
-			return NULL;
+			return null;
 		}
 	}
 
 	/**
 	 * Converts to web safe characters [a-z0-9-] text.
+	 *
 	 * @param  string $s UTF-8 encoding
 	 * @param  string $charlist allowed characters
 	 * @param  bool $lower
+	 *
 	 * @return string
 	 */
-	public static function webalize($s, $charlist = NULL, $lower = TRUE)
+	public static function webalize($s, $charlist = null, $lower = true)
 	{
 		$s = self::toAscii($s);
 		if ($lower) {
@@ -258,7 +269,9 @@ class Helpers
 
 	/**
 	 * Converts to ASCII.
+	 *
 	 * @param  string  UTF-8 encoding
+	 *
 	 * @return string  ASCII
 	 */
 	public static function toAscii($s)
@@ -288,7 +301,7 @@ class Helpers
 		} else {
 			$s = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s); // intentionally @
 		}
-		$s = str_replace(array('`', "'", '"', '^', '~', '?'), '', $s);
+		$s = str_replace(['`', "'", '"', '^', '~', '?'], '', $s);
 		return strtr($s, "\x01\x02\x03\x04\x05\x06", '`\'"^~?');
 	}
 }

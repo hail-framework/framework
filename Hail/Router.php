@@ -17,11 +17,6 @@ class Router
 	private $routes = ['childs' => [], 'regexps' => []];
 	private $result = [];
 
-	public function __construct($di)
-	{
-		$this->initCache($di);
-	}
-
 	private function match($url)
 	{
 		$parts = explode('?', $url, 2);
@@ -77,7 +72,7 @@ class Router
 
 		foreach ($config as $app => $rules) {
 			$app = ucfirst($app);
-			foreach ($rules as $rule) {
+			foreach ($rules as $route => $rule) {
 				$handler = ['app' => $app];
 				$methods = ['GET', 'POST'];
 
@@ -85,14 +80,11 @@ class Router
 					$route = $rule;
 				} else {
 					$methods = $rule['methods'] ?? $methods;
-					if (empty($rule['route'])) {
-						throw new \RuntimeException('Router rules error: ' . json_encode($rule));
-					}
-					$route = $rule['route'];
 
 					if (!empty($rule['controller'])) {
 						$handler['controller'] = $rule['controller'];
 					}
+
 					if (!empty($rule['action'])) {
 						$handler['action'] = $rule['action'];
 					}

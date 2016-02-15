@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by IntelliJ IDEA.
- * User: Hao
+ * User: FlyingHail
  * Date: 2015/12/16 0016
  * Time: 12:10
  */
@@ -16,16 +16,10 @@ namespace Hail;
  * @property-read Output\JsonP $jsonp
  * @property-read Output\File $file
  * @property-read Output\Text $text
+ * @property-read Output\Template $template
  */
 class Output
 {
-	const TYPE = [
-		'json' => 'Json',
-		'jsonp' => 'JsonP',
-		'file' => 'File',
-		'text' => 'Text',
-	];
-
 	private $output = false;
 
 	public function __get($name)
@@ -35,12 +29,7 @@ class Output
 		}
 		$this->output = true;
 
-		$type = self::TYPE;
-		if (!isset($type[$name])) {
-			throw new \RuntimeException('Output Type Node Defined');
-		}
-
-		$class = __NAMESPACE__ . '\\Output\\' . $type[$name];
+		$class = __NAMESPACE__ . '\\Output\\' . ucfirst($name);
 		return new $class();
 	}
 }

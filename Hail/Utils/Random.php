@@ -20,7 +20,7 @@ class Random
 	 * @param  string
 	 * @return string
 	 */
-	public static function generate($length = 10, $charlist = '0-9a-z')
+	public static function generate($length = 10, $charlist = '0-9a-zA-Z')
 	{
 		if ($length === 0) {
 			return ''; // mcrypt_create_iv does not support zero length
@@ -33,14 +33,11 @@ class Random
 
 		if (function_exists('openssl_random_pseudo_bytes')) {
 			$rand3 = openssl_random_pseudo_bytes($length);
-		}
-		if (empty($rand3) && function_exists('mcrypt_create_iv')) { // PHP bug #52523
+		} else if (function_exists('mcrypt_create_iv')) { // PHP bug #52523
 			$rand3 = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
-		}
-		if (empty($rand3) && @is_readable('/dev/urandom')) {
+		} else if (@is_readable('/dev/urandom')) {
 			$rand3 = file_get_contents('/dev/urandom', FALSE, NULL, -1, $length);
-		}
-		if (empty($rand3)) {
+		} else {
 			static $cache;
 			$rand3 = $cache ?: $cache = md5(serialize($_SERVER), TRUE);
 		}

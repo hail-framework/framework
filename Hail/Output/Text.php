@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by IntelliJ IDEA.
- * User: Hao
+ * User: FlyingHail
  * Date: 2015/12/16 0016
  * Time: 11:47
  */
@@ -20,10 +20,6 @@ class Text
 	 */
 	public function send($source)
 	{
-		if (is_object($source)) {
-			$source->render();
-		} else {
-			echo $source;
-		}
+		echo $source;
 	}
 }

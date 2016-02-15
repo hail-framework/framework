@@ -7,6 +7,12 @@ namespace Hail;
  */
 class Bootstrap
 {
+	private static $alias = [
+		'db' => 'DB',
+		'app' => 'Application',
+		'lib' => 'Library',
+	];
+
 	public static function di($start = [])
 	{
 		require HAIL_PATH . 'Cache/EmbeddedTrait.php';
@@ -34,10 +40,9 @@ class Bootstrap
 				return $loader;
 			},
 
-			// After here, no need add require
 			'alias' => function ($c) {
 				return new Loader\Alias(
-					$c['config']->get('env.alias')
+					self::alias($c)
 				);
 			},
 		];
@@ -54,7 +59,25 @@ class Bootstrap
 			}
 		}
 
-		return new DI($set);
+		$di = new DI($set);
+
+		$di['loader']->register();
+		$di['alias']->register();
+		\DI::swap($di);
+
+		return $di;
+	}
+
+	private static function alias($di)
+	{
+		$keys = $di->keys();
+		$alias = $di['config']->get('env.alias');
+		$alias['DI'] = 'Hail\\Facades\\DI';
+		foreach ($keys as $v) {
+			$name = self::$alias[$v] ?? ucfirst($v);
+			$alias[$name] = 'Hail\\Facades\\' . $name;
+		}
+		return $alias;
 	}
 
 	public static function diOptional()
@@ -100,6 +123,10 @@ class Bootstrap
 				return new Output();
 			},
 
+			'acl' => function ($c) {
+				return new Acl();
+			},
+
 			'model' => function ($c) {
 				return new Utils\ObjectFactory('Model');
 			},
@@ -107,31 +134,28 @@ class Bootstrap
 			'lib' => function ($c) {
 				return new Utils\ObjectFactory('Library');
 			},
+
+			'template' => function ($c) {
+				return new Latte\Engine(
+					$c['config']->get('app.template')
+				);
+			},
 		];
-	}
-
-	public static function autoload($di)
-	{
-		$di['loader']->register();
-		$di['alias']->register();
-		\DI::swap($di);
-
-		DB\Model::init($di);
 	}
 
 	public static function httpRequest()
 	{
 		$url = new Http\UrlScript();
 
-		$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : NULL;
+		$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null;
 		if ($method === 'POST' && isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])
 			&& preg_match('#^[A-Z]+\z#', $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])
 		) {
 			$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
 		}
 
-		$remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : NULL;
-		$remoteHost = isset($_SERVER['REMOTE_HOST']) ? $_SERVER['REMOTE_HOST'] : NULL;
+		$remoteAddr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null;
+		$remoteHost = isset($_SERVER['REMOTE_HOST']) ? $_SERVER['REMOTE_HOST'] : null;
 
 		return new Http\Request($url, $method, $remoteAddr, $remoteHost);
 	}

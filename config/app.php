@@ -5,8 +5,8 @@ return [
 	'database' => [
 		// required
 		'type' => 'mysql',
-		'database' => 'admin_panel',
-		'server' => '192.168.1.179',
+		'database' => 'games_panel',
+		'server' => 'localhost',
 		'username' => 'root',
 		'password' => 'w12345',
 		'charset' => 'utf8mb4',
@@ -15,7 +15,7 @@ return [
 		'port' => 3306,
 
 		// [optional] Table prefix
-		'prefix' => 'ap_',
+		'prefix' => 'gp_',
 
 		// driver_option for connection, read more from http://www.php.net/manual/en/pdo.setattribute.php
 		'option' => [
@@ -32,4 +32,11 @@ return [
 			]
 		]
 	],
+
+	'template' => [
+		'directory' => SYSTEM_PATH . 'template/',
+		'cache' => TEMP_PATH . 'template/',
+	],
+
+	'cross_origin' => 'http://127.0.0.1:3000',
 ];

@@ -9,6 +9,11 @@ namespace Hail\Facades;
 
 abstract class Facade
 {
+    /**
+     * Class alias name
+     *
+     * @var string
+     */
 	protected static $name = '';
 
     /**
@@ -36,17 +41,12 @@ abstract class Facade
      */
     public static function instance()
     {
-	    if (static::$name !== '') {
-		    $name = __NAMESPACE__ . '\\' . static::$name;
-	    } else {
-		    $name = static::class;
-	    }
-
+	    $name = static::class;
         if (isset(static::$resolvedInstance[$name])) {
             return static::$resolvedInstance[$name];
         }
 
-        $fun = substr(strrchr($name, '\\'), 1);
+        $fun = (static::$name !== '') ? static::$name : substr(strrchr($name, '\\'), 1);
         return static::$resolvedInstance[$name] = DI::$fun();
     }
 

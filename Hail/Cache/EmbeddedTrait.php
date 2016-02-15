@@ -10,6 +10,19 @@ trait EmbeddedTrait
      */
     protected $cache;
 
+	/**
+	 * EmbeddedTrait constructor.
+	 *
+	 * @param null|\Hail\DI $di
+	 */
+	public function __construct($di = null)
+	{
+		$this->initCache($di);
+	}
+
+	/**
+	 * @param null|\Hail\DI $di
+	 */
     public function initCache($di = null)
     {
         if (null === $di) {
@@ -62,6 +75,9 @@ trait EmbeddedTrait
 			return true;
 		}
 
+		/**
+		 * @var null|array $check
+		 */
 		$check = $this->getCache($key . '/time');
 		if ($check) {
 			if (NOW >= ($check[0] + EMBEDDED_CACHE_CHECK_DELAY)) {

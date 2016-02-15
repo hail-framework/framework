@@ -57,7 +57,6 @@ class Application
     private $autoExit = true;
     private $definition;
     private $helperSet;
-    private $dispatcher;
     private $terminalDimensions;
     private $defaultCommand;
 
@@ -80,11 +79,6 @@ class Application
         foreach ($this->getDefaultCommands() as $command) {
             $this->add($command);
         }
-    }
-
-    public function setDispatcher(EventDispatcherInterface $dispatcher)
-    {
-        $this->dispatcher = $dispatcher;
     }
 
     /**

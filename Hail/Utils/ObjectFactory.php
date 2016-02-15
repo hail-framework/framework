@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by IntelliJ IDEA.
- * User: Hao
+ * User: FlyingHail
  * Date: 2015/12/16 0016
  * Time: 15:07
  */
@@ -28,11 +28,6 @@ class ObjectFactory implements \ArrayAccess
 	}
 
 	public function __call($name, $arguments)
-	{
-		return $this->offsetGet($name);
-	}
-
-	public function __callStatic($name, $arguments)
 	{
 		return $this->offsetGet($name);
 	}

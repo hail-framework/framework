@@ -21,11 +21,6 @@ class PSR4
      */
     protected $prefixes = [];
 
-    public function __construct($di)
-    {
-        $this->initCache($di);
-    }
-
     /**
      * Register loader with SPL autoloader stack.
      *

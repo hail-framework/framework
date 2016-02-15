@@ -18,24 +18,22 @@ class Config
 	 */
 	protected $items = [];
 
-	public function __construct($di)
-	{
-		$this->initCache($di);
-	}
+	public function set($key, $value) {
+		$v = $this->get($key);
+		if ($v === $value) {
+			return;
+		}
 
-	/**
-	 * Determine if the given configuration value exists.
-	 *
-	 * @param  string  $key
-	 * @return bool
-	 */
-	public function has($key)
-	{
-		if (empty($this->items)) return false;
-		if (isset($this->items[$key])) return true;
-
-		$return = $this->arrayGet($this->items, $key, null);
-		return (null === $return) ? false : true;
+		if (strpos($key, '.') === false) {
+			$this->items[$key] = $value;
+		} else {
+			$key = explode('.', $key);
+			$array = &$this->items;
+			foreach ($key as $v) {
+				$array = &$array[$v];
+			}
+			$array = $value;
+		}
 	}
 
 	/**
@@ -108,6 +106,7 @@ class Config
 			if (!is_array($array) || !isset($array[$segment])) {
 				return $default;
 			}
+
 			$array = $array[$segment];
 		}
 		return $array;

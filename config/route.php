@@ -1,25 +1,24 @@
 <?php
 /**
- * [
+ * '/{controller:[a-z\-]+}/{action:[a-z\-]+}/{param}' => [
  *   'methods' => ['GET', 'POST'],
- *   'route' => '/{controller:[a-z\-]+}/{action:[a-z\-]+}/{param}',
  *   'controller' => '',
  *   'action' => ''
  * ]
  */
 return [
 	'Panel' => [
-		'/{controller:[a-z\-]+}/{action:[a-z\-]+}/{param}',
-		'/{controller:[a-z\-]+}/{action:[a-z\-]+}',
-		'/{controller:[a-z\-]+}/{param}',
-		'/{controller:[a-z\-]+}',
+		'/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}/{param}',
+		'/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}',
+		'/{controller:[a-zA-Z\-]+}/{param}',
+		'/{controller:[a-zA-Z\-]+}',
 		'/',
 	],
 	'Api' => [
-		'/{version:v[0-9]+}/{controller:[a-z\-]+}/{action:[a-z\-]+}/{param}',
-		'/{version:v[0-9]+}/{controller:[a-z\-]+}/{action:[a-z\-]+}',
-		'/{version:v[0-9]+}/{controller:[a-z\-]+}/{param}',
-		'/{version:v[0-9]+}/{controller:[a-z\-]+}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}/{param}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}/{param}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}',
 		'/{version:v[0-9]+}',
 	],
 ];

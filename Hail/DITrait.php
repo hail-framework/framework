@@ -24,25 +24,31 @@ namespace Hail;
  * @property-read Event\Emitter $event
  * @property-read Application $app
  * @property-read Output $output
+ * @property-read Latte\Engine $template
+ * @property-read DB\Medoo $db
+ * @property-read Acl $acl
  */
 Trait DITrait
 {
-	protected $di = null;
+	/**
+	 * @var DI|null
+	 */
+	protected static $_di = null;
 
 	public function __get($name)
 	{
-		if ($this->di === null) {
-			$this->di = \DI::instance();
-		}
-
-		if ($name === 'di') {
-			return $this->di;
-		} else if (isset($this->di[$name])) {
-			return $this->di[$name];
-		} else if (method_exists($this, '__getProperty')) {
-			return $this->__getProperty($name);
-		} else {
+		if (($v = static::di($name)) === null) {
 			throw new \RuntimeException("Property $name Not Defined");
 		}
+		return $v;
+	}
+
+	public static function di($name)
+	{
+		if (static::$_di === null) {
+			static::$_di = \DI::instance();
+		}
+
+		return static::$_di[$name] ?? null;
 	}
 }

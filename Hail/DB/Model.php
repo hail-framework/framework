@@ -17,7 +17,7 @@ abstract class Model
 	/**
 	 * @var Medoo
 	 */
-	protected static $db;
+	protected static $db = null;
 
 	/**
 	 * @var array maping the function name and the operator, to build Expressions in WHERE condition.
@@ -99,6 +99,10 @@ abstract class Model
 
 	public function __construct($config = [])
 	{
+		if (self::$db === null) {
+			self::$db = \DI::DB();
+		}
+
 		foreach ($config as $key => $val) {
 			$this->$key = $val;
 		}
@@ -126,18 +130,6 @@ abstract class Model
 		$this->dirty = $dirty;
 		$this->data = array_merge($this->data, $dirty);
 		return $this;
-	}
-
-	/**
-	 * set the DB connection.
-	 *
-	 * @param \DI|null $di
-	 */
-	public static function init($di = null)
-	{
-		if (isset($di['db'])) {
-			self::$db = $di['db'];
-		}
 	}
 
 	private function defaultTable()

@@ -24,7 +24,6 @@ define('LANG_DOMAIN', 'default');
 
 require HAIL_PATH . 'Bootstrap.php';
 $di = Hail\Bootstrap::di();
-Hail\Bootstrap::autoload($di);
 
 date_default_timezone_set(
 	Config::get('app.timezone')

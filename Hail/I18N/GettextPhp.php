@@ -8,11 +8,6 @@ namespace Hail\I18N;
 
 use Hail\Cache\EmbeddedTrait;
 
-function _($msg)
-{
-	return \Gettext::gettext($msg);
-}
-
 class Gettext
 {
 	use EmbeddedTrait;
@@ -32,14 +27,6 @@ class Gettext
 	protected $locale;
 	protected $translationTable = [];
 	protected $parsed = [];
-
-	/**
-	 * @param null|\Hail\DI $di
-	 */
-	public function __construct($di = null)
-	{
-		$this->initCache($di);
-	}
 
 	/**
 	 * Initialize a new gettext class
