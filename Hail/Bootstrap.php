@@ -9,6 +9,7 @@ class Bootstrap
 {
 	private static $alias = [
 		'db' => 'DB',
+		'cdb' => 'CachedDB',
 		'app' => 'Application',
 		'lib' => 'Library',
 	];
@@ -99,6 +100,17 @@ class Bootstrap
 				);
 			},
 
+			'cdb' => function ($c) {
+				return new DB\Cache();
+			},
+
+			'session' => function ($c) {
+				return new Session(
+					$c['config']->get('app.session'),
+					$c['config']->get('app.cookie')
+				);
+			},
+
 			'router' => function ($c) {
 				return new Router($c);
 			},
@@ -108,7 +120,15 @@ class Bootstrap
 			},
 
 			'response' => function ($c) {
-				return new Http\Response();
+				return new Http\Response(
+					$c['config']->get('app.response')
+				);
+			},
+
+			'cookie' => function($c) {
+				return new Cookie(
+					$c['config']->get('app.cookie')
+				);
 			},
 
 			'event' => function ($c) {
@@ -139,6 +159,10 @@ class Bootstrap
 				return new Latte\Engine(
 					$c['config']->get('app.template')
 				);
+			},
+
+			'client' => function ($c) {
+				return new Buzz\Browser();
 			},
 		];
 	}

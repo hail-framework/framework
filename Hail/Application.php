@@ -58,7 +58,7 @@ class Application
 	 * @return Dispatcher
 	 * @throws BadRequest
 	 */
-	private function getDispatcher($app)
+	public function getDispatcher($app)
 	{
 		if (!isset($this->dispatcher[$app])) {
 			return $this->dispatcher[$app] = new Dispatcher($app);

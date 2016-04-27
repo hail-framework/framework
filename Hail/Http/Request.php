@@ -85,7 +85,7 @@ class Request
 	 *
 	 * @return mixed
 	 */
-	public function getParam($key)
+	public function getParam($key = null)
 	{
 		$type = $this->getHeader('CONTENT_TYPE');
 
@@ -99,7 +99,7 @@ class Request
 			$return = $return ?: $this->getPost($key);
 		}
 
-		return $return ?: $this->getQuery($key);
+		return $return ?? $this->getQuery($key);
 	}
 
 	/**
@@ -277,7 +277,9 @@ class Request
 	 */
 	public function isAjax()
 	{
-		return !empty($this->getHeader('Origin')) || $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
+		return !empty($this->getHeader('Origin')) ||
+			$this->getHeader('X-Requested-With') === 'XMLHttpRequest' ||
+			$this->getHeader('Accept') === 'application/json';
 	}
 
 

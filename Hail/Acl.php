@@ -8,7 +8,11 @@
 
 namespace Hail;
 
-
+/**
+ * Class Acl
+ *
+ * @package Hail
+ */
 class Acl
 {
 	use DITrait;

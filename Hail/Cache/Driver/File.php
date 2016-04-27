@@ -93,7 +93,7 @@ class File extends Driver
 		}
 
 		// YES, this needs to be *after* createPathIfNeeded()
-		$this->directory = realpath($directory);
+		$this->directory = realpath($directory) . '/';
 
 		$extension = $params['extension'] ?? self::EXTENSION;
 		$this->extension = (string) $extension;
@@ -315,6 +315,8 @@ class File extends Driver
 
 	/**
 	 * {@inheritdoc}
+	 *
+	 * @throws \InvalidArgumentException
 	 */
 	protected function doSave($id, $data, $lifetime = 0)
 	{
@@ -324,14 +326,20 @@ class File extends Driver
 
 		if (is_object($data) && !method_exists($data, '__set_state')) {
 			throw new \InvalidArgumentException(
-				"Invalid argument given, PhpFileCache only allows objects that implement __set_state() " .
-				"and fully support var_export(). You can use the FilesystemCache to save arbitrary object " .
-				"graphs using serialize()/deserialize()."
+				'Invalid argument given, PhpFileCache only allows objects that implement __set_state() ' .
+				'and fully support var_export(). You can use the FilesystemCache to save arbitrary object ' .
+				'graphs using serialize()/deserialize().'
 			);
 		}
 
 		$filename = $this->getFilename($id);
-		$code = '<?php return (NOW > ' . $lifetime . ') ? false : ' . var_export($data, true) . ';';
+		$code = '<?php return ';
+
+		if ($lifetime > 0) {
+			$code .= '(NOW > ' . $lifetime . ') ? false : ';
+		}
+		$code .= var_export($data, true) . ';';
+
 
 		return $this->writeFile($filename, $code);
 	}

@@ -38,7 +38,7 @@ class Cache extends Driver
 					$k = ucfirst($k);
 			}
 
-			$class = 'Cache\\Driver\\' . $k;
+			$class = 'Hail\\Cache\\Driver\\' . $k;
 			$this->drivers[] = new $class($v);
 		}
 

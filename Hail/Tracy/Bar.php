@@ -7,7 +7,6 @@
 
 namespace Hail\Tracy;
 
-
 /**
  * Debug Bar.
  */
@@ -53,7 +52,7 @@ class Bar
 	 */
 	public function render()
 	{
-		@session_start(); // @ session may be already started or it is not possible to start session
+		@session_start();
 		$session = &$_SESSION['__HF']['debuggerbar'];
 		$redirect = preg_match('#^Location:#im', implode("\n", headers_list()));
 		if ($redirect) {

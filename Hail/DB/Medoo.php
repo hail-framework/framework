@@ -275,10 +275,9 @@ class Medoo
 
 		foreach ($data as $key => $value) {
 			$type = gettype($value);
-
 			if (
-				preg_match("/^(AND|OR)(\s+#.*)?$/i", $key, $relation) &&
-				$type == 'array'
+				$type === 'array' &&
+				preg_match("/^(AND|OR)(\s+#.*)?$/i", $key, $relation)
 			) {
 				$wheres[] = 0 !== count(array_diff_key($value, array_keys(array_keys($value)))) ?
 					'(' . $this->dataImplode($value, ' ' . $relation[1]) . ')' :
@@ -340,6 +339,7 @@ class Medoo
 						foreach ($value as $item) {
 							$item = (string) $item;
 							$suffix = mb_substr($item, -1, 1);
+
 							if ($suffix === '_') {
 								$item = substr_replace($item, '%', -1);
 							} else if ($suffix === '%') {
@@ -422,7 +422,7 @@ class Medoo
 			);
 
 			if ($single_condition !== []) {
-				$condition = $this->dataImplode($single_condition, '');
+				$condition = $this->dataImplode($single_condition, ' AND');
 				if ($condition !== '') {
 					$clause = ' WHERE ' . $condition;
 				}
@@ -468,13 +468,13 @@ class Medoo
 						$stack = [];
 						foreach ($ORDER as $column) {
 							preg_match($rsort, $column, $match);
-							$stack[] = '"' . $this->quoteColumn($match[1]) . '" ' . ($match[3] ?? '');
+							$stack[] = $this->quoteColumn($match[1]) . ' ' . ($match[3] ?? '');
 						}
 						$clause .= ' ORDER BY ' . implode(',', $stack);
 					}
 				} else {
 					preg_match($rsort, $ORDER, $match);
-					$clause .= ' ORDER BY "' . $this->quoteColumn($match[1]) . '" ' . ($match[3] ?? '');
+					$clause .= ' ORDER BY ' . $this->quoteColumn($match[1]) . ' ' . ($match[3] ?? '');
 				}
 			}
 
@@ -483,9 +483,7 @@ class Medoo
 
 				if (is_numeric($LIMIT)) {
 					$clause .= ' LIMIT ' . $LIMIT;
-				}
-
-				if (
+				} else if (
 					is_array($LIMIT) &&
 					is_numeric($LIMIT[0]) &&
 					is_numeric($LIMIT[1])
@@ -506,6 +504,12 @@ class Medoo
 
 	protected function selectContext($struct)
 	{
+		if (is_string($struct)) {
+			$struct = [
+				'FROM' => $struct
+			];
+		}
+
 		if (isset($struct['FROM'])) {
 			$table = $struct['FROM'];
 			$columns = $struct['SELECT'] ?? $struct['COLUMNS'] ?? '*';
@@ -592,7 +596,7 @@ class Medoo
 		return $headers;
 	}
 
-	public function select(array $struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
+	public function select($struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
 		$query = $this->query(
 			$this->selectContext($struct)
@@ -602,18 +606,49 @@ class Medoo
 			return false;
 		}
 
-		if ($fetchArgs === false) {
+		if ($fetchArgs === null) {
 			return $query->fetchAll($fetch);
 		} else {
 			return $query->fetchAll($fetch, $fetchArgs);
 		}
 	}
 
-	public function insert($table, $datas = [])
+	public function insert($table, $datas = [], $INSERT = 'INSERT')
 	{
 		if (is_array($table)) {
 			$datas = $table['VALUES'] ?? $table['SET'];
 			$table = $table['FROM'] ?? $table['TABLE'] ?? $table['INSERT'];
+
+			if (is_string($datas)) {
+				$INSERT = $datas;
+			}
+		}
+
+		if (strpos($INSERT, ' ') !== false) {
+			$INSERT = explode(' ', trim($INSERT));
+			if (count($INSERT) > 3) {
+				$INSERT = 'INSERT';
+			} else {
+				if ($INSERT[0] !== 'REPLACE') {
+					$INSERT[0] = 'INSERT';
+				}
+
+				if (isset($INSERT[1]) &&
+					!in_array($INSERT[1], ['LOW_PRIORITY', 'DELAYED', 'IGNORE'], true)
+				) {
+					$INSERT[1] = '';
+				}
+
+				if (isset($INSERT[2]) &&
+					($INSERT[1] === $INSERT[2] || $INSERT[2] !== 'IGNORE')
+				) {
+					$INSERT[2] = '';
+				}
+
+				$INSERT = trim(implode(' ', $INSERT));
+			}
+		} else if ($INSERT !== 'REPLACE') {
+			$INSERT = 'INSERT';
 		}
 
 		$lastId = [];
@@ -632,9 +667,8 @@ class Medoo
 				$values[] = $this->quoteValue($key, $value);
 			}
 
-			$this->exec('INSERT INTO "' . $this->prefix . $table . '" (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')');
-
-			$lastId[] = $this->pdo->lastInsertId();
+			$result = $this->exec($INSERT . ' INTO "' . $this->prefix . $table . '" (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')');
+			$lastId[] = $result === false ? $result : $this->pdo->lastInsertId();
 		}
 
 		return count($lastId) > 1 ? $lastId : $lastId[0];
@@ -710,11 +744,11 @@ class Medoo
 	/**
 	 * @param array $struct
 	 * @param int $fetch
-	 * @param null $fetchArgs
+	 * @param int|array|null $fetchArgs
 	 *
-	 * @return array|bool|mixed
+	 * @return array
 	 */
-	public function get(array $struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
+	public function get($struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
 		$query = $this->query(
 			$this->selectContext($struct) . ' LIMIT 1'
@@ -733,8 +767,16 @@ class Medoo
 			if (is_object($data)) {
 				return $data;
 			} else if (!empty($data)) {
-				$column = $struct['COLUMNS'] ?? null;
-				if (is_string($column) && $column !== '*' && strpos($column, ',') !== false) {
+				if (isset($struct['FROM']) || isset($struct['TABLE'])) {
+					$column = $struct['SELECT'] ?? $struct['COLUMNS'] ?? null;
+				} else {
+					$column = $struct['COLUMNS'] ?? null;
+				}
+
+				if (is_string($column) &&
+					$column !== '*' &&
+					strpos($column, ',') === false
+				) {
 					return $data[$column];
 				}
 

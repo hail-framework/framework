@@ -166,21 +166,29 @@ abstract class Driver
 	 *
 	 * @param string $id The cache id.
 	 * @param mixed $data The cache entry/data.
-	 * @param int $lifetime The lifetime in number of seconds for this cache entry.
+	 * @param int|null $lifetime The lifetime in number of seconds for this cache entry.
 	 *                         If zero (the default), the entry never expires (although it may be deleted from the cache
 	 *                         to make place for other entries).
 	 *
 	 * @return bool TRUE if the entry was successfully stored in the cache, FALSE otherwise.
 	 */
-	public function save($id, $data, $lifetime = 0)
+	public function save($id, $data, $lifetime = null)
 	{
 		$lifetime = $this->getLifetime($lifetime);
 		return $this->doSave($this->getNamespacedId($id), $data, $lifetime);
 	}
 
-	public function getLifetime($lifetime = 0)
+	/**
+	 * @param int|null $lifetime
+	 * @return int
+	 */
+	public function getLifetime($lifetime = null)
 	{
-		return ($lifetime === 0 && $this->lifetime > 0) ? $this->lifetime : $this->lifetime;
+		if ($lifetime === null) {
+			$lifetime = $this->lifetime ?: 0;
+		}
+
+		return $lifetime;
 	}
 
 	/**

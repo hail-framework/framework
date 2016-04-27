@@ -18,7 +18,6 @@ class Dispatcher
 	protected $forward = [];
 	protected $current = [];
 	protected $controller = [];
-	protected $model = [];
 
 	public function __construct($app)
 	{
@@ -33,8 +32,8 @@ class Dispatcher
 		$params = $params ?: [];
 
 		$this->current = [
-			'controller' => $controller,
-			'action' => $action,
+			'controller' => ucfirst($controller),
+			'action' => lcfirst($action),
 			'params' => $params
 		];
 
@@ -43,11 +42,13 @@ class Dispatcher
 		$object = $this->controller($class);
 		if (!method_exists($object, $method)) {
 			throw new BadRequest('Action Not Defined', 404);
+		} else if (method_exists($object, 'authorize') && !$object->authorize()) {
+			throw new BadRequest('Unauthorized', 401);
 		}
 
 		$return = $object->$method();
 
-		$outputType = $return['_type_'] ?? $this->config->get("env.output.{$this->application}");
+		$outputType = $return['_type_'] ?? $this->config->get("app.output.{$this->application}");
 		$this->output($outputType, $return);
 	}
 
@@ -61,18 +62,26 @@ class Dispatcher
 		}
 	}
 
+	public function setParam($key, $value)
+	{
+		$this->current['params'][$key] = $value;
+	}
+
 	public function output($type, $return)
 	{
 		if ($return === false || $return === null) {
 			return;
 		}
 
-		if (!empty($this->request->getHeader('Origin'))) {
-			$domain = $this->config->get('app.cross_origin');
-			if (!empty($domain)) {
-				$this->response->addHeader('Access-Control-Allow-Origin', $domain);
-				$this->response->addHeader('Access-Control-Allow-Credentials', 'true');
-			}
+		if ($this->request->getHeader('Origin') &&
+			($domain = $this->config->get('app.cross_origin'))
+		) {
+			$this->response->addHeader('Access-Control-Allow-Origin', $domain);
+			$this->response->addHeader('Access-Control-Allow-Credentials', 'true');
+		}
+
+		if ($return === true) {
+			$return = [];
 		}
 
 		switch ($type) {
@@ -123,7 +132,7 @@ class Dispatcher
 	 */
 	protected function class($class)
 	{
-		return strpos($class, $this->namespace) === 0 ? $class : $this->namespace . '\\' . $class;
+		return strpos($class, $this->namespace) === 0 ? $class : $this->namespace . '\\' . ucfirst($class);
 	}
 
 	/**
@@ -145,30 +154,46 @@ class Dispatcher
 			throw new BadRequest('Controller Not Defined', 404);
 		}
 
-		return [$controllerClass, $action . 'Action'];
+		return [$controllerClass, lcfirst($action) . 'Action'];
 	}
 
 	public function forward($to)
 	{
-		$controller = $to['controller'] ?? 'Index';
-		$action = $to['action'] ?? 'Index';
-		$params = $to['params'] ?? [];
+		$app = $to['app'] ?? $this->application;
 
-		$this->forward[] = $this->current;
+		if ($app !== $this->application) {
+			$dispatcher = $this->app->getDispatcher($app);
+			return $dispatcher->forward($to);
+		} else {
+			$controller = $to['controller'] ?? 'Index';
+			$action = $to['action'] ?? 'Index';
+			$params = $to['params'] ?? [];
 
-		$this->run($controller, $action, $params);
-		return false;
+			$this->forward[] = $this->current;
+			$this->run($controller, $action, $params);
+			return false;
+		}
 	}
 
-	public function error($no)
+	public function error($no, $msg = null)
 	{
 		$this->forward([
 			'controller' => 'Error',
 			'params' => [
-				'error' => $no
+				'error' => $no,
+				'message' => $msg
 			]
 		]);
 
 		return false;
+	}
+
+	public function current($type = null)
+	{
+		if ($type === null) {
+			return $this->current;
+		}
+
+		return $this->current[$type] ?? null;
 	}
 }

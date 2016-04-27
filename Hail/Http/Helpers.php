@@ -129,6 +129,11 @@ class Helpers
 		}
 	}
 
+	public static function filter($v)
+	{
+		return $v !== false;
+	}
+
 	public static function getParams(&$vars, $type, $key = null)
 	{
 		if ($key === null) {
@@ -151,7 +156,7 @@ class Helpers
 				}
 			}
 
-			return array_filter($vars);
+			return array_filter($vars, [self::class, 'filter']);
 		} else if (isset($var[$key])) {
 			return $var[$key] === false ? null : $var[$key];
 		} else if (isset($GLOBALS[$type][$key])) {

@@ -100,7 +100,9 @@ class Embedded
     public function set($key, $value)
     {
         if (isset($this->fun['set'])) {
-            return $this->fun['set']($key, $value);
+            return $this->fun['set'](
+	            $this->key($key), $value
+            );
         }
         return false;
 
@@ -109,9 +111,23 @@ class Embedded
     public function get($key)
     {
         if (isset($this->fun['get'])) {
-            return $this->fun['get']($key);
+            return $this->fun['get'](
+	            $this->key($key)
+            );
         }
 
         return false;
     }
+
+	protected function key($key)
+	{
+		switch($this->type) {
+			case 'yac':
+				if (strlen($key) > 48) {
+					$key = hash('md4', $key);
+				}
+		}
+
+		return $key;
+	}
 }

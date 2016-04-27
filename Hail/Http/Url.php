@@ -55,28 +55,28 @@ class Url implements \JsonSerializable
 	];
 
 	/** @var string */
-	private $scheme = '';
+	protected $scheme = '';
 
 	/** @var string */
-	private $user = '';
+	protected $user = '';
 
 	/** @var string */
-	private $password = '';
+	protected $password = '';
 
 	/** @var string */
-	private $host = '';
+	protected $host = '';
 
 	/** @var int|NULL */
-	private $port;
+	protected $port;
 
 	/** @var string */
-	private $path = '';
+	protected $path = '';
 
 	/** @var array */
-	private $query = [];
+	protected $query = [];
 
 	/** @var string */
-	private $fragment = '';
+	protected $fragment = '';
 
 	/**
 	 * @param  string|null $url

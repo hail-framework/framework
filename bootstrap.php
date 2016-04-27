@@ -1,9 +1,9 @@
 <?php
 // System Start Time
-define('START_TIME', isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(true));
+define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
 
 // Now timestamp
-define('NOW', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
+define('NOW',  $_SERVER['REQUEST_TIME'] ?? time());
 
 // Absolute path to the system folder
 !defined('SYSTEM_PATH') && define('SYSTEM_PATH', __DIR__ . '/');

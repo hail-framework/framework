@@ -8,7 +8,7 @@
 namespace Hail\Http;
 
 use Hail\Utils\DateTime;
-use Hail\Utils\Random;
+use Hail\Utils\Generator;
 
 /**
  * HttpResponse class.
@@ -40,7 +40,7 @@ class Response
 		S303_POST_GET = 303,
 		S304_NOT_MODIFIED = 304,
 		S305_USE_PROXY = 305,
-		S307_TEMPORARY_REDIRECT= 307,
+		S307_TEMPORARY_REDIRECT = 307,
 		S400_BAD_REQUEST = 400,
 		S401_UNAUTHORIZED = 401,
 		S402_PAYMENT_REQUIRED = 402,
@@ -68,7 +68,9 @@ class Response
 		S505_HTTP_VERSION_NOT_SUPPORTED = 505;
 
 	/** @var bool  Send invisible garbage for IE 6? */
-	private static $fixIE = TRUE;
+	private static $fixIE = true;
+
+	public $cookiePrefix = '';
 
 	/** @var string The domain in which the cookie will be available */
 	public $cookieDomain = '';
@@ -77,13 +79,13 @@ class Response
 	public $cookiePath = '/';
 
 	/** @var bool Whether the cookie is available only through HTTPS */
-	public $cookieSecure = FALSE;
+	public $cookieSecure = false;
 
 	/** @var bool Whether the cookie is hidden from client-side */
-	public $cookieHttpOnly = TRUE;
+	public $cookieHttpOnly = true;
 
 	/** @var bool Whether warn on possible problem with data in output buffer */
-	public $warnOnBuffer = TRUE;
+	public $warnOnBuffer = true;
 
 	/** @var int HTTP response code */
 	private $code = self::S200_OK;
@@ -103,6 +105,7 @@ class Response
 
 	/**
 	 * Sets HTTP response code.
+	 *
 	 * @param  int
 	 * @return self
 	 * @throws \InvalidArgumentException  if code is invalid
@@ -117,13 +120,14 @@ class Response
 		self::checkHeaders();
 		$this->code = $code;
 		$protocol = isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
-		header($protocol . ' ' . $code, TRUE, $code);
+		header($protocol . ' ' . $code, true, $code);
 		return $this;
 	}
 
 
 	/**
 	 * Returns HTTP response code.
+	 *
 	 * @return int
 	 */
 	public function getCode()
@@ -134,6 +138,7 @@ class Response
 
 	/**
 	 * Sends a HTTP header and replaces a previous one.
+	 *
 	 * @param  string  header name
 	 * @param  string  header value
 	 * @return self
@@ -142,12 +147,12 @@ class Response
 	public function setHeader($name, $value)
 	{
 		self::checkHeaders();
-		if ($value === NULL) {
+		if ($value === null) {
 			header_remove($name);
 		} elseif (strcasecmp($name, 'Content-Length') === 0 && ini_get('zlib.output_compression')) {
 			// ignore, PHP bug #44164
 		} else {
-			header($name . ': ' . $value, TRUE, $this->code);
+			header($name . ': ' . $value, true, $this->code);
 		}
 		return $this;
 	}
@@ -155,6 +160,7 @@ class Response
 
 	/**
 	 * Adds HTTP header.
+	 *
 	 * @param  string  header name
 	 * @param  string  header value
 	 * @return self
@@ -163,19 +169,20 @@ class Response
 	public function addHeader($name, $value)
 	{
 		self::checkHeaders();
-		header($name . ': ' . $value, FALSE, $this->code);
+		header($name . ': ' . $value, false, $this->code);
 		return $this;
 	}
 
 
 	/**
 	 * Sends a Content-type HTTP header.
+	 *
 	 * @param  string  mime-type
 	 * @param  string  charset
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
-	public function setContentType($type, $charset = NULL)
+	public function setContentType($type, $charset = null)
 	{
 		$this->setHeader('Content-Type', $type . ($charset ? '; charset=' . $charset : ''));
 		return $this;
@@ -184,6 +191,7 @@ class Response
 
 	/**
 	 * Redirects to a new URL. Note: call exit() after it.
+	 *
 	 * @param  string  URL
 	 * @param  int     HTTP code
 	 * @return void
@@ -202,7 +210,8 @@ class Response
 
 	/**
 	 * Sets the number of seconds before a page cached on a browser expires.
-	 * @param  string|int|\DateTime  time, value 0 means "until the browser is closed"
+	 *
+	 * @param  string|int|\DateTime time , value 0 means "until the browser is closed"
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
@@ -223,6 +232,7 @@ class Response
 
 	/**
 	 * Checks if headers have been sent.
+	 *
 	 * @return bool
 	 */
 	public function isSent()
@@ -233,11 +243,12 @@ class Response
 
 	/**
 	 * Returns value of an HTTP header.
+	 *
 	 * @param  string
 	 * @param  mixed
 	 * @return mixed
 	 */
-	public function getHeader($header, $default = NULL)
+	public function getHeader($header, $default = null)
 	{
 		$header .= ':';
 		$len = strlen($header);
@@ -252,6 +263,7 @@ class Response
 
 	/**
 	 * Returns a list of headers to sent.
+	 *
 	 * @return array (name => value)
 	 */
 	public function getHeaders()
@@ -268,7 +280,7 @@ class Response
 	/**
 	 * @deprecated
 	 */
-	public static function date($time = NULL)
+	public static function date($time = null)
 	{
 		return Helpers::formatDate($time);
 	}
@@ -279,21 +291,22 @@ class Response
 	 */
 	public function __destruct()
 	{
-		if (self::$fixIE && isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== FALSE
-			&& in_array($this->code, [400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505], TRUE)
+		if (self::$fixIE && isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== false
+			&& in_array($this->code, [400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505], true)
 			&& preg_match('#^text/html(?:;|$)#', $this->getHeader('Content-Type', 'text/html'))
 		) {
-			echo Random::generate(2e3, " \t\r\n"); // sends invisible garbage for IE
-			self::$fixIE = FALSE;
+			echo Generator::random(2e3, " \t\r\n"); // sends invisible garbage for IE
+			self::$fixIE = false;
 		}
 	}
 
 
 	/**
 	 * Sends a cookie.
+	 *
 	 * @param  string name of the cookie
 	 * @param  string value
-	 * @param  string|int|\DateTime  expiration time, value 0 means "until the browser is closed"
+	 * @param  string|int|\DateTime expiration time, value 0 means "until the browser is closed"
 	 * @param  string
 	 * @param  string
 	 * @param  bool
@@ -301,17 +314,17 @@ class Response
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
-	public function setCookie($name, $value, $time, $path = NULL, $domain = NULL, $secure = NULL, $httpOnly = NULL)
+	public function setCookie($name, $value, $time, $path = null, $domain = null, $secure = null, $httpOnly = null)
 	{
 		self::checkHeaders();
 		setcookie(
 			$name,
 			$value,
 			$time ? (int) DateTime::from($time)->format('U') : 0,
-			$path === NULL ? $this->cookiePath : (string) $path,
-			$domain === NULL ? $this->cookieDomain : (string) $domain,
-			$secure === NULL ? $this->cookieSecure : (bool) $secure,
-			$httpOnly === NULL ? $this->cookieHttpOnly : (bool) $httpOnly
+			$path === null ? $this->cookiePath : (string) $path,
+			$domain === null ? $this->cookieDomain : (string) $domain,
+			$secure === null ? $this->cookieSecure : (bool) $secure,
+			$httpOnly === null ? $this->cookieHttpOnly : (bool) $httpOnly
 		);
 //		Helpers::removeDuplicateCookies();
 		return $this;
@@ -319,6 +332,7 @@ class Response
 
 	/**
 	 * Deletes a cookie.
+	 *
 	 * @param  string name of the cookie.
 	 * @param  string
 	 * @param  string
@@ -326,16 +340,19 @@ class Response
 	 * @return void
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
-	public function deleteCookie($name, $path = NULL, $domain = NULL, $secure = NULL)
+	public function deleteCookie($name, $path = null, $domain = null, $secure = null)
 	{
-		$this->setCookie($name, FALSE, 0, $path, $domain, $secure);
+		$this->setCookie($name, false, 0, $path, $domain, $secure);
 	}
 
 	private function checkHeaders()
 	{
 		if (headers_sent($file, $line)) {
 			throw new \RuntimeException('Cannot send header after HTTP headers have been sent' . ($file ? " (output started at $file:$line)." : '.'));
-		} elseif ($this->warnOnBuffer && ob_get_length() && !array_filter(ob_get_status(TRUE), function($i) { return !$i['chunk_size']; })) {
+		} elseif ($this->warnOnBuffer && ob_get_length() && !array_filter(ob_get_status(true), function ($i) {
+				return !$i['chunk_size'];
+			})
+		) {
 			trigger_error('Possible problem: you are sending a HTTP header while already having some data in output buffer. Try Tracy\OutputDebugger or start session earlier.', E_USER_NOTICE);
 		}
 	}

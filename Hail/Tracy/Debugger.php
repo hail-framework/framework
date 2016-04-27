@@ -48,7 +48,7 @@ class Debugger
 	/********************* Debugger::dump() ****************d*g**/
 
 	/** @var int  how many nested levels of array/object properties display {@link Debugger::dump()} */
-	public static $maxDepth = 3;
+	public static $maxDepth = 5;
 
 	/** @var int  how long strings display {@link Debugger::dump()} */
 	public static $maxLen = 150;

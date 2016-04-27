@@ -12,9 +12,4 @@ return [
 	'alias' => [
 		'Debugger' => 'Hail\\Tracy\\Debugger',
 	],
-
-	'output' => [
-		'Api' => 'json',
-		'Panel' => 'json',
-	],
 ];

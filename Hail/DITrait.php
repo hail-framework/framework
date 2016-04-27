@@ -27,6 +27,13 @@ namespace Hail;
  * @property-read Latte\Engine $template
  * @property-read DB\Medoo $db
  * @property-read Acl $acl
+ * @property-read Session $session
+ * @property-read Cookie $cookie
+ * @property-read Cache $cache
+ * @property-read DB\Cache $cdb
+ * @property-read Utils\ObjectFactory $lib
+ * @property-read Utils\ObjectFactory $model
+ * @property-read Buzz\Browser $client
  */
 Trait DITrait
 {

@@ -15,9 +15,14 @@ class Error extends Controller
 	public function indexAction()
 	{
 		$error = $this->dispatcher->getParam('error');
+		$message = $this->dispatcher->getParam('message');
+
+		$errorMessage = $this->config->get('error.' . $error);
+		$message = $message ? sprintf($errorMessage, $message) : $errorMessage;
+
 		return [
 			'ret' => $error,
-			'msg' => $this->config->get('error.' . $error),
+			'msg' => $message,
 		];
 	}
 }

@@ -25,6 +25,13 @@ class DI extends Container
 		$this->offsetSet($id, $value);
 	}
 
+	public function get($id)
+	{
+		return $this->offsetGet(
+			strtolower($id)
+		);
+	}
+
 	public function has($id)
 	{
 		return $this->offsetExists($id);
@@ -35,13 +42,11 @@ class DI extends Container
 		if (isset($args[0]) && $args[0] instanceof \Closure) {
 			$this->extend($func, $args[0]);
 		}
-		return $this->offsetGet(
-			strtolower($func)
-		);
+		return $this->get($func);
 	}
 
 	public function __get($id)
 	{
-		return $this->offsetGet($id);
+		return $this->get($id);
 	}
 }

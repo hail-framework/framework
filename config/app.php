@@ -26,7 +26,7 @@ return [
 		'namespace' => 'data',
 		'drivers' => [
 			'array' => [],
-			'apc' => [],
+			'yac' => [],
 			'file' => [
 				'directory' => TEMP_PATH . 'cache/'
 			]
@@ -39,4 +39,18 @@ return [
 	],
 
 	'cross_origin' => 'http://127.0.0.1:3000',
+
+	'output' => [
+		'Api' => 'json',
+		'Panel' => 'json',
+	],
+
+	'session' => [
+		'handler' => '',
+		'settings' => [],
+	],
+
+	'cookie' => [
+		'prefix' => 'GP_',
+	],
 ];
