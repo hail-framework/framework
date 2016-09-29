@@ -15,6 +15,7 @@ class Dispatcher
 
 	protected $application;
 	protected $namespace;
+	protected $rest = '';
 	protected $forward = [];
 	protected $current = [];
 	protected $controller = [];
@@ -25,8 +26,9 @@ class Dispatcher
 		$this->namespace = 'App\\Controller\\' . $app;
 	}
 
-	public function run($controller, $action, $params)
+	public function run($rest, $controller, $action, $params)
 	{
+		$this->rest = $rest;
 		$controller = $controller ?: 'Index';
 		$action = $action ?: 'index';
 		$params = $params ?: [];
@@ -34,7 +36,7 @@ class Dispatcher
 		$this->current = [
 			'controller' => ucfirst($controller),
 			'action' => lcfirst($action),
-			'params' => $params
+			'params' => $params,
 		];
 
 		list($class, $method) = $this->convert($controller, $action);
@@ -46,9 +48,19 @@ class Dispatcher
 			throw new BadRequest('Unauthorized', 401);
 		}
 
-		$return = $object->$method();
+		switch ($rest) {
+			case 'OPTIONS':
+				$return = false;
+				$outputType = 'blank';
+			break;
 
-		$outputType = $return['_type_'] ?? $this->config->get("app.output.{$this->application}");
+			case 'GET':
+			case 'POST':
+			default:
+				$return = $object->$method();
+				$outputType = $return['_type_'] ?? $this->config->get("app.output.{$this->application}");
+		}
+
 		$this->output($outputType, $return);
 	}
 
@@ -69,20 +81,24 @@ class Dispatcher
 
 	public function output($type, $return)
 	{
-		if ($return === false || $return === null) {
+		if ($return === null) {
 			return;
 		}
 
 		if ($this->request->getHeader('Origin') &&
 			($domain = $this->config->get('app.cross_origin'))
 		) {
-			$this->response->addHeader('Access-Control-Allow-Origin', $domain);
-			$this->response->addHeader('Access-Control-Allow-Credentials', 'true');
+			$this->response->setOrigin($domain);
 		}
 
-		if ($return === true) {
+		if ($return === false) {
+			return;
+		} else if ($return === true) {
 			$return = [];
 		}
+
+		$logData = ['post' => $this->request->getParam(), 'api' => $this->current, 'return' => $return];
+		$this->event->emit('oplog', $logData);
 
 		switch ($type) {
 			case 'json':
@@ -110,6 +126,7 @@ class Dispatcher
 
 	/**
 	 * @param $class
+	 *
 	 * @return Controller
 	 * @throws BadRequest
 	 */
@@ -120,6 +137,7 @@ class Dispatcher
 			if (!is_subclass_of($class, __NAMESPACE__ . '\\Controller')) {
 				throw new BadRequest('Controller Not Defined', 404);
 			}
+
 			return $this->controller[$class] = new $class($this);
 		}
 
@@ -128,6 +146,7 @@ class Dispatcher
 
 	/**
 	 * @param string $class
+	 *
 	 * @return string
 	 */
 	protected function class($class)
@@ -138,6 +157,7 @@ class Dispatcher
 	/**
 	 * @param string $controller
 	 * @param string $action
+	 *
 	 * @return array
 	 * @throws BadRequest
 	 */
@@ -163,6 +183,7 @@ class Dispatcher
 
 		if ($app !== $this->application) {
 			$dispatcher = $this->app->getDispatcher($app);
+
 			return $dispatcher->forward($to);
 		} else {
 			$controller = $to['controller'] ?? 'Index';
@@ -170,22 +191,21 @@ class Dispatcher
 			$params = $to['params'] ?? [];
 
 			$this->forward[] = $this->current;
-			$this->run($controller, $action, $params);
-			return false;
+			$this->run($this->rest, $controller, $action, $params);
+
+			return null;
 		}
 	}
 
 	public function error($no, $msg = null)
 	{
-		$this->forward([
+		return $this->forward([
 			'controller' => 'Error',
 			'params' => [
 				'error' => $no,
-				'message' => $msg
-			]
+				'message' => $msg,
+			],
 		]);
-
-		return false;
 	}
 
 	public function current($type = null)

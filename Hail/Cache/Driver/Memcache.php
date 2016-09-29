@@ -57,7 +57,7 @@ class Memcache extends Driver
 				$port = $server['port'] ?? $server[1] ?? 11211;
 				$weight = $server['weight'] ?? $server[2] ?? null;
 
-				if (is_integer($weight)) {
+				if (is_int($weight)) {
 					$memcache->addServer($host, $port, true, $weight);
 				} else {
 					$memcache->addServer($host, $port);

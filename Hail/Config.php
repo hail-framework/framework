@@ -7,9 +7,51 @@ use Hail\Cache\EmbeddedTrait;
  * Class Php
  * @package Hail\Config
  */
-class Config
+class Config implements \ArrayAccess
 {
 	use EmbeddedTrait;
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetExists($offset)
+	{
+		$val = $this->get($offset);
+		return $val !== null;
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetGet($offset)
+	{
+		return $this->get($offset);
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetSet($offset, $value)
+	{
+		$this->set($offset, $value);
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetUnset($name)
+	{
+		if (strpos($name, '.') === false) {
+			unset($this->items[$name]);
+		} else {
+			$key = explode('.', $name);
+			$array = &$this->items;
+			foreach ($key as $v) {
+				$array = &$array[$v];
+			}
+			$array = null;
+		}
+	}
 
 	/**
 	 * All of the configuration items.
@@ -18,7 +60,8 @@ class Config
 	 */
 	protected $items = [];
 
-	public function set($key, $value) {
+	public function set($key, $value)
+	{
 		$v = $this->get($key);
 		if ($v === $value) {
 			return;
@@ -39,8 +82,8 @@ class Config
 	/**
 	 * Get the specified configuration value.
 	 *
-	 * @param  string  $key
-	 * @param  mixed   $default
+	 * @param  string $key
+	 * @param  mixed $default
 	 * @return mixed
 	 */
 	public function get($key, $default = null)

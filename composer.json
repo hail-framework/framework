@@ -1,30 +1,42 @@
 {
-  "name": "hail/framework",
-  "version": "0.0.1",
-  "type": "library",
-  "description": "PHP 5 Framework",
-  "keywords": ["hailframework", "framework", "mvc"],
-  "homepage": "http://framework.flyinghail.com/",
-  "license": "MIT",
   "authors": [
     {
-      "name": "FlyingHail",
-      "homepage": "http://flyinghail.net"
-    }
-  ],
-  "require": {
-    "php": ">=7.0.0",
-    "ext-mbstring" : "*"
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/flyinghail/Hail-Framework.git"
+      "homepage": "http://flyinghail.net",
+      "name": "FlyingHail"
     }
   ],
   "autoload": {
     "psr-4": {
       "Hail\\": "Hail/"
     }
-  }
+  },
+  "description": "PHP 7 Framework",
+  "homepage": "http://framework.flyinghail.com/",
+  "keywords": [
+    "hailframework",
+    "framework",
+    "mvc"
+  ],
+  "license": "MIT",
+  "name": "hail/framework",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/flyinghail/Hail-Framework.git"
+    }
+  ],
+  "require": {
+    "ext-mbstring": "*",
+    "php": ">=7.0.0"
+  },
+  "suggest": {
+    "ext-iconv": "To handle non UTF-8 CSV files (if \"php-intl\" is not already installed or is too limited)",
+    "ext-intl": "To handle non UTF-8 CSV files (if \"iconv\" is not already installed)",
+    "ext-pimple": "Improve the performance of pimple",
+    "ext-simplexml": "To handle XSLX/ODS files",
+    "ext-xmlreader": "To handle XSLX/ODS files",
+    "ext-zip": "To handle XSLX/ODS files"
+  },
+  "type": "library",
+  "version": "0.0.1"
 }

@@ -20,6 +20,7 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
+use Hail\Utils\Serialize;
 use \Redis as RedisExt;
 
 /**
@@ -62,7 +63,7 @@ class Redis extends Driver
 		// this will have to be revisited to support multiple servers, using
 		// the RedisArray object. That object acts as a proxy object, meaning
 		// most of the class will be the same even after the changes.
-		if (count($servers) == 1) {
+		if (count($servers) === 1) {
 			$server = $servers[0];
 			$redis = new \Redis();
 			if (!empty($server['socket'])) {
@@ -111,7 +112,7 @@ class Redis extends Driver
 		if (isset($params['database'])) {
 			$redis->select($params['database']);
 		}
-		$redis->setOption(RedisExt::OPT_SERIALIZER, $this->getSerializerValue());
+		$redis->setOption(RedisExt::OPT_SERIALIZER, RedisExt::SERIALIZER_NONE);
 		$this->redis = $redis;
 
 		parent::__construct($params);
@@ -132,7 +133,9 @@ class Redis extends Driver
 	 */
 	protected function doFetch($id)
 	{
-		return $this->redis->get($id);
+		return Serialize::decode(
+			$this->redis->get($id)
+		);
 	}
 
 	/**
@@ -144,11 +147,15 @@ class Redis extends Driver
 
 		if (!$lifetime) {
 			// No lifetime, use MSET
-			$success = $this->redis->mset($keysAndValues);
+			$success = $this->redis->mset(
+				Serialize::encodeArray($keysAndValues)
+			);
 		} else {
 			// Keys have lifetime, use SETEX for each of them
 			foreach ($keysAndValues as $key => $value) {
-				if (!$this->redis->setex($key, $lifetime, $value)) {
+				if (!$this->redis->setex($key, $lifetime,
+					Serialize::encode($value)
+				)) {
 					$success = false;
 				}
 			}
@@ -168,6 +175,7 @@ class Redis extends Driver
 		$foundItems = array();
 
 		foreach ($fetchedItems as $key => $value) {
+			$value = Serialize::decode($value);
 			if (false !== $value || $this->redis->exists($key)) {
 				$foundItems[$key] = $value;
 			}
@@ -189,6 +197,7 @@ class Redis extends Driver
 	 */
 	protected function doSave($id, $data, $lifetime = 0)
 	{
+		$data = Serialize::encode($data);
 		if ($lifetime > 0) {
 			return $this->redis->setex($id, $lifetime, $data);
 		}
@@ -225,20 +234,5 @@ class Redis extends Driver
 			Driver::STATS_MEMORY_USAGE => $info['used_memory'],
 			Driver::STATS_MEMORY_AVAILABLE => false
 		);
-	}
-
-	/**
-	 * Returns the serializer constant to use. If Redis is compiled with
-	 * igbinary support, that is used. Otherwise the default PHP serializer is
-	 * used.
-	 *
-	 * @return integer One of the Redis::SERIALIZER_* constants
-	 */
-	protected function getSerializerValue()
-	{
-		if (defined('HHVM_VERSION')) {
-			return RedisExt::SERIALIZER_PHP;
-		}
-		return defined('Redis::SERIALIZER_IGBINARY') ? RedisExt::SERIALIZER_IGBINARY : RedisExt::SERIALIZER_PHP;
 	}
 }

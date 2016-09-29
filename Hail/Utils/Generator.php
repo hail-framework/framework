@@ -175,29 +175,9 @@ class Generator
 		);
 	}
 
-	public static function isUUID($uuid) {
-		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.
+	public static function isUUID($uuid)
+	{
+		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?' .
 			'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
-	}
-}
-
-if (!function_exists('random_bytes')) {
-	function random_bytes($length) {
-		if (function_exists('openssl_random_pseudo_bytes')) {
-			return openssl_random_pseudo_bytes($length);
-		} else if (function_exists('mcrypt_create_iv')) { // PHP bug #52523
-			return mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
-		} else if (@is_readable('/dev/urandom')) {
-			return file_get_contents('/dev/urandom', false, null, -1, $length);
-		} else {
-			static $cache;
-			return $cache ?: $cache = md5(serialize($_SERVER), true);
-		}
-	}
-}
-
-if (!function_exists('random_int')) {
-	function random_int($min, $max) {
-		return mt_rand($min, $max);
 	}
 }

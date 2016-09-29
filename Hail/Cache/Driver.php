@@ -30,7 +30,7 @@ namespace Hail\Cache;
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author FlyingHail <flyinghail@msn.com>
  */
-abstract class Driver
+abstract class Driver implements \ArrayAccess
 {
 	const STATS_HITS = 'hits';
 	const STATS_MISSES = 'misses';
@@ -339,6 +339,38 @@ abstract class Driver
 		}
 
 		return $return;
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetUnset($offset)
+	{
+		return $this->delete($offset);
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetExists($offset)
+	{
+		return $this->contains($offset);
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetSet($offset, $value)
+	{
+		return $this->save($offset, $value);
+	}
+
+	/**
+	 * @{inheritDoc}
+	 */
+	public function offsetGet($offset)
+	{
+		return $this->fetch($offset);
 	}
 
 	/**

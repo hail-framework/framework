@@ -33,7 +33,7 @@ namespace Hail;
  * @property-read DB\Cache $cdb
  * @property-read Utils\ObjectFactory $lib
  * @property-read Utils\ObjectFactory $model
- * @property-read Buzz\Browser $client
+ * @property-read Browser $client
  */
 Trait DITrait
 {

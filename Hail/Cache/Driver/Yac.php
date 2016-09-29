@@ -41,7 +41,7 @@ class Yac extends Driver
      */
     protected function doFetch($id)
     {
-        return $this->yac->get($id);
+        return $this->yac->get($this->key($id));
     }
 
     /**
@@ -49,7 +49,7 @@ class Yac extends Driver
      */
     protected function doContains($id)
     {
-        return $this->yac->get($id) !== false;
+        return $this->yac->get($this->key($id)) !== false;
     }
 
     /**
@@ -57,7 +57,7 @@ class Yac extends Driver
      */
     protected function doSave($id, $data, $lifetime = 0)
     {
-        return $this->yac->set($id, $data, $lifetime);
+        return $this->yac->set($this->key($id), $data, $lifetime);
     }
 
     /**
@@ -65,7 +65,7 @@ class Yac extends Driver
      */
     protected function doDelete($id)
     {
-        return $this->yac->delete($id);
+        return $this->yac->delete($this->key($id));
     }
 
     /**
@@ -81,7 +81,11 @@ class Yac extends Driver
 	 */
 	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
 	{
-		return $this->yac->set($keysAndValues, $lifetime);
+		$list = [];
+		foreach ($keysAndValues as $k => $v) {
+			$list[$this->key($k)] = $v;
+		}
+		return $this->yac->set($list, $lifetime);
 	}
 
     /**
@@ -89,7 +93,7 @@ class Yac extends Driver
      */
     protected function doFetchMultiple(array $keys)
     {
-        return $this->yac->get($keys);
+        return $this->yac->get(array_map([$this, 'key'], $keys));
     }
 
     /**
@@ -103,5 +107,14 @@ class Yac extends Driver
 	        Driver::STATS_MISSES           => $info['miss'],
 	        Driver::STATS_MEMORY_USAGE     => $info['memory_size']
         ];
+    }
+
+    public function key($key)
+    {
+    	if (strlen($key) > YAC_MAX_KEY_LEN) {
+    		return hash('md4', $key);
+	    }
+
+	    return $key;
     }
 }

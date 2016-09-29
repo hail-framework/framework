@@ -74,7 +74,7 @@ class SQLite3 extends Driver
 
         list($id, $data, $exp) = $this->getFields();
 
-        return $this->sqlite->exec("CREATE TABLE IF NOT EXISTS $table ($id TEXT PRIMARY KEY NOT NULL, $data BLOB, $exp INTEGER)");
+        $this->sqlite->exec("CREATE TABLE IF NOT EXISTS $table ($id TEXT PRIMARY KEY NOT NULL, $data BLOB, $exp INTEGER)");
     }
 
     /**
@@ -202,6 +202,6 @@ class SQLite3 extends Driver
     {
         return isset($item[static::EXPIRATION_FIELD]) &&
             $item[self::EXPIRATION_FIELD] !== null &&
-            $item[self::EXPIRATION_FIELD] < time();
+            $item[self::EXPIRATION_FIELD] < NOW;
     }
 }

@@ -22,6 +22,12 @@ class BlueScreen
 	/** @var string[] paths to be collapsed in stack trace (e.g. core libraries) */
 	public $collapsePaths = [];
 
+	/** @var int  */
+	public $maxDepth = 3;
+
+	/** @var int  */
+	public $maxLength = 150;
+
 
 	public function __construct()
 	{
@@ -52,6 +58,41 @@ class BlueScreen
 	 */
 	public function render($exception)
 	{
+		if (Helpers::isAjax() && session_status() === PHP_SESSION_ACTIVE) {
+			ob_start(function () {});
+			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/content.phtml');
+			$contentId = $_SERVER['HTTP_X_TRACY_AJAX'];
+			$queue = & $_SESSION['_tracy']['bluescreen'];
+			$queue = array_slice(array_filter((array) $queue), -5, NULL, TRUE);
+			$queue[$contentId] = ['content' => ob_get_clean(), 'dumps' => Dumper::fetchLiveData()];
+
+		} else {
+			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
+		}
+	}
+
+
+	/**
+	 * Renders blue screen to file (if file exists, it will not be overwritten).
+	 * @param  \Exception|\Throwable
+	 * @param  string file path
+	 * @return void
+	 */
+	public function renderToFile($exception, $file)
+	{
+		if ($handle = @fopen($file, 'x')) {
+			ob_start(); // double buffer prevents sending HTTP headers in some PHP
+			ob_start(function ($buffer) use ($handle) { fwrite($handle, $buffer); }, 4096);
+			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
+			ob_end_flush();
+			ob_end_clean();
+			fclose($handle);
+		}
+	}
+
+
+	private function renderTemplate($exception, $template)
+	{
 		$panels = $this->panels;
 		$info = array_filter($this->info);
 		$source = Helpers::getSource();
@@ -62,8 +103,17 @@ class BlueScreen
 		$skipError = $sourceIsUrl && $exception instanceof \ErrorException && !empty($exception->skippable)
 			? $source . (strpos($source, '?') ? '&' : '?') . '_tracy_skip_error'
 			: NULL;
+		$lastError = $exception instanceof \ErrorException || $exception instanceof \Error ? NULL : error_get_last();
+		$dump = function($v) {
+			return Dumper::toHtml($v, [
+				Dumper::DEPTH => $this->maxDepth,
+				Dumper::TRUNCATE => $this->maxLength,
+				Dumper::LIVE => TRUE,
+				Dumper::LOCATION => Dumper::LOCATION_CLASS,
+			]);
+		};
 
-		require __DIR__ . '/assets/BlueScreen/bluescreen.phtml';
+		require $template;
 	}
 
 
@@ -80,7 +130,7 @@ class BlueScreen
 		if ($source) {
 			$source = static::highlightPhp($source, $line, $lines, $vars);
 			if ($editor = Helpers::editorUri($file, $line)) {
-				$source = substr_replace($source, ' data-tracy-href="' . htmlspecialchars($editor, ENT_QUOTES, 'UTF-8') . '"', 4, 0);
+				$source = substr_replace($source, ' data-tracy-href="' . Helpers::escapeHtml($editor) . '"', 4, 0);
 			}
 			return $source;
 		}
@@ -121,7 +171,7 @@ class BlueScreen
 		}
 
 		$out = str_replace('&nbsp;', ' ', $out);
-		return "<pre class='php'><div>$out</div></pre>";
+		return "<pre class='code'><div>$out</div></pre>";
 	}
 
 
@@ -135,7 +185,7 @@ class BlueScreen
 		$source = explode("\n", "\n" . str_replace("\r\n", "\n", $html));
 		$out = '';
 		$spans = 1;
-		$start = $i = max(1, $line - floor($lines * 2 / 3));
+		$start = $i = max(1, min($line, count($source) - 1) - floor($lines * 2 / 3));
 		while (--$i >= 1) { // find last highlighted block
 			if (preg_match('#.*(</?span[^>]*>)#', $source[$i], $m)) {
 				if ($m[1] !== '</span>') {

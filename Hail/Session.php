@@ -62,8 +62,6 @@ class Session implements \ArrayAccess
 			$params['httponly']
 		);
 
-		ini_set('session.gc_maxlifetime', $params['lifetime']);
-
 		$serializeHandler = ini_get('session.serialize_handler');
 		if ($serializeHandler === 'php' || $serializeHandler === 'php_binary') {
 			ini_set('session.serialize_handler', 'php_serialize');

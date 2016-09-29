@@ -7,7 +7,6 @@
 
 namespace Hail\Http;
 
-use Hail\DITrait;
 use Hail\Utils\DateTime;
 
 /**
@@ -109,7 +108,6 @@ class Helpers
 	/**
 	 * Removes duplicate cookies from response.
 	 * @return void
-	 * @internal
 	 */
 	public static function removeDuplicateCookies()
 	{

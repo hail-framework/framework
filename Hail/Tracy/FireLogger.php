@@ -54,7 +54,7 @@ class FireLogger implements LoggerInterface
 		if (isset($args[0]) && ($args[0] instanceof \Exception || $args[0] instanceof \Throwable)) {
 			$e = array_shift($args);
 			$trace = $e->getTrace();
-			if (isset($trace[0]['class']) && $trace[0]['class'] === Debugger::class
+			if (isset($trace[0]['class']) && $trace[0]['class'] === 'Hail\Tracy\Debugger'
 				&& ($trace[0]['function'] === 'shutdownHandler' || $trace[0]['function'] === 'errorHandler')
 			) {
 				unset($trace[0]);
@@ -68,7 +68,7 @@ class FireLogger implements LoggerInterface
 
 		} else {
 			$trace = debug_backtrace();
-			if (isset($trace[1]['class']) && $trace[1]['class'] === Debugger::class
+			if (isset($trace[1]['class']) && $trace[1]['class'] === 'Hail\Tracy\Debugger'
 				&& ($trace[1]['function'] === 'fireLog')
 			) {
 				unset($trace[0]);
@@ -153,7 +153,7 @@ class FireLogger implements LoggerInterface
 				$list[] = $var;
 				$res = ["\x00" => '(object) ' . Helpers::getClass($var)];
 				foreach ($arr as $k => & $v) {
-					if ($k[0] === "\x00") {
+					if (isset($k[0]) && $k[0] === "\x00") {
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
 					$res[$this->jsonDump($k)] = $this->jsonDump($v, $level + 1);

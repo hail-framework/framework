@@ -23,7 +23,7 @@ return [
 		]
 	],
 	'cache' => [
-		'namespace' => 'data',
+		'namespace' => 'hf_data',
 		'drivers' => [
 			'array' => [],
 			'yac' => [],
@@ -42,7 +42,7 @@ return [
 
 	'output' => [
 		'Api' => 'json',
-		'Panel' => 'json',
+		'Panel' => 'template',
 	],
 
 	'session' => [
@@ -51,6 +51,6 @@ return [
 	],
 
 	'cookie' => [
-		'prefix' => 'GP_',
+		'prefix' => 'HF_',
 	],
 ];

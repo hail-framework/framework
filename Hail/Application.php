@@ -36,8 +36,9 @@ class Application
 
 	private function process()
 	{
+		$method = $this->request->getMethod();
 		$result = $this->router->dispatch(
-			$this->request->getMethod(),
+			$method,
 			$this->request->getPathInfo()
 		);
 
@@ -50,7 +51,7 @@ class Application
 		$action= $result['handler']['action'] ?? '';
 
 		$dispatcher = $this->getDispatcher($app);
-		$dispatcher->run($controller, $action, $result['params']);
+		$dispatcher->run($method, $controller, $action, $result['params']);
 	}
 
 	/**
@@ -68,8 +69,7 @@ class Application
 
 	public function processException(\Exception $e)
 	{
-		$debuggerEnabled = Debugger::isEnabled();
-		if ($debuggerEnabled && !$e instanceof ApplicationException) {
+		if (!$e instanceof ApplicationException) {
 			throw $e;
 		}
 
@@ -82,25 +82,21 @@ class Application
 			$this->response->setCode($code);
 		}
 
-		if (!$debuggerEnabled) {
-			$msg = [
-				403 => 'Access Denied',
-				404 => 'Not Found',
-				405 => 'Method Not Allowed',
-				410 => 'Gone',
-				500 => 'Server Error'
-			];
+		$msg = [
+			403 => 'Access Denied',
+			404 => 'Not Found',
+			405 => 'Method Not Allowed',
+			410 => 'Gone',
+			500 => 'Server Error'
+		];
 
-			$msg = $msg[$code] ?? $e->getMessage();
-		} else {
-			$msg = $e->getMessage();
-		}
+		$msg = $msg[$code] ?? $e->getMessage();
 
 		$this->output->json->send([
 			'ret' => $code,
 			'msg' => $msg
 		]);
 
-		!$debuggerEnabled && Debugger::log($e, Debugger::EXCEPTION);
+		Debugger::log($e, Debugger::EXCEPTION);
 	}
 }

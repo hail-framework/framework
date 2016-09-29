@@ -96,6 +96,10 @@ class Dumper
 		$loc = & $options[self::LOCATION];
 		$loc = $loc === TRUE ? ~0 : (int) $loc;
 		$options[self::OBJECT_EXPORTERS] = (array) $options[self::OBJECT_EXPORTERS] + self::$objectExporters;
+		uksort($options[self::OBJECT_EXPORTERS], function ($a, $b) {
+			return $b === '' || (class_exists($a, FALSE) && is_subclass_of($a, $b)) ? -1 : 1;
+		});
+
 		$live = !empty($options[self::LIVE]) && $var && (is_array($var) || is_object($var) || is_resource($var));
 		list($file, $line, $code) = $loc ? self::findLocation() : NULL;
 		$locAttrs = $file && $loc & self::LOCATION_SOURCE ? Helpers::formatHtml(
@@ -104,7 +108,7 @@ class Dumper
 
 		return '<pre class="tracy-dump' . ($live && $options[self::COLLAPSE] === TRUE ? ' tracy-collapsed' : '') . '"'
 			. $locAttrs
-			. ($live ? " data-tracy-dump='" . str_replace("'", '&#039;', json_encode(self::toJson($var, $options))) . "'>" : '>')
+			. ($live ? " data-tracy-dump='" . json_encode(self::toJson($var, $options), JSON_HEX_APOS | JSON_HEX_AMP) . "'>" : '>')
 			. ($live ? '' : self::dumpVar($var, $options))
 			. ($file && $loc & self::LOCATION_LINK ? '<small>in ' . Helpers::editorLink($file, $line) . '</small>' : '')
 			. "</pre>\n";
@@ -172,7 +176,7 @@ class Dumper
 	{
 		$var = is_finite($var)
 			? ($tmp = json_encode($var)) . (strpos($tmp, '.') === FALSE ? '.0' : '')
-			: var_export($var, TRUE);
+			: str_replace('.0', '', var_export($var, TRUE)); // workaround for PHP 7.0.2
 		return "<span class=\"tracy-dump-number\">$var</span>\n";
 	}
 
@@ -180,7 +184,7 @@ class Dumper
 	private static function dumpString(& $var, $options)
 	{
 		return '<span class="tracy-dump-string">"'
-			. htmlspecialchars(self::encodeString($var, $options[self::TRUNCATE]), ENT_NOQUOTES, 'UTF-8')
+			. Helpers::escapeHtml(self::encodeString($var, $options[self::TRUNCATE]))
 			. '"</span>' . (strlen($var) > 1 ? ' (' . strlen($var) . ')' : '') . "\n";
 	}
 
@@ -208,7 +212,7 @@ class Dumper
 			$var[$marker] = TRUE;
 			foreach ($var as $k => & $v) {
 				if ($k !== $marker) {
-					$k = preg_match('#^\w{1,50}\z#', $k) ? $k : '"' . htmlspecialchars(self::encodeString($k, $options[self::TRUNCATE]), ENT_NOQUOTES, 'UTF-8') . '"';
+					$k = preg_match('#^\w{1,50}\z#', $k) ? $k : '"' . Helpers::escapeHtml(self::encodeString($k, $options[self::TRUNCATE])) . '"';
 					$out .= '<span class="tracy-dump-indent">   ' . str_repeat('|  ', $level) . '</span>'
 						. '<span class="tracy-dump-key">' . $k . '</span> => '
 						. self::dumpVar($v, $options, $level + 1);
@@ -235,7 +239,7 @@ class Dumper
 			. ($editor ? Helpers::formatHtml(
 				' title="Declared in file % on line %" data-tracy-href="%"', $rc->getFileName(), $rc->getStartLine(), $editor
 			) : '')
-			. '>' . htmlspecialchars(Helpers::getClass($var)) . '</span> <span class="tracy-dump-hash">#' . substr(md5(spl_object_hash($var)), 0, 4) . '</span>';
+			. '>' . Helpers::escapeHtml(Helpers::getClass($var)) . '</span> <span class="tracy-dump-hash">#' . substr(md5(spl_object_hash($var)), 0, 4) . '</span>';
 
 		static $list = [];
 
@@ -253,11 +257,11 @@ class Dumper
 			$list[] = $var;
 			foreach ($fields as $k => & $v) {
 				$vis = '';
-				if ($k[0] === "\x00") {
+				if (isset($k[0]) && $k[0] === "\x00") {
 					$vis = ' <span class="tracy-dump-visibility">' . ($k[1] === '*' ? 'protected' : 'private') . '</span>';
 					$k = substr($k, strrpos($k, "\x00") + 1);
 				}
-				$k = preg_match('#^\w{1,50}\z#', $k) ? $k : '"' . htmlspecialchars(self::encodeString($k, $options[self::TRUNCATE]), ENT_NOQUOTES, 'UTF-8') . '"';
+				$k = preg_match('#^\w{1,50}\z#', $k) ? $k : '"' . Helpers::escapeHtml(self::encodeString($k, $options[self::TRUNCATE])) . '"';
 				$out .= '<span class="tracy-dump-indent">   ' . str_repeat('|  ', $level) . '</span>'
 					. '<span class="tracy-dump-key">' . $k . "</span>$vis => "
 					. self::dumpVar($v, $options, $level + 1);
@@ -274,13 +278,13 @@ class Dumper
 	private static function dumpResource(& $var, $options, $level)
 	{
 		$type = get_resource_type($var);
-		$out = '<span class="tracy-dump-resource">' . htmlSpecialChars($type, ENT_IGNORE, 'UTF-8') . ' resource</span> '
-			. '<span class="tracy-dump-hash">#' . intval($var) . '</span>';
+		$out = '<span class="tracy-dump-resource">' . Helpers::escapeHtml($type) . ' resource</span> '
+			. '<span class="tracy-dump-hash">#' . ((int) $var) . '</span>';
 		if (isset(self::$resources[$type])) {
 			$out = "<span class=\"tracy-toggle tracy-collapsed\">$out</span>\n<div class=\"tracy-collapsed\">";
 			foreach (call_user_func(self::$resources[$type], $var) as $k => $v) {
 				$out .= '<span class="tracy-dump-indent">   ' . str_repeat('|  ', $level) . '</span>'
-					. '<span class="tracy-dump-key">' . htmlSpecialChars($k, ENT_IGNORE, 'UTF-8') . '</span> => ' . self::dumpVar($v, $options, $level + 1);
+					. '<span class="tracy-dump-key">' . Helpers::escapeHtml($k) . '</span> => ' . self::dumpVar($v, $options, $level + 1);
 			}
 			return $out . '</div>';
 		}
@@ -348,7 +352,7 @@ class Dumper
 
 				foreach (self::exportObject($var, $options[self::OBJECT_EXPORTERS]) as $k => $v) {
 					$vis = 0;
-					if ($k[0] === "\x00") {
+					if (isset($k[0]) && $k[0] === "\x00") {
 						$vis = $k[1] === '*' ? 1 : 2;
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
@@ -409,15 +413,26 @@ class Dumper
 		}
 
 		if (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $s) || preg_last_error()) {
-			if ($maxLength && strlen($s) > $maxLength) {
-				$s = substr($s, 0, $maxLength) . ' ... ';
+			if ($shortened = ($maxLength && strlen($s) > $maxLength)) {
+				$s = substr($s, 0, $maxLength);
 			}
 			$s = strtr($s, $table);
-		} elseif ($maxLength && strlen(utf8_decode($s)) > $maxLength) {
-			$s = iconv_substr($s, 0, $maxLength, 'UTF-8') . ' ... ';
+
+		} elseif ($shortened = ($maxLength && strlen(utf8_decode($s)) > $maxLength)) {
+			if (function_exists('iconv_substr')) {
+				$s = iconv_substr($s, 0, $maxLength, 'UTF-8');
+			} else {
+				$i = $len = 0;
+				do {
+					if (($s[$i] < "\x80" || $s[$i] >= "\xC0") && (++$len > $maxLength)) {
+						$s = substr($s, 0, $i);
+						break;
+					}
+				} while (isset($s[++$i]));
+			}
 		}
 
-		return $s;
+		return $s . (empty($shortened) ? '' : ' ... ');
 	}
 
 
@@ -427,7 +442,7 @@ class Dumper
 	private static function exportObject($obj, array $exporters)
 	{
 		foreach ($exporters as $type => $dumper) {
-			if ($obj instanceof $type) {
+			if (!$type || $obj instanceof $type) {
 				return call_user_func($dumper, $obj);
 			}
 		}
@@ -542,6 +557,7 @@ class Dumper
 		return self::$terminalColors &&
 			(getenv('ConEmuANSI') === 'ON'
 			|| getenv('ANSICON') !== FALSE
+			|| getenv('term') === 'xterm-256color'
 			|| (defined('STDOUT') && function_exists('posix_isatty') && posix_isatty(STDOUT)));
 	}
 

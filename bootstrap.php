@@ -6,7 +6,7 @@ define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
 define('NOW',  $_SERVER['REQUEST_TIME'] ?? time());
 
 // Absolute path to the system folder
-!defined('SYSTEM_PATH') && define('SYSTEM_PATH', __DIR__ . '/');
+define('SYSTEM_PATH', __DIR__ . '/');
 
 // Path to the Hail namespace root folder
 define('HAIL_PATH', SYSTEM_PATH . 'Hail/');
@@ -35,7 +35,7 @@ if (PHP_SAPI !== 'cli' && Config::get('env.debug')) {
 			TEMP_PATH . 'xdebugTrace.xt'
 		);
 	});
-	$debugMode = Debugger::DEVELOPMENT;
+	$debugMode = Debugger::DETECT;
 } else {
 	$debugMode = Debugger::PRODUCTION;
 }

@@ -3,7 +3,7 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
-
+use Hail\Utils\Serialize;
 use Predis\ClientInterface;
 
 /**
@@ -78,7 +78,7 @@ class Predis extends Driver
 			return false;
 		}
 
-		return unserialize($result);
+		return Serialize::decode($result);
 	}
 
 	/**
@@ -90,15 +90,17 @@ class Predis extends Driver
 
 		if (!$lifetime) {
 			// No lifetime, use MSET
-			$response = $this->client->mset(array_map(function ($value) {
-				return serialize($value);
-			}, $keysAndValues));
+			$response = $this->client->mset(
+				Serialize::encodeArray($keysAndValues)
+			);
 
 			$success = ((string)$response === 'OK');
 		} else {
 			// Keys have lifetime, use SETEX for each of them
 			foreach ($keysAndValues as $key => $value) {
-				$response = $this->client->setex($key, $lifetime, serialize($value));
+				$response = $this->client->setex($key, $lifetime,
+					Serialize::encode($value)
+				);
 
 				if ((string)$response !== 'OK') {
 					$success = false;
@@ -116,7 +118,7 @@ class Predis extends Driver
 	{
 		$fetchedItems = call_user_func_array(array($this->client, 'mget'), $keys);
 
-		return array_map('unserialize', array_filter(array_combine($keys, $fetchedItems)));
+		return Serialize::decodeArray(array_filter(array_combine($keys, $fetchedItems)));
 	}
 
 	/**
@@ -132,7 +134,7 @@ class Predis extends Driver
 	 */
 	protected function doSave($id, $data, $lifetime = 0)
 	{
-		$data = serialize($data);
+		$data = Serialize::encode($data);
 		if ($lifetime > 0) {
 			$response = $this->client->setex($id, $lifetime, $data);
 		} else {

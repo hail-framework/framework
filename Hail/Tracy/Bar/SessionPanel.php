@@ -14,7 +14,7 @@ class SessionPanel implements PanelInterface
 	 */
 	public function getTab()
 	{
-		ob_start(NULL, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+		ob_start(function () {});
 		require __DIR__ . '/templates/session.tab.phtml';
 		return ob_get_clean();
 	}
@@ -26,7 +26,7 @@ class SessionPanel implements PanelInterface
 	 */
 	public function getPanel()
 	{
-		ob_start(NULL, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+		ob_start(function () {});
 		require __DIR__ . '/templates/session.panel.phtml';
 		return ob_get_clean();
 	}

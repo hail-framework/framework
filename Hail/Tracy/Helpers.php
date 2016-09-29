@@ -20,7 +20,8 @@ class Helpers
 	 */
 	public static function editorLink($file, $line = NULL)
 	{
-		if ($editor = self::editorUri($file, $line)) {
+		$file = strtr($origFile = $file, Debugger::$editorMapping);
+		if ($editor = self::editorUri($origFile, $line)) {
 			$file = strtr($file, '\\', '/');
 			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
 				$file = '...' . $m[0];
@@ -46,16 +47,24 @@ class Helpers
 	public static function editorUri($file, $line = NULL)
 	{
 		if (Debugger::$editor && $file && is_file($file)) {
+			$file = strtr($file, Debugger::$editorMapping);
 			return strtr(Debugger::$editor, ['%file' => rawurlencode($file), '%line' => $line ? (int) $line : 1]);
 		}
 	}
 
 
-	public static function formatHtml($mask, ...$args)
+	public static function formatHtml($mask)
 	{
-		return preg_replace_callback('#%#', function () use (& $args) {
-			return htmlspecialchars(each($args)[1], ENT_IGNORE | ENT_QUOTES, 'UTF-8');
+		$args = func_get_args();
+		return preg_replace_callback('#%#', function () use (& $args, & $count) {
+			return Helpers::escapeHtml($args[++$count]);
 		}, $mask);
+	}
+
+
+	public static function escapeHtml($s)
+	{
+		return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
 
@@ -65,7 +74,7 @@ class Helpers
 		foreach ($trace as $i => $item) {
 			if (isset($item['function']) && $item['function'] === end($m)
 				&& isset($item['class']) === isset($m[1])
-				&& (!isset($item['class']) || $item['class'] === $m[0] || $m[0] === '*' || is_subclass_of($item['class'], $m[0]))
+				&& (!isset($item['class']) || $m[0] === '*' || is_a($item['class'], $m[0], TRUE))
 			) {
 				$index = $i;
 				return $item;
@@ -148,7 +157,8 @@ class Helpers
 				. (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')
 				. $_SERVER['REQUEST_URI'];
 		} else {
-			return empty($_SERVER['argv']) ? 'CLI' : 'CLI: ' . implode(' ', $_SERVER['argv']);
+			return 'CLI (PID: ' . getmypid() . ')'
+				. (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
 		}
 	}
 
@@ -210,6 +220,22 @@ class Helpers
 			}
 		}
 		return $best;
+	}
+
+
+	/** @internal */
+	public static function isHtmlMode()
+	{
+		return empty($_SERVER['HTTP_X_REQUESTED_WITH']) && empty($_SERVER['HTTP_X_TRACY_AJAX'])
+			&& PHP_SAPI !== 'cli'
+			&& !preg_match('#^Content-Type: (?!text/html)#im', implode("\n", headers_list()));
+	}
+
+
+	/** @internal */
+	public static function isAjax()
+	{
+		return isset($_SERVER['HTTP_X_TRACY_AJAX']) && preg_match('#^\w{10}\z#', $_SERVER['HTTP_X_TRACY_AJAX']);
 	}
 
 }

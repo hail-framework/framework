@@ -117,7 +117,7 @@ class Response
 		if ($code < 100 || $code > 599) {
 			throw new \InvalidArgumentException("Bad HTTP response '$code'.");
 		}
-		self::checkHeaders();
+		$this->checkHeaders();
 		$this->code = $code;
 		$protocol = isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
 		header($protocol . ' ' . $code, true, $code);
@@ -146,10 +146,10 @@ class Response
 	 */
 	public function setHeader($name, $value)
 	{
-		self::checkHeaders();
+		$this->checkHeaders();
 		if ($value === null) {
 			header_remove($name);
-		} elseif (strcasecmp($name, 'Content-Length') === 0 && ini_get('zlib.output_compression')) {
+		} else if (strcasecmp($name, 'Content-Length') === 0 && ini_get('zlib.output_compression')) {
 			// ignore, PHP bug #44164
 		} else {
 			header($name . ': ' . $value, true, $this->code);
@@ -168,7 +168,7 @@ class Response
 	 */
 	public function addHeader($name, $value)
 	{
-		self::checkHeaders();
+		$this->checkHeaders();
 		header($name . ': ' . $value, false, $this->code);
 		return $this;
 	}
@@ -217,6 +217,7 @@ class Response
 	 */
 	public function setExpiration($time)
 	{
+		$this->setHeader('Pragma', NULL);
 		if (!$time) { // no cache
 			$this->setHeader('Cache-Control', 's-maxage=0, max-age=0, must-revalidate');
 			$this->setHeader('Expires', 'Mon, 23 Jan 1978 10:00:00 GMT');
@@ -229,6 +230,13 @@ class Response
 		return $this;
 	}
 
+	public function setOrigin($domain)
+	{
+		$this->setHeader('Access-Control-Allow-Origin', $domain);
+		$this->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+		$this->setHeader('Access-Control-Allow-Headers', 'Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With');
+		$this->setHeader('Access-Control-Allow-Credentials', 'true');
+	}
 
 	/**
 	 * Checks if headers have been sent.
@@ -251,10 +259,9 @@ class Response
 	public function getHeader($header, $default = null)
 	{
 		$header .= ':';
-		$len = strlen($header);
 		foreach (headers_list() as $item) {
-			if (strncasecmp($item, $header, $len) === 0) {
-				return ltrim(substr($item, $len));
+			if (0 === stripos($item, $header)) {
+				return ltrim(substr($item, strlen($header)));
 			}
 		}
 		return $default;
@@ -271,7 +278,7 @@ class Response
 		$headers = [];
 		foreach (headers_list() as $header) {
 			$a = strpos($header, ':');
-			$headers[substr($header, 0, $a)] = (string) substr($header, $a + 2);
+			$headers[substr($header, 0, $a)] = ltrim(substr($header, $a + 1));
 		}
 		return $headers;
 	}
@@ -316,7 +323,7 @@ class Response
 	 */
 	public function setCookie($name, $value, $time, $path = null, $domain = null, $secure = null, $httpOnly = null)
 	{
-		self::checkHeaders();
+		$this->checkHeaders();
 		setcookie(
 			$name,
 			$value,
@@ -326,7 +333,7 @@ class Response
 			$secure === null ? $this->cookieSecure : (bool) $secure,
 			$httpOnly === null ? $this->cookieHttpOnly : (bool) $httpOnly
 		);
-//		Helpers::removeDuplicateCookies();
+		Helpers::removeDuplicateCookies();
 		return $this;
 	}
 
@@ -347,13 +354,15 @@ class Response
 
 	private function checkHeaders()
 	{
-		if (headers_sent($file, $line)) {
+		if (PHP_SAPI === 'cli') {
+			return;
+		} else if (headers_sent($file, $line)) {
 			throw new \RuntimeException('Cannot send header after HTTP headers have been sent' . ($file ? " (output started at $file:$line)." : '.'));
-		} elseif ($this->warnOnBuffer && ob_get_length() && !array_filter(ob_get_status(true), function ($i) {
+		} else if ($this->warnOnBuffer && ob_get_length() && !array_filter(ob_get_status(true), function ($i) {
 				return !$i['chunk_size'];
 			})
 		) {
-			trigger_error('Possible problem: you are sending a HTTP header while already having some data in output buffer. Try Tracy\OutputDebugger or start session earlier.', E_USER_NOTICE);
+			trigger_error('Possible problem: you are sending a HTTP header while already having some data in output buffer. Try Hail\Tracy\OutputDebugger or start session earlier.');
 		}
 	}
 

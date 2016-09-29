@@ -6,6 +6,7 @@
  */
 
 namespace Hail\Http;
+use Hail\DITrait;
 
 /**
  * HttpRequest provides access scheme for request sent via HTTP.
@@ -13,6 +14,8 @@ namespace Hail\Http;
  */
 class Request
 {
+	use DITrait;
+
 	/** @var string */
 	private $method;
 
@@ -42,6 +45,13 @@ class Request
 
 	/** @var string|NULL */
 	private $remoteHost;
+
+	/** @var array */
+	private $params = [];
+	/** @var bool */
+	private $params_all = false;
+	/** @var array */
+	private $params_del = [];
 
 	public function __construct(Url $url, $method = null, $remoteAddress = null, $remoteHost = null)
 	{
@@ -80,6 +90,44 @@ class Request
 	/********************* query, post, files & cookies ****************d*g**/
 
 
+	public function setAllParams($array)
+	{
+		$this->setParams($array);
+		$this->params_all = true;
+	}
+
+	public function setParams($array)
+	{
+		foreach ($array as $k => $v) {
+			$this->setParam($k, $v);
+		}
+	}
+
+	/**
+	 * @param string $key
+	 * @param mixed $value
+	 */
+	public function setParam($key, $value = null)
+	{
+		if (isset($this->params_del[$key])) {
+			unset($this->params_del[$key]);
+		}
+		$this->params[$key] = $value;
+	}
+
+	public function delParam($key)
+	{
+		if ($this->params_all) {
+			if (isset($this->params[$key])) {
+				unset($this->params[$key]);
+			}
+		}
+
+		if (!isset($this->params_del[$key])) {
+			$this->params_del[$key] = true;
+		}
+	}
+
 	/**
 	 * @param $key
 	 *
@@ -87,19 +135,52 @@ class Request
 	 */
 	public function getParam($key = null)
 	{
-		$type = $this->getHeader('CONTENT_TYPE');
+		if ($key === null && $this->params_all) {
+			return array_filter($this->params, function($v) {
+				return $v !== null;
+			});
+		} else if (isset($this->params[$key])) {
+			return $this->params[$key];
+		} else if ($this->params_all) {
+			return null;
+		}
+
+		return $this->getParamSet($key);
+	}
+
+	private function getParamSet($key = null)
+	{
+		if ($key !== null && isset($this->params_del[$key])) {
+			return null;
+		}
+
+		$type = $this->getHeader('CONTENT-TYPE');
 
 		$return = null;
 		if ($type === 'application/json') {
 			$return = $this->getJson($key);
 		} else if ($type === 'application/x-www-form-urlencoded') {
 			$return = $this->getPost($key);
-		} else if ($type === 'multipart/form-data') {
+		} else if (strpos($type, 'multipart/form-data') === 0) {
 			$return = $this->getFile($key);
 			$return = $return ?: $this->getPost($key);
 		}
 
-		return $return ?? $this->getQuery($key);
+		$return = $return ?? $this->getQuery($key);
+
+		if ($key === null) {
+			$this->params_all = true;
+			$return = array_merge($return, $this->params);
+
+			foreach ($this->params_del as $k => $v) {
+				unset($return[$k]);
+			}
+			$this->params = $return;
+		} else {
+			$this->setParam($key, $return);
+		}
+
+		return $return;
 	}
 
 	/**

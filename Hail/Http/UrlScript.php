@@ -51,40 +51,29 @@ class UrlScript extends Url
 		}
 
 		// path & query
-		if (isset($_SERVER['REQUEST_URI'])) {
-			$path = $_SERVER['REQUEST_URI'];
-			if (strpos($path, '?') !== false) {
-				$path = strstr($_SERVER['REQUEST_URI'], '?', true);
-			}
-			if (strpos($path, '//') !== false) {
-				$path = preg_replace('#/{2,}#', '/', $path);
-			}
-		} else {
-			$path = '/';
+		$requestUrl = $_SERVER['REQUEST_URI'] ?? '/';
+		$path = preg_replace('#^\w++://[^/]++#', '', $requestUrl);
+		if (strpos($path, '?') !== false) {
+			$path = strstr($path, '?', true);
 		}
 		$path = static::unescape($path, '%/?#');
+		if (strpos($path, '//') !== false) {
+			$path = preg_replace('#/{2,}#', '/', $path);
+		}
 		$path = htmlspecialchars_decode(
 			htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES
 		);
 		$this->setPath($path);
 
 		// detect script path
-		if ($path !== '/') {
-			$lpath = strtolower($path);
-			$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
-			if ($lpath !== $script) {
-				$tmp = explode('/', $path);
-				$script = explode('/', $script);
-				$path = '';
-				foreach (explode('/', $lpath) as $k => $v) {
-					if ($v !== $script[$k]) {
-						break;
-					}
-					$path .= $tmp[$k] . '/';
-				}
-			}
-			$this->setScriptPath($path);
+		$lpath = strtolower($path);
+		$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
+		if ($lpath !== $script) {
+			$max = min(strlen($lpath), strlen($script));
+			for ($i = 0; $i < $max && $lpath[$i] === $script[$i]; $i++);
+			$path = $i ? substr($path, 0, strrpos($path, '/', $i - strlen($path) - 1) + 1) : '/';
 		}
+		$this->setScriptPath($path);
 	}
 
 	/**

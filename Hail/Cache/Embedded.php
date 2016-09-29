@@ -123,7 +123,7 @@ class Embedded
 	{
 		switch($this->type) {
 			case 'yac':
-				if (strlen($key) > 48) {
+				if (strlen($key) > YAC_MAX_KEY_LEN) {
 					$key = hash('md4', $key);
 				}
 		}

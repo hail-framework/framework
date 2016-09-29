@@ -43,6 +43,7 @@ class FileUpload
 		foreach (['name', 'type', 'size', 'tmp_name', 'error'] as $key) {
 			if (!isset($value[$key]) || !is_scalar($value[$key])) {
 				$this->error = UPLOAD_ERR_NO_FILE;
+
 				return; // or throw exception?
 			}
 		}
@@ -55,11 +56,13 @@ class FileUpload
 	public function __get($key)
 	{
 		$fun = 'get' . ucfirst($key);
+
 		return $this->$fun();
 	}
 
 	/**
 	 * Returns the file name.
+	 *
 	 * @return string
 	 */
 	public function getName()
@@ -70,29 +73,33 @@ class FileUpload
 
 	/**
 	 * Returns the sanitized file name.
+	 *
 	 * @return string
 	 */
 	public function getSanitizedName()
 	{
-		return trim(Helpers::webalize($this->name, '.', FALSE), '.-');
+		return trim(Helpers::webalize($this->name, '.', false), '.-');
 	}
 
 
 	/**
 	 * Returns the MIME content type of an uploaded file.
+	 *
 	 * @return string|NULL
 	 */
 	public function getContentType()
 	{
-		if ($this->isOk() && $this->type === NULL) {
+		if ($this->type === null && $this->isOk()) {
 			$this->type = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $this->tmpName);
 		}
+
 		return $this->type;
 	}
 
 
 	/**
 	 * Returns the size of an uploaded file.
+	 *
 	 * @return int
 	 */
 	public function getSize()
@@ -103,6 +110,7 @@ class FileUpload
 
 	/**
 	 * Returns the path to an uploaded file.
+	 *
 	 * @return string
 	 */
 	public function getTemporaryFile()
@@ -110,9 +118,15 @@ class FileUpload
 		return $this->tmpName;
 	}
 
+	public function getExtension()
+	{
+		return strrchr($this->name, '.');
+	}
+
 
 	/**
 	 * Returns the path to an uploaded file.
+	 *
 	 * @return string
 	 */
 	public function __toString()
@@ -123,6 +137,7 @@ class FileUpload
 
 	/**
 	 * Returns the error code. {@link http://php.net/manual/en/features.file-upload.errors.php}
+	 *
 	 * @return int
 	 */
 	public function getError()
@@ -133,6 +148,7 @@ class FileUpload
 
 	/**
 	 * Is there any error?
+	 *
 	 * @return bool
 	 */
 	public function isOk()
@@ -143,7 +159,9 @@ class FileUpload
 
 	/**
 	 * Move uploaded file to new location.
+	 *
 	 * @param  string
+	 *
 	 * @return self
 	 * @throws \RuntimeException
 	 */
@@ -153,8 +171,8 @@ class FileUpload
 			unlink($dest);
 		} else {
 			$dir = dirname($dest);
-			if (!is_dir($dir)) {
-				mkdir($dir, 0777, TRUE);
+			if (!is_dir($dir) && (!@mkdir($dir, 0777, true) && !is_dir($dir))) {
+				throw new \RuntimeException("Unable to create dir '$dir'.");
 			}
 		}
 
@@ -163,17 +181,19 @@ class FileUpload
 		}
 		chmod($dest, 0666);
 		$this->tmpName = $dest;
+
 		return $this;
 	}
 
 
 	/**
 	 * Is uploaded file GIF, PNG or JPEG?
+	 *
 	 * @return bool
 	 */
 	public function isImage()
 	{
-		return in_array($this->getContentType(), ['image/gif', 'image/png', 'image/jpeg'], TRUE);
+		return in_array($this->getContentType(), ['image/gif', 'image/png', 'image/jpeg'], true);
 	}
 
 
@@ -189,21 +209,23 @@ class FileUpload
 
 	/**
 	 * Returns the dimensions of an uploaded image as array.
+	 *
 	 * @return array|NULL
 	 */
 	public function getImageSize()
 	{
-		return $this->isOk() ? @getimagesize($this->tmpName) : NULL; // @ - files smaller than 12 bytes causes read error
+		return $this->isOk() ? @getimagesize($this->tmpName) : null; // @ - files smaller than 12 bytes causes read error
 	}
 
 
 	/**
 	 * Get file contents.
+	 *
 	 * @return string|NULL
 	 */
 	public function getContents()
 	{
 		// future implementation can try to work around safe_mode and open_basedir limitations
-		return $this->isOk() ? file_get_contents($this->tmpName) : NULL;
+		return $this->isOk() ? file_get_contents($this->tmpName) : null;
 	}
 }

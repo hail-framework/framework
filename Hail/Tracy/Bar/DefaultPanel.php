@@ -31,7 +31,7 @@ class DefaultPanel implements PanelInterface
 	 */
 	public function getTab()
 	{
-		ob_start(NULL, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+		ob_start(function () {});
 		$data = $this->data;
 		require __DIR__ . "/templates/{$this->id}.tab.phtml";
 		return ob_get_clean();
@@ -44,7 +44,7 @@ class DefaultPanel implements PanelInterface
 	 */
 	public function getPanel()
 	{
-		ob_start(NULL, 0, PHP_OUTPUT_HANDLER_REMOVABLE);
+		ob_start(function () {});
 		if (is_file(__DIR__ . "/templates/{$this->id}.panel.phtml")) {
 			$data = $this->data;
 			require __DIR__ . "/templates/{$this->id}.panel.phtml";
