@@ -14,13 +14,12 @@ namespace Hail\Tracy;
 interface LoggerInterface
 {
 	const
-		DEBUG = Debugger::DEBUG,
-		INFO = Debugger::INFO,
-		WARNING = Debugger::WARNING,
-		ERROR = Debugger::ERROR,
-		EXCEPTION = Debugger::EXCEPTION,
-		CRITICAL = Debugger::CRITICAL;
+		DEBUG = 'debug',
+		INFO = 'info',
+		WARNING = 'warning',
+		ERROR = 'error',
+		EXCEPTION = 'exception',
+		CRITICAL = 'critical';
 
-	function log($value, $priority = self::INFO);
-
+	public function log($value, $priority = self::INFO);
 }

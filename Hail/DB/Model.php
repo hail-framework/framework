@@ -125,7 +125,7 @@ abstract class Model
 	 * @param array $dirty The dirty data will be set, or empty array to reset the dirty data.
 	 * @return self return $this, can using chain method calls.
 	 */
-	public function dirty($dirty = [])
+	public function dirty(array $dirty = [])
 	{
 		$this->dirty = $dirty;
 		$this->data = array_merge($this->data, $dirty);
@@ -188,7 +188,7 @@ abstract class Model
 	 */
 	public function update()
 	{
-		if (count($this->dirty) == 0) {
+		if ($this->dirty === []) {
 			return true;
 		}
 

@@ -4,7 +4,6 @@ namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
 use Hail\Utils\Serialize;
-use Predis\ClientInterface;
 
 /**
  * Predis cache provider.
@@ -21,10 +20,14 @@ class Predis extends Driver
 
 	/**
 	 * Predis constructor.
-	 * @param array $params [client => ClientInterface]
+	 * @param array $params [client => \Predis\ClientInterface]
 	 */
 	public function __construct($params)
 	{
+		$params = array_merge(
+			\Config::get('redis'), $params
+		);
+
 		if (isset($params['servers'])) {
 			$paramServers = (array)$params['servers'];
 			unset($params['servers']);

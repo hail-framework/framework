@@ -6,6 +6,7 @@
  */
 
 namespace Hail\Tracy;
+use Hail\Utils\Singleton;
 
 
 /**
@@ -15,32 +16,36 @@ namespace Hail\Tracy;
  */
 class FireLogger implements LoggerInterface
 {
-	/** @var int  */
+	use Singleton;
+
+	/** @var int */
 	public $maxDepth = 3;
 
-	/** @var int  */
+	/** @var int */
 	public $maxLength = 150;
 
-	/** @var array  */
+	/** @var array */
 	private $payload = ['logs' => []];
 
 
 	/**
 	 * Sends message to FireLogger console.
+	 *
 	 * @param  mixed
+	 *
 	 * @return bool    was successful?
 	 */
 	public function log($message, $priority = self::DEBUG)
 	{
 		if (!isset($_SERVER['HTTP_X_FIRELOGGER']) || headers_sent()) {
-			return FALSE;
+			return false;
 		}
 
 		$item = [
 			'name' => 'PHP',
 			'level' => $priority,
 			'order' => count($this->payload['logs']),
-			'time' => str_pad(number_format((microtime(TRUE) - Debugger::$time) * 1000, 1, '.', ' '), 8, '0', STR_PAD_LEFT) . ' ms',
+			'time' => str_pad(number_format((microtime(true) - Debugger::$time) * 1000, 1, '.', ' '), 8, '0', STR_PAD_LEFT) . ' ms',
 			'template' => '',
 			'message' => '',
 			'style' => 'background:#767ab6',
@@ -87,12 +92,12 @@ class FireLogger implements LoggerInterface
 		$item['exc_frames'] = [];
 
 		foreach ($trace as $frame) {
-			$frame += ['file' => NULL, 'line' => NULL, 'class' => NULL, 'type' => NULL, 'function' => NULL, 'object' => NULL, 'args' => NULL];
+			$frame += ['file' => null, 'line' => null, 'class' => null, 'type' => null, 'function' => null, 'object' => null, 'args' => null];
 			$item['exc_info'][2][] = [$frame['file'], $frame['line'], "$frame[class]$frame[type]$frame[function]", $frame['object']];
 			$item['exc_frames'][] = $frame['args'];
 		}
 
-		if (isset($args[0]) && in_array($args[0], [self::DEBUG, self::INFO, self::WARNING, self::ERROR, self::CRITICAL], TRUE)) {
+		if (isset($args[0]) && in_array($args[0], [self::DEBUG, self::INFO, self::WARNING, self::ERROR, self::CRITICAL], true)) {
 			$item['level'] = array_shift($args);
 		}
 
@@ -102,14 +107,17 @@ class FireLogger implements LoggerInterface
 		foreach (str_split(base64_encode(json_encode($this->payload)), 4990) as $k => $v) {
 			header("FireLogger-de11e-$k:$v");
 		}
-		return TRUE;
+
+		return true;
 	}
 
 
 	/**
 	 * Dump implementation for JSON.
-	 * @param  mixed  $var variable to dump
-	 * @param  int    $level current recursion level
+	 *
+	 * @param  mixed $var variable to dump
+	 * @param  int $level current recursion level
+	 *
 	 * @return string
 	 */
 	private function jsonDump(& $var, $level = 0)
@@ -122,14 +130,14 @@ class FireLogger implements LoggerInterface
 
 		} elseif (is_array($var)) {
 			static $marker;
-			if ($marker === NULL) {
-				$marker = uniqid("\x00", TRUE);
+			if ($marker === null) {
+				$marker = uniqid("\x00", true);
 			}
 			if (isset($var[$marker])) {
 				return "\xE2\x80\xA6RECURSION\xE2\x80\xA6";
 
 			} elseif ($level < $this->maxDepth || !$this->maxDepth) {
-				$var[$marker] = TRUE;
+				$var[$marker] = true;
 				$res = [];
 				foreach ($var as $k => & $v) {
 					if ($k !== $marker) {
@@ -137,6 +145,7 @@ class FireLogger implements LoggerInterface
 					}
 				}
 				unset($var[$marker]);
+
 				return $res;
 
 			} else {
@@ -146,7 +155,7 @@ class FireLogger implements LoggerInterface
 		} elseif (is_object($var)) {
 			$arr = (array) $var;
 			static $list = [];
-			if (in_array($var, $list, TRUE)) {
+			if (in_array($var, $list, true)) {
 				return "\xE2\x80\xA6RECURSION\xE2\x80\xA6";
 
 			} elseif ($level < $this->maxDepth || !$this->maxDepth) {
@@ -159,6 +168,7 @@ class FireLogger implements LoggerInterface
 					$res[$this->jsonDump($k)] = $this->jsonDump($v, $level + 1);
 				}
 				array_pop($list);
+
 				return $res;
 
 			} else {

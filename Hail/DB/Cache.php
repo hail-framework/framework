@@ -9,6 +9,7 @@
 namespace Hail\DB;
 
 use Hail\DITrait;
+use Hail\Utils\Serialize;
 
 /**
  * Class Cache
@@ -24,19 +25,7 @@ class Cache
 	private $lifetime = 0;
 	private $name = '';
 
-	public function lifetime($lifetime = 0)
-	{
-		$this->lifetime = $lifetime;
-		return $this;
-	}
-
-	public function ttl($lifetime = 0)
-	{
-		$this->lifetime = $lifetime;
-		return $this;
-	}
-
-	public function expire($lifetime = 0)
+	public function expiresAfter($lifetime = 0)
 	{
 		$this->lifetime = $lifetime;
 		return $this;
@@ -70,7 +59,7 @@ class Cache
 				break;
 
 				default:
-					throw new \InvalidArgumentException('Cache only support select/get metod');
+					throw new \InvalidArgumentException('Cache only support select/get method');
 			}
 
 			$this->cache->save($key, $result, $this->lifetime);
@@ -86,7 +75,7 @@ class Cache
 	 *
 	 * @return string
 	 */
-	public function key($name, $arguments = null)
+	protected function key($name, $arguments = null)
 	{
 		if ($this->name) {
 			return $this->name;
@@ -96,7 +85,7 @@ class Cache
 			return $arguments[0];
 		}
 
-		return hash('md4', json_encode([$name, $arguments]));
+		return hash('sha1', Serialize::encode([$name, $arguments]));
 	}
 
 	public function reset()

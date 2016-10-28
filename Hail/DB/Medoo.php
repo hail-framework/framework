@@ -38,6 +38,9 @@ class Medoo
 	protected $prefix;
 	protected $option = [];
 
+	// use php-cp extension
+	protected $extConnectPool = false;
+
 	// Variable
 	protected $logs = [];
 	protected $debug = false;
@@ -50,87 +53,91 @@ class Medoo
 
 	public function __construct(array $options)
 	{
-		try {
-			foreach ($options as $option => $value) {
-				$this->$option = $value;
+		foreach ($options as $option => $value) {
+			$this->$option = $value;
+		}
+
+		if ($this->extConnectPool) {
+			$this->extConnectPool = class_exists('\pdoProxy');
+		}
+
+		if (
+			isset($this->port) &&
+			is_int($this->port * 1)
+		) {
+			$port = $this->port;
+		}
+
+		$this->type = $type = strtolower($this->type);
+
+		$dsn = '';
+		$commands = [];
+		switch ($type) {
+			case 'mariadb':
+			case 'mysql':
+				if ($this->socket) {
+					$dsn = 'mysql:unix_socket=' . $this->socket . ';dbname=' . $this->database;
+				} else {
+					$dsn = 'mysql:host=' . $this->server . ';port=' . ($port ?? '3306') . ';dbname=' . $this->database;
+				}
+
+				// Make MySQL using standard quoted identifier
+				$commands[] = 'SET SQL_MODE=ANSI_QUOTES';
+			break;
+
+			case 'pgsql':
+				$dsn = 'pgsql:host=' . $this->server . ';port=' . ($port ?? '5432') . ';dbname=' . $this->database;
+			break;
+
+			case 'sybase':
+				$dsn = 'dblib:host=' . $this->server . ':' . ($port ?? '5000') . ';dbname=' . $this->database;
+			break;
+
+			case 'oracle':
+				$dbname = $this->server ?
+					'//' . $this->server . ':' . ($port ?? '1521') . '/' . $this->database :
+					$this->database;
+
+				$dsn = 'oci:dbname=' . $dbname . ($this->charset ? ';charset=' . $this->charset : '');
+			break;
+
+			case 'mssql':
+				$dsn = strstr(PHP_OS, 'WIN') ?
+					'sqlsrv:server=' . $this->server . ',' . ($port ?? '1433') . ';database=' . $this->database :
+					'dblib:host=' . $this->server . ':' . ($port ?? '1433') . ';dbname=' . $this->database;
+
+				// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
+				$commands[] = 'SET QUOTED_IDENTIFIER ON';
+			break;
+
+			case 'sqlite':
+				$dsn = 'sqlite:' . $this->file;
+				$this->username = null;
+				$this->password = null;
+			break;
+		}
+
+		if (
+			$this->charset &&
+			in_array($type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql'], true)
+
+		) {
+			$commands[] = "SET NAMES '" . $this->charset . "'";
+		}
+
+		$class = $this->extConnectPool ? '\pdoProxy' : 'PDO';
+		$this->pdo = new $class(
+			$dsn,
+			$this->username,
+			$this->password,
+			$this->option
+		);
+
+		foreach ($commands as $value) {
+			$this->pdo->exec($value);
+			if ($this->extConnectPool) {
+				$this->pdo->release();
 			}
-
-			if (
-				isset($this->port) &&
-				is_int($this->port * 1)
-			) {
-				$port = $this->port;
-			}
-
-			$this->type = $type = strtolower($this->type);
-
-			$dsn = '';
-			$commands = [];
-			switch ($type) {
-				case 'mariadb':
-				case 'mysql':
-					if ($this->socket) {
-						$dsn = $type . ':unix_socket=' . $this->socket . ';dbname=' . $this->database;
-					} else {
-						$dsn = $type . ':host=' . $this->server . ';port=' . ($port ?? '3306') . ';dbname=' . $this->database;
-					}
-
-					// Make MySQL using standard quoted identifier
-					$commands[] = 'SET SQL_MODE=ANSI_QUOTES';
-				break;
-
-				case 'pgsql':
-					$dsn = $type . ':host=' . $this->server . ';port=' . ($port ?? '5432') . ';dbname=' . $this->database;
-				break;
-
-				case 'sybase':
-					$dsn = 'dblib:host=' . $this->server . ':' . ($port ?? '5000') . ';dbname=' . $this->database;
-				break;
-
-				case 'oracle':
-					$dbname = $this->server ?
-						'//' . $this->server . ':' . ($port ?? '1521') . '/' . $this->database :
-						$this->database;
-
-					$dsn = 'oci:dbname=' . $dbname . ($this->charset ? ';charset=' . $this->charset : '');
-				break;
-
-				case 'mssql':
-					$dsn = strstr(PHP_OS, 'WIN') ?
-						'sqlsrv:server=' . $this->server . ',' . ($port ?? '1433') . ';database=' . $this->database :
-						'dblib:host=' . $this->server . ':' . ($port ?? '1433') . ';dbname=' . $this->database;
-
-					// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
-					$commands[] = 'SET QUOTED_IDENTIFIER ON';
-				break;
-
-				case 'sqlite':
-					$dsn = $type . ':' . $this->file;
-					$this->username = null;
-					$this->password = null;
-				break;
-			}
-
-			if (
-				$this->charset &&
-				in_array($type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql'], true)
-
-			) {
-				$commands[] = "SET NAMES '" . $this->charset . "'";
-			}
-
-			$this->pdo = new PDO(
-				$dsn,
-				$this->username,
-				$this->password,
-				$this->option
-			);
-
-			foreach ($commands as $value) {
-				$this->pdo->exec($value);
-			}
-		} catch (\PDOException $e) {
-			throw new \RuntimeException($e->getMessage());
 		}
 	}
 
@@ -162,6 +169,13 @@ class Medoo
 		$this->logs[] = $query;
 
 		return $this->pdo->exec($query);
+	}
+
+	public function release()
+	{
+		if ($this->extConnectPool) {
+			$this->pdo->release();
+		}
 	}
 
 	public function quote($string)
@@ -467,7 +481,7 @@ class Medoo
 				$ORDER = $where['ORDER'];
 
 				if (is_array($ORDER)) {
-					$stack = array();
+					$stack = [];
 
 					foreach ($ORDER as $column => $value) {
 						if (is_array($value)) {
@@ -620,7 +634,7 @@ class Medoo
 	protected function dataMap($index, $key, $value, $data, &$stack)
 	{
 		if (is_array($value)) {
-			$subStack = array();
+			$subStack = [];
 
 			foreach ($value as $sub_key => $sub_value) {
 				if (is_array($sub_value)) {
@@ -650,6 +664,7 @@ class Medoo
 		for ($i = 0, $n = $sth->columnCount(); $i < $n; ++$i) {
 			$headers[] = $sth->getColumnMeta($i);
 		}
+		$this->release();
 
 		return $headers;
 	}
@@ -665,10 +680,13 @@ class Medoo
 		}
 
 		if ($fetchArgs !== null) {
-			return $query->fetchAll($fetch, $fetchArgs);
+			$return = $query->fetchAll($fetch, $fetchArgs);
 		} else {
-			return $query->fetchAll($fetch);
+			$return = $query->fetchAll($fetch);
 		}
+		$this->release();
+
+		return $return;
 	}
 
 	protected function insertContext($table, $datas, $INSERT, $multi = false)
@@ -756,6 +774,7 @@ class Medoo
 		foreach ($sql as $v) {
 			$result = $this->exec($v);
 			$lastId[] = $result === false ? $result : $this->pdo->lastInsertId();
+			$this->release();
 		}
 
 		$return = count($lastId) > 1 ? $lastId : $lastId[0];
@@ -764,7 +783,8 @@ class Medoo
 		return $return;
 	}
 
-	public function lastInsertId() {
+	public function lastInsertId()
+	{
 		return $this->lastId;
 	}
 
@@ -772,7 +792,10 @@ class Medoo
 	{
 		$sql = $this->insertContext($table, $datas, $INSERT, true);
 
-		return $this->exec($sql);
+		$return = $this->exec($sql);
+		$this->release();
+
+		return $return;
 	}
 
 	public function update($table, $data = [], $where = null)
@@ -800,7 +823,10 @@ class Medoo
 			}
 		}
 
-		return $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . implode(', ', $fields) . $where);
+		$return = $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . implode(', ', $fields) . $where);
+		$this->release();
+
+		return $return;
 	}
 
 	public function delete($table, $where = null)
@@ -812,7 +838,10 @@ class Medoo
 			$where = $this->whereClause($where);
 		}
 
-		return $this->exec('DELETE FROM ' . $this->quoteTable($table) . $where);
+		$return = $this->exec('DELETE FROM ' . $this->quoteTable($table) . $where);
+		$this->release();
+
+		return $return;
 	}
 
 	public function replace($table, $columns, $search = null, $replace = null, $where = null)
@@ -839,7 +868,10 @@ class Medoo
 			$replace_query = $columns . ' = REPLACE(' . $this->quoteColumn($columns) . ', ' . $this->quote($search) . ', ' . $this->quote($replace) . ')';
 		}
 
-		return $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . $replace_query . $this->whereClause($where));
+		$return = $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . $replace_query . $this->whereClause($where));
+		$this->release();
+
+		return $return;
 	}
 
 	/**
@@ -864,6 +896,7 @@ class Medoo
 				$query->setFetchMode(...$fetchArgs);
 				$data = $query->fetch($fetch);
 			}
+			$this->release();
 
 			if (is_object($data)) {
 				return $data;
@@ -898,7 +931,14 @@ class Medoo
 			'SELECT EXISTS(' . $this->selectContext($struct) . ')'
 		);
 
-		return $query ? $query->fetchColumn() === '1' : false;
+		if ($query) {
+			$return = $query->fetchColumn() === '1';
+			$this->release();
+
+			return $return;
+		}
+
+		return false;
 	}
 
 	public function count(array $struct)
@@ -908,7 +948,14 @@ class Medoo
 			$this->selectContext($struct)
 		);
 
-		return $query ? (int) $query->fetchColumn() : false;
+		if ($query) {
+			$return = (int) $query->fetchColumn();
+			$this->release();
+
+			return $return;
+		}
+
+		return false;
 	}
 
 	public function max(array $struct)
@@ -920,11 +967,12 @@ class Medoo
 
 		if ($query) {
 			$max = $query->fetchColumn();
+			$this->release();
 
 			return is_numeric($max) ? (int) $max : $max;
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	public function min(array $struct)
@@ -936,11 +984,12 @@ class Medoo
 
 		if ($query) {
 			$min = $query->fetchColumn();
+			$this->release();
 
 			return is_numeric($min) ? (int) $min : $min;
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	public function avg(array $struct)
@@ -950,7 +999,14 @@ class Medoo
 			$this->selectContext($struct)
 		);
 
-		return $query ? (int) $query->fetchColumn() : false;
+		if ($query) {
+			$return = (int) $query->fetchColumn();
+			$this->release();
+
+			return $return;
+		}
+
+		return false;
 	}
 
 	public function sum(array $struct)
@@ -960,14 +1016,24 @@ class Medoo
 			$this->selectContext($struct)
 		);
 
-		return $query ? (int) $query->fetchColumn() : false;
+		if ($query) {
+			$return = (int) $query->fetchColumn();
+			$this->release();
+
+			return $return;
+		}
+
+		return false;
 	}
 
 	public function truncate($table)
 	{
-		return $this->query(
+		$return = $this->query(
 			'TRUNCATE TABLE ' . $table
 		);
+		$this->release();
+
+		return $return;
 	}
 
 	public function action($actions)
@@ -982,6 +1048,7 @@ class Medoo
 			} else {
 				$this->pdo->commit();
 			}
+			$this->release();
 		} else {
 			return false;
 		}

@@ -141,19 +141,20 @@
 		}
 
 		function escape(s) {
-			return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+			return s.replace(/<\//g, '<\\\/');
 		}
 
 		var doc = win.document;
 		doc.write('<!DOCTYPE html><meta charset="utf-8">'
-			+ '<link rel="stylesheet" href="' + escape(document.getElementById('tracy-debug-style').href) + '">'
-			+ '<script src="' + escape(document.getElementById('tracy-debug-script').src) + '" onload="Tracy.Dumper.init()" async><\/script>'
+			+ '<style>' + escape(localStorage.getItem('tracy-style')) + '</style>'
+			+ '<script>' + escape(localStorage.getItem('tracy-script')) + '</script>'
 			+ '<body id="tracy-debug">'
+			+ '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '</div>'
+			+ '<script>Tracy.Dumper.init()</script>'
 		);
-		doc.body.innerHTML = '<div class="tracy-panel tracy-mode-window" id="' + this.elem.id + '">' + this.elem.innerHTML + '<\/div>';
 		evalScripts(doc.body, win);
 		if (this.elem.querySelector('h1')) {
-			doc.title = this.elem.querySelector('h1').innerHTML;
+			doc.title = this.elem.querySelector('h1').textContent;
 		}
 
 		var _this = this;
@@ -222,7 +223,6 @@
 		});
 
 		this.initTabs();
-		this.autoHideLabels();
 		this.restorePosition();
 	};
 
@@ -279,6 +279,7 @@
 				}
 			});
 		});
+		this.autoHideLabels();
 	};
 
 	Bar.prototype.autoHideLabels = function() {
@@ -314,11 +315,6 @@
 	Debug.panels = {};
 
 	Debug.init = function(content, dumps) {
-		if (!document.documentElement.dataset) {
-			console.log('Warning: Tracy requires IE 11+');
-			return;
-		}
-
 		layer.innerHTML = content;
 		evalScripts(layer);
 		Tracy.Dumper.init();
@@ -385,24 +381,31 @@
 		if (!header) {
 			return;
 		}
-		var oldOpen = XMLHttpRequest.prototype.open;
+		var oldOpen = XMLHttpRequest.prototype.open,
+			oldGet = XMLHttpRequest.prototype.getResponseHeader,
+			oldGetAll = XMLHttpRequest.prototype.getAllResponseHeaders;
+
 		XMLHttpRequest.prototype.open = function() {
 			oldOpen.apply(this, arguments);
-			if (window.TracyAutoRefresh !== false && arguments[1].indexOf('//') < 0 || arguments[1].indexOf(location.origin + '/') === 0) {
+			if (window.TracyAutoRefresh !== false && arguments[1].indexOf('//') <= 0 || arguments[1].indexOf(location.origin + '/') === 0) {
 				this.setRequestHeader('X-Tracy-Ajax', header);
 			}
 		};
-		var oldGet = XMLHttpRequest.prototype.getAllResponseHeaders;
-		XMLHttpRequest.prototype.getAllResponseHeaders = function() {
-			var headers = oldGet.call(this);
-			if (headers.match(/^X-Tracy-Ajax: 1/mi)) {
-				Debug.loadScript(
-					document.getElementById('tracy-debug-script').src.split('?')[0]
-					+ '?_tracy_bar=content-ajax.' + header + '&XDEBUG_SESSION_STOP=1&XDEBUG_PROFILE=0&XDEBUG_TRACE=0&v=' + Math.random()
-				);
-			}
-			return headers;
+		XMLHttpRequest.prototype.getResponseHeader = function() {
+			process(this);
+			return oldGet.apply(this, arguments);
 		};
+		XMLHttpRequest.prototype.getAllResponseHeaders = function() {
+			process(this);
+			return oldGetAll.call(this);
+		};
+		function process(xhr) {
+			xhr.getResponseHeader = oldGet;
+			xhr.getAllResponseHeaders = oldGetAll;
+			if (xhr.getAllResponseHeaders().match(/^X-Tracy-Ajax: 1/mi)) {
+				Debug.loadScript('?_tracy_bar=content-ajax.' + header + '&XDEBUG_SESSION_STOP=1&v=' + Math.random());
+			}
+		}
 	};
 
 	Debug.loadScript = function(url) {

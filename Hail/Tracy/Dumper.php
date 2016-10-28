@@ -95,6 +95,7 @@ class Dumper
 		];
 		$loc = & $options[self::LOCATION];
 		$loc = $loc === TRUE ? ~0 : (int) $loc;
+
 		$options[self::OBJECT_EXPORTERS] = (array) $options[self::OBJECT_EXPORTERS] + self::$objectExporters;
 		uksort($options[self::OBJECT_EXPORTERS], function ($a, $b) {
 			return $b === '' || (class_exists($a, FALSE) && is_subclass_of($a, $b)) ? -1 : 1;
@@ -412,24 +413,29 @@ class Dumper
 			$table["\t"] = '\t';
 		}
 
-		if (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $s) || preg_last_error()) {
-			if ($shortened = ($maxLength && strlen($s) > $maxLength)) {
-				$s = substr($s, 0, $maxLength);
-			}
-			$s = strtr($s, $table);
-
-		} elseif ($shortened = ($maxLength && strlen(utf8_decode($s)) > $maxLength)) {
-			if (function_exists('iconv_substr')) {
-				$s = iconv_substr($s, 0, $maxLength, 'UTF-8');
+		if ($maxLength && strlen($s) > $maxLength) { // shortens to $maxLength in UTF-8 or longer
+			if (function_exists('mb_substr')) {
+				$s = mb_substr($tmp = $s, 0, $maxLength, 'UTF-8');
+				$shortened = $s !== $tmp;
 			} else {
 				$i = $len = 0;
+				$maxI = $maxLength * 4; // max UTF-8 length
 				do {
-					if (($s[$i] < "\x80" || $s[$i] >= "\xC0") && (++$len > $maxLength)) {
+					if (($s[$i] < "\x80" || $s[$i] >= "\xC0") && (++$len > $maxLength) || $i >= $maxI) {
 						$s = substr($s, 0, $i);
+						$shortened = TRUE;
 						break;
 					}
 				} while (isset($s[++$i]));
 			}
+		}
+
+		if (preg_match('#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]#u', $s) || preg_last_error()) { // is binary?
+			if ($maxLength && strlen($s) > $maxLength) {
+				$s = substr($s, 0, $maxLength);
+				$shortened = TRUE;
+			}
+			$s = strtr($s, $table);
 		}
 
 		return $s . (empty($shortened) ? '' : ' ... ');

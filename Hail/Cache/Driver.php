@@ -73,7 +73,7 @@ abstract class Driver implements \ArrayAccess
 	 */
 	public function setNamespace($namespace)
 	{
-		$this->namespace = (string)$namespace;
+		$this->namespace = (string) $namespace;
 		$this->namespaceVersion = null;
 	}
 
@@ -103,6 +103,7 @@ abstract class Driver implements \ArrayAccess
 	 * Returns an associative array of values for keys is found in cache.
 	 *
 	 * @param string[] ...$keys Array of keys to retrieve from cache
+	 *
 	 * @return mixed[] Array of retrieved values, indexed by the specified keys.
 	 *                 Values that couldn't be retrieved are not contained in this array.
 	 */
@@ -140,24 +141,24 @@ abstract class Driver implements \ArrayAccess
 		return $this->doContains($this->getNamespacedId($id));
 	}
 
-    /**
-     * Returns a boolean value indicating if the operation succeeded.
-     *
-     * @param array $keysAndValues  Array of keys and values to save in cache
-     * @param int   $lifetime       The lifetime. If != 0, sets a specific lifetime for these
-     *                              cache entries (0 => infinite lifeTime).
-     *
-     * @return bool TRUE if the operation was successful, FALSE if it wasn't.
-     */
-    public function saveMultiple(array $keysAndValues, $lifetime = 0)
-    {
-        $namespacedKeysAndValues = array();
-        foreach ($keysAndValues as $key => $value) {
-            $namespacedKeysAndValues[$this->getNamespacedId($key)] = $value;
-        }
+	/**
+	 * Returns a boolean value indicating if the operation succeeded.
+	 *
+	 * @param array $keysAndValues Array of keys and values to save in cache
+	 * @param int $lifetime The lifetime. If != 0, sets a specific lifetime for these
+	 *                              cache entries (0 => infinite lifeTime).
+	 *
+	 * @return bool TRUE if the operation was successful, FALSE if it wasn't.
+	 */
+	public function saveMultiple(array $keysAndValues, $lifetime = 0)
+	{
+		$namespacedKeysAndValues = [];
+		foreach ($keysAndValues as $key => $value) {
+			$namespacedKeysAndValues[$this->getNamespacedId($key)] = $value;
+		}
 
-        return $this->doSaveMultiple($namespacedKeysAndValues, $lifetime);
-    }
+		return $this->doSaveMultiple($namespacedKeysAndValues, $lifetime);
+	}
 
 	/**
 	 * Puts data into the cache.
@@ -175,11 +176,13 @@ abstract class Driver implements \ArrayAccess
 	public function save($id, $data, $lifetime = null)
 	{
 		$lifetime = $this->getLifetime($lifetime);
+
 		return $this->doSave($this->getNamespacedId($id), $data, $lifetime);
 	}
 
 	/**
 	 * @param int|null $lifetime
+	 *
 	 * @return int
 	 */
 	public function getLifetime($lifetime = null)
@@ -202,6 +205,18 @@ abstract class Driver implements \ArrayAccess
 	public function delete($id)
 	{
 		return $this->doDelete($this->getNamespacedId($id));
+	}
+
+	/**
+	 * Deletes several cache entries.
+	 *
+	 * @param string[] $keys Array of keys to delete from cache
+	 *
+	 * @return bool TRUE if the operation was successful, FALSE if it wasn't.
+	 */
+	public function deleteMultiple(array $keys)
+	{
+		return $this->doDeleteMultiple(array_map([$this, 'getNamespacedId'], $keys));
 	}
 
 	/**
@@ -272,6 +287,7 @@ abstract class Driver implements \ArrayAccess
 	protected function getNamespacedId($id)
 	{
 		$version = $this->getNamespaceVersion();
+
 		return "{$this->namespace}[$version][$id]";
 	}
 
@@ -297,35 +313,37 @@ abstract class Driver implements \ArrayAccess
 		}
 
 		$namespaceCacheKey = $this->getNamespaceCacheKey();
+
 		return $this->namespaceVersion = $this->doFetch($namespaceCacheKey) ?: 1;
 	}
 
 	/**
-     * Default implementation of doSaveMultiple. Each driver that supports multi-put should overwrite it.
-     *
-     * @param array $keysAndValues  Array of keys and values to save in cache
-     * @param int   $lifetime       The lifetime. If != 0, sets a specific lifetime for these
-     *                              cache entries (0 => infinite lifeTime).
-     *
-     * @return bool TRUE if the operation was successful, FALSE if it wasn't.
-     */
-    protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
-    {
-        $success = true;
+	 * Default implementation of doSaveMultiple. Each driver that supports multi-put should overwrite it.
+	 *
+	 * @param array $keysAndValues Array of keys and values to save in cache
+	 * @param int $lifetime The lifetime. If != 0, sets a specific lifetime for these
+	 *                              cache entries (0 => infinite lifeTime).
+	 *
+	 * @return bool TRUE if the operation was successful, FALSE if it wasn't.
+	 */
+	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	{
+		$success = true;
 
-        foreach ($keysAndValues as $key => $value) {
-            if (!$this->doSave($key, $value, $lifetime)) {
-                $success = false;
-            }
-        }
+		foreach ($keysAndValues as $key => $value) {
+			if (!$this->doSave($key, $value, $lifetime)) {
+				$success = false;
+			}
+		}
 
-        return $success;
-    }
+		return $success;
+	}
 
 	/**
 	 * Default implementation of doFetchMultiple. Each driver that supports multi-get should owerwrite it.
 	 *
 	 * @param array $keys Array of keys to retrieve from cache
+	 *
 	 * @return array Array of values retrieved for the given keys.
 	 */
 	protected function doFetchMultiple(array $keys)
@@ -411,6 +429,26 @@ abstract class Driver implements \ArrayAccess
 	 * @return bool TRUE if the cache entry was successfully deleted, FALSE otherwise.
 	 */
 	abstract protected function doDelete($id);
+
+	/**
+	 * Default implementation of doDeleteMultiple. Each driver that supports multi-delete should override it.
+	 *
+	 * @param array $keys Array of keys to delete from cache
+	 *
+	 * @return bool TRUE if the operation was successful, FALSE if it wasn't
+	 */
+	protected function doDeleteMultiple(array $keys)
+	{
+		$success = true;
+
+		foreach ($keys as $key) {
+			if (!$this->doDelete($key)) {
+				$success = false;
+			}
+		}
+
+		return $success;
+	}
 
 	/**
 	 * Flushes all cache entries.

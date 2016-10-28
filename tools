@@ -2,13 +2,4 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 
-DI::set('console', function ($c) {
-	return new Hail\Console\Application(
-		'Hail Framework',
-		$c['config']->get('env.version')
-	);
-});
-
-DI::Alias()->alias('Console', 'Hail\\Facades\\Console');
-
 Console::run();

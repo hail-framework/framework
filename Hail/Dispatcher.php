@@ -64,6 +64,21 @@ class Dispatcher
 		$this->output($outputType, $return);
 	}
 
+	public function getApplication()
+	{
+		return $this->application;
+	}
+
+	public function getController()
+	{
+		return $this->current['controller'] ?? null;
+	}
+
+	public function getAction()
+	{
+		return $this->current['action'] ?? null;
+	}
+
 	public function getParam($key = null)
 	{
 		$params = $this->current['params'] ?? [];
@@ -85,10 +100,11 @@ class Dispatcher
 			return;
 		}
 
-		if ($this->request->getHeader('Origin') &&
-			($domain = $this->config->get('app.cross_origin'))
+		if (($origin = $this->request->getHeader('Origin')) &&
+			($allowOrigin = $this->config->get('app.allow_origin')) &&
+			in_array($origin, (array) $allowOrigin, true)
 		) {
-			$this->response->setOrigin($domain);
+			$this->response->setOrigin($origin);
 		}
 
 		if ($return === false) {
@@ -206,14 +222,5 @@ class Dispatcher
 				'message' => $msg,
 			],
 		]);
-	}
-
-	public function current($type = null)
-	{
-		if ($type === null) {
-			return $this->current;
-		}
-
-		return $this->current[$type] ?? null;
 	}
 }

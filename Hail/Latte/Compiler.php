@@ -6,7 +6,7 @@
  */
 
 namespace Hail\Latte;
-include 'exceptions.php';
+include __DIR__ . '/exceptions.php';
 
 /**
  * Latte compiler.

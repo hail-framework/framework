@@ -8,38 +8,34 @@ trait EmbeddedTrait
      *
      * @var mixed
      */
-    protected $cache;
+    protected static $_cache;
 
 	/**
 	 * EmbeddedTrait constructor.
 	 *
-	 * @param null|\Hail\DI $di
 	 */
-	public function __construct($di = null)
+	public function __construct()
 	{
-		$this->initCache($di);
+		self::initCache();
 	}
 
-	/**
-	 * @param null|\Hail\DI $di
-	 */
-    public function initCache($di = null)
+	protected static function initCache()
     {
-        if (null === $di) {
-            $cache = \DI::embedded();
-        } else {
-            $cache = $di['embedded'];
-        }
+	    if (self::$_cache !== null){
+		    return;
+	    }
+
+        $cache = \DI::embedded();
 
         if ($cache->check()) {
-            $this->cache = $cache;
+            self::$_cache = $cache;
         }
     }
 
-    public function getCache($key)
+	protected function cacheGet($key)
     {
-        if (!empty($this->cache)) {
-            return $this->cache->get(
+        if (self::$_cache !== null) {
+            return self::$_cache->get(
                 $this->cacheName($key)
             );
         }
@@ -47,10 +43,10 @@ trait EmbeddedTrait
         return null;
     }
 
-    public function setCache($key, $value)
+	protected function cacheSet($key, $value)
     {
-        if (!empty($this->cache)) {
-            $this->cache->set(
+        if (self::$_cache !== null) {
+	        self::$_cache->set(
                 $this->cacheName($key), $value
             );
         }
@@ -64,12 +60,12 @@ trait EmbeddedTrait
      * @param $key string
      * @return string
      */
-    public function cacheName($key)
+	protected function cacheName($key)
     {
         return __CLASS__ . '/' . $key;
     }
 
-	public function updateCheck($key, $file)
+	protected function cacheUpdateCheck($key, $file)
 	{
 		if (EMBEDDED_CACHE_CHECK_DELAY === 0) {
 			return true;
@@ -78,15 +74,15 @@ trait EmbeddedTrait
 		/**
 		 * @var null|array $check
 		 */
-		$check = $this->getCache($key . '/time');
-		if ($check) {
+		$check = $this->cacheGet($key . '/time');
+		if ($check !== false) {
 			if (NOW >= ($check[0] + EMBEDDED_CACHE_CHECK_DELAY)) {
 				if (!file_exists($file) || filemtime($file) !== $check[1]) {
 					return false;
 				}
 
 				$check[0] = NOW;
-				$this->setCache($key . '/time', $check);
+				$this->cacheSet($key . '/time', $check);
 			}
 			return true;
 		}
@@ -94,8 +90,8 @@ trait EmbeddedTrait
 		return false;
 	}
 
-	public function setTime($key, $file)
+	protected function cacheSetTime($key, $file)
 	{
-		$this->setCache($key . '/time', [NOW, filemtime($file)]);
+		$this->cacheSet($key . '/time', [NOW, filemtime($file)]);
 	}
 }

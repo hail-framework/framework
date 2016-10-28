@@ -6,6 +6,7 @@ use Hail\Cache\Driver;
 
 /**
  * Class Cache
+ *
  * @package Hail
  */
 class Cache extends Driver
@@ -30,10 +31,10 @@ class Cache extends Driver
 				case 'array':
 				case 'zend':
 					$k = ucfirst($k) . 'Data';
-					break;
+				break;
 				case 'apc':
 					$k = 'Apcu';
-					break;
+				break;
 				default:
 					$k = ucfirst($k);
 			}
@@ -83,6 +84,30 @@ class Cache extends Driver
 	}
 
 	/**
+	 * {@inheritdoc}
+	 */
+	protected function doFetchMultiple(array $keys)
+	{
+		$count = count($keys);
+		$values = [];
+
+		foreach ($this->drivers as $key => $driver) {
+			$values = $driver->doFetchMultiple($keys);
+
+			// We populate all the previous cache layers (that are assumed to be faster)
+			if (count($values) === $count) {
+				for ($subKey = $key - 1; $subKey >= 0; $subKey--) {
+					$this->$driver[$subKey]->doSaveMultiple($values);
+				}
+
+				return $values;
+			}
+		}
+
+		return $values;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	protected function doContains($id)
@@ -112,6 +137,20 @@ class Cache extends Driver
 	}
 
 	/**
+	 * {@inheritdoc}
+	 */
+	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	{
+		$stored = true;
+
+		foreach ($this->drivers as $driver) {
+			$stored = $driver->doSaveMultiple($keysAndValues, $lifetime) && $stored;
+		}
+
+		return $stored;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	protected function doDelete($id)
@@ -120,6 +159,20 @@ class Cache extends Driver
 
 		foreach ($this->drivers as $driver) {
 			$deleted = $driver->doDelete($id) && $deleted;
+		}
+
+		return $deleted;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doDeleteMultiple(array $keys)
+	{
+		$deleted = true;
+
+		foreach ($this->drivers as $driver) {
+			$deleted = $driver->doDeleteMultiple($keys) && $deleted;
 		}
 
 		return $deleted;
@@ -145,7 +198,7 @@ class Cache extends Driver
 	protected function doGetStats()
 	{
 		// We return all the stats from all adapters
-		$stats = array();
+		$stats = [];
 
 		foreach ($this->drivers as $driver) {
 			$stats[] = $driver->doGetStats();

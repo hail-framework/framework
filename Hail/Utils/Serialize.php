@@ -8,6 +8,8 @@
 
 namespace Hail\Utils;
 
+use Hail\Facades\Config;
+
 class Serialize
 {
 	private static $mode = 'php_serialize';
@@ -17,14 +19,24 @@ class Serialize
 
 	public static function init()
 	{
-		if (extension_loaded('msgpack')) {
-			self::$mode = 'msgpack';
-			self::$encode = 'msgpack_pack';
-			self::$decode = 'msgpack_unpack';
-		} else if (extension_loaded('igbinary')) {
-			self::$mode = 'igbinary';
-			self::$encode = 'igbinary_serialize';
-			self::$decode = 'igbinary_unserialize';
+		$type = Config::get('app.serialize');
+
+		switch ($type) {
+			case 'msgpack':
+				if (extension_loaded('msgpack')) {
+					self::$mode = 'msgpack';
+					self::$encode = 'msgpack_pack';
+					self::$decode = 'msgpack_unpack';
+				}
+			break;
+
+			case 'igbinary':
+				if (extension_loaded('igbinary')) {
+					self::$mode = 'igbinary';
+					self::$encode = 'igbinary_serialize';
+					self::$decode = 'igbinary_unserialize';
+				}
+			break;
 		}
 	}
 
@@ -62,7 +74,7 @@ class Serialize
 	}
 
 	public static function encodeArray($array) {
-		return array_map([self::class, 'encode'], $array);
+		return array_map(self::$encode, $array);
 	}
 
 	public static function decodeArray($array) {

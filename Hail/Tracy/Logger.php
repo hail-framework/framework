@@ -83,15 +83,15 @@ class Logger implements LoggerInterface
 	 */
 	protected function formatMessage($message)
 	{
-		if ($message instanceof \Exception || $message instanceof \Throwable) {
+		if ($message instanceof \Throwable) {
 			while ($message) {
 				$tmp[] = ($message instanceof \ErrorException
 					? Helpers::errorTypeToString($message->getSeverity()) . ': ' . $message->getMessage()
-					: Helpers::getClass($message) . ': ' . $message->getMessage()
+					: Helpers::getClass($message) . ': ' . $message->getMessage() . ($message->getCode() ? ' #' . $message->getCode() : '')
 				) . ' in ' . $message->getFile() . ':' . $message->getLine();
 				$message = $message->getPrevious();
 			}
-			$message = implode($tmp, "\ncaused by ");
+			$message = implode("\ncaused by ", $tmp);
 
 		} elseif (!is_string($message)) {
 			$message = Dumper::toText($message);
@@ -122,8 +122,15 @@ class Logger implements LoggerInterface
 	 */
 	public function getExceptionFile($exception)
 	{
+		while ($exception) {
+			$data[] = [
+				$exception->getMessage(), $exception->getCode(), $exception->getFile(), $exception->getLine(),
+				array_map(function ($item) { unset($item['args']); return $item; }, $exception->getTrace()),
+			];
+			$exception = $exception->getPrevious();
+		}
+		$hash = substr(md5(serialize($data)), 0, 10);
 		$dir = strtr($this->directory . '/', '\\/', DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR);
-		$hash = substr(md5(preg_replace('~(Resource id #)\d+~', '$1', $exception)), 0, 10);
 		foreach (new \DirectoryIterator($this->directory) as $file) {
 			if (strpos($file, $hash)) {
 				return $dir . $file;

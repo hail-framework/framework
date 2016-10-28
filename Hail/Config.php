@@ -115,8 +115,8 @@ class Config implements \ArrayAccess
 			return $this->items[$space];
 		}
 
-		if ($this->updateCheck($space, $this->file($space))) {
-			$config = $this->getCache($space);
+		if ($this->cacheUpdateCheck($space, $this->file($space))) {
+			$config = $this->cacheGet($space);
 			if (is_array($config)) {
 				return $this->items[$space] = $config;
 			}
@@ -137,8 +137,8 @@ class Config implements \ArrayAccess
 		}
 
 		$array = require $file;
-		$this->setCache($space, $array);
-		$this->setTime($space, $file);
+		$this->cacheSet($space, $array);
+		$this->cacheSetTime($space, $file);
 
 		return $this->items[$space] = $array;
 	}

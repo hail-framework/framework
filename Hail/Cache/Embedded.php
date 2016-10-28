@@ -21,11 +21,11 @@ class Embedded
 
     public function __construct($ext = 'auto')
     {
-        if (empty($ext) || $ext == 'none') {
+        if (empty($ext) || $ext === 'none') {
             return;
         }
 
-        $check = ['apcu', 'xcache', 'yac', 'pcache', 'wincache'];
+        $check = ['yac', 'pcache', 'xcache', 'wincache', 'apcu'];
         if (in_array($ext, $check, true)) {
             $check = [$ext];
         }
@@ -38,33 +38,27 @@ class Embedded
         }
 
         switch($this->type) {
-            case 'apcu':
-                $this->fun = [
-                    'set' => 'apcu_store',
-                    'get' => 'apcu_fetch',
-                ];
-                return;
+	        case 'yac':
+		        $yac = new \Yac();
+		        $this->fun = [
+			        'set' => function($key, $value) use ($yac) {
+				        return $yac->set($key, $value);
+			        },
+			        'get' => function($key) use ($yac) {
+				        return $yac->get($key);
+			        },
+		        ];
+		        return;
+	        case 'pcache':
+		        $this->fun = [
+			        'set' => 'pcache_set',
+			        'get' => 'pcache_get',
+		        ];
+		        return;
             case 'xcache':
                 $this->fun = [
                     'set' => 'xcache_set',
                     'get' => 'xcache_get',
-                ];
-                return;
-            case 'yac':
-                $yac = new \Yac();
-                $this->fun = [
-                    'set' => function($key, $value) use ($yac) {
-                        return $yac->set($key, $value);
-                    },
-                    'get' => function($key) use ($yac) {
-                        return $yac->get($key);
-                    },
-                ];
-                return;
-            case 'pcache':
-                $this->fun = [
-                    'set' => 'pcache_set',
-                    'get' => 'pcache_get',
                 ];
                 return;
             case 'wincache':
@@ -72,6 +66,13 @@ class Embedded
                     'set' => 'wincache_ucache_set',
                     'get' => 'wincache_ucache_get',
                 ];
+		        return;
+	        case 'apcu':
+		        $this->fun = [
+			        'set' => 'apcu_store',
+			        'get' => 'apcu_fetch',
+		        ];
+		        return;
             default:
                 return;
         }
@@ -121,11 +122,8 @@ class Embedded
 
 	protected function key($key)
 	{
-		switch($this->type) {
-			case 'yac':
-				if (strlen($key) > YAC_MAX_KEY_LEN) {
-					$key = hash('md4', $key);
-				}
+		if ($this->type === 'yac' && strlen($key) > YAC_MAX_KEY_LEN) {
+			$key = hash('sha1', $key);
 		}
 
 		return $key;

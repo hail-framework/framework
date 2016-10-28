@@ -8,15 +8,15 @@
  */
 return [
 	'Panel' => [
-		'/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}/{do}',
-		'/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}',
-		'/{controller:[a-zA-Z\-]+}',
+		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}/{do}',
+		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}',
+		'/{controller:[a-zA-Z0-9]+}',
 		'/',
 	],
 	'Api' => [
-		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}/{do}',
-		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}/{action:[a-zA-Z\-]+}',
-		'/{version:v[0-9]+}/{controller:[a-zA-Z\-]+}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}/{do}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}',
+		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}',
 		'/{version:v[0-9]+}',
 	],
 ];

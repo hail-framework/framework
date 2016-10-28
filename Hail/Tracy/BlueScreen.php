@@ -22,16 +22,16 @@ class BlueScreen
 	/** @var string[] paths to be collapsed in stack trace (e.g. core libraries) */
 	public $collapsePaths = [];
 
-	/** @var int  */
+	/** @var int */
 	public $maxDepth = 3;
 
-	/** @var int  */
+	/** @var int */
 	public $maxLength = 150;
 
 
 	public function __construct()
 	{
-		$this->collapsePaths[] = preg_match('#(.+/vendor)/tracy/tracy/src/Tracy$#', strtr(__DIR__, '\\', '/'), $m)
+		$this->collapsePaths[] = preg_match('#(.+/vendor)/tracy/tracy/src/Tracy$#', str_replace('\\', '/', __DIR__), $m)
 			? $m[1]
 			: __DIR__;
 	}
@@ -39,31 +39,37 @@ class BlueScreen
 
 	/**
 	 * Add custom panel.
+	 *
 	 * @param  callable
+	 *
 	 * @return self
 	 */
 	public function addPanel($panel)
 	{
-		if (!in_array($panel, $this->panels, TRUE)) {
+		if (!in_array($panel, $this->panels, true)) {
 			$this->panels[] = $panel;
 		}
+
 		return $this;
 	}
 
 
 	/**
 	 * Renders blue screen.
+	 *
 	 * @param  \Exception|\Throwable
+	 *
 	 * @return void
 	 */
 	public function render($exception)
 	{
 		if (Helpers::isAjax() && session_status() === PHP_SESSION_ACTIVE) {
-			ob_start(function () {});
+			ob_start(function () {
+			});
 			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/content.phtml');
 			$contentId = $_SERVER['HTTP_X_TRACY_AJAX'];
-			$queue = & $_SESSION['_tracy']['bluescreen'];
-			$queue = array_slice(array_filter((array) $queue), -5, NULL, TRUE);
+			$queue = &$_SESSION['_tracy']['bluescreen'];
+			$queue = array_slice(array_filter((array) $queue), -5, null, true);
 			$queue[$contentId] = ['content' => ob_get_clean(), 'dumps' => Dumper::fetchLiveData()];
 
 		} else {
@@ -74,15 +80,19 @@ class BlueScreen
 
 	/**
 	 * Renders blue screen to file (if file exists, it will not be overwritten).
+	 *
 	 * @param  \Exception|\Throwable
 	 * @param  string file path
+	 *
 	 * @return void
 	 */
 	public function renderToFile($exception, $file)
 	{
 		if ($handle = @fopen($file, 'x')) {
 			ob_start(); // double buffer prevents sending HTTP headers in some PHP
-			ob_start(function ($buffer) use ($handle) { fwrite($handle, $buffer); }, 4096);
+			ob_start(function ($buffer) use ($handle) {
+				fwrite($handle, $buffer);
+			}, 4096);
 			$this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
 			ob_end_flush();
 			ob_end_clean();
@@ -93,7 +103,6 @@ class BlueScreen
 
 	private function renderTemplate($exception, $template)
 	{
-		$panels = $this->panels;
 		$info = array_filter($this->info);
 		$source = Helpers::getSource();
 		$sourceIsUrl = preg_match('#^https?://#', $source);
@@ -102,13 +111,13 @@ class BlueScreen
 			: Helpers::getClass($exception);
 		$skipError = $sourceIsUrl && $exception instanceof \ErrorException && !empty($exception->skippable)
 			? $source . (strpos($source, '?') ? '&' : '?') . '_tracy_skip_error'
-			: NULL;
-		$lastError = $exception instanceof \ErrorException || $exception instanceof \Error ? NULL : error_get_last();
-		$dump = function($v) {
+			: null;
+		$lastError = $exception instanceof \ErrorException || $exception instanceof \Error ? null : error_get_last();
+		$dump = function ($v) {
 			return Dumper::toHtml($v, [
 				Dumper::DEPTH => $this->maxDepth,
 				Dumper::TRUNCATE => $this->maxLength,
-				Dumper::LIVE => TRUE,
+				Dumper::LIVE => true,
 				Dumper::LOCATION => Dumper::LOCATION_CLASS,
 			]);
 		};
@@ -118,13 +127,47 @@ class BlueScreen
 
 
 	/**
+	 * @return \stdClass[]
+	 */
+	private function renderPanels($ex)
+	{
+		$obLevel = ob_get_level();
+		$res = [];
+		foreach ($this->panels as $callback) {
+			try {
+				$panel = call_user_func($callback, $ex);
+				if (empty($panel['tab']) || empty($panel['panel'])) {
+					continue;
+				}
+				$res[] = (object) $panel;
+				continue;
+			} catch (\Throwable $e) {
+			} catch (\Exception $e) {
+			}
+			while (ob_get_level() > $obLevel) { // restore ob-level if broken
+				ob_end_clean();
+			}
+			is_callable($callback, true, $name);
+			$res[] = (object) [
+				'tab' => "Error in panel $name",
+				'panel' => nl2br(Helpers::escapeHtml($e)),
+			];
+		}
+
+		return $res;
+	}
+
+
+	/**
 	 * Returns syntax highlighted source code.
+	 *
 	 * @param  string
 	 * @param  int
 	 * @param  int
+	 *
 	 * @return string|NULL
 	 */
-	public static function highlightFile($file, $line, $lines = 15, array $vars = NULL)
+	public static function highlightFile($file, $line, $lines = 15, array $vars = null)
 	{
 		$source = @file_get_contents($file); // @ file may not exist
 		if ($source) {
@@ -132,6 +175,7 @@ class BlueScreen
 			if ($editor = Helpers::editorUri($file, $line)) {
 				$source = substr_replace($source, ' data-tracy-href="' . Helpers::escapeHtml($editor) . '"', 4, 0);
 			}
+
 			return $source;
 		}
 	}
@@ -139,12 +183,14 @@ class BlueScreen
 
 	/**
 	 * Returns syntax highlighted source code.
+	 *
 	 * @param  string
 	 * @param  int
 	 * @param  int
+	 *
 	 * @return string
 	 */
-	public static function highlightPhp($source, $line, $lines = 15, array $vars = NULL)
+	public static function highlightPhp($source, $line, $lines = 15, array $vars = null)
 	{
 		if (function_exists('ini_set')) {
 			ini_set('highlight.comment', '#998; font-style: italic');
@@ -155,7 +201,7 @@ class BlueScreen
 		}
 
 		$source = str_replace(["\r\n", "\r"], "\n", $source);
-		$source = explode("\n", highlight_string($source, TRUE));
+		$source = explode("\n", highlight_string($source, true));
 		$out = $source[0]; // <code><span color=highlight.html>
 		$source = str_replace('<br />', "\n", $source[1]);
 		$out .= static::highlightLine($source, $line, $lines);
@@ -164,20 +210,21 @@ class BlueScreen
 			$out = preg_replace_callback('#">\$(\w+)(&nbsp;)?</span>#', function ($m) use ($vars) {
 				return array_key_exists($m[1], $vars)
 					? '" title="'
-						. str_replace('"', '&quot;', trim(strip_tags(Dumper::toHtml($vars[$m[1]], [Dumper::DEPTH => 1]))))
-						. $m[0]
+					. str_replace('"', '&quot;', trim(strip_tags(Dumper::toHtml($vars[$m[1]], [Dumper::DEPTH => 1]))))
+					. $m[0]
 					: $m[0];
 			}, $out);
 		}
 
 		$out = str_replace('&nbsp;', ' ', $out);
+
 		return "<pre class='code'><div>$out</div></pre>";
 	}
 
 
-
 	/**
 	 * Returns highlighted line in HTML code.
+	 *
 	 * @return string
 	 */
 	public static function highlightLine($html, $line, $lines = 15)
@@ -196,7 +243,7 @@ class BlueScreen
 			}
 		}
 
-		$source = array_slice($source, $start, $lines, TRUE);
+		$source = array_slice($source, $start, $lines, true);
 		end($source);
 		$numWidth = strlen((string) key($source));
 
@@ -216,25 +263,29 @@ class BlueScreen
 			}
 		}
 		$out .= str_repeat('</span>', $spans) . '</code>';
+
 		return $out;
 	}
 
 
 	/**
 	 * Should a file be collapsed in stack trace?
+	 *
 	 * @param  string
+	 *
 	 * @return bool
 	 */
 	public function isCollapsed($file)
 	{
-		$file = strtr($file, '\\', '/') . '/';
+		$file = str_replace('\\', '/', $file) . '/';
 		foreach ($this->collapsePaths as $path) {
-			$path = strtr($path, '\\', '/') . '/';
-			if (strncmp($file, $path, strlen($path)) === 0) {
-				return TRUE;
+			$path = str_replace('\\', '/', $path) . '/';
+			if (strpos($file, $path) === 0) {
+				return true;
 			}
 		}
-		return FALSE;
+
+		return false;
 	}
 
 }

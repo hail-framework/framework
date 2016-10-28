@@ -21,7 +21,6 @@ namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
 use Hail\Utils\Serialize;
-use \Redis as RedisExt;
 
 /**
  * Redis cache provider.
@@ -38,8 +37,22 @@ class Redis extends Driver
 	 */
 	private $redis;
 
+	// use php-cp extension
+	protected $extConnectPool = false;
+
+	protected function release()
+	{
+		if ($this->extConnectPool) {
+			$this->redis->release();
+		}
+	}
+
 	public function __construct($params)
 	{
+		$params = array_merge(
+			\Config::get('redis'), $params
+		);
+
 		if (isset($params['servers'])) {
 			$paramServers = (array) $params['servers'];
 			unset($params['servers']);
@@ -56,8 +69,12 @@ class Redis extends Driver
 			}
 		} else {
 			$servers = [
-				['host' => '127.0.0.1', 'port' => 6379]
+				['host' => '127.0.0.1', 'port' => 6379],
 			];
+		}
+
+		if ($params['extConnectPool']) {
+			$this->extConnectPool = count($servers) === 1 && class_exists('\redisProxy');
 		}
 
 		// this will have to be revisited to support multiple servers, using
@@ -65,7 +82,7 @@ class Redis extends Driver
 		// most of the class will be the same even after the changes.
 		if (count($servers) === 1) {
 			$server = $servers[0];
-			$redis = new \Redis();
+			$redis = $this->extConnectPool ? new \redisProxy() : new \Redis();
 			if (!empty($server['socket'])) {
 				$redis->connect($server['socket']);
 			} else {
@@ -78,7 +95,7 @@ class Redis extends Driver
 			}
 			$this->redis = $redis;
 		} else {
-			$options = array();
+			$options = [];
 			foreach (
 				[
 					'previous',
@@ -112,7 +129,8 @@ class Redis extends Driver
 		if (isset($params['database'])) {
 			$redis->select($params['database']);
 		}
-		$redis->setOption(RedisExt::OPT_SERIALIZER, RedisExt::SERIALIZER_NONE);
+
+		$redis->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_NONE);
 		$this->redis = $redis;
 
 		parent::__construct($params);
@@ -133,9 +151,12 @@ class Redis extends Driver
 	 */
 	protected function doFetch($id)
 	{
-		return Serialize::decode(
+		$return = Serialize::decode(
 			$this->redis->get($id)
 		);
+		$this->release();
+
+		return $return;
 	}
 
 	/**
@@ -145,20 +166,21 @@ class Redis extends Driver
 	{
 		$success = true;
 
-		if (!$lifetime) {
+		$lifetime = (int) $lifetime;
+		if ($lifetime > 0) {
+			// Keys have lifetime, use SETEX for each of them
+			foreach ($keysAndValues as $key => $value) {
+				if (!$this->redis->setex($key, $lifetime, Serialize::encode($value))) {
+					$success = false;
+				}
+				$this->release();
+			}
+		} else {
 			// No lifetime, use MSET
 			$success = $this->redis->mset(
 				Serialize::encodeArray($keysAndValues)
 			);
-		} else {
-			// Keys have lifetime, use SETEX for each of them
-			foreach ($keysAndValues as $key => $value) {
-				if (!$this->redis->setex($key, $lifetime,
-					Serialize::encode($value)
-				)) {
-					$success = false;
-				}
-			}
+			$this->release();
 		}
 
 		return $success;
@@ -172,13 +194,14 @@ class Redis extends Driver
 		$fetchedItems = array_combine($keys, $this->redis->mget($keys));
 
 		// Redis mget returns false for keys that do not exist. So we need to filter those out unless it's the real data.
-		$foundItems = array();
+		$foundItems = [];
 
 		foreach ($fetchedItems as $key => $value) {
 			$value = Serialize::decode($value);
 			if (false !== $value || $this->redis->exists($key)) {
 				$foundItems[$key] = $value;
 			}
+			$this->release();
 		}
 
 		return $foundItems;
@@ -189,7 +212,10 @@ class Redis extends Driver
 	 */
 	protected function doContains($id)
 	{
-		return $this->redis->exists($id);
+		$return = $this->redis->exists($id);
+		$this->release();
+
+		return $return;
 	}
 
 	/**
@@ -199,10 +225,13 @@ class Redis extends Driver
 	{
 		$data = Serialize::encode($data);
 		if ($lifetime > 0) {
-			return $this->redis->setex($id, $lifetime, $data);
+			$return = $this->redis->setex($id, $lifetime, $data);
+		} else {
+			$return = $this->redis->set($id, $data);
 		}
+		$this->release();
 
-		return $this->redis->set($id, $data);
+		return $return;
 	}
 
 	/**
@@ -210,7 +239,10 @@ class Redis extends Driver
 	 */
 	protected function doDelete($id)
 	{
-		return $this->redis->delete($id) >= 0;
+		$return = $this->redis->delete($id);
+		$this->release();
+
+		return $return >= 0;
 	}
 
 	/**
@@ -218,7 +250,10 @@ class Redis extends Driver
 	 */
 	protected function doFlush()
 	{
-		return $this->redis->flushDB();
+		$return = $this->redis->flushDB();
+		$this->release();
+
+		return $return;
 	}
 
 	/**
@@ -227,12 +262,14 @@ class Redis extends Driver
 	protected function doGetStats()
 	{
 		$info = $this->redis->info();
-		return array(
+		$this->release();
+
+		return [
 			Driver::STATS_HITS => $info['keyspace_hits'],
 			Driver::STATS_MISSES => $info['keyspace_misses'],
 			Driver::STATS_UPTIME => $info['uptime_in_seconds'],
 			Driver::STATS_MEMORY_USAGE => $info['used_memory'],
-			Driver::STATS_MEMORY_AVAILABLE => false
-		);
+			Driver::STATS_MEMORY_AVAILABLE => false,
+		];
 	}
 }

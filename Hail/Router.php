@@ -17,6 +17,12 @@ class Router
 	private $routes = ['childs' => [], 'regexps' => []];
 	private $result = [];
 
+	public function __construct($config)
+	{
+		self::initCache();
+		$this->addRoutes($config);
+	}
+
 	private function match($url)
 	{
 		$parts = explode('?', $url, 2);
@@ -61,12 +67,12 @@ class Router
 	/**
 	 * @param array $config
 	 */
-	public function addRoutes($config)
+	protected function addRoutes($config)
 	{
-		$sign = hash('md4', json_encode($config));
-		$check = $this->getCache('routes_sign');
+		$sign = hash('sha1', json_encode($config));
+		$check = $this->cacheGet('routes_sign');
 		if (is_string($check) && $check === $sign) {
-			$this->routes = $this->getCache('routes');
+			$this->routes = $this->cacheGet('routes');
 			return;
 		}
 
@@ -93,11 +99,11 @@ class Router
 				$this->addRoute($methods, $route, $handler);
 			}
 		}
-		$this->setCache('routes', $this->routes);
-		$this->setCache('routes_sign', $sign);
+		$this->cacheSet('routes', $this->routes);
+		$this->cacheSet('routes_sign', $sign);
 	}
 
-	private function addRoute($methods, $route, $handler)
+	public function addRoute($methods, $route, $handler)
 	{
 		$methods = (array)$methods;
 

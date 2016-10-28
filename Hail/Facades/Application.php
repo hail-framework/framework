@@ -11,5 +11,10 @@ namespace Hail\Facades;
 
 class Application extends Facade
 {
-	protected static $name = 'App';
+	protected static $name = 'app';
+
+	protected static function instance()
+	{
+		return new \Hail\Application();
+	}
 }

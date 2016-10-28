@@ -49,6 +49,7 @@ class Gettext
 	 *
 	 * @param string $locale
 	 * @param string $domain
+	 *
 	 * @return void
 	 */
 	private function parse($locale, $domain)
@@ -57,10 +58,11 @@ class Gettext
 		$mo = "{$this->dir}/{$locale}/LC_MESSAGES/{$domain}.mo";
 
 		$cache_key = "$locale/$domain";
-		if ($this->updateCheck($cache_key, $mo)) {
-			$array = $this->getCache($cache_key);
+		if ($this->cacheUpdateCheck($cache_key, $mo)) {
+			$array = $this->cacheGet($cache_key);
 			if (is_array($array)) {
 				$this->translationTable[$locale][$domain] = $array;
+
 				return;
 			}
 		}
@@ -72,8 +74,8 @@ class Gettext
 			$this->parseFile($mo, $locale, $domain);
 		}
 
-		$this->setCache($cache_key, $this->translationTable[$locale][$domain]);
-		$this->setTime($cache_key, $mo);
+		$this->cacheSet($cache_key, $this->translationTable[$locale][$domain]);
+		$this->cacheSetTime($cache_key, $mo);
 	}
 
 
@@ -85,14 +87,16 @@ class Gettext
 	 * as we need to get close to ext/gettexts beahvior.
 	 *
 	 * @param resource $fp The open file handler to the MO file
+	 *
 	 * @return array An array of offset
 	 */
 	private function parseHeader($fp)
 	{
-		$data   = fread($fp, 8);
+		$data = fread($fp, 8);
 		$header = unpack('lmagic/lrevision', $data);
 		if ((int) self::MAGIC1 != $header['magic']
-			&& (int) self::MAGIC2 != $header['magic']) {
+			&& (int) self::MAGIC2 != $header['magic']
+		) {
 			return null;
 		}
 		if (0 != $header['revision']) {
@@ -100,6 +104,7 @@ class Gettext
 		}
 		$data = fread($fp, 4 * 5);
 		$offsets = unpack('lnum_strings/lorig_offset/ltrans_offset/lhash_size/lhash_offset', $data);
+
 		return $offsets;
 	}
 
@@ -114,6 +119,7 @@ class Gettext
 	 * @param resource $fp The open file handler to the MO file
 	 * @param int $offset The offset to the table that should be parsed
 	 * @param int $num The number of strings to parse1
+	 *
 	 * @return array Array of offsets
 	 */
 	private function parseOffsetTable($fp, $offset, $num)
@@ -123,9 +129,10 @@ class Gettext
 		}
 		$table = [];
 		for ($i = 0; $i < $num; $i++) {
-			$data    = fread($fp, 8);
+			$data = fread($fp, 8);
 			$table[] = unpack('lsize/loffset', $data);
 		}
+
 		return $table;
 	}
 
@@ -133,8 +140,9 @@ class Gettext
 	 * Parse a string as referenced by an table. Returns an
 	 * array with the actual string.
 	 *
-	 * @param resource $fp    The open file handler to the MO fie
+	 * @param resource $fp The open file handler to the MO fie
 	 * @param array $entry The entry as parsed by parseOffsetTable()
+	 *
 	 * @return string Parsed string
 	 */
 	private function parseEntry($fp, $entry)
@@ -145,11 +153,13 @@ class Gettext
 		if ($entry['size'] > 0) {
 			return fread($fp, $entry['size']);
 		}
+
 		return '';
 	}
 
 	/**
 	 * generate a file to cache
+	 *
 	 * @param string $file .mo file
 	 * @param string $locale locale
 	 * @param string $domain domain
@@ -160,12 +170,14 @@ class Gettext
 		$offsets = $this->parseHeader($fp);
 		if (null == $offsets || filesize($file) < 4 * ($offsets['num_strings'] + 7)) {
 			fclose($fp);
+
 			return;
 		}
 
 		$table = $this->parseOffsetTable($fp, $offsets['trans_offset'], $offsets['num_strings']);
 		if (null == $table) {
 			fclose($fp);
+
 			return;
 		}
 		$this->generateTables($fp, $locale, $domain, $table, $offsets);
@@ -192,7 +204,7 @@ class Gettext
 			$entry = $this->parseEntry($fp, $entry);
 			$formes = explode(chr(0), $entry);
 			$translation = explode(chr(0), $transTable[$idx]);
-			foreach($formes as $form) {
+			foreach ($formes as $form) {
 				$this->translationTable[$locale][$domain][$form] = $translation;
 			}
 		}
@@ -205,6 +217,7 @@ class Gettext
 	 * will be returned.
 	 *
 	 * @param string $msg
+	 *
 	 * @return string Translated message
 	 */
 	public function gettext($msg)
@@ -212,6 +225,7 @@ class Gettext
 		if (isset($this->translationTable[$this->locale][$this->domain][$msg])) {
 			return $this->translationTable[$this->locale][$this->domain][$msg][0];
 		}
+
 		return $msg;
 	}
 
@@ -223,6 +237,7 @@ class Gettext
 	 *
 	 * @param string $domain The domain to search in
 	 * @param string $msg The message to search for
+	 *
 	 * @return string Translated string
 	 */
 	public function dgettext($domain, $msg)
@@ -233,6 +248,7 @@ class Gettext
 		if (isset($this->translationTable[$this->locale][$domain][$msg])) {
 			return $this->translationTable[$this->locale][$domain][$msg][0];
 		}
+
 		return $msg;
 	}
 
@@ -260,6 +276,7 @@ class Gettext
 			} else {
 				$count = min(count($translation), $count);
 			}
+
 			return $translation[$count - 1];
 		}
 		/* not found, handle count */
@@ -269,6 +286,7 @@ class Gettext
 			return $msg_plural;
 		}
 	}
+
 	/**
 	 * Override the current domain for a single plural message lookup
 	 *
@@ -296,6 +314,7 @@ class Gettext
 			if ($count <= 0 || count($translation) < $count) {
 				$count = count($translation);
 			}
+
 			return $translation[$count - 1];
 		}
 		/* not found, handle count */

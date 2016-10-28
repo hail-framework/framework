@@ -19,32 +19,29 @@ class Generator
 	 *
 	 * @param  int
 	 * @param  string
+	 *
 	 * @return string
+	 * @throws \InvalidArgumentException
 	 */
-	public static function random($length = 10, $charlist = '0-9a-zA-Z')
+	public static function random(int $length = 10, string $charList = '0-9a-zA-Z') :string
 	{
-		if ($length === 0) {
-			return ''; // mcrypt_create_iv does not support zero length
-		}
-
-		$charlist = str_shuffle(preg_replace_callback('#.-.#', function ($m) {
+		$charList = count_chars(preg_replace_callback('#.-.#', function (array $m) {
 			return implode('', range($m[0][0], $m[0][2]));
-		}, $charlist));
-		$chLen = strlen($charlist);
+		}, $charList), 3);
+		$chLen = strlen($charList);
 
-		$rand3 = random_bytes($length);
-
-		$s = '';
-		for ($i = 0; $i < $length; $i++) {
-			if ($i % 5 === 0) {
-				list($rand, $rand2) = explode(' ', microtime());
-				$rand += lcg_value();
-			}
-			$rand *= $chLen;
-			$s .= $charlist[($rand + $rand2 + ord($rand3[$i % strlen($rand3)])) % $chLen];
-			$rand -= (int) $rand;
+		if ($length < 1) {
+			throw new \InvalidArgumentException('Length must be greater than zero.');
+		} elseif ($chLen < 2) {
+			throw new \InvalidArgumentException('Character list must contain as least two chars.');
 		}
-		return $s;
+
+		$res = '';
+		for ($i = 0; $i < $length; $i++) {
+			$res .= $charList[random_int(0, $chLen - 1)];
+		}
+
+		return $res;
 	}
 
 	public static function unique()
@@ -177,7 +174,6 @@ class Generator
 
 	public static function isUUID($uuid)
 	{
-		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?' .
-			'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
+		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
 	}
 }

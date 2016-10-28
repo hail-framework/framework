@@ -83,6 +83,14 @@ class Memcache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
+	protected function doFetchMultiple(array $keys)
+	{
+		return $this->memcache->get($keys) ?: [];
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	protected function doContains($id)
 	{
 		$flags = null;
@@ -101,7 +109,7 @@ class Memcache extends Driver
 			$lifetime = NOW + $lifetime;
 		}
 
-		return $this->memcache->set($id, $data, 0, (int)$lifetime);
+		return $this->memcache->set($id, $data, 0, (int) $lifetime);
 	}
 
 	/**

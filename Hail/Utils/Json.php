@@ -17,7 +17,7 @@ class Json
 	 * @param int $options
 	 *
 	 * @return string
-	 * @throws \InvalidArgumentException if there is any encoding error
+	 * @throws Exception\Json if there is any encoding error
 	 */
 	public static function encode($value, $options = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
 	{
@@ -33,7 +33,7 @@ class Json
 	 * @param boolean $asArray whether to return objects in terms of associative arrays.
 	 *
 	 * @return mixed the PHP data
-	 * @throws \InvalidArgumentException if there is any decoding error
+	 * @throws Exception\Json if there is any decoding error
 	 */
 	public static function decode(string $json, $asArray = true)
 	{
@@ -44,21 +44,18 @@ class Json
 
 	protected static function handleJsonError($lastError)
 	{
-		switch ($lastError) {
-			case JSON_ERROR_NONE:
-			break;
-			case JSON_ERROR_DEPTH:
-				throw new \InvalidArgumentException('The maximum stack depth has been exceeded.');
-			case JSON_ERROR_CTRL_CHAR:
-				throw new \InvalidArgumentException('Control character error, possibly incorrectly encoded.');
-			case JSON_ERROR_SYNTAX:
-				throw new \InvalidArgumentException('Syntax error.');
-			case JSON_ERROR_STATE_MISMATCH:
-				throw new \InvalidArgumentException('Invalid or malformed JSON.');
-			case JSON_ERROR_UTF8:
-				throw new \InvalidArgumentException('Malformed UTF-8 characters, possibly incorrectly encoded.');
-			default:
-				throw new \InvalidArgumentException('Unknown JSON decoding error.');
+		if ($lastError === JSON_ERROR_NONE) {
+			return;
 		}
+
+		static $messages = [
+			JSON_ERROR_DEPTH => 'The maximum stack depth has been exceeded.',
+			JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded.',
+			JSON_ERROR_SYNTAX => 'Syntax error.',
+			JSON_ERROR_STATE_MISMATCH => 'Invalid or malformed JSON.',
+			JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded.',
+		];
+
+		throw new Exception\Json($messages[$lastError] ?? 'Unknown JSON decoding error.');
 	}
 }

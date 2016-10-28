@@ -96,7 +96,7 @@ class Apcu extends Driver
      */
     protected function doFetchMultiple(array $keys)
     {
-        return apcu_fetch($keys);
+        return apcu_fetch($keys) ?: [];
     }
 
     /**

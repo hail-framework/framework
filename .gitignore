@@ -4,6 +4,7 @@
 
 *.iml
 .idea/
-temp/cache/**
-temp/log/**
 temp/xdebugTrace.xt
+composer.lock
+composer.phar
+/vendor/

@@ -31,9 +31,9 @@ class ObjectFactory implements \ArrayAccess
 	private $namespace;
 	private $object;
 
-	public function __construct($name)
+	public function __construct($namespace)
 	{
-		$this->namespace = 'App\\' . $name . '\\';
+		$this->namespace = trim($namespace, '\\') . '\\';
 	}
 
 	public function __get($name)

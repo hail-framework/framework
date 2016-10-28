@@ -20,7 +20,6 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
-use \Memcached as Me;
 
 /**
  * Memcached cache provider.
@@ -48,7 +47,7 @@ class Memcached extends Driver
 		}
 
 		if (isset($params['servers'])) {
-			$paramServers = (array)$params['servers'];
+			$paramServers = (array) $params['servers'];
 			unset($params['servers']);
 
 			$servers = [];
@@ -76,21 +75,21 @@ class Memcached extends Driver
 						throw new \RuntimeException('Memcached option ' . $name . ' requires valid memcache hash option value');
 					}
 					$value = constant('\Memcached::HASH_' . $value);
-					break;
+				break;
 				case 'DISTRIBUTION':
 					$value = strtoupper($value);
 					if (!defined('\Memcached::DISTRIBUTION_' . $value)) {
 						throw new \RuntimeException('Memcached option ' . $name . ' requires valid memcache distribution option value');
 					}
 					$value = constant('\Memcached::DISTRIBUTION_' . $value);
-					break;
+				break;
 				case 'SERIALIZER':
 					$value = strtoupper($value);
 					if (!defined('\Memcached::SERIALIZER_' . $value)) {
 						throw new \RuntimeException('Memcached option ' . $name . ' requires valid memcache serializer option value');
 					}
 					$value = constant('\Memcached::SERIALIZER_' . $value);
-					break;
+				break;
 				case 'SOCKET_SEND_SIZE':
 				case 'SOCKET_RECV_SIZE':
 				case 'CONNECT_TIMEOUT':
@@ -102,12 +101,12 @@ class Memcached extends Driver
 					if (!is_numeric($value)) {
 						throw new \RuntimeException('Memcached option ' . $name . ' requires numeric value');
 					}
-					break;
+				break;
 				case 'PREFIX_KEY':
 					if (!is_string($value)) {
 						throw new \RuntimeException('Memcached option ' . $name . ' requires string value');
 					}
-					break;
+				break;
 				case 'COMPRESSION':
 				case 'LIBKETAMA_COMPATIBLE':
 				case 'BUFFER_WRITES':
@@ -118,7 +117,7 @@ class Memcached extends Driver
 					if (!is_bool($value)) {
 						throw new \RuntimeException('Memcached option ' . $name . ' requires boolean value');
 					}
-					break;
+				break;
 				default:
 					continue;
 			}
@@ -136,11 +135,11 @@ class Memcached extends Driver
 	/**
 	 * Sets the memcache instance to use.
 	 *
-	 * @param Memcached $memcached
+	 * @param \Memcached $memcached
 	 *
 	 * @return void
 	 */
-	public function setMemcached(Me $memcached)
+	public function setMemcached(\Memcached $memcached)
 	{
 		$this->memcached = $memcached;
 	}
@@ -148,7 +147,7 @@ class Memcached extends Driver
 	/**
 	 * Gets the memcached instance used by the cache.
 	 *
-	 * @return Memcached|null
+	 * @return \Memcached|null
 	 */
 	public function getMemcached()
 	{
@@ -180,7 +179,7 @@ class Memcached extends Driver
 	 */
 	protected function doFetchMultiple(array $keys)
 	{
-		return $this->memcached->getMulti($keys);
+		return $this->memcached->getMulti($keys) ?: [];
 	}
 
 	/**
@@ -200,7 +199,8 @@ class Memcached extends Driver
 		if ($lifetime > 30 * 24 * 3600) {
 			$lifetime = NOW + $lifetime;
 		}
-		return $this->memcached->set($id, $data, (int)$lifetime);
+
+		return $this->memcached->set($id, $data, (int) $lifetime);
 	}
 
 	/**
@@ -209,7 +209,16 @@ class Memcached extends Driver
 	protected function doDelete($id)
 	{
 		return $this->memcached->delete($id)
-		|| $this->memcached->getResultCode() === Memcached::RES_NOTFOUND;
+		|| $this->memcached->getResultCode() === \Memcached::RES_NOTFOUND;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doDeleteMultiple(array $keys)
+	{
+		return $this->memcached->deleteMulti($keys)
+		|| $this->memcached->getResultCode() === \Memcached::RES_NOTFOUND;
 	}
 
 	/**
@@ -229,6 +238,7 @@ class Memcached extends Driver
 		$servers = $this->memcached->getServerList();
 		$key = $servers[0]['host'] . ':' . $servers[0]['port'];
 		$stats = $stats[$key];
+
 		return [
 			Driver::STATS_HITS => $stats['get_hits'],
 			Driver::STATS_MISSES => $stats['get_misses'],

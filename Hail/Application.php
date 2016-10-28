@@ -8,8 +8,7 @@
 
 namespace Hail;
 
-use Hail\Exception\Application as ApplicationException;
-use Hail\Exception\BadRequest;
+use Hail\Exception;
 use Hail\Tracy\Debugger;
 
 /**
@@ -43,12 +42,12 @@ class Application
 		);
 
 		if (isset($result['error'])) {
-			throw new BadRequest('Router Error', $result['error']);
+			throw new Exception\BadRequest('Router Error', $result['error']);
 		}
 
 		$app = $result['handler']['app'] ?? '';
 		$controller = $result['handler']['controller'] ?? '';
-		$action= $result['handler']['action'] ?? '';
+		$action = $result['handler']['action'] ?? '';
 
 		$dispatcher = $this->getDispatcher($app);
 		$dispatcher->run($method, $controller, $action, $result['params']);
@@ -56,6 +55,7 @@ class Application
 
 	/**
 	 * @param string $app
+	 *
 	 * @return Dispatcher
 	 * @throws BadRequest
 	 */
@@ -64,20 +64,24 @@ class Application
 		if (!isset($this->dispatcher[$app])) {
 			return $this->dispatcher[$app] = new Dispatcher($app);
 		}
+
 		return $this->dispatcher[$app];
 	}
 
 	public function processException(\Exception $e)
 	{
-		if (!$e instanceof ApplicationException) {
+		if (!$e instanceof Exception\Application) {
 			throw $e;
 		}
 
-		if (!$e instanceof BadRequest) {
-			$this->response->warnOnBuffer = FALSE;
+		$code = 500;
+		$isBadRequest = $e instanceof Exception\BadRequest;
+		if ($isBadRequest) {
+			$code = $e->getCode() ?: 404;
+		} else {
+			$this->response->warnOnBuffer = false;
 		}
 
-		$code = $e instanceof BadRequest ? ($e->getCode() ?: 404) : 500;
 		if (!$this->response->isSent()) {
 			$this->response->setCode($code);
 		}
@@ -87,16 +91,18 @@ class Application
 			404 => 'Not Found',
 			405 => 'Method Not Allowed',
 			410 => 'Gone',
-			500 => 'Server Error'
+			500 => 'Server Error',
 		];
 
 		$msg = $msg[$code] ?? $e->getMessage();
 
 		$this->output->json->send([
 			'ret' => $code,
-			'msg' => $msg
+			'msg' => $msg,
 		]);
 
-		Debugger::log($e, Debugger::EXCEPTION);
+		if (!$isBadRequest) {
+			Debugger::log($e, Debugger::EXCEPTION);
+		}
 	}
 }

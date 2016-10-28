@@ -7,18 +7,19 @@
  */
 
 namespace Hail;
+use Hail\Facades\DI;
 
 /**
  * Class DITrait
  *
  * @package Hail
- * @property-read DI $di
+ * @property-read DI\Container $di
  * @property-read Cache\Embedded $embedded
  * @property-read Config $config
- * @property-read Loader\PSR4 $loader
- * @property-read Loader\Alias $alias
+ * @property-read Loader $loader
+ * @property-read AliasLoader $alias
  * @property-read Router $router
- * @property-read I18N\Gettext $gettext
+ * @property-read I18N\Gettext i18n
  * @property-read Http\Request $request
  * @property-read Http\Response $response
  * @property-read Event\Emitter $event
@@ -33,29 +34,33 @@ namespace Hail;
  * @property-read DB\Cache $cdb
  * @property-read Utils\ObjectFactory $lib
  * @property-read Utils\ObjectFactory $model
- * @property-read Browser $client
+ * @property-read Browser $browser
  */
 Trait DITrait
 {
 	/**
-	 * @var DI|null
+	 * @var DI\Container
 	 */
-	protected static $_di = null;
+	private static $_di;
 
 	public function __get($name)
 	{
-		if (($v = static::di($name)) === null) {
-			throw new \RuntimeException("Property $name Not Defined");
+		if (($v = self::di($name)) === null) {
+			throw new Exception\InvalidState("Property $name Not Defined");
 		}
 		return $v;
 	}
 
-	public static function di($name)
+	final public static function di($name = null)
 	{
-		if (static::$_di === null) {
-			static::$_di = \DI::instance();
+		if (self::$_di === null) {
+			self::$_di = DI::getInstance();
 		}
 
-		return static::$_di[$name] ?? null;
+		if ($name === null) {
+			return self::$_di;
+		}
+
+		return self::$_di->get($name) ?? null;
 	}
 }

@@ -112,7 +112,7 @@ class Yac extends Driver
     public function key($key)
     {
     	if (strlen($key) > YAC_MAX_KEY_LEN) {
-    		return hash('md4', $key);
+    		return hash('sha1', $key);
 	    }
 
 	    return $key;

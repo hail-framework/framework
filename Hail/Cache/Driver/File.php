@@ -132,7 +132,7 @@ class File extends Driver
 	 */
 	protected function getFilename($id)
 	{
-		$hash = hash('sha256', $id);
+		$hash = hash('sha1', $id);
 
 		// This ensures that the filename is unique and that there are no invalid chars in it.
 		if (
@@ -320,16 +320,9 @@ class File extends Driver
 	 */
 	protected function doSave($id, $data, $lifetime = 0)
 	{
+		$lifetime = (int) $lifetime;
 		if ($lifetime > 0) {
 			$lifetime = NOW + $lifetime;
-		}
-
-		if (is_object($data) && !method_exists($data, '__set_state')) {
-			throw new \InvalidArgumentException(
-				'Invalid argument given, PhpFileCache only allows objects that implement __set_state() ' .
-				'and fully support var_export(). You can use the FilesystemCache to save arbitrary object ' .
-				'graphs using serialize()/deserialize().'
-			);
 		}
 
 		$filename = $this->getFilename($id);
@@ -338,8 +331,12 @@ class File extends Driver
 		if ($lifetime > 0) {
 			$code .= '(NOW > ' . $lifetime . ') ? false : ';
 		}
-		$code .= var_export($data, true) . ';';
 
+		if (is_object($data) && !method_exists($data, '__set_state')) {
+			$code .= 'unserialize(' . var_export(serialize($data), true) . ');';
+		} else {
+			$code .= var_export($data, true) . ';';
+		}
 
 		return $this->writeFile($filename, $code);
 	}
