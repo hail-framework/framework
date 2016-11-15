@@ -1,7 +1,7 @@
 <?php
 namespace Hail;
 
-use Hail\Cache\EmbeddedTrait;
+use Hail\Utils\OptimizeTrait;
 
 /**
  * Class Php
@@ -9,7 +9,7 @@ use Hail\Cache\EmbeddedTrait;
  */
 class Config implements \ArrayAccess
 {
-	use EmbeddedTrait;
+	use OptimizeTrait;
 
 	/**
 	 * @{inheritDoc}
@@ -96,11 +96,11 @@ class Config implements \ArrayAccess
 			return $this->load($key);
 		}
 
-		$key = explode('.', $key);
+		$split = explode('.', $key);
 		$array = $this->load(
-			array_shift($key)
+			array_shift($split)
 		);
-		return $this->arrayGet($array, $key, $default);
+		return $this->arrayGet($array, $split, $default);
 	}
 
 	/**
@@ -115,30 +115,28 @@ class Config implements \ArrayAccess
 			return $this->items[$space];
 		}
 
-		if ($this->cacheUpdateCheck($space, $this->file($space))) {
-			$config = $this->cacheGet($space);
-			if (is_array($config)) {
-				return $this->items[$space] = $config;
-			}
+		$file = $this->file($space);
+
+		$config = $this->optimizeGet($space, $file);
+		if ($config !== false) {
+			return $this->items[$space] = $config;
 		}
 
-		return $this->readFile($space);
+		return $this->readFile($space, $file);
 	}
 
 	/**
 	 * @param string $space
 	 * @return null|string
 	 */
-	protected function readFile($space)
+	protected function readFile($space, $file)
 	{
-		$file = $this->file($space);
 		if (!file_exists($file)) {
 			return null;
 		}
 
 		$array = require $file;
-		$this->cacheSet($space, $array);
-		$this->cacheSetTime($space, $file);
+		$this->optimizeSet($space, $array, $file);
 
 		return $this->items[$space] = $array;
 	}

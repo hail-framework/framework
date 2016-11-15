@@ -922,8 +922,8 @@ class Medoo
 
 	public function has(array $struct)
 	{
-		if (isset($struct['COLUMNS'])) {
-			unset($struct['COLUMNS']);
+		if (isset($struct['COLUMNS']) || isset($struct['SELECT'])) {
+			unset($struct['COLUMNS'], $struct['SELECT']);
 		}
 		$struct['FUN'] = 1;
 

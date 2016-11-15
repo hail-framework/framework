@@ -6,11 +6,12 @@
 
 namespace Hail;
 
-use Hail\Cache\EmbeddedTrait;
+use Hail\Utils\OptimizeTrait;
+use Hail\Utils\Serialize;
 
 class Router
 {
-	use EmbeddedTrait;
+	use OptimizeTrait;
 
 	const PARAM_REGEXP = '/^{((([^:]+):(.+))|(.+))}$/';
 	const SEPARATOR_REGEXP = '/^[\s\/]+|[\s\/]+$/';
@@ -19,7 +20,6 @@ class Router
 
 	public function __construct($config)
 	{
-		self::initCache();
 		$this->addRoutes($config);
 	}
 
@@ -57,10 +57,11 @@ class Router
 		if (!isset($current['methods'])) {
 			return null;
 		}
+
 		return [
 			'methods' => $current['methods'],
 			'route' => $current['route'],
-			'params' => $params
+			'params' => $params,
 		];
 	}
 
@@ -69,10 +70,11 @@ class Router
 	 */
 	protected function addRoutes($config)
 	{
-		$sign = hash('sha1', json_encode($config));
-		$check = $this->cacheGet('routes_sign');
-		if (is_string($check) && $check === $sign) {
-			$this->routes = $this->cacheGet('routes');
+		$sign = hash('sha1', Serialize::encode($config));
+		$check = $this->optimizeGet('routes_sign');
+		if ($check === $sign) {
+			$this->routes = $this->optimizeGet('routes');
+
 			return;
 		}
 
@@ -99,13 +101,16 @@ class Router
 				$this->addRoute($methods, $route, $handler);
 			}
 		}
-		$this->cacheSet('routes', $this->routes);
-		$this->cacheSet('routes_sign', $sign);
+
+		$this->optimizeSet([
+			'routes' => $this->routes,
+			'routes_sign' => $sign,
+		]);
 	}
 
 	public function addRoute($methods, $route, $handler)
 	{
-		$methods = (array)$methods;
+		$methods = (array) $methods;
 
 		$parts = explode('/', preg_replace(static::SEPARATOR_REGEXP, '', $route));
 
@@ -123,7 +128,7 @@ class Router
 						$current['regexps'][$paramsMatches[4]] = [
 							'childs' => [],
 							'regexps' => [],
-							'name' => $paramsMatches[3]
+							'name' => $paramsMatches[3],
 						];
 					}
 					$current = &$current['regexps'][$paramsMatches[4]];
@@ -132,7 +137,7 @@ class Router
 						$current['others'] = [
 							'childs' => [],
 							'regexps' => [],
-							'name' => $paramsMatches[5]
+							'name' => $paramsMatches[5],
 						];
 					}
 					$current = &$current['others'];
@@ -141,7 +146,7 @@ class Router
 				if (!isset($current['childs'][$v])) {
 					$current['childs'][$v] = [
 						'childs' => [],
-						'regexps' => []
+						'regexps' => [],
 					];
 				}
 				$current = &$current['childs'][$v];
@@ -163,6 +168,7 @@ class Router
 		if (!$route) {
 			return null;
 		}
+
 		return array_keys($route['methods']);
 	}
 
@@ -173,7 +179,7 @@ class Router
 			return $this->result = [
 				'error' => 404,
 				'method' => $method,
-				'url' => $url
+				'url' => $url,
 			];
 		} else if (isset($route['methods'][$method])) {
 			$params = $route['params'];
@@ -188,7 +194,7 @@ class Router
 					'app' => $handler['app'],
 					'controller' => $handler['controller'] ?? $params['controller'] ?? '',
 					'action' => $handler['action'] ?? $params['action'] ?? '',
-				]
+				],
 			];
 		}
 
@@ -198,7 +204,7 @@ class Router
 			'url' => $url,
 			'route' => $route['route'],
 			'params' => $route['params'],
-			'allowed' => array_keys($route['methods'])
+			'allowed' => array_keys($route['methods']),
 		];
 	}
 

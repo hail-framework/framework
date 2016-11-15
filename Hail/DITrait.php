@@ -7,16 +7,16 @@
  */
 
 namespace Hail;
+
+use Hail\DI\Container;
 use Hail\Facades\DI;
 
 /**
  * Class DITrait
  *
  * @package Hail
- * @property-read DI\Container $di
- * @property-read Cache\Embedded $embedded
+ * @property-read Container $di
  * @property-read Config $config
- * @property-read Loader $loader
  * @property-read AliasLoader $alias
  * @property-read Router $router
  * @property-read I18N\Gettext i18n
@@ -39,28 +39,28 @@ use Hail\Facades\DI;
 Trait DITrait
 {
 	/**
-	 * @var DI\Container
+	 * @var Container
 	 */
 	private static $_di;
 
 	public function __get($name)
 	{
-		if (($v = self::di($name)) === null) {
-			throw new Exception\InvalidState("Property $name Not Defined");
-		}
-		return $v;
+		return self::$_di->get($name);
+	}
+
+	final public static function initDI()
+	{
+		self::$_di = DI::getInstance();
 	}
 
 	final public static function di($name = null)
 	{
-		if (self::$_di === null) {
-			self::$_di = DI::getInstance();
-		}
-
 		if ($name === null) {
 			return self::$_di;
 		}
 
-		return self::$_di->get($name) ?? null;
+		return self::$_di->get($name);
 	}
 }
+
+DITrait::initDI();

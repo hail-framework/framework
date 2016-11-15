@@ -2,19 +2,20 @@
 namespace Hail;
 
 use Hail\Tracy\Debugger;
+use Hail\Facades\{
+	Config,
+	Alias,
+	I18N
+};
 
 // System Start Time
-define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT']);
+defined('START_TIME') || define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT']);
 
 // Now timestamp
-define('NOW', $_SERVER['REQUEST_TIME']);
+defined('NOW') || define('NOW', $_SERVER['REQUEST_TIME']);
 
 // Absolute path to the temp folder
 defined('TEMP_PATH') || define('TEMP_PATH', SYSTEM_PATH . 'temp/');
-
-// Embedded cache engine: 'auto', 'yac', 'pcache', 'wincache', 'xcache', 'apcu', 'none'
-defined('EMBEDDED_CACHE_ENGINE') || define('EMBEDDED_CACHE_ENGINE', 'auto');
-defined('EMBEDDED_CACHE_CHECK_DELAY') || define('EMBEDDED_CACHE_CHECK_DELAY', 2);
 
 /**
  * Class Bootstrap
@@ -25,15 +26,15 @@ class Bootstrap
 {
 	public static function init()
 	{
-		$di = Facades\DI::getInstance();
+		define('HAIL_SERIALIZE', Config::get('env.serialize'));
 
-		$di['alias']->register();
+		Alias::register();
 
 		date_default_timezone_set(
-			$di['config']->get('app.timezone')
+			Config::get('app.timezone')
 		);
 
-		if (PHP_SAPI !== 'cli' && $di['config']->get('env.debug')) {
+		if (PHP_SAPI !== 'cli' && Config::get('env.debug')) {
 			$debugMode = Debugger::DETECT;
 		} else {
 			$debugMode = Debugger::PRODUCTION;
@@ -44,13 +45,10 @@ class Bootstrap
 			TEMP_PATH . 'log/'
 		);
 
-		$config = $di['config']->get('app.i18n');
-		$di['i18n']->init(
+		I18N::init(
 			SYSTEM_PATH . 'lang/',
-			$config['domain'],
-			$config['locale']
+			Config::get('app.i18n.domain'),
+			Config::get('app.i18n.local')
 		);
-
-		return $di;
 	}
 }

@@ -12,6 +12,8 @@ class Loader
 	protected static $mapFile = TEMP_PATH . 'runtime/autoloadMap.php';
 	protected static $classesMap;
 
+	protected static $registered = false;
+
 	/**
 	 * An associative array where the key is a namespace prefix and the value
 	 * is an array of base directories for classes in that namespace.
@@ -30,11 +32,14 @@ class Loader
 	 */
 	public static function register()
 	{
-		if (file_exists(self::$mapFile)) {
-			self::$classesMap = include self::$mapFile;
-		}
+		if (!self::$registered) {
+			if (file_exists(self::$mapFile)) {
+				self::$classesMap = include self::$mapFile;
+			}
 
-		spl_autoload_register([__CLASS__, 'loadClass']);
+			spl_autoload_register([__CLASS__, 'loadClass']);
+			self::$registered = true;
+		}
 	}
 
 	/**
@@ -50,9 +55,8 @@ class Loader
 			$class = substr($class, 1);
 		}
 
-		$file = self::$classesMap[$class] ?? false;
-		if ($file !== false) {
-			return $file;
+		if (isset(self::$classesMap[$class])) {
+			return self::$classesMap[$class];
 		}
 
 		$pos = strpos($class, '\\');

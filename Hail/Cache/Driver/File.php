@@ -132,7 +132,7 @@ class File extends Driver
 	 */
 	protected function getFilename($id)
 	{
-		$hash = hash('sha1', $id);
+		$hash = sha1($id);
 
 		// This ensures that the filename is unique and that there are no invalid chars in it.
 		if (

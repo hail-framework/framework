@@ -6,21 +6,21 @@
 
 namespace Hail\I18N;
 
-use Hail\Cache\EmbeddedTrait;
+use Hail\Utils\OptimizeTrait;
 
 class Gettext
 {
-	use EmbeddedTrait;
+	use OptimizeTrait;
 
 	/**
 	 * First magic word in the MO header
 	 */
-	const MAGIC1 = 0xde120495;
+	const MAGIC1 = (int) 0xde120495;
 
 	/**
 	 * First magic word in the MO header
 	 */
-	const MAGIC2 = 0x950412de;
+	const MAGIC2 = (int) 0x950412de;
 
 	protected $dir;
 	protected $domain;
@@ -57,25 +57,20 @@ class Gettext
 		$this->parsed[$locale][$domain] = true;
 		$mo = "{$this->dir}/{$locale}/LC_MESSAGES/{$domain}.mo";
 
-		$cache_key = "$locale/$domain";
-		if ($this->cacheUpdateCheck($cache_key, $mo)) {
-			$array = $this->cacheGet($cache_key);
-			if (is_array($array)) {
-				$this->translationTable[$locale][$domain] = $array;
+		$key = "$locale/$domain";
+		$array = $this->optimizeGet($key, $mo);
+		if ($array !== false) {
+			$this->translationTable[$locale][$domain] = $array;
 
-				return;
-			}
+			return;
 		}
 
 		$this->translationTable[$locale][$domain] = [];
-		if (!file_exists($mo) || filesize($mo) < 4 * 7) {
-			//nothing
-		} else {
+		if (file_exists($mo) && filesize($mo) >= 4 * 7) {
 			$this->parseFile($mo, $locale, $domain);
 		}
 
-		$this->cacheSet($cache_key, $this->translationTable[$locale][$domain]);
-		$this->cacheSetTime($cache_key, $mo);
+		$this->optimizeSet($key, $this->translationTable[$locale][$domain], $mo);
 	}
 
 
@@ -94,12 +89,10 @@ class Gettext
 	{
 		$data = fread($fp, 8);
 		$header = unpack('lmagic/lrevision', $data);
-		if ((int) self::MAGIC1 != $header['magic']
-			&& (int) self::MAGIC2 != $header['magic']
-		) {
+		if (self::MAGIC1 !== $header['magic'] && self::MAGIC2 !== $header['magic']) {
 			return null;
 		}
-		if (0 != $header['revision']) {
+		if (0 !== $header['revision']) {
 			return null;
 		}
 		$data = fread($fp, 4 * 5);
@@ -166,16 +159,16 @@ class Gettext
 	 */
 	private function parseFile($file, $locale, $domain)
 	{
-		$fp = fopen($file, "rb");
+		$fp = fopen($file, 'rb');
 		$offsets = $this->parseHeader($fp);
-		if (null == $offsets || filesize($file) < 4 * ($offsets['num_strings'] + 7)) {
+		if (null === $offsets || filesize($file) < 4 * ($offsets['num_strings'] + 7)) {
 			fclose($fp);
 
 			return;
 		}
 
 		$table = $this->parseOffsetTable($fp, $offsets['trans_offset'], $offsets['num_strings']);
-		if (null == $table) {
+		if (null === $table) {
 			fclose($fp);
 
 			return;
@@ -265,7 +258,7 @@ class Gettext
 	 *
 	 * @return string Translated string
 	 */
-	public function ngettext($msg, $msg_plural, $count)
+	public function ngettext($msg, $msg_plural, int $count)
 	{
 		$msg = (string) $msg;
 		if (isset($this->translationTable[$this->locale][$this->domain][$msg])) {
@@ -273,14 +266,14 @@ class Gettext
 			/* the gettext api expect an unsigned int, so we just fake 'cast' */
 			if ($count <= 0) {
 				$count = count($translation);
-			} else {
-				$count = min(count($translation), $count);
+			} elseif (($min = count($translation)) < $count) {
+				$count = $min;
 			}
 
 			return $translation[$count - 1];
 		}
 		/* not found, handle count */
-		if (1 == $count) {
+		if (1 === $count) {
 			return $msg;
 		} else {
 			return $msg_plural;
@@ -301,7 +294,7 @@ class Gettext
 	 *
 	 * @return string Translated string
 	 */
-	public function dngettext($domain, $msg, $msg_plural, $count)
+	public function dngettext($domain, $msg, $msg_plural, int $count)
 	{
 		if (!isset($this->parsed[$this->locale][$domain])) {
 			$this->parse($this->locale, $domain);
@@ -311,8 +304,10 @@ class Gettext
 		if (isset($this->translationTable[$this->locale][$domain][$msg])) {
 			$translation = $this->translationTable[$this->locale][$domain][$msg];
 			/* the gettext api expect an unsigned int, so we just fake 'cast' */
-			if ($count <= 0 || count($translation) < $count) {
+			if ($count <= 0) {
 				$count = count($translation);
+			} elseif (($min = count($translation)) < $count) {
+				$count = $min;
 			}
 
 			return $translation[$count - 1];

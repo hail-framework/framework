@@ -85,7 +85,7 @@ class Cache
 			return $arguments[0];
 		}
 
-		return hash('sha1', Serialize::encode([$name, $arguments]));
+		return sha1(Serialize::encode([$name, $arguments]));
 	}
 
 	public function reset()
