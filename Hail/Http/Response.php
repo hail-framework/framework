@@ -102,6 +102,10 @@ class Response
 		);
 	}
 
+	public function disableWarnOnBuffer()
+	{
+		$this->warnOnBuffer = false;
+	}
 
 	/**
 	 * Sets HTTP response code.

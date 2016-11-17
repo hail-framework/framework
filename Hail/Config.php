@@ -5,6 +5,7 @@ use Hail\Utils\OptimizeTrait;
 
 /**
  * Class Php
+ *
  * @package Hail\Config
  */
 class Config implements \ArrayAccess
@@ -17,6 +18,7 @@ class Config implements \ArrayAccess
 	public function offsetExists($offset)
 	{
 		$val = $this->get($offset);
+
 		return $val !== null;
 	}
 
@@ -60,14 +62,16 @@ class Config implements \ArrayAccess
 	 */
 	protected $items = [];
 
+	/**
+	 * @param string $key
+	 * @param mixed $value
+	 */
 	public function set($key, $value)
 	{
-		$v = $this->get($key);
-		if ($v === $value) {
+		// 框架内置 config 不允许修改
+		if (strpos($key, '__') === 0) {
 			return;
-		}
-
-		if (strpos($key, '.') === false) {
+		} elseif (strpos($key, '.') === false) {
 			$this->items[$key] = $value;
 		} else {
 			$key = explode('.', $key);
@@ -84,6 +88,7 @@ class Config implements \ArrayAccess
 	 *
 	 * @param  string $key
 	 * @param  mixed $default
+	 *
 	 * @return mixed
 	 */
 	public function get($key, $default = null)
@@ -100,6 +105,7 @@ class Config implements \ArrayAccess
 		$array = $this->load(
 			array_shift($split)
 		);
+
 		return $this->arrayGet($array, $split, $default);
 	}
 
@@ -107,9 +113,10 @@ class Config implements \ArrayAccess
 	 * Read config array from cache or file
 	 *
 	 * @param string $space
+	 *
 	 * @return array|mixed|null
 	 */
-	public function load($space)
+	protected function load($space)
 	{
 		if (isset($this->items[$space])) {
 			return $this->items[$space];
@@ -117,26 +124,53 @@ class Config implements \ArrayAccess
 
 		$file = $this->file($space);
 
-		$config = $this->optimizeGet($space, $file);
+		$config = $this->optimizeGet($space, [
+			SYSTEM_PATH . $file,
+			HAIL_PATH . $file,
+		]);
+
 		if ($config !== false) {
 			return $this->items[$space] = $config;
 		}
 
-		return $this->readFile($space, $file);
+		return $this->readFile($space);
 	}
 
 	/**
+	 * 优先 {SYSTEM_PATH}/config/{$space}.php，其次 {HAIL_PATH}/config/{$space}.php
+	 * $space 为 __ 开头，则只读取 {HAIL_PATH}/config/{$space}.php
+	 *
 	 * @param string $space
+	 *
 	 * @return null|string
 	 */
-	protected function readFile($space, $file)
+	protected function readFile($space)
 	{
-		if (!file_exists($file)) {
-			return null;
+		$file = $this->file($space);
+		$base = null;
+		if (file_exists(HAIL_PATH . $file)) {
+			$base = require HAIL_PATH . $file;
 		}
 
-		$array = require $file;
-		$this->optimizeSet($space, $array, $file);
+		if (
+			SYSTEM_PATH !== HAIL_PATH &&
+			strpos($space, '__') !== 0 &&
+			file_exists(SYSTEM_PATH . $file)
+		) {
+			$array = require SYSTEM_PATH . $file;
+			if ($base !== null) {
+				$array = array_merge($base, $array);
+			}
+		} elseif ($base === null) {
+			return null;
+		} else {
+			$array = $base;
+		}
+
+		$this->optimizeSet($space, $array, [
+			SYSTEM_PATH . $file,
+			HAIL_PATH . $file,
+		]);
 
 		return $this->items[$space] = $array;
 	}
@@ -150,11 +184,12 @@ class Config implements \ArrayAccess
 
 			$array = $array[$segment];
 		}
+
 		return $array;
 	}
 
-	public function file($space)
+	protected function file($space)
 	{
-		return SYSTEM_PATH . 'config/' . $space . '.php';
+		return 'config/' . $space . '.php';
 	}
 }

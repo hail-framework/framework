@@ -108,9 +108,18 @@ class Router
 		]);
 	}
 
-	public function addRoute($methods, $route, $handler)
+	/**
+	 * @param array $methods
+	 * @param string $route
+	 * @param array $handler
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function addRoute(array $methods, string $route, array $handler)
 	{
-		$methods = (array) $methods;
+		if (!isset($handler['app'])) {
+			throw new \InvalidArgumentException('Handler must have app key set.');
+		}
 
 		$parts = explode('/', preg_replace(static::SEPARATOR_REGEXP, '', $route));
 
@@ -162,7 +171,12 @@ class Router
 		}
 	}
 
-	public function getOptions($url)
+	/**
+	 * @param string $url
+	 *
+	 * @return array|null
+	 */
+	public function getOptions(string $url)
 	{
 		$route = $this->match($url);
 		if (!$route) {
@@ -172,7 +186,13 @@ class Router
 		return array_keys($route['methods']);
 	}
 
-	public function dispatch($method, $url)
+	/**
+	 * @param string $method
+	 * @param string $url
+	 *
+	 * @return array
+	 */
+	public function dispatch(string $method, string $url)
 	{
 		$route = $this->match($url);
 		if (!$route) {
@@ -218,43 +238,43 @@ class Router
 		return $this->routes;
 	}
 
-	public function options($route, $handler)
+	public function options(string $route, array $handler)
 	{
-		$this->addRoute('OPTIONS', $route, $handler);
+		$this->addRoute(['OPTIONS'], $route, $handler);
 	}
 
-	public function get($route, $handler)
+	public function get(string $route, array $handler)
 	{
-		$this->addRoute('GET', $route, $handler);
+		$this->addRoute(['GET'], $route, $handler);
 	}
 
-	public function head($route, $handler)
+	public function head(string $route, array $handler)
 	{
-		$this->addRoute('HEAD', $route, $handler);
+		$this->addRoute(['HEAD'], $route, $handler);
 	}
 
-	public function post($route, $handler)
+	public function post(string $route, array $handler)
 	{
-		$this->addRoute('POST', $route, $handler);
+		$this->addRoute(['POST'], $route, $handler);
 	}
 
-	public function put($route, $handler)
+	public function put(string $route, array $handler)
 	{
-		$this->addRoute('PUT', $route, $handler);
+		$this->addRoute(['PUT'], $route, $handler);
 	}
 
-	public function delete($route, $handler)
+	public function delete(string $route, array $handler)
 	{
-		$this->addRoute('DELETE', $route, $handler);
+		$this->addRoute(['DELETE'], $route, $handler);
 	}
 
-	public function trace($route, $handler)
+	public function trace(string $route, array $handler)
 	{
-		$this->addRoute('TRACE', $route, $handler);
+		$this->addRoute(['TRACE'], $route, $handler);
 	}
 
-	public function connect($route, $handler)
+	public function connect(string $route, array $handler)
 	{
-		$this->addRoute('CONNECT', $route, $handler);
+		$this->addRoute(['CONNECT'], $route, $handler);
 	}
 }

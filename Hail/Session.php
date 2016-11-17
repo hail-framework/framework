@@ -103,6 +103,26 @@ class Session implements \ArrayAccess
 		session_destroy();
 	}
 
+	public function get($key)
+	{
+		return $this->offsetGet($key);
+	}
+
+	public function has($key)
+	{
+		return $this->offsetExists($key);
+	}
+
+	public function set($key, $value)
+	{
+		return $this->offsetSet($key, $value);
+	}
+
+	public function delete($key)
+	{
+		return $this->offsetUnset($key);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */

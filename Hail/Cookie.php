@@ -2,6 +2,11 @@
 
 namespace Hail;
 
+use Hail\Facades\{
+	Request,
+	Response
+};
+
 /**
  * Class Cookie
  *
@@ -9,8 +14,6 @@ namespace Hail;
  */
 class Cookie
 {
-	use DITrait;
-
 	public $prefix = '';
 	public $domain = '';
 	public $path = '/';
@@ -28,9 +31,16 @@ class Cookie
 		$this->lifetime = $config['lifetime'] ?? true;
 	}
 
-	public function set($name, $value, $time = null)
+	/**
+	 * @param $name
+	 * @param $value
+	 * @param string|int|\DateTime $time
+	 *
+	 * @throws \RuntimeException  if HTTP headers have been sent
+	 */
+	public function set($name, $value, $time = 0)
 	{
-		$this->response->setCookie(
+		Response::setCookie(
 			$this->prefix . $name, $value,
 			$time ?: $this->lifetime,
 			$this->path,
@@ -40,8 +50,28 @@ class Cookie
 		);
 	}
 
+	/**
+	 * @param $name
+	 *
+	 * @return mixed
+	 */
 	public function get($name)
 	{
-		return $this->request->getCookie($this->prefix . $name);
+		return Request::getCookie($this->prefix . $name);
+	}
+
+	/**
+	 * @param $name
+	 *
+	 * @throws \RuntimeException  if HTTP headers have been sent
+	 */
+	public function delete($name)
+	{
+		Response::deleteCookie(
+			$this->prefix . $name,
+			$this->path,
+			$this->domain,
+			$this->secure
+		);
 	}
 }

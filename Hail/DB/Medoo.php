@@ -141,6 +141,11 @@ class Medoo
 		}
 	}
 
+	/**
+	 * @param $query
+	 *
+	 * @return bool|\PDOStatement
+	 */
 	public function query($query)
 	{
 		if ($this->debug) {
@@ -156,6 +161,11 @@ class Medoo
 		return $this->pdo->query($query);
 	}
 
+	/**
+	 * @param $query
+	 *
+	 * @return bool|int
+	 */
 	public function exec($query)
 	{
 		if ($this->debug) {
@@ -178,6 +188,11 @@ class Medoo
 		}
 	}
 
+	/**
+	 * @param $string
+	 *
+	 * @return string
+	 */
 	public function quote($string)
 	{
 		return $this->pdo->quote($string);
@@ -192,7 +207,7 @@ class Medoo
 		return '"' . $this->prefix . $table . '"';
 	}
 
-	public function quoteColumn($string)
+	protected function quoteColumn($string)
 	{
 		if (strpos($string, '#') === 0) {
 			$string = substr($string, 1);
@@ -269,7 +284,7 @@ class Medoo
 		return (strpos($column, '#') === 0 && preg_match('/^[A-Z0-9\_]*\([^)]*\)$/', $string)) ? $string : $this->quote($string);
 	}
 
-	public function quoteValue($column, $value)
+	protected function quoteValue($column, $value)
 	{
 		switch (gettype($value)) {
 			case 'NULL':
@@ -656,6 +671,11 @@ class Medoo
 		}
 	}
 
+	/**
+	 * @param $table
+	 *
+	 * @return array
+	 */
 	public function headers($table)
 	{
 		$sth = $this->pdo->query('SELECT * FROM ' . $this->quoteTable($table));
@@ -669,6 +689,13 @@ class Medoo
 		return $headers;
 	}
 
+	/**
+	 * @param $struct
+	 * @param int $fetch
+	 * @param mixed  $fetchArgs
+	 *
+	 * @return array|bool
+	 */
 	public function select($struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
 		$query = $this->query(
@@ -766,6 +793,13 @@ class Medoo
 		return $sql;
 	}
 
+	/**
+	 * @param $table
+	 * @param array $datas
+	 * @param string $INSERT
+	 *
+	 * @return array|mixed
+	 */
 	public function insert($table, $datas = [], $INSERT = 'INSERT')
 	{
 		$sql = $this->insertContext($table, $datas, $INSERT, false);
@@ -783,11 +817,21 @@ class Medoo
 		return $return;
 	}
 
+	/**
+	 * @return string|array
+	 */
 	public function lastInsertId()
 	{
 		return $this->lastId;
 	}
 
+	/**
+	 * @param $table
+	 * @param array $datas
+	 * @param string $INSERT
+	 *
+	 * @return bool|int
+	 */
 	public function multiInsert($table, $datas = [], $INSERT = 'INSERT')
 	{
 		$sql = $this->insertContext($table, $datas, $INSERT, true);
@@ -798,6 +842,13 @@ class Medoo
 		return $return;
 	}
 
+	/**
+	 * @param $table
+	 * @param array $data
+	 * @param null $where
+	 *
+	 * @return bool|int
+	 */
 	public function update($table, $data = [], $where = null)
 	{
 		if (is_array($table)) {
@@ -829,6 +880,12 @@ class Medoo
 		return $return;
 	}
 
+	/**
+	 * @param $table
+	 * @param null $where
+	 *
+	 * @return bool|int
+	 */
 	public function delete($table, $where = null)
 	{
 		if (is_array($table)) {
@@ -844,6 +901,15 @@ class Medoo
 		return $return;
 	}
 
+	/**
+	 * @param $table
+	 * @param $columns
+	 * @param string|array|null $search
+	 * @param mixed $replace
+	 * @param array|null $where
+	 *
+	 * @return bool|int
+	 */
 	public function replace($table, $columns, $search = null, $replace = null, $where = null)
 	{
 		if (is_array($columns)) {
@@ -920,6 +986,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool
+	 */
 	public function has(array $struct)
 	{
 		if (isset($struct['COLUMNS']) || isset($struct['SELECT'])) {
@@ -941,6 +1012,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool|int
+	 */
 	public function count(array $struct)
 	{
 		$struct['FUN'] = 'COUNT';
@@ -958,6 +1034,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool|int|string
+	 */
 	public function max(array $struct)
 	{
 		$struct['FUN'] = 'MAX';
@@ -975,6 +1056,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool|int|string
+	 */
 	public function min(array $struct)
 	{
 		$struct['FUN'] = 'MIN';
@@ -992,6 +1078,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool|int
+	 */
 	public function avg(array $struct)
 	{
 		$struct['FUN'] = 'AVG';
@@ -1009,6 +1100,11 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param array $struct
+	 *
+	 * @return bool|int
+	 */
 	public function sum(array $struct)
 	{
 		$struct['FUN'] = 'SUM';
@@ -1026,9 +1122,14 @@ class Medoo
 		return false;
 	}
 
+	/**
+	 * @param $table
+	 *
+	 * @return bool|int
+	 */
 	public function truncate($table)
 	{
-		$return = $this->query(
+		$return = $this->exec(
 			'TRUNCATE TABLE ' . $table
 		);
 		$this->release();
@@ -1036,6 +1137,11 @@ class Medoo
 		return $return;
 	}
 
+	/**
+	 * @param $actions
+	 *
+	 * @return bool
+	 */
 	public function action($actions)
 	{
 		if (is_callable($actions)) {

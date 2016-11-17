@@ -8,18 +8,38 @@ use Hail\Utils\Json;
 
 class Browser
 {
-	public function get($url, $params = [], $headers = [])
+	/**
+	 * @param string $url
+	 * @param array $params
+	 * @param array $headers
+	 *
+	 * @return Browser\Response
+	 */
+	public function get(string $url, array $params = [], array $headers = [])
 	{
 		return Request::get($url, $headers, $params);
 	}
 
-	public function post($url, $params = [], $headers = [])
+	/**
+	 * @param string $url
+	 * @param array $params
+	 * @param array $headers
+	 *
+	 * @return Browser\Response
+	 */
+	public function post(string $url, array $params = [], array $headers = [])
 	{
 		$body = Body::form($params);
 		return Request::post($url, $headers, $body);
 	}
 
-	public function socket($url, $content)
+	/**
+	 * @param string $url
+	 * @param string $content
+	 *
+	 * @return string
+	 */
+	public function socket(string $url, string $content)
 	{
 		$errno = 0;
 		$errstr = '';
@@ -41,7 +61,14 @@ class Browser
 		return $return;
 	}
 
-	public function json($url, $params = [], $headers = [])
+	/**
+	 * @param string $url
+	 * @param array $params
+	 * @param array $headers
+	 *
+	 * @return Browser\Response
+	 */
+	public function json(string $url, array $params = [], array $headers = [])
 	{
 		if (is_string($params)) {
 			$body = $params;
@@ -52,27 +79,59 @@ class Browser
 		return Request::post($url, ['Content-Type' => 'application/json'] + $headers, $body);
 	}
 
-	public function head($url, $headers = [])
+	/**
+	 * @param string $url
+	 * @param array $headers
+	 *
+	 * @return Browser\Response
+	 */
+	public function head(string $url, array $headers = [])
 	{
 		return Request::head($url, $headers);
 	}
 
-	public function patch($url, $headers = [], $body = null)
+	/**
+	 * @param string $url
+	 * @param array $headers
+	 * @param string|null $body
+	 *
+	 * @return Browser\Response
+	 */
+	public function patch(string $url, array $headers = [], string $body = null)
 	{
 		return Request::patch($url, $headers, $body);
 	}
 
-	public function put($url, $headers = [], $body = null)
+	/**
+	 * @param string $url
+	 * @param array $headers
+	 * @param string|null $body
+	 *
+	 * @return Browser\Response
+	 */
+	public function put(string $url, array $headers = [], string $body = null)
 	{
 		return Request::put($url, $headers, $body);
 	}
 
-	public function delete($url, $headers = [], $body = null)
+	/**
+	 * @param string $url
+	 * @param array $headers
+	 * @param string|null $body
+	 *
+	 * @return Browser\Response
+	 */
+	public function delete(string $url, $headers = [], string $body = null)
 	{
 		return Request::delete($url, $headers, $body);
 	}
 
-	public function timeout($seconds)
+	/**
+	 * @param int $seconds
+	 *
+	 * @return int
+	 */
+	public function timeout(int $seconds)
 	{
 		return Request::timeout($seconds);
 	}

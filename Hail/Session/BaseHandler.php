@@ -8,9 +8,6 @@
 
 namespace Hail\Session;
 
-
-use Hail\DITrait;
-
 /**
  * Class BaseHandler
  *
@@ -18,8 +15,6 @@ use Hail\DITrait;
  */
 abstract class BaseHandler implements \SessionHandlerInterface
 {
-	use DITrait;
-
 	protected $settings = [];
 
 	public function __construct(array $settings = [])

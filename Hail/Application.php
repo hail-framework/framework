@@ -10,6 +10,13 @@ namespace Hail;
 
 use Hail\Exception;
 use Hail\Tracy\Debugger;
+use Hail\Facades\{
+	Event,
+	Router,
+	Request,
+	Response,
+	Output
+};
 
 /**
  * Front Controller.
@@ -17,28 +24,27 @@ use Hail\Tracy\Debugger;
  */
 class Application
 {
-	use DITrait;
 	private $dispatcher = [];
 
 	public function run()
 	{
 		try {
-			$this->event->emit('startup');
+			Event::emit('startup');
 			$this->process();
 		} catch (\Exception $e) {
-			$this->event->emit('error', $e);
+			Event::emit('error', $e);
 			$this->processException($e);
 		} finally {
-			$this->event->emit('shutdown');
+			Event::emit('shutdown');
 		}
 	}
 
 	private function process()
 	{
-		$method = $this->request->getMethod();
-		$result = $this->router->dispatch(
+		$method = Request::getMethod();
+		$result = Router::dispatch(
 			$method,
-			$this->request->getPathInfo()
+			Request::getPathInfo()
 		);
 
 		if (isset($result['error'])) {
@@ -57,7 +63,7 @@ class Application
 	 * @param string $app
 	 *
 	 * @return Dispatcher
-	 * @throws BadRequest
+	 * @throws Exception\BadRequest
 	 */
 	public function getDispatcher($app)
 	{
@@ -68,7 +74,7 @@ class Application
 		return $this->dispatcher[$app];
 	}
 
-	public function processException(\Exception $e)
+	protected function processException(\Exception $e)
 	{
 		if (!$e instanceof Exception\Application) {
 			throw $e;
@@ -79,11 +85,11 @@ class Application
 		if ($isBadRequest) {
 			$code = $e->getCode() ?: 404;
 		} else {
-			$this->response->warnOnBuffer = false;
+			Response::disableWarnOnBuffer();
 		}
 
-		if (!$this->response->isSent()) {
-			$this->response->setCode($code);
+		if (!Response::isSent()) {
+			Response::setCode($code);
 		}
 
 		$msg = [
@@ -96,7 +102,7 @@ class Application
 
 		$msg = $msg[$code] ?? $e->getMessage();
 
-		$this->output->json->send([
+		Output::json()->send([
 			'ret' => $code,
 			'msg' => $msg,
 		]);

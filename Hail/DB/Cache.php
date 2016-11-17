@@ -8,8 +8,11 @@
 
 namespace Hail\DB;
 
-use Hail\DITrait;
 use Hail\Utils\Serialize;
+use Hail\Facades\{
+	DB,
+	Cache as SimpleCache
+};
 
 /**
  * Class Cache
@@ -20,18 +23,26 @@ use Hail\Utils\Serialize;
  */
 class Cache
 {
-	use DITrait;
-
 	private $lifetime = 0;
 	private $name = '';
 
+	/**
+	 * @param int $lifetime
+	 *
+	 * @return $this
+	 */
 	public function expiresAfter($lifetime = 0)
 	{
 		$this->lifetime = $lifetime;
 		return $this;
 	}
 
-	public function name($name)
+	/**
+	 * @param string $name
+	 *
+	 * @return $this
+	 */
+	public function name(string $name)
 	{
 		$this->name = $name;
 		return $this;
@@ -47,22 +58,22 @@ class Cache
 	{
 		$key = $this->key($name, $arguments);
 
-		$result = $this->cache->fetch($key);
+		$result = SimpleCache::fetch($key);
 		if (!$result) {
 			switch ($name) {
 				case 'get':
-					$result = $this->db->get(...$arguments);
+					$result = DB::get(...$arguments);
 				break;
 
 				case 'select':
-					$result = $this->db->select(...$arguments);
+					$result = DB::select(...$arguments);
 				break;
 
 				default:
 					throw new \InvalidArgumentException('Cache only support select/get method');
 			}
 
-			$this->cache->save($key, $result, $this->lifetime);
+			SimpleCache::save($key, $result, $this->lifetime);
 		}
 
 		$this->reset();
@@ -88,6 +99,9 @@ class Cache
 		return sha1(Serialize::encode([$name, $arguments]));
 	}
 
+	/**
+	 * @return $this
+	 */
 	public function reset()
 	{
 		if ($this->lifetime !== 0) {
@@ -101,11 +115,17 @@ class Cache
 		return $this;
 	}
 
-	public function delete($name, $arguments = null)
+	/**
+	 * @param string $name
+	 * @param mixed $arguments
+	 *
+	 * @return bool
+	 */
+	public function delete(string $name, $arguments = null)
 	{
 		$key = $this->key($name, $arguments);
 		$this->reset();
 
-		return $this->cache->delete($key);
+		return SimpleCache::delete($key);
 	}
 }

@@ -3,14 +3,23 @@ namespace Hail\Facades;
 
 use Hail\AliasLoader;
 
+/**
+ * Class Alias
+ *
+ * @package Hail\Facades
+ *
+ * @method static void alias(string $class, string $alias)
+ * @method static array getAliases()
+ * @method static void setAliases(array $aliases)
+ * @method static void register()
+ */
 class Alias extends Facade
 {
-	protected static $mapFile = TEMP_PATH . 'runtime/aliasMap.php';
-
 	protected static function instance()
 	{
-		if (file_exists(self::$mapFile)) {
-			$alias = include self::$mapFile;
+		$file = Config::get('__hail.map.alias');
+		if (file_exists($file)) {
+			$alias = include $file;
 		} else {
 			$alias = self::getConfig();
 		}
@@ -41,6 +50,9 @@ class Alias extends Facade
 	public static function buildMap()
 	{
 		$set = self::getConfig();
-		file_put_contents(self::$mapFile, '<?php return ' . var_export($set, true) . ';');
+		file_put_contents(
+			Config::get('__hail.map.alias'),
+			'<?php return ' . var_export($set, true) . ';'
+		);
 	}
 }

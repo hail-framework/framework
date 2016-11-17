@@ -8,6 +8,8 @@
 
 namespace Hail\Session;
 
+use Hail\Facades\DB;
+
 /**
  * Class DBHandler
  *
@@ -35,7 +37,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function destroy($id)
 	{
-		$result = $this->db->delete(
+		$result = DB::delete(
 			$this->settings['table'],
 			[$this->settings['id'] => $id]
 		);
@@ -47,7 +49,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function gc($lifetime)
 	{
-		$result = $this->db->delete(
+		$result = DB::delete(
 			$this->settings['table'], [
 				$this->settings['time'] . '[<]' => NOW - $lifetime,
 			]
@@ -60,7 +62,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function open($path, $name)
 	{
-		return $this->db ? true : false;
+		return DB::getInstance() ? true : false;
 	}
 
 	/**
@@ -68,7 +70,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function read($id)
 	{
-		$result = $this->db->get([
+		$result = DB::get([
 			'SELECT' => $this->settings['data'],
 			'FROM' => $this->settings['table'],
 			'WHERE' => [$this->settings['id'] => $id],
@@ -82,7 +84,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function write($id, $data)
 	{
-		$result = $this->db->insert(
+		$result = DB::insert(
 			$this->settings['table'], [
 			$this->settings['id'] => $id,
 			$this->settings['time'] => NOW,

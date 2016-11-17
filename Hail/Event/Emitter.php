@@ -37,7 +37,7 @@ class Emitter
 	 *
 	 * Listeners will get sorted and stored for re-use.
 	 *
-	 * @var Listener[]
+	 * @var [Listener[]]
 	 */
 	protected $sortedListeners = [];
 
@@ -49,15 +49,20 @@ class Emitter
 	 * an optional third parameter specifying the priority as an integer. You
 	 * may use one of our predefined constants here if you want.
 	 *
-	 * @param string                     $event
+	 * @param string $event
 	 * @param Listener|callable $listener
-	 * @param int                        $priority
+	 * @param int $priority
 	 *
 	 * @return $this
 	 */
 	public function on($event, $listener, $priority = self::P_NORMAL)
 	{
-		$this->listeners[$event][$priority][] = new Listener($listener);
+		if ($listener instanceof Listener) {
+			$this->listeners[$event][$priority][] = $listener;
+		} else {
+			$this->listeners[$event][$priority][] = new Listener($listener);
+		}
+
 		$this->clearSortedListeners($event);
 
 		return $this;
@@ -69,16 +74,19 @@ class Emitter
 	 * The first parameter should be the event name, and the second should be
 	 * the event listener.
 	 *
-	 * @param string   $event
-	 * @param Listener|callable $listener
-	 * @param int      $priority
+	 * @param string $event
+	 * @param callable $listener
+	 * @param int $priority
 	 *
 	 * @return $this
 	 */
 	public function once($event, $listener, $priority = self::P_NORMAL)
 	{
-		$listener = new OnceListener($event, $this, $listener);
-		return $this->on($event, $listener, $priority);
+		return $this->on(
+			$event,
+			new OnceListener($event, $this, $listener),
+			$priority
+		);
 	}
 
 	/**
@@ -87,7 +95,7 @@ class Emitter
 	 * The first parameter should be the event name, and the second should be
 	 * the event listener.
 	 *
-	 * @param string                     $event
+	 * @param string $event
 	 * @param callable $listener
 	 *
 	 * @return $this
@@ -100,7 +108,7 @@ class Emitter
 			: [];
 
 		$filter = function ($registered) use ($listener) {
-			return ! $registered->isEqual($listener);
+			return !$registered->isEqual($listener);
 		};
 
 		foreach ($listeners as $priority => $collection) {
@@ -160,7 +168,7 @@ class Emitter
 	 */
 	public function getListeners($event)
 	{
-		if (array_key_exists($event, $this->sortedListeners)) {
+		if (isset($this->sortedListeners[$event])) {
 			return $this->sortedListeners[$event];
 		}
 
@@ -176,7 +184,7 @@ class Emitter
 	 */
 	protected function getSortedListeners($event)
 	{
-		if (! $this->hasListeners($event)) {
+		if (!$this->hasListeners($event)) {
 			return [];
 		}
 
@@ -187,10 +195,8 @@ class Emitter
 	}
 
 	/**
-	 * Emit an event.
-	 *
-	 * @param string $event
-	 * @param array $arguments
+	 * @param $event
+	 * @param array ...$arguments
 	 */
 	public function emit($event, ...$arguments)
 	{
@@ -213,8 +219,8 @@ class Emitter
 	/**
 	 * Invoke the listeners for an event.
 	 *
-	 * @param string        $name
-	 * @param array         $arguments
+	 * @param string $name
+	 * @param array $arguments
 	 *
 	 * @return void
 	 */

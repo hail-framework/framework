@@ -18,7 +18,9 @@ class Error extends Controller
 		$message = $this->dispatcher->getParam('message');
 
 		$errorMessage = $this->config->get('error.' . $error);
-		$message = $message ? sprintf($errorMessage, $message) : $errorMessage;
+		if ($errorMessage) {
+			$message = $message ? sprintf($errorMessage, $message) : $errorMessage;
+		}
 
 		return [
 			'ret' => $error,

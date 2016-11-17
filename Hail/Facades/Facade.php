@@ -78,11 +78,14 @@ abstract class Facade
 	}
 
 	/**
+	 * 由子类定义获取实例的具体实现
+	 *
 	 * @return object
+	 * @throws \LogicException;
 	 */
 	protected static function instance()
 	{
-		throw new \RuntimeException('Class should define instance() method');
+		throw new \LogicException('Class should define instance() method');
 	}
 
 	public static function getName()

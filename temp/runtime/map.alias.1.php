@@ -10,7 +10,6 @@
   'Console' => '\\Hail\\Facades\\Console',
   'Cookie' => '\\Hail\\Facades\\Cookie',
   'DB' => '\\Hail\\Facades\\DB',
-  'Embedded' => '\\Hail\\Facades\\Embedded',
   'Event' => '\\Hail\\Facades\\Event',
   'I18N' => '\\Hail\\Facades\\I18N',
   'Library' => '\\Hail\\Facades\\Library',

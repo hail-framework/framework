@@ -77,7 +77,9 @@ class Container implements \ArrayAccess, ContainerInterface
 
 	public function isFacade($raw)
 	{
-		return is_string($raw) && strpos($raw, '\\Hail\\Facades\\') === 0;
+		return is_string($raw) &&
+			strpos($raw, '\\Hail\\Facades\\') === 0 &&
+			class_exists($raw);
 	}
 
 	/**

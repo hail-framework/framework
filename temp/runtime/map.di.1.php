@@ -9,7 +9,6 @@
   'console' => '\\Hail\\Facades\\Console',
   'cookie' => '\\Hail\\Facades\\Cookie',
   'db' => '\\Hail\\Facades\\DB',
-  'embedded' => '\\Hail\\Facades\\Embedded',
   'event' => '\\Hail\\Facades\\Event',
   'i18n' => '\\Hail\\Facades\\I18N',
   'lib' => '\\Hail\\Facades\\Library',

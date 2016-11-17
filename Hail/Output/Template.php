@@ -8,19 +8,16 @@
 
 namespace Hail\Output;
 
-
-use Hail\DITrait;
+use Hail\Facades\Template as Tpl;
 
 class Template
 {
-	use DITrait;
-
 	/**
 	 * @param string $name
 	 * @param array $params
 	 */
 	public function send($name, $params)
 	{
-		$this->template->render($name . '.latte', $params);
+		Tpl::render($name . '.latte', $params);
 	}
 }

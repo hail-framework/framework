@@ -11,7 +11,7 @@ trait OptimizeTrait
 			$time = $key . '|time';
 			$check = Optimize::get(__CLASS__, $time);
 			if ($check !== false && NOW >= ($check[0] + HAIL_OPTIMIZE_CHECK_DELAY)) {
-				if (!file_exists($file) || filemtime($file) !== $check[1]) {
+				if ($this->optimizeVerifyMTime($file, $check[1])) {
 					return false;
 				}
 
@@ -27,11 +27,14 @@ trait OptimizeTrait
 
 	protected function optimizeSet($key, $value = null, $file = null)
 	{
-		if ($file !== null && file_exists($file)) {
-			$key = [
-				$key => $value,
-				$key . '|time' => [NOW, filemtime($file)],
-			];
+		if ($file !== null) {
+			$mtime = $this->optimizeFileMTime($file);
+			if ($mtime !== []) {
+				$key = [
+					$key => $value,
+					$key . '|time' => [NOW, $mtime],
+				];
+			}
 		}
 
 		if (is_array($key)) {
@@ -43,5 +46,36 @@ trait OptimizeTrait
 		return Optimize::set(
 			__CLASS__, $key, $value
 		);
+	}
+
+	protected function optimizeVerifyMTime($file, $check)
+	{
+		$file = array_unique((array) $file);
+
+		foreach ($file as $v) {
+			if (file_exists($v)) {
+				if (!isset($check[$v]) || filemtime($v) !== $check[$v]) {
+					return true;
+				}
+			} elseif (isset($check[$v])) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	protected function optimizeFileMTime($file)
+	{
+		$file = array_unique((array) $file);
+
+		$mtime = [];
+		foreach ($file as $v) {
+			if (file_exists($v)) {
+				$mtime[$v] = filemtime($v);
+			}
+		}
+
+		return $mtime;
 	}
 }

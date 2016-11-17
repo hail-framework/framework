@@ -24,8 +24,21 @@ defined('TEMP_PATH') || define('TEMP_PATH', SYSTEM_PATH . 'temp/');
  */
 class Bootstrap
 {
+	protected static $inited = false;
+
 	public static function init()
 	{
+		if (self::$inited === true) {
+			return;
+		}
+
+		$hailPath = substr(__DIR__, 0, -4);
+		if (!defined('HAIL_PATH')) {
+			define('HAIL_PATH', $hailPath);
+		} elseif (HAIL_PATH !== $hailPath) {
+			exit;
+		}
+
 		define('HAIL_SERIALIZE', Config::get('env.serialize'));
 
 		Alias::register();
@@ -50,5 +63,7 @@ class Bootstrap
 			Config::get('app.i18n.domain'),
 			Config::get('app.i18n.local')
 		);
+
+		self::$inited = true;
 	}
 }

@@ -9,17 +9,17 @@
 namespace Hail\Utils;
 
 /**
- * Ð¡Êý×é
- * Ñ¹Ëõ³ß´ç:     msgpack < igbinary < json < swoole < serialize
- * ÐòÁÐ»¯ËÙ¶È:   swoole << serialize < msgpack < json < igbinary
- * ·´ÐòÁÐ»¯ËÙ¶È: swoole << igbinary < msgpack < serialize << json
+ * å°æ•°ç»„
+ * åŽ‹ç¼©å°ºå¯¸:     msgpack < igbinary < json < swoole < serialize
+ * åºåˆ—åŒ–é€Ÿåº¦:   swoole << serialize < msgpack < json < igbinary
+ * ååºåˆ—åŒ–é€Ÿåº¦: swoole << igbinary < msgpack < serialize << json
  *
- * ´óÊý×é
- * Ñ¹Ëõ³ß´ç:     igbinary << msgpack < json << swoole < serialize
- * ÐòÁÐ»¯ËÙ¶È:   swoole << msgpack < serialize < igbinary ¡Ö json
- * ·´ÐòÁÐ»¯ËÙ¶È: swoole << igbinary < serialize < msgpack << json
+ * å¤§æ•°ç»„
+ * åŽ‹ç¼©å°ºå¯¸:     igbinary << msgpack < json << swoole < serialize
+ * åºåˆ—åŒ–é€Ÿåº¦:   swoole << msgpack < serialize < igbinary â‰ˆ json
+ * ååºåˆ—åŒ–é€Ÿåº¦: swoole << igbinary < serialize < msgpack << json
  *
- * serialize ºÍ json ²»ÐèÒª°²×°¶îÍâµÄÀ©Õ¹
+ * serialize å’Œ json ä¸éœ€è¦å®‰è£…é¢å¤–çš„æ‰©å±•
  */
 defined('HAIL_SERIALIZE') || define('HAIL_SERIALIZE', 'serialize');
 

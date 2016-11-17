@@ -9,22 +9,20 @@
 namespace Hail\Output;
 
 
-use Hail\DITrait;
-use Hail\Http\Response;
+use Hail\Facades\Response;
+use Hail\Http\Response as Code;
 
 class Redirect
 {
-	use DITrait;
-
 	/**
 	 * @param string $url
 	 * @param int $code
 	 */
-	public function send($url, $code = Response::S302_FOUND)
+	public function send($url, $code = Code::S302_FOUND)
 	{
 		$url = (string) $url;
 		$code = (int) $code;
-		$this->response->redirect($url, $code);
+		Response::redirect($url, $code);
 	}
 
 }

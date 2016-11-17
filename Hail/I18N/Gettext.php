@@ -1,4 +1,6 @@
 <?php
+use Hail\Facades\I18N;
+
 if (extension_loaded('gettext')) {
 	require __DIR__ . '/GettextExt.php';
 } else {
@@ -6,7 +8,7 @@ if (extension_loaded('gettext')) {
 
 	function _($msg)
 	{
-		return Gettext::gettext($msg);
+		return I18N::gettext($msg);
 	}
 }
 
@@ -17,15 +19,15 @@ function _e($msg)
 
 function _n($msg, $msg_plural, $count)
 {
-	return Gettext::ngettext($msg, $msg_plural, $count);
+	return I18N::ngettext($msg, $msg_plural, $count);
 }
 
 function _d($domain, $msg)
 {
-	return Gettext::dgettext($domain, $msg);
+	return I18N::dgettext($domain, $msg);
 }
 
 function _dn($domain, $msg, $msg_plural, $count)
 {
-	return Gettext::dngettext($domain, $msg, $msg_plural, $count);
+	return I18N::dngettext($domain, $msg, $msg_plural, $count);
 }

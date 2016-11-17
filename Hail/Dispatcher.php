@@ -3,6 +3,13 @@
 namespace Hail;
 
 use Hail\Exception\BadRequest;
+use Hail\Facades\{
+	Config,
+	Application,
+	Request,
+	Response,
+	Output
+};
 
 /**
  * Class Dispatcher
@@ -11,8 +18,6 @@ use Hail\Exception\BadRequest;
  */
 class Dispatcher
 {
-	use DITrait;
-
 	protected $application;
 	protected $namespace;
 	protected $rest = '';
@@ -58,7 +63,7 @@ class Dispatcher
 			case 'POST':
 			default:
 				$return = $object->$method();
-				$outputType = $return['_type_'] ?? $this->config->get("app.output.{$this->application}");
+				$outputType = $return['_type_'] ?? Config::get("app.output.{$this->application}");
 		}
 
 		$this->output($outputType, $return);
@@ -100,11 +105,11 @@ class Dispatcher
 			return;
 		}
 
-		if (($origin = $this->request->getHeader('Origin')) &&
-			($allowOrigin = $this->config->get('app.allow_origin')) &&
+		if (($origin = Request::getHeader('Origin')) &&
+			($allowOrigin = Config::get('app.allow_origin')) &&
 			in_array($origin, (array) $allowOrigin, true)
 		) {
-			$this->response->setOrigin($origin);
+			Response::setOrigin($origin);
 		}
 
 		if ($return === false) {
@@ -112,9 +117,6 @@ class Dispatcher
 		} else if ($return === true) {
 			$return = [];
 		}
-
-		$logData = ['post' => $this->request->getParam(), 'api' => $this->current, 'return' => $return];
-		$this->event->emit('oplog', $logData);
 
 		switch ($type) {
 			case 'json':
@@ -125,17 +127,17 @@ class Dispatcher
 					$return['msg'] = '';
 				}
 
-				$this->output->json->send($return);
+				Output::json()->send($return);
 			break;
 
 			case 'text':
-				$this->output->text->send($return);
+				Output::text()->send($return);
 			break;
 
 			case 'template':
 				$name = $return['_template_'] ??
 					$this->application . '/' . $this->current['controller'] . '/' . $this->current['action'];
-				$this->output->template->send($name, $return);
+				Output::template()->send($name, $return);
 			break;
 		}
 	}
@@ -198,7 +200,7 @@ class Dispatcher
 		$app = $to['app'] ?? $this->application;
 
 		if ($app !== $this->application) {
-			$dispatcher = $this->app->getDispatcher($app);
+			$dispatcher = Application::getDispatcher($app);
 
 			return $dispatcher->forward($to);
 		} else {

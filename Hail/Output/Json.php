@@ -9,7 +9,10 @@
 namespace Hail\Output;
 
 
-use Hail\DITrait;
+use Hail\Facades\{
+	Request,
+	Response
+};
 use Hail\Utils\Json as Js;
 
 /**
@@ -18,12 +21,10 @@ use Hail\Utils\Json as Js;
  */
 class Json
 {
-	use DITrait;
-
 	public function send($content) {
-		$contentType = !$this->request->isAjax() ? 'text/html' : 'application/json';
-		$this->response->setContentType($contentType, 'utf-8');
-		$this->response->setExpiration(false);
+		$contentType = !Request::isAjax() ? 'text/html' : 'application/json';
+		Response::setContentType($contentType, 'utf-8');
+		Response::setExpiration(false);
 		echo Js::encode($content);
 	}
 }

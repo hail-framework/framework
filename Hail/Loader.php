@@ -9,7 +9,7 @@ define('HAIL_PATH', substr(__DIR__, 0, -4));
  */
 class Loader
 {
-	protected static $mapFile = TEMP_PATH . 'runtime/autoloadMap.php';
+	protected static $mapFile = TEMP_PATH . 'runtime/map.autoload.php';
 	protected static $classesMap;
 
 	protected static $registered = false;
@@ -34,7 +34,7 @@ class Loader
 	{
 		if (!self::$registered) {
 			if (file_exists(self::$mapFile)) {
-				self::$classesMap = include self::$mapFile;
+				self::$classesMap = require self::$mapFile;
 			}
 
 			spl_autoload_register([__CLASS__, 'loadClass']);
@@ -103,7 +103,10 @@ class Loader
 			}
 		}
 
-		file_put_contents(self::$mapFile, '<?php return ' . var_export($map, true) . ';');
+		file_put_contents(
+			self::$mapFile,
+			'<?php return ' . var_export($map, true) . ';'
+		);
 	}
 
 	private static function scan($path) {

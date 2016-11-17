@@ -8,13 +8,8 @@
 
 namespace Hail\Output;
 
-
-use Hail\DITrait;
-
 class Text
 {
-	use DITrait;
-
 	/**
 	 * @param mixed $source
 	 */

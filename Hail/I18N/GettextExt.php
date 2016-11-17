@@ -12,8 +12,6 @@ namespace Hail\I18N;
  */
 class Gettext
 {
-	protected $dir;
-
 	/**
 	 * Initialize a new gettext class
 	 *
@@ -26,8 +24,6 @@ class Gettext
 		setlocale(LC_ALL, $locale . '.utf-8');
 		bindtextdomain($domain, $directory);
 		textdomain($domain);
-
-		$this->dir = $directory;
 	}
 
 	/**

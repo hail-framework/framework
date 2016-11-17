@@ -6,7 +6,7 @@
  */
 
 namespace Hail\Http;
-use Hail\DITrait;
+
 
 /**
  * HttpRequest provides access scheme for request sent via HTTP.
@@ -14,8 +14,6 @@ use Hail\DITrait;
  */
 class Request
 {
-	use DITrait;
-
 	/** @var string */
 	private $method;
 
@@ -288,7 +286,7 @@ class Request
 			return $this->headers[$header] === false ? $default : $this->headers[$header];
 		}
 
-		$key = 'HTTP_' . strtr($header, '-', '_');
+		$key = 'HTTP_' . str_replace('-', '_', $header);
 		if (isset($_SERVER[$key])) {
 			return $this->headers[$header] = $_SERVER[$key];
 		} else {
@@ -319,12 +317,12 @@ class Request
 		} else {
 			$headers = [];
 			foreach ($_SERVER as $k => $v) {
-				if (strncmp($k, 'HTTP_', 5) == 0) {
+				if (strpos($k, 'HTTP_') === 0) {
 					$k = substr($k, 5);
 				} elseif (strncmp($k, 'CONTENT_', 8)) {
 					continue;
 				}
-				$headers[strtr($k, '_', '-')] = $v;
+				$headers[str_replace('_', '-', $k)] = $v;
 			}
 		}
 		return $this->headers = $headers;
@@ -415,7 +413,7 @@ class Request
 		}
 
 		$s = strtolower($header);  // case insensitive
-		$s = strtr($s, '_', '-');  // cs_CZ means cs-CZ
+		$s = str_replace('_', '-', $s);  // cs_CZ means cs-CZ
 		rsort($langs);             // first more specific
 		preg_match_all('#(' . implode('|', $langs) . ')(?:-[^\s,;=]+)?\s*(?:;\s*q=([0-9.]+))?#', $s, $matches);
 
