@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\I18N\Gettext;
+use Hail;
 
 /**
  * Class I18N
@@ -18,6 +18,6 @@ class I18N extends Facade
 {
 	protected static function instance()
 	{
-		return new Gettext();
+		return new Hail\I18N\Gettext();
 	}
 }

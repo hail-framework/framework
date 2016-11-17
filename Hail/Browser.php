@@ -22,14 +22,15 @@ class Browser
 
 	/**
 	 * @param string $url
-	 * @param array $params
+	 * @param string|array $params
 	 * @param array $headers
 	 *
 	 * @return Browser\Response
 	 */
-	public function post(string $url, array $params = [], array $headers = [])
+	public function post(string $url, $params = [], array $headers = [])
 	{
 		$body = Body::form($params);
+
 		return Request::post($url, $headers, $body);
 	}
 
@@ -63,12 +64,12 @@ class Browser
 
 	/**
 	 * @param string $url
-	 * @param array $params
+	 * @param string|array $params
 	 * @param array $headers
 	 *
 	 * @return Browser\Response
 	 */
-	public function json(string $url, array $params = [], array $headers = [])
+	public function json(string $url, $params = [], array $headers = [])
 	{
 		if (is_string($params)) {
 			$body = $params;

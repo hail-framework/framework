@@ -83,7 +83,10 @@ class Loader
 			$path = rtrim($path, '/');
 
 			foreach (self::scan($path) as $file) {
-				if (pathinfo($file, PATHINFO_EXTENSION) !== 'php' || !preg_match('/^[A-Z]/', $file)) {
+				if (
+					pathinfo($file, PATHINFO_EXTENSION) !== 'php' ||
+					!preg_match('/^[A-Z]/', pathinfo($file, PATHINFO_FILENAME))
+				) {
 					continue;
 				}
 
