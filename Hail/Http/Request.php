@@ -7,10 +7,17 @@
 
 namespace Hail\Http;
 
+use Hail\Utils\{
+	Arrays,
+	Strings,
+	Json
+};
+
 
 /**
  * HttpRequest provides access scheme for request sent via HTTP.
  *
+ * @property array $inputs
  */
 class Request
 {
@@ -21,19 +28,19 @@ class Request
 	private $url;
 
 	/** @var array */
-	private $post;
-
-	/** @var null|array */
-	private $json;
+	private $post = [];
 
 	/** @var array */
-	private $files;
+	private $json = [];
 
 	/** @var array */
-	private $cookies;
+	private $files = [];
 
 	/** @var array */
-	private $headers;
+	private $cookies = [];
+
+	/** @var array */
+	private $headers = [];
 
 	/** @var null|string */
 	private $content;
@@ -44,12 +51,8 @@ class Request
 	/** @var string|NULL */
 	private $remoteHost;
 
-	/** @var array */
-	private $params = [];
-	/** @var bool */
-	private $params_all = false;
-	/** @var array */
-	private $params_del = [];
+	/** @var Input */
+	public $input;
 
 	public function __construct(Url $url, $method = null, $remoteAddress = null, $remoteHost = null)
 	{
@@ -57,10 +60,29 @@ class Request
 		$this->method = $method ?: 'GET';
 		$this->remoteAddress = $remoteAddress;
 		$this->remoteHost = $remoteHost;
+
+		$this->input = new Input($this);
+	}
+
+	public function __set($name, $value)
+	{
+		if ($name === 'inputs') {
+			$this->input->setAll($value);
+		}
+	}
+
+	public function __get($name)
+	{
+		if ($name === 'inputs') {
+			$this->input->getAll();
+		}
+
+		return null;
 	}
 
 	/**
 	 * Returns URL object.
+	 *
 	 * @return Url
 	 */
 	public function getUrl()
@@ -70,6 +92,7 @@ class Request
 
 	/**
 	 * Returns URL object.
+	 *
 	 * @return Url
 	 */
 	public function cloneUrl()
@@ -87,98 +110,9 @@ class Request
 
 	/********************* query, post, files & cookies ****************d*g**/
 
-
-	public function setAllParams($array)
+	public function input($key = null, $default = null)
 	{
-		$this->setParams($array);
-		$this->params_all = true;
-	}
-
-	public function setParams($array)
-	{
-		foreach ($array as $k => $v) {
-			$this->setParam($k, $v);
-		}
-	}
-
-	/**
-	 * @param string $key
-	 * @param mixed $value
-	 */
-	public function setParam($key, $value = null)
-	{
-		if (isset($this->params_del[$key])) {
-			unset($this->params_del[$key]);
-		}
-		$this->params[$key] = $value;
-	}
-
-	public function delParam($key)
-	{
-		if ($this->params_all) {
-			if (isset($this->params[$key])) {
-				unset($this->params[$key]);
-			}
-		}
-
-		if (!isset($this->params_del[$key])) {
-			$this->params_del[$key] = true;
-		}
-	}
-
-	/**
-	 * @param $key
-	 *
-	 * @return mixed
-	 */
-	public function getParam($key = null)
-	{
-		if ($key === null && $this->params_all) {
-			return array_filter($this->params, function($v) {
-				return $v !== null;
-			});
-		} else if (isset($this->params[$key])) {
-			return $this->params[$key];
-		} else if ($this->params_all) {
-			return null;
-		}
-
-		return $this->getParamSet($key);
-	}
-
-	private function getParamSet($key = null)
-	{
-		if ($key !== null && isset($this->params_del[$key])) {
-			return null;
-		}
-
-		$type = $this->getHeader('CONTENT-TYPE');
-
-		$return = null;
-		if ($type === 'application/json') {
-			$return = $this->getJson($key);
-		} else if ($type === 'application/x-www-form-urlencoded') {
-			$return = $this->getPost($key);
-		} else if (strpos($type, 'multipart/form-data') === 0) {
-			$return = $this->getFile($key);
-			$return = $return ?: $this->getPost($key);
-		}
-
-		$return = $return ?? $this->getQuery($key);
-
-		if ($key === null) {
-			$this->params_all = true;
-			$return = array_merge($return, $this->params);
-
-			foreach ($this->params_del as $k => $v) {
-				unset($return[$k]);
-			}
-			$this->params = $return;
-		} else {
-			$this->setParam($key, $return);
-		}
-
-		return $return;
+		return $this->input->get($key, $default);
 	}
 
 	/**
@@ -204,20 +138,20 @@ class Request
 	 */
 	public function getPost($key = null)
 	{
-		return Helpers::getParams($this->post, '_POST', $key);
+		return Helpers::getParam($this->post, '_POST', $key);
 	}
 
 	public function getJson($key = null)
 	{
 		if ($this->json === null) {
 			$body = $this->getRawBody();
-			$this->json = json_decode($body);
+			$this->json = Json::decode($body);
 		}
 
 		if ($key === null) {
 			return $this->json;
 		} else {
-			return $this->json[$key] ?? null;
+			return Arrays::get($this->json, $key);
 		}
 	}
 
@@ -230,7 +164,7 @@ class Request
 	 */
 	public function getFile($key = null)
 	{
-		return Helpers::getParams($this->files, '_FILES', $key);
+		return Helpers::getParam($this->files, '_FILES', $key);
 	}
 
 	/**
@@ -242,7 +176,7 @@ class Request
 	 */
 	public function getCookie($key = null)
 	{
-		return Helpers::getParams($this->cookies, '_COOKIE', $key);
+		return Helpers::getParam($this->cookies, '_COOKIE', $key);
 	}
 
 	/********************* method & headers ****************d*g**/
@@ -250,6 +184,7 @@ class Request
 
 	/**
 	 * Returns HTTP request method (GET, POST, HEAD, PUT, ...). The method is case-sensitive.
+	 *
 	 * @return string
 	 */
 	public function getMethod()
@@ -300,6 +235,7 @@ class Request
 				return $this->headers[$header] = $_SERVER[$contentHeaders[$header]];
 			} else {
 				$this->headers[$header] = false;
+
 				return $default;
 			}
 		}
@@ -308,6 +244,7 @@ class Request
 
 	/**
 	 * Returns all HTTP headers.
+	 *
 	 * @return array
 	 */
 	public function getHeaders()
@@ -325,23 +262,27 @@ class Request
 				$headers[str_replace('_', '-', $k)] = $v;
 			}
 		}
+
 		return $this->headers = $headers;
 	}
 
 
 	/**
 	 * Returns referrer.
+	 *
 	 * @return Url|NULL
 	 */
 	public function getReferer()
 	{
 		$referre = $this->getHeader('referer');
+
 		return null === $referre ? null : new Url($referre);
 	}
 
 
 	/**
 	 * Is the request is sent via secure channel (https).
+	 *
 	 * @return bool
 	 */
 	public function isSecured()
@@ -352,18 +293,61 @@ class Request
 
 	/**
 	 * Is AJAX request?
+	 *
 	 * @return bool
 	 */
 	public function isAjax()
 	{
-		return !empty($this->getHeader('Origin')) ||
-			$this->getHeader('X-Requested-With') === 'XMLHttpRequest' ||
-			$this->getHeader('Accept') === 'application/json';
+		return $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
 	}
 
+	/**
+	 * Determine if the request is the result of an PJAX call.
+	 *
+	 * @return bool
+	 */
+	public function isPjax()
+	{
+		return $this->getHeader('X-PJAX') === 'true';
+	}
+
+	/**
+	 * Determine if the request is sending JSON.
+	 *
+	 * @return bool
+	 */
+	public function isJson()
+	{
+		return Strings::contains(
+			$this->getHeader('CONTENT-TYPE'), ['/json', '+json']
+		);
+	}
+
+	/**
+	 * Determine if the current request probably expects a JSON response.
+	 *
+	 * @return bool
+	 */
+	public function expectsJson()
+	{
+		return ($this->isAjax() && !$this->isPjax()) || $this->wantsJson();
+	}
+
+	/**
+	 * Determine if the current request is asking for JSON in return.
+	 *
+	 * @return bool
+	 */
+	public function wantsJson()
+	{
+		$acceptable = $this->getHeader('Accept');
+
+		return $acceptable !== null && Strings::contains($acceptable, ['/json', '+json']);
+	}
 
 	/**
 	 * Returns the IP address of the remote client.
+	 *
 	 * @return string|NULL
 	 */
 	public function getRemoteAddress()
@@ -374,6 +358,7 @@ class Request
 
 	/**
 	 * Returns the host of the remote client.
+	 *
 	 * @return string|NULL
 	 */
 	public function getRemoteHost()
@@ -381,12 +366,14 @@ class Request
 		if ($this->remoteHost === null && $this->remoteAddress !== null) {
 			$this->remoteHost = gethostbyaddr($this->remoteAddress);
 		}
+
 		return $this->remoteHost;
 	}
 
 
 	/**
 	 * Returns raw content of HTTP request body.
+	 *
 	 * @return string|NULL
 	 */
 	public function getRawBody()
@@ -394,6 +381,7 @@ class Request
 		if ($this->content === null) {
 			$this->content = file_get_contents('php://input');
 		}
+
 		return $this->content;
 	}
 

@@ -133,7 +133,7 @@ class UrlScript extends Url
 	 */
 	public function getQueryParameters()
 	{
-		return Helpers::getParams($this->query, '_GET');
+		return Helpers::getParam($this->query, '_GET');
 	}
 
 	/**
@@ -144,6 +144,6 @@ class UrlScript extends Url
 	 */
 	public function getQueryParameter($key = NULL)
 	{
-		return Helpers::getParams($this->query, '_GET', $key);
+		return Helpers::getParam($this->query, '_GET', $key);
 	}
 }

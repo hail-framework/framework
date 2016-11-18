@@ -47,6 +47,7 @@ class Validator
 		'space' => 'ctype_space',
 		'xdigit' => 'ctype_xdigit',
 	];
+
 	protected static $counters = [
 		'string' => 'strlen',
 		'unicode' => [Strings::class, 'length'],
@@ -64,9 +65,9 @@ class Validator
 	/**
 	 * Throws exception if a variable is of unexpected type.
 	 *
-	 * @param  mixed
-	 * @param  string  expected types separated by pipe
-	 * @param  string  label
+	 * @param  mixed $value
+	 * @param  string $expected expected types separated by pipe
+	 * @param  string $label
 	 *
 	 * @return void
 	 * @throws Exception\Assertion
@@ -113,8 +114,8 @@ class Validator
 	/**
 	 * Finds whether a variable is of expected type.
 	 *
-	 * @param  mixed
-	 * @param  string  expected types separated by pipe with optional ranges
+	 * @param  mixed $value
+	 * @param  string $expected expected types separated by pipe with optional ranges
 	 *
 	 * @return bool
 	 */
@@ -138,11 +139,13 @@ class Validator
 			} elseif (!$value instanceof $type) {
 				continue;
 			}
+
 			if (isset($item[1])) {
 				$length = $value;
 				if (isset(static::$counters[$type])) {
 					$length = call_user_func(static::$counters[$type], $value);
 				}
+
 				$range = explode('..', $item[1]);
 				if (!isset($range[1])) {
 					$range[1] = $range[0];
@@ -219,7 +222,7 @@ class Validator
 	 */
 	public static function isList($value)
 	{
-		return is_array($value) && (!$value || array_keys($value) === range(0, count($value) - 1));
+		return is_array($value) && false === Arrays::isAssoc($value);
 	}
 
 	/**

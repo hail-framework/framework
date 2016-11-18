@@ -7,7 +7,10 @@
 
 namespace Hail\Http;
 
+use Hail\Utils\Arrays;
 use Hail\Utils\DateTime;
+use Hail\Facades\Response as Res;
+use Hail\Facades\Request as Req;
 
 /**
  * Rendering helpers for HTTP.
@@ -21,6 +24,8 @@ class Helpers
 	/** @internal */
 	const VAL_CHARS = '#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]+#u';
 
+	private static $cached = [];
+
 	/**
 	 * Attempts to cache the sent entity by its last modification date.
 	 *
@@ -32,29 +37,29 @@ class Helpers
 	public static function isModified($lastModified = null, $etag = null)
 	{
 		if ($lastModified) {
-			\Response::setHeader('Last-Modified', self::formatDate($lastModified));
+			Res::setHeader('Last-Modified', static::formatDate($lastModified));
 		}
 		if ($etag) {
-			\Response::setHeader('ETag', '"' . addslashes($etag) . '"');
+			Res::setHeader('ETag', '"' . addslashes($etag) . '"');
 		}
 
-		$ifNoneMatch = \Request::getHeader('If-None-Match');
+		$ifNoneMatch = Req::getHeader('If-None-Match');
 		if ($ifNoneMatch === '*') {
 			$match = true; // match, check if-modified-since
 		} elseif ($ifNoneMatch !== null) {
-			$etag = \Response::getHeader('ETag');
+			$etag = Res::getHeader('ETag');
 
-			if ($etag == null || strpos(' ' . strtr($ifNoneMatch, ",\t", '  '), ' ' . $etag) === false) {
+			if ($etag === null || strpos(' ' . strtr($ifNoneMatch, ",\t", '  '), ' ' . $etag) === false) {
 				return true;
 			} else {
 				$match = true; // match, check if-modified-since
 			}
 		}
 
-		$ifModifiedSince = \Request::getHeader('If-Modified-Since');
+		$ifModifiedSince = Req::getHeader('If-Modified-Since');
 		if ($ifModifiedSince !== null) {
-			$lastModified = \Response::getHeader('Last-Modified');
-			if ($lastModified != null && strtotime($lastModified) <= strtotime($ifModifiedSince)) {
+			$lastModified = Res::getHeader('Last-Modified');
+			if ($lastModified !== null && strtotime($lastModified) <= strtotime($ifModifiedSince)) {
 				$match = true;
 			} else {
 				return true;
@@ -65,7 +70,8 @@ class Helpers
 			return true;
 		}
 
-		\Response::setCode(Response::S304_NOT_MODIFIED);
+		Res::setCode(Response::S304_NOT_MODIFIED);
+
 		return false;
 	}
 
@@ -81,12 +87,14 @@ class Helpers
 	{
 		$time = DateTime::from($time);
 		$time->setTimezone(new \DateTimeZone('GMT'));
+
 		return $time->format('D, d M Y H:i:s \G\M\T');
 	}
 
 
 	/**
 	 * Is IP address in CIDR block?
+	 *
 	 * @return bool
 	 */
 	public static function ipMatch($ip, $mask)
@@ -101,12 +109,14 @@ class Helpers
 		if (!$max || $max !== strlen($mask) || (int) $size < 0 || (int) $size > $max) {
 			return false;
 		}
+
 		return strncmp($ip, $mask, $size === '' ? $max : (int) $size) === 0;
 	}
 
 
 	/**
 	 * Removes duplicate cookies from response.
+	 *
 	 * @return void
 	 */
 	public static function removeDuplicateCookies()
@@ -127,51 +137,48 @@ class Helpers
 		}
 	}
 
-	public static function filter($v)
+	/**
+	 * @param array $vars
+	 * @param string $type
+	 * @param string|null $key
+	 *
+	 * @return array|FileUpload|mixed|null|string
+	 */
+	public static function getParam(array &$vars, string $type, string $key = null)
 	{
-		return $v !== false;
-	}
-
-	public static function getParams(&$vars, $type, $key = null)
-	{
-		if ($key === null) {
-			if ($type === null) {
-				return $vars;
-			} else if (empty($GLOBALS[$type])) {
-				return [];
-			}
-
+		if (empty($GLOBALS[$type])) {
+			return $key === null ? [] : null;
+		} elseif ($key === null) {
 			foreach ($GLOBALS[$type] as $k => $v) {
-				if (isset($vars[$k]) || static::keyCheck($k)) {
-					continue;
-				} else if ($type === '_FILES') {
-					$vars[$k] = static::getFile($v);
-					if ($vars[$k] === null) {
-						$vars[$k] = false;
-					}
-				} else {
-					$vars[$k] = static::getParam($v);
-				}
+				static::getParam($vars, $type, $k);
 			}
 
-			return array_filter($vars, [self::class, 'filter']);
-		} else if (isset($var[$key])) {
-			return $var[$key] === false ? null : $var[$key];
-		} else if (isset($GLOBALS[$type][$key])) {
-			if (self::keyCheck($key)) {
-				$var[$key] = false;
-				return null;
+			return $vars;
+		} elseif (isset($vars[$key])) {
+			return $vars[$key];
+		} elseif (array_key_exists(static::$cached, $key)) {
+			return static::$cached[$key];
+		} elseif (static::keyCheck($key)) {
+			return self::$cached[$key] = null;
+		}  elseif ($type === '_FILES') {
+			if (($file = static::getFile($GLOBALS[$type][$key])) === null) {
+				return self::$cached[$key] = null;
 			}
-			if ($type === '_FILES') {
-				$file = self::getFile($GLOBALS[$type][$key]);
-				$vars[$key] = $file === null ? false : $file;
-				return $file;
-			} else {
-				return $var[$key] = self::getParam($GLOBALS[$type][$key]);
-			}
+			return $vars[$key] = $file;
 		} else {
-			$var[$key] = false;
-			return null;
+			$pos = strpos($key, '.');
+			$first = $pos === false ? $key : substr($key, 0, $pos);
+			if (!isset($GLOBALS[$type][$first])) {
+				return self::$cached[$key] = null;
+			}
+
+			$val = $vars[$first] = $GLOBALS[$type][$first];
+			if ($pos !== false) {
+				$val = Arrays::get($vars[$first], substr($key, $pos + 1));
+			}
+			$val = static::valueCheck($val);
+
+			return self::$cached[$key] = $val;
 		}
 	}
 
@@ -182,7 +189,7 @@ class Helpers
 	 */
 	public static function keyCheck($k)
 	{
-		return is_string($k) && (!preg_match(self::KEY_CHARS, $k) || preg_last_error());
+		return is_string($k) && (!preg_match(static::KEY_CHARS, $k) || preg_last_error());
 	}
 
 	/**
@@ -190,20 +197,23 @@ class Helpers
 	 *
 	 * @return array|string
 	 */
-	public static function getParam($val)
+	public static function valueCheck($val)
 	{
-		if (is_array($val)) {
+		if ($val === null) {
+			return null;
+		} elseif (is_array($val)) {
 			foreach ($val as $k => $v) {
 				if (static::keyCheck($k)) {
 					unset($val[$k]);
 				} else {
-					$val[$k] = static::getParam($v);
+					$val[$k] = static::valueCheck($v);
 				}
 			}
+
 			return $val;
-		} else {
-			return (string) preg_replace(self::VAL_CHARS, '', $val);
 		}
+
+		return (string) preg_replace(static::VAL_CHARS, '', $val);
 	}
 
 	/**
@@ -216,11 +226,11 @@ class Helpers
 		if (is_array($v['name'])) {
 			$list = [];
 			foreach ($v['name'] as $k => $foo) {
-				if (!is_numeric($k) && self::keyCheck($k)) {
+				if (!is_numeric($k) && static::keyCheck($k)) {
 					continue;
 				}
 
-				$file = self::getFile([
+				$file = static::getFile([
 					'name' => $v['name'][$k],
 					'type' => $v['type'][$k],
 					'size' => $v['size'][$k],
@@ -236,18 +246,16 @@ class Helpers
 			}
 
 			return $list;
-		} else {
-			if (isset($v['name'])) {
-				if (self::keyCheck($v['name'])) {
-					$v['name'] = '';
-				}
-				if ($v['error'] !== UPLOAD_ERR_NO_FILE) {
-					return new FileUpload($v);
-				}
+		} elseif (isset($v['name'])) {
+			if (static::keyCheck($v['name'])) {
+				$v['name'] = '';
 			}
-
-			return null;
+			if ($v['error'] !== UPLOAD_ERR_NO_FILE) {
+				return new FileUpload($v);
+			}
 		}
+
+		return null;
 	}
 
 	/**
@@ -261,12 +269,13 @@ class Helpers
 	 */
 	public static function webalize($s, $charlist = null, $lower = true)
 	{
-		$s = self::toAscii($s);
+		$s = static::toAscii($s);
 		if ($lower) {
 			$s = strtolower($s);
 		}
 		$s = preg_replace('#[^a-z0-9' . preg_quote($charlist, '#') . ']+#i', '-', $s);
 		$s = trim($s, '-');
+
 		return $s;
 	}
 
@@ -305,6 +314,7 @@ class Helpers
 			$s = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s); // intentionally @
 		}
 		$s = str_replace(['`', "'", '"', '^', '~', '?'], '', $s);
+
 		return strtr($s, "\x01\x02\x03\x04\x05\x06", '`\'"^~?');
 	}
 }

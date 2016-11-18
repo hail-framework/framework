@@ -23,7 +23,7 @@ class Jsonp extends Json
 {
 	public function send($content, $callback = null) {
 		if ($callback === null) {
-			$callback = Request::getParam('callback');
+			$callback = Request::input('callback');
 			if (empty($callback)) {
 				throw new BadRequest("callback doesn't defined.");
 			}

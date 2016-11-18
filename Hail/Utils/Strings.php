@@ -105,16 +105,20 @@ class Strings
 
 
 	/**
-	 * Does $haystack contain $needle?
+	 * Determine if a given string contains a given substring.
 	 *
-	 * @param  string
-	 * @param  string
-	 *
+	 * @param  string  $haystack
+	 * @param  string|array  $needles
 	 * @return bool
 	 */
-	public static function contains($haystack, $needle)
+	public static function contains($haystack, $needles)
 	{
-		return strpos($haystack, $needle) !== false;
+		foreach ((array) $needles as $needle) {
+			if ($needle !== '' && mb_strpos($haystack, $needle, null, 'UTF-8') !== false) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 
@@ -129,15 +133,7 @@ class Strings
 	 */
 	public static function substring($s, $start, $length = null)
 	{
-		if (function_exists('mb_substr')) {
-			return mb_substr($s, $start, $length, 'UTF-8'); // MB is much faster
-		} else if ($length === null) {
-			$length = self::length($s);
-		} else if ($start < 0 && $length < 0) {
-			$start += self::length($s); // unifies iconv_substr behavior with mb_substr
-		}
-
-		return iconv_substr($s, $start, $length, 'UTF-8');
+		return mb_substr($s, $start, $length, 'UTF-8');
 	}
 
 

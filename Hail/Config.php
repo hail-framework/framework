@@ -1,6 +1,8 @@
 <?php
 namespace Hail;
 
+use Hail\Utils\Arrays;
+use Hail\Utils\ArrayTrait;
 use Hail\Utils\OptimizeTrait;
 
 /**
@@ -11,49 +13,7 @@ use Hail\Utils\OptimizeTrait;
 class Config implements \ArrayAccess
 {
 	use OptimizeTrait;
-
-	/**
-	 * @{inheritDoc}
-	 */
-	public function offsetExists($offset)
-	{
-		$val = $this->get($offset);
-
-		return $val !== null;
-	}
-
-	/**
-	 * @{inheritDoc}
-	 */
-	public function offsetGet($offset)
-	{
-		return $this->get($offset);
-	}
-
-	/**
-	 * @{inheritDoc}
-	 */
-	public function offsetSet($offset, $value)
-	{
-		$this->set($offset, $value);
-	}
-
-	/**
-	 * @{inheritDoc}
-	 */
-	public function offsetUnset($name)
-	{
-		if (strpos($name, '.') === false) {
-			unset($this->items[$name]);
-		} else {
-			$key = explode('.', $name);
-			$array = &$this->items;
-			foreach ($key as $v) {
-				$array = &$array[$v];
-			}
-			$array = null;
-		}
-	}
+	use ArrayTrait;
 
 	/**
 	 * All of the configuration items.
@@ -71,16 +31,9 @@ class Config implements \ArrayAccess
 		// 框架内置 config 不允许修改
 		if (strpos($key, '__') === 0) {
 			return;
-		} elseif (strpos($key, '.') === false) {
-			$this->items[$key] = $value;
-		} else {
-			$key = explode('.', $key);
-			$array = &$this->items;
-			foreach ($key as $v) {
-				$array = &$array[$v];
-			}
-			$array = $value;
 		}
+
+		Arrays::set($this->items, $key, $value);
 	}
 
 	/**
@@ -97,16 +50,19 @@ class Config implements \ArrayAccess
 			return $this->items[$key];
 		}
 
-		if (strpos($key, '.') === false) {
+		$pos = strpos($key, '.');
+		if ($pos === false) {
 			return $this->load($key);
 		}
 
-		$split = explode('.', $key);
-		$array = $this->load(
-			array_shift($split)
-		);
+		$array = $this->load(substr($key, 0, $pos));
 
-		return $this->arrayGet($array, $split, $default);
+		return Arrays::get($array, substr($key, $pos + 1), $default);
+	}
+
+	public function delete($key)
+	{
+		Arrays::delete($this->items, $key);
 	}
 
 	/**
@@ -138,7 +94,7 @@ class Config implements \ArrayAccess
 
 	/**
 	 * 优先 {SYSTEM_PATH}/config/{$space}.php，其次 {HAIL_PATH}/config/{$space}.php
-	 * $space 为 __ 开头，则只读取 {HAIL_PATH}/config/{$space}.php
+	 * $space 为 __ 开头，只读取 {HAIL_PATH}/config/{$space}.php
 	 *
 	 * @param string $space
 	 *
@@ -173,19 +129,6 @@ class Config implements \ArrayAccess
 		]);
 
 		return $this->items[$space] = $array;
-	}
-
-	protected function arrayGet($array, $key, $default)
-	{
-		foreach ($key as $segment) {
-			if (!is_array($array) || !isset($array[$segment])) {
-				return $default;
-			}
-
-			$array = $array[$segment];
-		}
-
-		return $array;
 	}
 
 	protected function file($space)
