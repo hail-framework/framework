@@ -28,6 +28,8 @@ namespace Hail\Utils;
  */
 class ObjectFactory implements \ArrayAccess
 {
+	use ArrayTrait;
+
 	private $namespace;
 	private $object;
 
@@ -36,70 +38,53 @@ class ObjectFactory implements \ArrayAccess
 		$this->namespace = trim($namespace, '\\') . '\\';
 	}
 
-	public function __get($name)
-	{
-		return $this->offsetGet($name);
-	}
-
 	public function __call($name, $arguments)
 	{
-		return $this->offsetGet($name);
+		return $this->get($name);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetExists($name)
+	public function has($key)
 	{
-		if (!isset($this->object[$name])) {
-			return class_exists($this->namespace . ucfirst($name));
+		if (!isset($this->object[$key])) {
+			return class_exists($this->namespace . ucfirst($key));
 		}
 
 		return true;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetGet($name)
+	public function get($key)
 	{
-		if (!isset($this->object[$name])) {
-			$class = $this->namespace . ucfirst($name);
+		if (!isset($this->object[$key])) {
+			$class = $this->namespace . ucfirst($key);
 			if (!class_exists($class)) {
-				throw new \RuntimeException("Model $name Not Defined");
+				throw new \RuntimeException("Class $class Not Defined");
 			}
 
-			return $this->object[$name] = new $class();
+			return $this->object[$key] = new $class();
 		}
 
-		return $this->object[$name];
+		return $this->object[$key];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetSet($name, $value)
+	public function set($key, $value)
 	{
-		if (isset($this->object[$name])) {
-			return $this->object[$name];
+		if (isset($this->object[$key])) {
+			return $this->object[$key];
 		}
 
-		$class = $this->namespace . ucfirst($name);
+		$class = $this->namespace . ucfirst($key);
 		if (!$value instanceof $class) {
 			throw new \RuntimeException("Object Not Instance of $class");
 		}
 
-		$this->object[$name] = $value;
+		$this->object[$key] = $value;
 		return $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetUnset($name)
+	public function delete($key)
 	{
-		if (isset($this->object[$name])) {
-			unset($this->object[$name]);
+		if (isset($this->object[$key])) {
+			unset($this->object[$key]);
 		}
 	}
 }

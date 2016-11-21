@@ -7,6 +7,7 @@
  */
 
 namespace Hail;
+use Hail\Utils\ArrayTrait;
 
 /**
  * Class Session
@@ -15,6 +16,8 @@ namespace Hail;
  */
 class Session implements \ArrayAccess
 {
+	use ArrayTrait;
+
 	private $cookieParams = [];
 	private $handler;
 
@@ -105,53 +108,21 @@ class Session implements \ArrayAccess
 
 	public function get($key)
 	{
-		return $this->offsetGet($key);
+		return $_SESSION[$key] ?? null;
 	}
 
 	public function has($key)
 	{
-		return $this->offsetExists($key);
+		return isset($_SESSION[$key]);
 	}
 
 	public function set($key, $value)
 	{
-		return $this->offsetSet($key, $value);
+		$_SESSION[$key] = $value;
 	}
 
 	public function delete($key)
 	{
-		return $this->offsetUnset($key);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetExists($offset)
-	{
-		return isset($_SESSION[$offset]);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetGet($offset)
-	{
-		return $_SESSION[$offset] ?? null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetSet($offset, $value)
-	{
-		$_SESSION[$offset] = $value;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function offsetUnset($offset)
-	{
-		unset($_SESSION[$offset]);
+		unset($_SESSION[$key]);
 	}
 }

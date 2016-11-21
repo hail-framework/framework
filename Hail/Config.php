@@ -40,11 +40,10 @@ class Config implements \ArrayAccess
 	 * Get the specified configuration value.
 	 *
 	 * @param  string $key
-	 * @param  mixed $default
 	 *
 	 * @return mixed
 	 */
-	public function get($key, $default = null)
+	public function get($key)
 	{
 		if (isset($this->items[$key])) {
 			return $this->items[$key];
@@ -57,7 +56,7 @@ class Config implements \ArrayAccess
 
 		$array = $this->load(substr($key, 0, $pos));
 
-		return Arrays::get($array, substr($key, $pos + 1), $default);
+		return Arrays::get($array, substr($key, $pos + 1));
 	}
 
 	public function delete($key)

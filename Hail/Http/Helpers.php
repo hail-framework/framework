@@ -24,7 +24,7 @@ class Helpers
 	/** @internal */
 	const VAL_CHARS = '#[^\x09\x0A\x0D\x20-\x7E\xA0-\x{10FFFF}]+#u';
 
-	private static $cached = [];
+	protected static $cached = [];
 
 	/**
 	 * Attempts to cache the sent entity by its last modification date.

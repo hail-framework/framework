@@ -15,19 +15,39 @@ namespace Hail\Utils;
  */
 trait ArrayTrait
 {
+	public function __isset($name)
+	{
+		return $this->has($name);
+	}
+
+	public function __set($name, $value)
+	{
+		$this->set($name, $value);
+	}
+
+	public function __get($name)
+	{
+		return $this->get($name);
+	}
+
+	public function __unset($name)
+	{
+		$this->delete($name);
+	}
+
 	public function offsetExists($offset)
 	{
 		return $this->has($offset);
 	}
 
-	public function offsetGet($offset)
-	{
-		return $this->get($offset);
-	}
-
 	public function offsetSet($offset, $value)
 	{
 		$this->set($offset, $value);
+	}
+
+	public function offsetGet($offset)
+	{
+		return $this->get($offset);
 	}
 
 	public function offsetUnset($offset)
@@ -43,11 +63,10 @@ trait ArrayTrait
 
 	/**
 	 * @param  string $key
-	 * @param  mixed $default
 	 *
 	 * @return mixed
 	 */
-	abstract public function get($key, $default = null);
+	abstract public function get($key);
 
 	/**
 	 * @param string $key
@@ -59,7 +78,7 @@ trait ArrayTrait
 	 *
 	 * @return bool
 	 */
-	public function has(string $key) : bool
+	public function has($key)
 	{
 		return $this->get($key) !== null;
 	}
@@ -81,6 +100,9 @@ trait ArrayTrait
 	 */
 	public function getMultiple(array $keys)
 	{
-		return array_map([$this, 'get'], $keys);
+		return array_combine(
+			$keys,
+			array_map([$this, 'get'], $keys)
+		);
 	}
 }

@@ -18,16 +18,17 @@ class Input implements \ArrayAccess
 {
 	use ArrayTrait;
 
-	private $request;
+	protected $request;
 
 	/** @var array */
-	private $params = [];
+	protected $items = [];
 
 	/** @var bool */
-	private $all = false;
+	protected $all = false;
 
 	/** @var array */
-	private $del = [];
+	protected $del = [];
+
 
 	public function __construct(Request $request)
 	{
@@ -49,7 +50,7 @@ class Input implements \ArrayAccess
 		if (!$this->all) {
 			Arrays::delete($this->del, $key);
 		}
-		Arrays::set($this->params, $key, $value);
+		Arrays::set($this->items, $key, $value);
 	}
 
 	public function delete($key)
@@ -57,21 +58,21 @@ class Input implements \ArrayAccess
 		if (!$this->all) {
 			Arrays::set($this->del, $key, true);
 		}
-		Arrays::delete($this->params, $key);
+		Arrays::delete($this->items, $key);
 	}
 
-	public function get($key = null, $default = null)
+	public function get($key = null)
 	{
 		if ($key === null) {
 			return $this->getAll();
 		} elseif ($this->all) {
-			return Arrays::get($this->params, $key);
+			return Arrays::get($this->items, $key);
 		}
 
 		if (Arrays::has($this->del, $key)) {
-			return $default;
-		} elseif (($return = Arrays::get($this->params, $key)) !== null) {
-			return $return ?? $default;
+			return null;
+		} elseif (($return = Arrays::get($this->items, $key)) !== null) {
+			return $return;
 		}
 
 		if ($this->request->isJson()) {
@@ -91,18 +92,20 @@ class Input implements \ArrayAccess
 
 		$return = $return ?? $this->request->getQuery($key);
 
-		$this->set($key, $return);
+		if ($return !== null) {
+			Arrays::set($this->items, $key, $return);
+		}
 
-		return $return ?? $default;
+		return $return;
 	}
 
 	public function getAll()
 	{
 		if ($this->all) {
-			return $this->params;
+			return $this->items;
 		}
 
-		$return = $this->params;
+		$return = $this->items;
 		if ($this->request->isJson()) {
 			$return += $this->request->getJson() ?? [];
 		} elseif (!$this->request->isMethod('GET')) {
@@ -125,10 +128,10 @@ class Input implements \ArrayAccess
 
 		$this->all = true;
 
-		return $this->params = $return;
+		return $this->items = $return;
 	}
 
-	private function clear(array &$array, array $del)
+	protected function clear(array &$array, array $del)
 	{
 		foreach ($del as $k => $v) {
 			if (is_array($v) && isset($array[$k])) {

@@ -3,14 +3,18 @@
 namespace Hail\DI;
 
 use Hail\Facades\Facade;
+use Hail\Utils\ArrayTrait;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class DI
- * @package Hail
+ * Class Container
+ *
+ * @package Hail\DI
  */
 class Container implements \ArrayAccess, ContainerInterface
 {
+	use ArrayTrait;
+
 	private $values = [];
 	private $raw = [];
 
@@ -95,7 +99,7 @@ class Container implements \ArrayAccess, ContainerInterface
 	 *
 	 * @param string $id The unique identifier for the parameter or object
 	 */
-	public function remove($id)
+	public function delete($id)
 	{
 		if (isset($this->values[$id])) {
 			unset($this->values[$id], $this->raw[$id]);
@@ -136,48 +140,5 @@ class Container implements \ArrayAccess, ContainerInterface
 		$keys = array_keys($this->values);
 		$keys[] = 'di';
 		return $keys;
-	}
-
-	public function offsetSet($id, $value)
-	{
-		$this->set($id, $value);
-	}
-
-
-	public function offsetGet($id)
-	{
-		return $this->get($id);
-	}
-
-	public function offsetExists($id)
-	{
-		return $this->has($id);
-	}
-
-
-	public function offsetUnset($id)
-	{
-		$this->remove($id);
-	}
-
-	/**
-	 * @param $func
-	 * @param $args
-	 *
-	 * @return mixed
-	 */
-	public function __call($func, $args)
-	{
-		return $this->get($func);
-	}
-
-	/**
-	 * @param string $id
-	 *
-	 * @return mixed
-	 */
-	public function __get($id)
-	{
-		return $this->get($id);
 	}
 }
