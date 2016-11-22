@@ -27,7 +27,7 @@ use Hail\Cache\Driver;
  * @link   www.doctrine-project.org
  * @since  1.5
  * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Void extends Driver
 {

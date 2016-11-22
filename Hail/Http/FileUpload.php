@@ -176,9 +176,11 @@ class FileUpload
 			}
 		}
 
-		if (!call_user_func(is_uploaded_file($this->tmpName) ? 'move_uploaded_file' : 'rename', $this->tmpName, $dest)) {
+		$moveFun = is_uploaded_file($this->tmpName) ? 'move_uploaded_file' : 'rename';
+		if (!$moveFun($this->tmpName, $dest)) {
 			throw new \RuntimeException("Unable to move uploaded file '$this->tmpName' to '$dest'.");
 		}
+
 		chmod($dest, 0666);
 		$this->tmpName = $dest;
 

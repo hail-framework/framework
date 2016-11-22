@@ -83,15 +83,15 @@ class Medoo
 
 				// Make MySQL using standard quoted identifier
 				$commands[] = 'SET SQL_MODE=ANSI_QUOTES';
-			break;
+				break;
 
 			case 'pgsql':
 				$dsn = 'pgsql:host=' . $this->server . ';port=' . ($port ?? '5432') . ';dbname=' . $this->database;
-			break;
+				break;
 
 			case 'sybase':
 				$dsn = 'dblib:host=' . $this->server . ':' . ($port ?? '5000') . ';dbname=' . $this->database;
-			break;
+				break;
 
 			case 'oracle':
 				$dbname = $this->server ?
@@ -99,7 +99,7 @@ class Medoo
 					$this->database;
 
 				$dsn = 'oci:dbname=' . $dbname . ($this->charset ? ';charset=' . $this->charset : '');
-			break;
+				break;
 
 			case 'mssql':
 				$dsn = strstr(PHP_OS, 'WIN') ?
@@ -108,13 +108,13 @@ class Medoo
 
 				// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
 				$commands[] = 'SET QUOTED_IDENTIFIER ON';
-			break;
+				break;
 
 			case 'sqlite':
 				$dsn = 'sqlite:' . $this->file;
 				$this->username = null;
 				$this->password = null;
-			break;
+				break;
 		}
 
 		if (
@@ -295,7 +295,7 @@ class Medoo
 
 			case 'boolean':
 				return $value ? '1' : '0';
-			break;
+				break;
 
 			case 'integer':
 			case 'double':
@@ -330,24 +330,24 @@ class Medoo
 						switch ($type) {
 							case 'NULL':
 								$wheres[] = $column . ' IS NOT NULL';
-							break;
+								break;
 
 							case 'array':
 								$wheres[] = $column . ' NOT IN (' . $this->quoteArray($value) . ')';
-							break;
+								break;
 
 							case 'integer':
 							case 'double':
 								$wheres[] = $column . ' != ' . $value;
-							break;
+								break;
 
 							case 'boolean':
 								$wheres[] = $column . ' != ' . ($value ? '1' : '0');
-							break;
+								break;
 
 							case 'string':
 								$wheres[] = $column . ' != ' . $this->quoteFn($key, $value);
-							break;
+								break;
 						}
 					}
 
@@ -404,24 +404,24 @@ class Medoo
 					switch ($type) {
 						case 'NULL':
 							$wheres[] = $column . ' IS NULL';
-						break;
+							break;
 
 						case 'array':
 							$wheres[] = $column . ' IN (' . $this->quoteArray($value) . ')';
-						break;
+							break;
 
 						case 'integer':
 						case 'double':
 							$wheres[] = $column . ' = ' . $value;
-						break;
+							break;
 
 						case 'boolean':
 							$wheres[] = $column . ' = ' . ($value ? '1' : '0');
-						break;
+							break;
 
 						case 'string':
 							$wheres[] = $column . ' = ' . $this->quoteFn($key, $value);
-						break;
+							break;
 					}
 				}
 			}
@@ -692,7 +692,7 @@ class Medoo
 	/**
 	 * @param $struct
 	 * @param int $fetch
-	 * @param mixed  $fetchArgs
+	 * @param mixed $fetchArgs
 	 *
 	 * @return array|bool
 	 */
@@ -959,7 +959,19 @@ class Medoo
 			} else {
 				$fetchArgs = (array) $fetchArgs;
 				array_unshift($fetchArgs, $fetch);
-				$query->setFetchMode(...$fetchArgs);
+
+				switch (count($fetchArgs)) {
+					case 1:
+						$query->setFetchMode($fetchArgs[0]);
+						break;
+					case 2:
+						$query->setFetchMode($fetchArgs[0], $fetchArgs[1]);
+						break;
+					case 3:
+						$query->setFetchMode($fetchArgs[0], $fetchArgs[1], $fetchArgs[2]);
+						break;
+				}
+
 				$data = $query->fetch($fetch);
 			}
 			$this->release();

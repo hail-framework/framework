@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/14 0014
- * Time: 12:33
- */
-
 namespace Hail\Utils;
 
 /**
@@ -23,6 +16,12 @@ namespace Hail\Utils;
  */
 defined('HAIL_SERIALIZE') || define('HAIL_SERIALIZE', 'serialize');
 
+/**
+ * Class Serialize
+ *
+ * @package Hail\Utils
+ * @author Hao Feng <flyinghail@msn.com>
+ */
 class Serialize
 {
 	private static $mode;

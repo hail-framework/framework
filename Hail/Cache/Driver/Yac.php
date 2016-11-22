@@ -24,7 +24,7 @@ use Hail\Cache\Driver;
 /**
  * YAC cache provider.
  *
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Yac extends Driver
 {

@@ -1,12 +1,6 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/15 0015
- * Time: 17:11
- */
-
 namespace Hail;
+
 use Hail\Utils\ArrayTrait;
 
 /**
@@ -38,7 +32,7 @@ class Session implements \ArrayAccess
 
 			$settings = $config['settings'] ?? [];
 			if (!isset($settings['lifetime']) && isset($this->cookieParams['lifetime'])) {
-				$settings['lifetime'] =  $this->cookieParams['lifetime'];
+				$settings['lifetime'] = $this->cookieParams['lifetime'];
 			}
 			$this->handler = new $handlerClass($settings);
 		}

@@ -3,13 +3,14 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
+use Hail\Utils\Arrays;
 use Hail\Utils\Serialize;
 
 /**
  * Predis cache provider.
  *
  * @author othillo <othillo@othillo.nl>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Predis extends Driver
 {
@@ -121,7 +122,11 @@ class Predis extends Driver
 	{
 		$fetchedItems = call_user_func_array(array($this->client, 'mget'), $keys);
 
-		return Serialize::decodeArray(array_filter(array_combine($keys, $fetchedItems)));
+		return Serialize::decodeArray(
+			Arrays::filter(
+				array_combine($keys, $fetchedItems)
+			)
+		);
 	}
 
 	/**

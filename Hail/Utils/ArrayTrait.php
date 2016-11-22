@@ -1,17 +1,11 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: Hao
- * Date: 2016/11/18 0018
- * Time: 14:15
- */
-
 namespace Hail\Utils;
 
 /**
  * Class ArrayTrait
  *
  * @package Hail\Utils
+ * @author Hao Feng <flyinghail@msn.com>
  */
 trait ArrayTrait
 {

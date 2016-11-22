@@ -2,16 +2,17 @@
 
 namespace Hail\DI;
 
+use ArrayAccess;
 use Hail\Facades\Facade;
 use Hail\Utils\ArrayTrait;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class Container
+ * Simple Container
  *
  * @package Hail\DI
  */
-class Container implements \ArrayAccess, ContainerInterface
+class Container implements ArrayAccess, ContainerInterface
 {
 	use ArrayTrait;
 
@@ -25,7 +26,7 @@ class Container implements \ArrayAccess, ContainerInterface
 	 *
 	 * @param array $values The parameters or objects.
 	 */
-	public function __construct(array $values = array())
+	public function __construct(array $values = [])
 	{
 		foreach ($values as $key => $value) {
 			$this->set($key, $value);
@@ -68,7 +69,7 @@ class Container implements \ArrayAccess, ContainerInterface
 		if ($this->isFacade($raw)) {
 			/** @var Facade $raw */
 			$val = $raw::getInstance();
-		} else if ($raw instanceof \Closure) {
+		} elseif ($raw instanceof \Closure) {
 			$val = $raw($this);
 		} elseif (is_callable($raw, true, $call)) {
 			$val = $call($this);
@@ -82,13 +83,10 @@ class Container implements \ArrayAccess, ContainerInterface
 	public function isFacade($raw)
 	{
 		return is_string($raw) &&
-			strpos($raw, '\\Hail\\Facades\\') === 0 &&
-			class_exists($raw);
+		strpos($raw, '\\Hail\\Facades\\') === 0 &&
+		class_exists($raw);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
 	public function has($id)
 	{
 		return $id === 'di' || isset($this->values[$id]);
@@ -139,6 +137,12 @@ class Container implements \ArrayAccess, ContainerInterface
 	{
 		$keys = array_keys($this->values);
 		$keys[] = 'di';
+
 		return $keys;
+	}
+
+	public function __call($name, $arguments)
+	{
+		return $this->get($name);
 	}
 }

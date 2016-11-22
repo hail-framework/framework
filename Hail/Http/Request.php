@@ -41,6 +41,7 @@ class Request
 
 	/** @var array */
 	private $headers = [];
+	private $allHeaders = false;
 
 	/** @var null|string */
 	private $content;
@@ -74,7 +75,7 @@ class Request
 	public function __get($name)
 	{
 		if ($name === 'inputs') {
-			$this->input->getAll();
+			return $this->input->getAll();
 		}
 
 		return null;
@@ -112,7 +113,12 @@ class Request
 
 	public function input($key = null, $default = null)
 	{
-		return $this->input->get($key, $default);
+		return $this->input->get($key) ?? $default;
+	}
+
+	public function getInput()
+	{
+		return $this->input;
 	}
 
 	/**
@@ -217,8 +223,10 @@ class Request
 	public function getHeader($header, $default = null)
 	{
 		$header = strtoupper($header);
-		if (isset($this->headers[$header])) {
-			return $this->headers[$header] === false ? $default : $this->headers[$header];
+		if ($this->allHeaders) {
+			return $this->headers[$header] ?? $default;
+		} else if (array_key_exists($header, $this->headers)) {
+			return $this->headers[$header] ?? $default;
 		}
 
 		$key = 'HTTP_' . str_replace('-', '_', $header);
@@ -234,8 +242,7 @@ class Request
 			if (isset($contentHeaders[$header], $_SERVER[$contentHeaders[$header]])) {
 				return $this->headers[$header] = $_SERVER[$contentHeaders[$header]];
 			} else {
-				$this->headers[$header] = false;
-
+				$this->headers[$header] = null;
 				return $default;
 			}
 		}
@@ -249,6 +256,10 @@ class Request
 	 */
 	public function getHeaders()
 	{
+		if ($this->allHeaders) {
+			return $this->headers;
+		}
+
 		if (function_exists('apache_request_headers')) {
 			$headers = apache_request_headers();
 		} else {
@@ -263,6 +274,7 @@ class Request
 			}
 		}
 
+		$this->allHeaders = true;
 		return $this->headers = $headers;
 	}
 

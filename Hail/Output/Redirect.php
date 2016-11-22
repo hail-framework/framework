@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/12/16 0016
- * Time: 11:42
- */
-
 namespace Hail\Output;
 
 

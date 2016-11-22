@@ -27,7 +27,7 @@ use Hail\Cache\Driver;
  * @since  2.3
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Tobias Schultze <http://tobion.de>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class File extends Driver
 {

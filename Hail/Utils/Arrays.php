@@ -1,13 +1,12 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: Hao
- * Date: 2016/11/18 0018
- * Time: 12:58
- */
-
 namespace Hail\Utils;
 
+/**
+ * Class Arrays
+ *
+ * @package Hail\Utils
+ * @author Hao Feng <flyinghail@msn.com>
+ */
 class Arrays
 {
 	/**
@@ -102,7 +101,7 @@ class Arrays
 	 * @param  string $key
 	 * @param  mixed $value
 	 *
-	 * @return array
+	 * @return mixed
 	 */
 	public static function set(array &$array, string $key, $value)
 	{
@@ -153,12 +152,12 @@ class Arrays
 	 */
 	public static function delete(array &$array, $keys)
 	{
-		$original = &$array;
 		$keys = (array) $keys;
 		if ($keys === []) {
 			return;
 		}
 
+		$original = &$array;
 		foreach ($keys as $key) {
 			// if the exact key exists in the top-level, remove it
 			if (isset($array[$key])) {
@@ -166,18 +165,30 @@ class Arrays
 				continue;
 			}
 
-			$parts = explode('.', $key);
 			// clean up before each pass
 			$array = &$original;
-			while (count($parts) > 1) {
-				$part = array_shift($parts);
+
+			$parts = explode('.', $key);
+			$delKey = array_pop($parts);
+			foreach ($parts as $part) {
 				if (isset($array[$part]) && is_array($array[$part])) {
 					$array = &$array[$part];
 				} else {
 					continue 2;
 				}
 			}
-			unset($array[array_shift($parts)]);
+
+			unset($array[$delKey]);
 		}
+	}
+
+	public static function filter($array)
+	{
+		return array_filter($array, [static::class, 'filterCallback']);
+	}
+
+	protected static function filterCallback($v)
+	{
+		return $v !== false && $v !== null;
 	}
 }

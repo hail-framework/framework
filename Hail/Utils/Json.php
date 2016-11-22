@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/14 0014
- * Time: 12:33
- */
-
 namespace Hail\Utils;
 
 class Json
@@ -19,10 +12,17 @@ class Json
 	 * @return string
 	 * @throws Exception\Json if there is any encoding error
 	 */
-	public static function encode($value, $options = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+	public static function encode($value, $options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION)
 	{
 		$json = json_encode($value, $options);
-		static::handleJsonError(json_last_error());
+		if ($error = json_last_error()) {
+			throw new Exception\Json(json_last_error_msg(), $error);
+		}
+
+		if (PHP_VERSION_ID < 70100) {
+			$json = str_replace(["\xe2\x80\xa8", "\xe2\x80\xa9"], ['\u2028', '\u2029'], $json);
+		}
+
 		return $json;
 	}
 
@@ -37,25 +37,10 @@ class Json
 	 */
 	public static function decode(string $json, $asArray = true)
 	{
-		$decode = json_decode($json, $asArray);
-		static::handleJsonError(json_last_error());
-		return $decode;
-	}
-
-	protected static function handleJsonError($lastError)
-	{
-		if ($lastError === JSON_ERROR_NONE) {
-			return;
+		$decode = json_decode($json, $asArray, 512, JSON_BIGINT_AS_STRING);
+		if ($error = json_last_error()) {
+			throw new Exception\Json(json_last_error_msg(), $error);
 		}
-
-		static $messages = [
-			JSON_ERROR_DEPTH => 'The maximum stack depth has been exceeded.',
-			JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded.',
-			JSON_ERROR_SYNTAX => 'Syntax error.',
-			JSON_ERROR_STATE_MISMATCH => 'Invalid or malformed JSON.',
-			JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded.',
-		];
-
-		throw new Exception\Json($messages[$lastError] ?? 'Unknown JSON decoding error.');
+		return $decode;
 	}
 }

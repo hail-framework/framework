@@ -28,7 +28,7 @@ use Hail\Utils\Serialize;
  * @link   www.doctrine-project.org
  * @since  2.2
  * @author Osman Ungur <osmanungur@gmail.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Redis extends Driver
 {

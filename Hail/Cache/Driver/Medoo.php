@@ -8,7 +8,7 @@ use Hail\Utils\Serialize;
 /**
  * Medoo DB cache provider.
  *
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Medoo extends Driver
 {

@@ -27,7 +27,7 @@ use Hail\Cache\Driver;
  * @link   www.doctrine-project.org
  * @since  1.6
  * @author Kévin Dunglas <dunglas@gmail.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Apcu extends Driver
 {

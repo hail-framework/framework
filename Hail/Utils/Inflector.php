@@ -14,7 +14,7 @@ namespace Hail\Utils;
  * @since  1.0
  * @author Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author Jonathan H. Wage <jonwage@gmail.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Inflector
 {

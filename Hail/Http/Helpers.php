@@ -156,20 +156,20 @@ class Helpers
 			return $vars;
 		} elseif (isset($vars[$key])) {
 			return $vars[$key];
-		} elseif (array_key_exists(static::$cached, $key)) {
-			return static::$cached[$key];
+		} elseif (array_key_exists($key, static::$cached[$type][$type])) {
+			return static::$cached[$type][$key];
 		} elseif (static::keyCheck($key)) {
-			return self::$cached[$key] = null;
+			return self::$cached[$type][$key] = null;
 		}  elseif ($type === '_FILES') {
 			if (($file = static::getFile($GLOBALS[$type][$key])) === null) {
-				return self::$cached[$key] = null;
+				return self::$cached[$type][$key] = null;
 			}
 			return $vars[$key] = $file;
 		} else {
 			$pos = strpos($key, '.');
 			$first = $pos === false ? $key : substr($key, 0, $pos);
 			if (!isset($GLOBALS[$type][$first])) {
-				return self::$cached[$key] = null;
+				return self::$cached[$type][$key] = null;
 			}
 
 			$val = $vars[$first] = $GLOBALS[$type][$first];
@@ -178,7 +178,7 @@ class Helpers
 			}
 			$val = static::valueCheck($val);
 
-			return self::$cached[$key] = $val;
+			return self::$cached[$type][$key] = $val;
 		}
 	}
 

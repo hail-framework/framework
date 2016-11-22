@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/12/14 0019
- * Time: 15:30
- */
 
 namespace Hail;
 
@@ -45,7 +39,7 @@ Trait DITrait
 
 	public function __get($name)
 	{
-		return self::$_di->get($name);
+		return $this->{$name} = self::$_di->get($name);
 	}
 
 	final public static function initDI()

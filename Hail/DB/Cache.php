@@ -1,13 +1,7 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/19 0019
- * Time: 14:01
- */
-
 namespace Hail\DB;
 
+use Hail\Exception;
 use Hail\Utils\Serialize;
 use Hail\Facades\{
 	DB,
@@ -18,6 +12,8 @@ use Hail\Facades\{
  * Class Cache
  *
  * @package Hail\DB
+ * @author Hao Feng <flyinghail@msn.com>
+ *
  * @method select(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
  * @method get(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
  */
@@ -45,14 +41,16 @@ class Cache
 	public function name(string $name)
 	{
 		$this->name = $name;
+
 		return $this;
 	}
 
 	/**
 	 * @param string $name
 	 * @param array $arguments
+	 *
 	 * @return array|bool|mixed
-	 * @throws \InvalidArgumentException
+	 * @throws Exception\InvalidArgument
 	 */
 	public function __call($name, $arguments)
 	{
@@ -60,23 +58,33 @@ class Cache
 
 		$result = SimpleCache::fetch($key);
 		if (!$result) {
-			switch ($name) {
-				case 'get':
-					$result = DB::get(...$arguments);
-				break;
+			if ($name === 'get' || $name === 'select') {
+				switch (count($arguments)) {
+					case 1:
+						$result = DB::$name($arguments[0]);
+						break;
 
-				case 'select':
-					$result = DB::select(...$arguments);
-				break;
+					case 2:
+						$result = DB::$name($arguments[0], $arguments[1]);
+						break;
 
-				default:
-					throw new \InvalidArgumentException('Cache only support select/get method');
+					case 3:
+						$result = DB::$name($arguments[0], $arguments[1], $arguments[2]);
+						break;
+
+					default:
+						throw new Exception\InvalidArgument('Aruguments number out of range');
+						break;
+				}
+			} else {
+				throw new Exception\InvalidArgument('Cache only support select/get method');
 			}
 
 			SimpleCache::save($key, $result, $this->lifetime);
 		}
 
 		$this->reset();
+
 		return $result;
 	}
 

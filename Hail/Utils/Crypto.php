@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/13 0013
- * Time: 23:06
- */
-
 namespace Hail\Utils;
 
 use Hail\Utils\Exception;
@@ -16,6 +9,7 @@ use Hail\Utils\Exception;
  * Class Crypto
  *
  * @package Hail\Utils
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Crypto
 {

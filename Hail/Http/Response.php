@@ -240,6 +240,8 @@ class Response
 		$this->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 		$this->setHeader('Access-Control-Allow-Headers', 'Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With');
 		$this->setHeader('Access-Control-Allow-Credentials', 'true');
+
+		return $this;
 	}
 
 	/**
@@ -285,15 +287,6 @@ class Response
 			$headers[substr($header, 0, $a)] = ltrim(substr($header, $a + 1));
 		}
 		return $headers;
-	}
-
-
-	/**
-	 * @deprecated
-	 */
-	public static function date($time = null)
-	{
-		return Helpers::formatDate($time);
 	}
 
 

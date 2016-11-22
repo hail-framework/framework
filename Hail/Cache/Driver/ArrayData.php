@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2015/12/21 0021
- * Time: 11:31
- */
-
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
@@ -20,7 +13,7 @@ use Hail\Cache\Driver;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author David Abdemoulaie <dave@hobodave.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class ArrayData extends Driver
 {

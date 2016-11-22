@@ -1,6 +1,6 @@
 <?php
 /**
- * @author FlyingHail <flyinghail#msn.com>
+ * @author Hao Feng <flyinghail#msn.com>
  */
 
 namespace Hail\DB;

@@ -2,6 +2,9 @@
 
 namespace Hail\Browser;
 
+use Hail\Utils\Json;
+use Hail\Utils\Exception;
+
 class Response
 {
 	private $code;
@@ -14,23 +17,18 @@ class Response
 	 * @param array $info cURL info
 	 * @param string $rawBody the raw body of the cURL response
 	 * @param string $headers raw header string from cURL response
-	 * @param array $jsonArgs arguments to pass to json_decode function
 	 */
-	public function __construct($info, $rawBody, $headers, $jsonArgs = [])
+	public function __construct($info, $rawBody, $headers)
 	{
 		$this->info = $info;
 		$this->code = $info['http_code'];
 		$this->headers = $this->parseHeaders($headers);
 		$this->rawBody = $rawBody;
-		$this->body = $rawBody;
 
-		// make sure raw_body is the first argument
-		array_unshift($jsonArgs, $rawBody);
-
-		$json = call_user_func_array('json_decode', $jsonArgs);
-
-		if (json_last_error() === JSON_ERROR_NONE) {
-			$this->body = $json;
+		try {
+			$this->body = Json::decode($rawBody);
+		} catch (Exception\Json $e) {
+			$this->body = $rawBody;
 		}
 	}
 

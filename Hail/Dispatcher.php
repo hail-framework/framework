@@ -8,7 +8,8 @@ use Hail\Facades\{
 	Application,
 	Request,
 	Response,
-	Output
+	Output,
+	Event
 };
 
 /**
@@ -101,6 +102,9 @@ class Dispatcher
 
 	public function output($type, $return)
 	{
+		$logData = ['post' => Request::input(), 'api' => $this->current, 'return' => $return];
+		Event::emit('oplog', $logData);
+
 		if ($return === null) {
 			return;
 		}

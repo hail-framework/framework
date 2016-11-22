@@ -1,16 +1,12 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: Hao
- * Date: 2016/10/8 0008
- * Time: 17:04
- */
-
 namespace Hail\Utils;
 
 
 /**
  * String tools library.
+ *
+ * @package Hail\Utils
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Strings
 {

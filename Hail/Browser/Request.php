@@ -9,7 +9,6 @@ class Request
 	private static $curlOpts = [];
 	private static $defaultHeaders = [];
 	private static $handle = null;
-	private static $jsonOpts = [true];
 	private static $socketTimeout = null;
 	private static $verifyPeer = true;
 	private static $verifyHost = true;
@@ -31,20 +30,6 @@ class Request
 			'method' => CURLAUTH_BASIC,
 		],
 	];
-
-	/**
-	 * Set JSON decode mode
-	 *
-	 * @param bool $assoc When TRUE, returned objects will be converted into associative arrays.
-	 * @param integer $depth User specified recursion depth.
-	 * @param integer $options Bitmask of JSON decode options. Currently only JSON_BIGINT_AS_STRING is supported (default is to cast large integers as floats)
-	 *
-	 * @return array
-	 */
-	public static function jsonOpts($assoc = true, $depth = 512, $options = 0)
-	{
-		return self::$jsonOpts = [$assoc, $depth, $options];
-	}
 
 	/**
 	 * Verify SSL peer
@@ -478,7 +463,7 @@ class Request
 		$header = substr($response, 0, $header_size);
 		$body = substr($response, $header_size);
 
-		$return = new Response($info, $body, $header, self::$jsonOpts);
+		$return = new Response($info, $body, $header);
 		curl_close(self::$handle);
 
 		return $return;

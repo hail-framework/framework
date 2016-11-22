@@ -28,7 +28,7 @@ use SQLite3Result;
  *
  * @since  1.4
  * @author Jake Bell <jake@theunraveler.com>
- * @author FlyingHail <flyinghail@msn.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class SQLite3 extends Driver
 {
