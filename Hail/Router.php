@@ -1,7 +1,7 @@
 <?php
 /**
  * @from https://github.com/baryshev/TreeRoute
- * Copyright (c) 2015, Vadim Baryshev Modified by FlyingHail <flyinghail@msn.com>
+ * Copyright (c) 2015, Vadim Baryshev
  */
 
 namespace Hail;
@@ -9,6 +9,12 @@ namespace Hail;
 use Hail\Utils\OptimizeTrait;
 use Hail\Utils\Serialize;
 
+/**
+ * Class Router
+ *
+ * @package Hail
+ * @author Hao Feng <flyinghail@msn.com>
+ */
 class Router
 {
 	use OptimizeTrait;

@@ -1,20 +1,25 @@
 <?php
+/*!
+ * Medoo database framework
+ * http://medoo.in
+ * Version 1.1.3
+ *
+ * Copyright 2016, Angel Lai
+ * Released under the MIT license
+ */
 
 namespace Hail\DB;
 
 use PDO;
 use Hail\Utils\Json;
 
-/*!
- * Medoo database framework
- * http://medoo.in
- * Version 1.1.2 no data map
- *
- * Copyright 2016, Angel Lai
- * Released under the MIT license
- * Modified by FlyingHail <flyinghail@msn.com>
- */
 
+/**
+ * 不包含 data map
+ *
+ * @package Hail\DB
+ * @author  Hao Feng <flyinghail@msn.com>
+ */
 class Medoo
 {
 	// General
@@ -375,13 +380,13 @@ class Medoo
 
 						foreach ($value as $item) {
 							$item = (string) $item;
-							$suffix = mb_substr($item, -1, 1);
+							$suffix = $item[-1];
 
 							if ($suffix === '_') {
 								$item = substr_replace($item, '%', -1);
 							} else if ($suffix === '%') {
 								$item = '%' . substr_replace($item, '', -1, 1);
-							} else if (preg_match('/^(?!%).+(?<!%)$/', $item)) {
+							} else if (preg_match('/^(?!(%|\[|_])).+(?<!(%|\]|_))$/', $item)) {
 								$item = '%' . $item . '%';
 							}
 
@@ -392,13 +397,16 @@ class Medoo
 					}
 
 					if (in_array($operator, ['>', '>=', '<', '<='], true)) {
+						$condition = $column . ' ' . $operator . ' ';
 						if (is_numeric($value)) {
-							$wheres[] = $column . ' ' . $operator . ' ' . $value;
+							$condition .= $value;
 						} elseif (strpos($key, '#') === 0) {
-							$wheres[] = $column . ' ' . $operator . ' ' . $this->quoteFn($key, $value);
+							$condition .= $this->quoteFn($key, $value);
 						} else {
-							$wheres[] = $column . ' ' . $operator . ' ' . $this->quote($value);
+							$condition .= $this->quote($value);
 						}
+
+						$wheres[] = $condition;
 					}
 				} else {
 					switch ($type) {
@@ -646,31 +654,6 @@ class Medoo
 		return 'SELECT ' . $column . ' FROM ' . $tableQuery . $this->suffixClause($struct);
 	}
 
-	protected function dataMap($index, $key, $value, $data, &$stack)
-	{
-		if (is_array($value)) {
-			$subStack = [];
-
-			foreach ($value as $sub_key => $sub_value) {
-				if (is_array($sub_value)) {
-					$currentStack = $stack[$index][$key];
-
-					$this->dataMap(false, $sub_key, $sub_value, $data, $currentStack);
-
-					$stack[$index][$key][$sub_key] = $currentStack[0][$sub_key];
-				} else {
-					$this->dataMap(false, preg_replace('/^[\w]*\./i', '', $sub_value), $sub_key, $data, $subStack);
-
-					$stack[$index][$key] = $subStack;
-				}
-			}
-		} else if ($index !== false) {
-			$stack[$index][$value] = $data[$value];
-		} else {
-			$stack[$key] = $data[$key];
-		}
-	}
-
 	/**
 	 * @param $table
 	 *
@@ -690,8 +673,8 @@ class Medoo
 	}
 
 	/**
-	 * @param $struct
-	 * @param int $fetch
+	 * @param       $struct
+	 * @param int   $fetch
 	 * @param mixed $fetchArgs
 	 *
 	 * @return array|bool
@@ -794,8 +777,8 @@ class Medoo
 	}
 
 	/**
-	 * @param $table
-	 * @param array $datas
+	 * @param        $table
+	 * @param array  $datas
 	 * @param string $INSERT
 	 *
 	 * @return array|mixed
@@ -826,8 +809,8 @@ class Medoo
 	}
 
 	/**
-	 * @param $table
-	 * @param array $datas
+	 * @param        $table
+	 * @param array  $datas
 	 * @param string $INSERT
 	 *
 	 * @return bool|int
@@ -843,9 +826,9 @@ class Medoo
 	}
 
 	/**
-	 * @param $table
+	 * @param       $table
 	 * @param array $data
-	 * @param null $where
+	 * @param null  $where
 	 *
 	 * @return bool|int
 	 */
@@ -881,7 +864,7 @@ class Medoo
 	}
 
 	/**
-	 * @param $table
+	 * @param      $table
 	 * @param null $where
 	 *
 	 * @return bool|int
@@ -902,11 +885,11 @@ class Medoo
 	}
 
 	/**
-	 * @param $table
-	 * @param $columns
+	 * @param                   $table
+	 * @param                   $columns
 	 * @param string|array|null $search
-	 * @param mixed $replace
-	 * @param array|null $where
+	 * @param mixed             $replace
+	 * @param array|null        $where
 	 *
 	 * @return bool|int
 	 */
@@ -941,8 +924,8 @@ class Medoo
 	}
 
 	/**
-	 * @param array $struct
-	 * @param int $fetch
+	 * @param array          $struct
+	 * @param int            $fetch
 	 * @param int|array|null $fetchArgs
 	 *
 	 * @return array|bool
