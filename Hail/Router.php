@@ -14,7 +14,7 @@ class Router
 	use OptimizeTrait;
 
 	const PARAM_REGEXP = '/^{((([^:]+):(.+))|(.+))}$/';
-	const SEPARATOR_REGEXP = '/^[\s\/]+|[\s\/]+$/';
+	const SEPARATOR_TRIM = "/ \t\n\r";
 	private $routes = ['childs' => [], 'regexps' => []];
 	private $result = [];
 
@@ -26,7 +26,7 @@ class Router
 	private function match($url)
 	{
 		$parts = explode('?', $url, 2);
-		$parts = explode('/', preg_replace(static::SEPARATOR_REGEXP, '', $parts[0]));
+		$parts = explode('/', trim($parts[0], static::SEPARATOR_TRIM));
 		if (!isset($parts[1]) && $parts[0] === '') {
 			$parts = [];
 		}
@@ -118,10 +118,10 @@ class Router
 	public function addRoute(array $methods, string $route, array $handler)
 	{
 		if (!isset($handler['app'])) {
-			throw new \InvalidArgumentException('Handler must have app key set.');
+			throw new Exception\InvalidArgument('Handler must have app key set.');
 		}
 
-		$parts = explode('/', preg_replace(static::SEPARATOR_REGEXP, '', $route));
+		$parts = explode('/', trim($route, static::SEPARATOR_TRIM));
 
 		if (!isset($parts[1]) && $parts[0] === '') {
 			$parts = [];
