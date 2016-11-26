@@ -7,6 +7,7 @@
 
 namespace Hail\Utils;
 
+use Hail\Exception\InvalidArgumentException;
 
 /**
  * Secure random string generator.
@@ -21,7 +22,7 @@ class Generator
 	 * @param  string
 	 *
 	 * @return string
-	 * @throws \InvalidArgumentException
+	 * @throws InvalidArgumentException
 	 */
 	public static function random(int $length = 10, string $charList = '0-9a-zA-Z') :string
 	{
@@ -31,9 +32,9 @@ class Generator
 		$chLen = strlen($charList);
 
 		if ($length < 1) {
-			throw new \InvalidArgumentException('Length must be greater than zero.');
+			throw new InvalidArgumentException('Length must be greater than zero.');
 		} elseif ($chLen < 2) {
-			throw new \InvalidArgumentException('Character list must contain as least two chars.');
+			throw new InvalidArgumentException('Character list must contain as least two chars.');
 		}
 
 		$res = '';

@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Exception;
+use Hail\Exception\InvalidArgumentException;
 
 /**
  * PHP callable tools.
@@ -13,7 +13,7 @@ class Callback
 	 * @param  string  method
 	 *
 	 * @return \Closure
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public static function closure($callable, $m = null)
 	{
@@ -50,7 +50,7 @@ class Callback
 	 * Invokes callback.
 	 *
 	 * @return mixed
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public static function invoke($callable, ...$args)
 	{
@@ -64,7 +64,7 @@ class Callback
 	 * Invokes callback with an array of parameters.
 	 *
 	 * @return mixed
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public static function invokeArgs($callable, array $args = [])
 	{
@@ -104,12 +104,12 @@ class Callback
 
 	/**
 	 * @return callable
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public static function check($callable, $syntax = false)
 	{
 		if (!is_callable($callable, $syntax)) {
-			throw new Exception\InvalidArgument($syntax
+			throw new InvalidArgumentException($syntax
 				? 'Given value is not a callable type.'
 				: sprintf("Callback '%s' is not callable.", self::toString($callable))
 			);

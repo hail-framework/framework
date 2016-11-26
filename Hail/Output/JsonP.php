@@ -5,7 +5,7 @@ use Hail\Facades\{
 	Request,
 	Response
 };
-use Hail\Exception\BadRequest;
+use Hail\Exception\BadRequestException;
 use Hail\Utils\Json as Js;
 
 /**
@@ -18,7 +18,7 @@ class Jsonp extends Json
 		if ($callback === null) {
 			$callback = Request::input('callback');
 			if (empty($callback)) {
-				throw new BadRequest("callback doesn't defined.");
+				throw new BadRequestException("callback doesn't defined.");
 			}
 		}
 

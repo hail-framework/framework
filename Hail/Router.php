@@ -118,15 +118,9 @@ class Router
 	 * @param array $methods
 	 * @param string $route
 	 * @param array $handler
-	 *
-	 * @throws \InvalidArgumentException
 	 */
 	public function addRoute(array $methods, string $route, array $handler)
 	{
-		if (!isset($handler['app'])) {
-			throw new Exception\InvalidArgument('Handler must have app key set.');
-		}
-
 		$parts = explode('/', trim($route, static::SEPARATOR_TRIM));
 
 		if (!isset($parts[1]) && $parts[0] === '') {
@@ -169,10 +163,11 @@ class Router
 		}
 
 		$current['route'] = $route;
+
+		if (!isset($current['methods'])) {
+			$current['methods'] = [];
+		}
 		foreach ($methods as $v) {
-			if (!isset($current['methods'])) {
-				$current['methods'] = [];
-			}
 			$current['methods'][strtoupper($v)] = $handler;
 		}
 	}

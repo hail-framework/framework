@@ -7,6 +7,7 @@
 
 namespace Hail\Mail;
 
+use Hail\Mail\Exception\SmtpException;
 
 /**
  * Sends emails via the SMTP server.
@@ -66,7 +67,7 @@ class Mailer
 	 * Sends email.
 	 *
 	 * @return void
-	 * @throws Exception\Smtp
+	 * @throws SmtpException
 	 */
 	public function send(Message $mail)
 	{
@@ -84,10 +85,10 @@ class Mailer
 			}
 
 			foreach (array_merge(
-				         (array) $mail->getHeader('To'),
-				         (array) $mail->getHeader('Cc'),
-				         (array) $mail->getHeader('Bcc')
-			         ) as $email => $name) {
+				(array) $mail->getHeader('To'),
+				(array) $mail->getHeader('Cc'),
+				(array) $mail->getHeader('Bcc')
+			) as $email => $name) {
 				$this->write("RCPT TO:<$email>", [250, 251]);
 			}
 
@@ -102,7 +103,7 @@ class Mailer
 				$this->write('QUIT', 221);
 				$this->disconnect();
 			}
-		} catch (Exception\Smtp $e) {
+		} catch (SmtpException $e) {
 			if ($this->connection) {
 				$this->disconnect();
 			}
@@ -115,7 +116,7 @@ class Mailer
 	 * Connects and authenticates to SMTP server.
 	 *
 	 * @return void
-	 * @throws Exception\Smtp
+	 * @throws SmtpException
 	 */
 	protected function connect()
 	{
@@ -124,7 +125,7 @@ class Mailer
 			$errno, $error, $this->timeout, STREAM_CLIENT_CONNECT, $this->context
 		);
 		if (!$this->connection) {
-			throw new Exception\Smtp($error, $errno);
+			throw new SmtpException($error, $errno);
 		}
 		stream_set_timeout($this->connection, $this->timeout, 0);
 		$this->read(); // greeting
@@ -139,7 +140,7 @@ class Mailer
 		if ($this->secure === 'tls') {
 			$this->write('STARTTLS', 220);
 			if (!stream_socket_enable_crypto($this->connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-				throw new Exception\Smtp('Unable to connect via TLS.');
+				throw new SmtpException('Unable to connect via TLS.');
 			}
 			$this->write("EHLO $self", 250);
 		}
@@ -177,12 +178,12 @@ class Mailer
 	/**
 	 * Writes data to server and checks response against expected code if some provided.
 	 *
-	 * @param  string
-	 * @param  int   response code
-	 * @param  string  error message
+	 * @param  string $line
+	 * @param  int    $expectedCode response code
+	 * @param  string $message      error message
 	 *
 	 * @return void
-	 * @throws Exception\Smtp
+	 * @throws SmtpException
 	 */
 	protected function write($line, $expectedCode = null, $message = null)
 	{
@@ -190,7 +191,7 @@ class Mailer
 		if ($expectedCode) {
 			$response = $this->read();
 			if (!in_array((int) $response, (array) $expectedCode, true)) {
-				throw new Exception\Smtp('SMTP server did not accept ' . ($message ? $message : $line) . ' with error: ' . trim($response));
+				throw new SmtpException('SMTP server did not accept ' . ($message ? $message : $line) . ' with error: ' . trim($response));
 			}
 		}
 	}

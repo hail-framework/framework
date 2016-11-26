@@ -5,20 +5,61 @@
 
 namespace Hail\DB;
 
+use Hail\Facades\DB;
+use Hail\DB\Exception\ModelException;
+
+use Hail\Utils\Json;
 use PDO;
 
 /**
  * Simple implement of active record in PHP.
  * Using magic function to implement more smarty functions.
  * Can using chain method calls, to build concise and compactness program.
+ *
+ * @method $this equal($field, $value = null, $relation = 'AND')
+ * @method $this eq($field, $value = null, $relation = 'AND')
+ * @method $this notEqual($field, $value = null, $relation = 'AND')
+ * @method $this ne($field, $value = null, $relation = 'AND')
+ * @method $this greaterThan($field, $value = null, $relation = 'AND')
+ * @method $this gt($field, $value = null, $relation = 'AND')
+ * @method $this lessThan($field, $value = null, $relation = 'AND')
+ * @method $this lt($field, $value = null, $relation = 'AND')
+ * @method $this greaterThanOrEqual($field, $value = null, $relation = 'AND')
+ * @method $this ge($field, $value = null, $relation = 'AND')
+ * @method $this gte($field, $value = null, $relation = 'AND')
+ * @method $this lessThanOrEqual($field, $value = null, $relation = 'AND')
+ * @method $this le($field, $value = null, $relation = 'AND')
+ * @method $this lte($field, $value = null, $relation = 'AND')
+ * @method $this between($field, $value = null, $relation = 'AND')
+ * @method $this bt($field, $value = null, $relation = 'AND')
+ * @method $this notBetween($field, $value = null, $relation = 'AND')
+ * @method $this nbt($field, $value = null, $relation = 'AND')
+ * @method $this nb($field, $value = null, $relation = 'AND')
+ * @method $this like($field, $value = null, $relation = 'AND')
+ * @method $this notLike($field, $value = null, $relation = 'AND')
+ * @method $this nlike($field, $value = null, $relation = 'AND')
+ * @method $this in($field, $value = null, $relation = 'AND')
+ * @method $this notIn($field, $value = null, $relation = 'AND')
+ * @method $this ni($field, $value = null, $relation = 'AND')
+ * @method $this isNull($field, $value = null, $relation = 'AND')
+ * @method $this null($field, $value = null, $relation = 'AND')
+ * @method $this isNotNull($field, $value = null, $relation = 'AND')
+ * @method $this notNull($field, $value = null, $relation = 'AND')
+ * @method $this nnull($field, $value = null, $relation = 'AND')
+ * @method $this select(...$fields)
+ * @method $this from($table)
+ * @method $this set(...$array)
+ * @method $this values(...$array)
+ * @method $this where(...$array)
+ * @method $this group(...$array)
+ * @method $this groupBy(...$array)
+ * @method $this having(...$array)
+ * @method $this order(...$array)
+ * @method $this orderBy(...$array)
+ * @method $this limit(int $skip, int $per = null)
  */
 abstract class Model
 {
-	/**
-	 * @var Medoo
-	 */
-	protected static $db = null;
-
 	/**
 	 * @var array maping the function name and the operator, to build Expressions in WHERE condition.
 	 * <pre>user can call it like this:
@@ -84,7 +125,8 @@ abstract class Model
 	protected $data = [];
 
 	/**
-	 * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data into database.
+	 * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data
+	 *      into database.
 	 */
 	protected $dirty = [];
 
@@ -97,12 +139,8 @@ abstract class Model
 	const HAS_MANY = 'HAS_MANY';
 	const HAS_ONE = 'HAS_ONE';
 
-	public function __construct($config = [])
+	public function __construct(array $config = [])
 	{
-		if (self::$db === null) {
-			self::$db = \DI::DB();
-		}
-
 		foreach ($config as $key => $val) {
 			$this->$key = $val;
 		}
@@ -116,6 +154,7 @@ abstract class Model
 	public function reset()
 	{
 		$this->sql = [];
+
 		return $this;
 	}
 
@@ -123,12 +162,14 @@ abstract class Model
 	 * function to SET or RESET the dirty data.
 	 *
 	 * @param array $dirty The dirty data will be set, or empty array to reset the dirty data.
+	 *
 	 * @return self return $this, can using chain method calls.
 	 */
 	public function dirty(array $dirty = [])
 	{
 		$this->dirty = $dirty;
 		$this->data = array_merge($this->data, $dirty);
+
 		return $this;
 	}
 
@@ -142,7 +183,9 @@ abstract class Model
 	/**
 	 * function to find one record and assign in to current object.
 	 *
-	 * @param int $id If call this function using this param, will find record by using this id. If not set, just find the first record in database.
+	 * @param int $id If call this function using this param, will find record by using this id. If not set, just find
+	 *                the first record in database.
+	 *
 	 * @return bool|self if find record, assign in to current object and return it, other wise return "false".
 	 */
 	public function get($id = null)
@@ -152,7 +195,8 @@ abstract class Model
 		}
 
 		$this->defaultTable();
-		self::$db->get($this->sql, PDO::FETCH_INTO, $this->reset());
+		DB::get($this->sql, PDO::FETCH_INTO, $this->reset());
+
 		return $this->dirty();
 	}
 
@@ -161,12 +205,13 @@ abstract class Model
 	 *
 	 * @return array return array of ORM
 	 */
-	public function select()
+	public function all()
 	{
 		$this->defaultTable();
 		$sql = $this->sql;
 		$this->reset();
-		return self::$db->select($sql, PDO::FETCH_CLASS, self::class);
+
+		return DB::select($sql, PDO::FETCH_CLASS, self::class);
 	}
 
 	/**
@@ -178,7 +223,8 @@ abstract class Model
 	{
 		$this->defaultTable();
 		$this->eq($this->primary, $this->__get($this->primary));
-		return self::$db->delete($this->sql);
+
+		return DB::delete($this->sql);
 	}
 
 	/**
@@ -196,7 +242,7 @@ abstract class Model
 		$this->sql['SET'] = $this->dirty;
 		$this->eq($this->primary, $this->__get($this->primary));
 
-		if (self::$db->update($this->sql)) {
+		if (DB::update($this->sql)) {
 			return $this->dirty()->reset();
 		} else {
 			return false;
@@ -210,17 +256,19 @@ abstract class Model
 	 */
 	public function insert()
 	{
-		if (count($this->dirty) == 0) {
+		if (count($this->dirty) === 0) {
 			return true;
 		}
 
 		$this->defaultTable();
 		$this->sql['VALUES'] = $this->dirty;
 
-		if ($return = self::$db->insert($this->sql)) {
+		if ($return = DB::insert($this->sql)) {
 			$this->__set($this->primary, $return);
+
 			return $this->dirty()->reset();
 		}
+
 		return false;
 	}
 
@@ -229,7 +277,9 @@ abstract class Model
 	 * There was three types of relations: {BELONGS_TO, HAS_ONE, HAS_MANY}
 	 *
 	 * @param string $name The name of the relation, the array key when defind the relation.
+	 *
 	 * @return mixed
+	 * @throws ModelException
 	 */
 	protected function getRelation($name)
 	{
@@ -239,6 +289,7 @@ abstract class Model
 		}
 
 		$class = 'App\\Model\\' . $relation[1];
+		/** @var Model $model */
 		$model = new $class();
 
 		switch ($relation[0]) {
@@ -252,7 +303,7 @@ abstract class Model
 				$this->relations[$name] = $model->get($this->__get($relation[2]));
 				break;
 			default:
-				throw new \RuntimeException("Relation $name not found.");
+				throw new ModelException("Relation $name not found.");
 		}
 
 		return $this->relations[$name];
@@ -263,8 +314,11 @@ abstract class Model
 	 * also can call function of PDO object.
 	 *
 	 * @param string $name function name
-	 * @param array $args The arguments of the function.
+	 * @param array  $args The arguments of the function.
+	 *
 	 * @return mixed Return the result of callback or the current object to make chain method calls.
+	 *
+	 * @throws ModelException
 	 */
 	public function __call($name, $args)
 	{
@@ -277,8 +331,9 @@ abstract class Model
 		} else if (isset(self::$sqlParts[$name])) {
 			$this->sql[$name] = $args;
 		} else {
-			throw new \RuntimeException("Method $name not exist.");
+			throw new ModelException("Method $name not exist.");
 		}
+
 		return $this;
 	}
 
@@ -288,7 +343,7 @@ abstract class Model
 			case 'equal':
 			case 'eq':
 				if (is_array($value)) {
-					$value = json_encode($value);
+					$value = Json::encode($value);
 				}
 				break;
 
@@ -325,8 +380,8 @@ abstract class Model
 	 * create the SQL Expressions.
 	 *
 	 * @param string $field The field name, the source of Expressions
-	 * @param mixed $value the target of the Expressions
-	 * @param string $op the operator to concat this Expressions into WHERE or SET statment.
+	 * @param mixed  $value the target of the Expressions
+	 * @param string $op    the operator to concat this Expressions into WHERE or SET statment.
 	 */
 	public function addWhere($field, $value, $op = 'AND')
 	{
@@ -344,7 +399,7 @@ abstract class Model
 
 	/**
 	 * @param string $name
-	 * @param mixed $value
+	 * @param mixed  $value
 	 */
 	public function __set($name, $value)
 	{
@@ -366,14 +421,15 @@ abstract class Model
 
 	/**
 	 * @param string $name
+	 *
 	 * @return mixed|null
 	 */
 	public function __get($name)
 	{
 		if (isset($this->relations[$name])) {
 			return $this->getRelation($name);
-		} else {
-			return $this->data[$name] ?? null;
 		}
+
+		return $this->data[$name] ?? null;
 	}
 }

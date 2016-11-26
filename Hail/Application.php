@@ -1,7 +1,10 @@
 <?php
 namespace Hail;
 
-use Hail\Exception;
+use Hail\Exception\{
+	ApplicationException,
+	BadRequestException
+};
 use Hail\Tracy\Debugger;
 use Hail\Facades\{
 	Event,
@@ -41,7 +44,7 @@ class Application
 		);
 
 		if (isset($result['error'])) {
-			throw new Exception\BadRequest('Router Error', $result['error']);
+			throw new BadRequestException('Router Error', $result['error']);
 		}
 
 		$app = $result['handler']['app'] ?? '';
@@ -56,7 +59,7 @@ class Application
 	 * @param string $app
 	 *
 	 * @return Dispatcher
-	 * @throws Exception\BadRequest
+	 * @throws BadRequestException
 	 */
 	public function getDispatcher($app)
 	{
@@ -69,12 +72,12 @@ class Application
 
 	protected function processException(\Exception $e)
 	{
-		if (!$e instanceof Exception\Application) {
+		if (!$e instanceof ApplicationException) {
 			throw $e;
 		}
 
 		$code = 500;
-		$isBadRequest = $e instanceof Exception\BadRequest;
+		$isBadRequest = $e instanceof BadRequestException;
 		if ($isBadRequest) {
 			$code = $e->getCode() ?: 404;
 		} else {

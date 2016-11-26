@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Exception;
+use Hail\Exception\InvalidArgumentException;
 
 /**
  * Validates input against certain criteria
@@ -85,7 +85,7 @@ class Validator
 	 * @param  string $lang
 	 * @param  string $langDir
 	 *
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct($data, $fields = [], $lang = null, $langDir = null)
 	{
@@ -105,7 +105,7 @@ class Validator
 			$langMessages = include $langFile;
 			static::$_ruleMessages = array_merge(static::$_ruleMessages, $langMessages);
 		} else {
-			throw new Exception\InvalidArgument("Fail to load language file '" . $langFile . "'");
+			throw new InvalidArgumentException("Fail to load language file '" . $langFile . "'");
 		}
 	}
 
@@ -1024,7 +1024,7 @@ class Validator
 	 * @param mixed $callback
 	 * @param string $message
 	 *
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public function addInstanceRule($name, $callback, $message = null)
 	{
@@ -1041,7 +1041,7 @@ class Validator
 	 * @param  mixed $callback
 	 * @param  string $message
 	 *
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public static function addRule($name, $callback, $message = null)
 	{
@@ -1093,7 +1093,7 @@ class Validator
 	 * @param  array $fields
 	 *
 	 * @return $this
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public function rule($rule, $fields)
 	{
@@ -1113,7 +1113,7 @@ class Validator
 		if (!isset($errors[$rule])) {
 			$ruleMethod = 'validate' . ucfirst($rule);
 			if (!method_exists($this, $ruleMethod)) {
-				throw new Exception\InvalidArgument("Rule '" . $rule . "' has not been registered with " . __CLASS__ . "::addRule().");
+				throw new InvalidArgumentException("Rule '" . $rule . "' has not been registered with " . __CLASS__ . "::addRule().");
 			}
 		}
 

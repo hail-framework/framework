@@ -2,7 +2,7 @@
 namespace Hail\Output;
 
 use Hail\Facades\Response;
-use Hail\Exception\BadRequest;
+use Hail\Exception\BadRequestException;
 
 class File
 {
@@ -41,7 +41,7 @@ class File
 	public function send($file)
 	{
 		if (!is_file($file)) {
-			throw new BadRequest("File '$file' doesn't exist.");
+			throw new BadRequestException("File '$file' doesn't exist.");
 		}
 
 		Response::setContentType($this->contentType);

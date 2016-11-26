@@ -1,7 +1,7 @@
 <?php
 namespace Hail\DB;
 
-use Hail\Exception;
+use Hail\Exception\InvalidArgumentException;
 use Hail\Utils\Serialize;
 use Hail\Facades\{
 	DB,
@@ -50,7 +50,7 @@ class Cache
 	 * @param array $arguments
 	 *
 	 * @return array|bool|mixed
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public function __call($name, $arguments)
 	{
@@ -73,11 +73,11 @@ class Cache
 						break;
 
 					default:
-						throw new Exception\InvalidArgument('Aruguments number out of range');
+						throw new InvalidArgumentException('Aruguments number out of range');
 						break;
 				}
 			} else {
-				throw new Exception\InvalidArgument('Cache only support select/get method');
+				throw new InvalidArgumentException('Cache only support select/get method');
 			}
 
 			SimpleCache::save($key, $result, $this->lifetime);

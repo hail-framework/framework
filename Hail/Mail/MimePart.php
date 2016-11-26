@@ -7,7 +7,10 @@
 
 namespace Hail\Mail;
 
-use Hail\Exception;
+use Hail\Exception\{
+	InvalidArgumentException,
+	InvalidStateException
+};
 use Hail\Utils\Generator;
 use Hail\Utils\Strings;
 use Hail\Utils\Validator;
@@ -43,17 +46,17 @@ class MimePart
 	/**
 	 * Sets a header.
 	 *
-	 * @param  string
+	 * @param               string
 	 * @param  string|array value or pair email => name
-	 * @param  bool
+	 * @param               bool
 	 *
 	 * @return self
-	 * @throws Exception\InvalidArgument
+	 * @throws InvalidArgumentException
 	 */
 	public function setHeader($name, $value, $append = false)
 	{
 		if (!$name || preg_match('#[^a-z0-9-]#i', $name)) {
-			throw new Exception\InvalidArgument("Header name must be non-empty alphanumeric string, '$name' given.");
+			throw new InvalidArgumentException("Header name must be non-empty alphanumeric string, '$name' given.");
 		}
 
 		if ($value == null) { // intentionally ==
@@ -72,7 +75,7 @@ class MimePart
 					Validator::assert($recipient, 'unicode', "header '$name'");
 				}
 				if (preg_match('#[\r\n]#', $recipient)) {
-					throw new Exception\InvalidArgument('Name must not contain line separator.');
+					throw new InvalidArgumentException('Name must not contain line separator.');
 				}
 				Validator::assert($email, 'email', "header '$name'");
 				$tmp[$email] = $recipient;
@@ -81,7 +84,7 @@ class MimePart
 		} else {
 			$value = (string) $value;
 			if (!Strings::checkEncoding($value)) {
-				throw new Exception\InvalidArgument('Header is not valid UTF-8 string.');
+				throw new InvalidArgumentException('Header is not valid UTF-8 string.');
 			}
 			$this->headers[$name] = preg_replace('#[\r\n]+#', ' ', $value);
 		}
@@ -251,6 +254,8 @@ class MimePart
 	 * Returns encoded message.
 	 *
 	 * @return string
+	 * @throws InvalidArgumentException
+	 * @throws InvalidStateException
 	 */
 	public function getEncodedMessage()
 	{
@@ -271,11 +276,11 @@ class MimePart
 			switch ($this->getEncoding()) {
 				case self::ENCODING_QUOTED_PRINTABLE:
 					$output .= quoted_printable_encode($body);
-				break;
+					break;
 
 				case self::ENCODING_BASE64:
 					$output .= rtrim(chunk_split(base64_encode($body), self::LINE_LENGTH, self::EOL));
-				break;
+					break;
 
 				case self::ENCODING_7BIT:
 					$body = preg_replace('#[\x80-\xFF]+#', '', $body);
@@ -283,10 +288,10 @@ class MimePart
 
 				case self::ENCODING_8BIT:
 					$output .= str_replace(["\x00", "\r", "\n"], ['', '', self::EOL], $body);
-				break;
+					break;
 
 				default:
-					throw new Exception\InvalidState('Unknown encoding.');
+					throw new InvalidStateException('Unknown encoding.');
 			}
 		}
 

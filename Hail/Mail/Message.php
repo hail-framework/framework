@@ -7,7 +7,7 @@
 
 namespace Hail\Mail;
 
-use Hail\Exception;
+use Hail\Exception\FileNotFoundException;
 use Hail\Utils\Generator;
 use Hail\Utils\Strings;
 
@@ -16,7 +16,7 @@ use Hail\Utils\Strings;
  * Mail provides functionality to compose and send both text and MIME-compliant multipart email messages.
  *
  * @property   string $subject
- * @property   mixed $htmlBody
+ * @property   mixed  $htmlBody
  */
 class Message extends MimePart
 {
@@ -364,6 +364,7 @@ class Message extends MimePart
 	 * Creates file MIME part.
 	 *
 	 * @return MimePart
+	 * @throws FileNotFoundException
 	 */
 	private function createAttachment($file, $content, $contentType, $disposition)
 	{
@@ -371,7 +372,7 @@ class Message extends MimePart
 		if ($content === null) {
 			$content = @file_get_contents($file); // @ is escalated to exception
 			if ($content === false) {
-				throw new Exception\FileNotFound("Unable to read file '$file'.");
+				throw new FileNotFoundException("Unable to read file '$file'.");
 			}
 		} else {
 			$content = (string) $content;
@@ -478,8 +479,8 @@ class Message extends MimePart
 	private function getRandomId()
 	{
 		return '<' . Generator::random() . '@'
-		. preg_replace('#[^\w.-]+#', '', $_SERVER['HTTP_HOST'] ?? php_uname('n'))
-		. '>';
+			. preg_replace('#[^\w.-]+#', '', $_SERVER['HTTP_HOST'] ?? php_uname('n'))
+			. '>';
 	}
 
 }

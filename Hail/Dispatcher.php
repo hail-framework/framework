@@ -2,7 +2,7 @@
 
 namespace Hail;
 
-use Hail\Exception\BadRequest;
+use Hail\Exception\BadRequestException;
 use Hail\Facades\{
 	Config,
 	Application,
@@ -29,15 +29,19 @@ class Dispatcher
 	public function __construct($app)
 	{
 		$this->application = $app;
-		$this->namespace = 'App\\Controller\\' . $app;
+		$this->namespace = 'App\\Controller';
+
+		if ($app) {
+			$this->namespace .= '\\' . $app;
+		}
 	}
 
-	public function run($rest, $controller, $action, $params)
+	public function run(string $rest, string $controller, string $action, array $params = null)
 	{
 		$this->rest = $rest;
 		$controller = $controller ?: 'Index';
 		$action = $action ?: 'index';
-		$params = $params ?: [];
+		$params = $params ?? [];
 
 		$this->current = [
 			'controller' => ucfirst($controller),
@@ -49,9 +53,9 @@ class Dispatcher
 
 		$object = $this->controller($class);
 		if (!method_exists($object, $method)) {
-			throw new BadRequest('Action Not Defined', 404);
+			throw new BadRequestException('Action Not Defined', 404);
 		} else if (method_exists($object, 'authorize') && !$object->authorize()) {
-			throw new BadRequest('Unauthorized', 401);
+			throw new BadRequestException('Unauthorized', 401);
 		}
 
 		switch ($rest) {
@@ -150,14 +154,14 @@ class Dispatcher
 	 * @param $class
 	 *
 	 * @return Controller
-	 * @throws BadRequest
+	 * @throws BadRequestException
 	 */
 	protected function controller($class)
 	{
 		$class = $this->class($class);
 		if (!isset($this->controller[$class])) {
 			if (!is_subclass_of($class, __NAMESPACE__ . '\\Controller')) {
-				throw new BadRequest('Controller Not Defined', 404);
+				throw new BadRequestException('Controller Not Defined', 404);
 			}
 
 			return $this->controller[$class] = new $class($this);
@@ -181,7 +185,7 @@ class Dispatcher
 	 * @param string $action
 	 *
 	 * @return array
-	 * @throws BadRequest
+	 * @throws BadRequestException
 	 */
 	protected function convert($controller, $action)
 	{
@@ -193,7 +197,7 @@ class Dispatcher
 		}
 
 		if (!class_exists($controllerClass)) {
-			throw new BadRequest('Controller Not Defined', 404);
+			throw new BadRequestException('Controller Not Defined', 404);
 		}
 
 		return [$controllerClass, lcfirst($action) . 'Action'];
@@ -201,32 +205,23 @@ class Dispatcher
 
 	public function forward($to)
 	{
-		$app = $to['app'] ?? $this->application;
+		if ($this->application !== '') {
+			$app = $to['app'] ?? $this->application;
 
-		if ($app !== $this->application) {
-			$dispatcher = Application::getDispatcher($app);
+			if ($app !== $this->application) {
+				$dispatcher = Application::getDispatcher($app);
 
-			return $dispatcher->forward($to);
-		} else {
-			$controller = $to['controller'] ?? 'Index';
-			$action = $to['action'] ?? 'Index';
-			$params = $to['params'] ?? [];
-
-			$this->forward[] = $this->current;
-			$this->run($this->rest, $controller, $action, $params);
-
-			return null;
+				return $dispatcher->forward($to);
+			}
 		}
-	}
 
-	public function error($no, $msg = null)
-	{
-		return $this->forward([
-			'controller' => 'Error',
-			'params' => [
-				'error' => $no,
-				'message' => $msg,
-			],
-		]);
+		$controller = $to['controller'] ?? 'Index';
+		$action = $to['action'] ?? 'Index';
+		$params = $to['params'] ?? [];
+
+		$this->forward[] = $this->current;
+		$this->run($this->rest, $controller, $action, $params);
+
+		return null;
 	}
 }

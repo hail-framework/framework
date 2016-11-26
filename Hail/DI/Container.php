@@ -3,6 +3,10 @@
 namespace Hail\DI;
 
 use ArrayAccess;
+use Hail\DI\Exception\{
+	ContainerException,
+	NotFoundException
+};
 use Hail\Facades\Facade;
 use Hail\Utils\ArrayTrait;
 use Psr\Container\ContainerInterface;
@@ -25,6 +29,8 @@ class Container implements ArrayAccess, ContainerInterface
 	 * Objects and parameters can be passed as argument to the constructor.
 	 *
 	 * @param array $values The parameters or objects.
+	 *
+	 * @throws ContainerException
 	 */
 	public function __construct(array $values = [])
 	{
@@ -33,10 +39,16 @@ class Container implements ArrayAccess, ContainerInterface
 		}
 	}
 
+	/**
+	 * @param $id
+	 * @param $value
+	 *
+	 * @throws ContainerException
+	 */
 	public function set($id, $value)
 	{
 		if ($id === 'di' || isset($this->raw[$id])) {
-			throw new Exception\Container(sprintf('Cannot override frozen service "%s".', $id));
+			throw new ContainerException(sprintf('Cannot override frozen service "%s".', $id));
 		}
 
 		$this->values[$id] = $value;
@@ -49,7 +61,7 @@ class Container implements ArrayAccess, ContainerInterface
 	 *
 	 * @return mixed The value of the parameter or an object
 	 *
-	 * @throws Exception\NotFound if the identifier is not defined
+	 * @throws NotFoundException if the identifier is not defined
 	 */
 	public function get($id)
 	{
@@ -58,7 +70,7 @@ class Container implements ArrayAccess, ContainerInterface
 		}
 
 		if (!isset($this->values[$id])) {
-			throw new Exception\NotFound(sprintf('Identifier "%s" is not defined.', $id));
+			throw new NotFoundException(sprintf('Identifier "%s" is not defined.', $id));
 		}
 
 		if (isset($this->raw[$id])) {
@@ -111,14 +123,14 @@ class Container implements ArrayAccess, ContainerInterface
 	 *
 	 * @return mixed The value of the parameter or the closure defining an object
 	 *
-	 * @throws \InvalidArgumentException if the identifier is not defined
+	 * @throws NotFoundException if the identifier is not defined
 	 */
 	public function raw($id)
 	{
 		if ($id === 'di') {
 			return '\\Hail\\Facades\\DI';
 		} elseif (!isset($this->values[$id])) {
-			throw new Exception\NotFound(sprintf('Identifier "%s" is not defined.', $id));
+			throw new NotFoundException(sprintf('Identifier "%s" is not defined.', $id));
 		}
 
 		if (isset($this->raw[$id])) {

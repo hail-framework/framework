@@ -1,9 +1,7 @@
 <?php
 namespace App\Controller\Panel;
 
-use Hail\Controller;
-
-class Index extends Controller
+class Index extends Base
 {
 	public function indexAction()
 	{

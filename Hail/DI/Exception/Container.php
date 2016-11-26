@@ -1,16 +1,16 @@
 <?php
 namespace Hail\DI\Exception;
 
-
-use Psr\Container\ContainerException;
+use Hail\Exception\InvalidStateException;
+use Psr\Container\ContainerException as PsrContainerException;
 
 /**
- * Class Container
+ * Class ContainerException
  *
  * @package Hail\DI\Exception
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  */
-class Container extends \RuntimeException implements ContainerException
+class ContainerException extends InvalidStateException implements PsrContainerException
 {
 
 }

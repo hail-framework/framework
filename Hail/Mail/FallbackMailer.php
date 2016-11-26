@@ -8,7 +8,11 @@
 namespace Hail\Mail;
 
 
-use Hail\Exception\InvalidArgument;
+use Hail\Exception\InvalidArgumentException;
+use Hail\Mail\Exception\{
+	SendException,
+	FallbackMailerException
+};
 
 class FallbackMailer
 {
@@ -26,27 +30,33 @@ class FallbackMailer
 
 
 	/**
-	 * @param Mailer[]
-	 * @param int
-	 * @param int in miliseconds
+	 * @param Mailer[] $mailers
+	 * @param int $retryCount
+	 * @param int $retryWaitTime in miliseconds
+	 * @param callable $onFailure
 	 */
-	public function __construct(array $mailers, $retryCount = 3, $retryWaitTime = 1000)
+	public function __construct(array $mailers, $retryCount = 3, $retryWaitTime = 1000, $onFailure = null)
 	{
 		$this->mailers = $mailers;
 		$this->retryCount = $retryCount;
 		$this->retryWaitTime = $retryWaitTime;
+		$this->onFailure = $onFailure ?? function () {};
 	}
 
 
 	/**
 	 * Sends email.
+	 *
+	 * @param Message $mail
+	 *
 	 * @return void
-	 * @throws InvalidArgument，Exception\FallbackMailer
+	 * @throws InvalidArgumentException
+	 * @throws FallbackMailerException
 	 */
 	public function send(Message $mail)
 	{
 		if (!$this->mailers) {
-			throw new InvalidArgument('At least one mailer must be provided.');
+			throw new InvalidArgumentException('At least one mailer must be provided.');
 		}
 
 		for ($i = 0; $i < $this->retryCount; $i++) {
@@ -59,20 +69,22 @@ class FallbackMailer
 					$mailer->send($mail);
 					return;
 
-				} catch (Exception\Send $e) {
+				} catch (SendException $e) {
 					$failures[] = $e;
 					$this->onFailure($this, $e, $mailer, $mail);
 				}
 			}
 		}
 
-		$e = new Exception\FallbackMailer('All mailers failed to send the message.');
+		$e = new FallbackMailerException('All mailers failed to send the message.');
 		$e->failures = $failures;
 		throw $e;
 	}
 
 
 	/**
+	 * @param Mailer $mailer
+	 *
 	 * @return self
 	 */
 	public function addMailer(Mailer $mailer)
@@ -80,5 +92,4 @@ class FallbackMailer
 		$this->mailers[] = $mailer;
 		return $this;
 	}
-
 }
