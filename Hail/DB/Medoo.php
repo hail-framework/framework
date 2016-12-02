@@ -47,9 +47,10 @@ class Medoo
 	protected $extConnectPool = false;
 
 	// Variable
-	protected $logs = [];
-	protected $debug = false;
 	protected $lastId = [];
+
+	/** @var Event */
+	protected $event;
 
 	/**
 	 * @var PDO $pdo
@@ -130,6 +131,8 @@ class Medoo
 			$commands[] = "SET NAMES '" . $this->charset . "'";
 		}
 
+		$this->event('start', Event::CONNECT);
+
 		$class = $this->extConnectPool ? '\pdoProxy' : 'PDO';
 		$this->pdo = new $class(
 			$dsn,
@@ -137,12 +140,12 @@ class Medoo
 			$this->password,
 			$this->option
 		);
+		$this->event('done');
 
 		foreach ($commands as $value) {
-			$this->pdo->exec($value);
-			if ($this->extConnectPool) {
-				$this->pdo->release();
-			}
+			$this->release(
+				$this->exec($value)
+			);
 		}
 	}
 
@@ -153,17 +156,15 @@ class Medoo
 	 */
 	public function query($query)
 	{
-		if ($this->debug) {
-			echo $query;
-
-			$this->debug = false;
-
-			return false;
+		if (PRODUCTION_MODE || strpos($query, 'EXPLAIN') === 0) {
+			return $this->pdo->query($query);
 		}
 
-		$this->logs[] = $query;
+		$this->event('sql', $query);
+		$query = $this->pdo->query($query);
+		$this->event('query');
 
-		return $this->pdo->query($query);
+		return $query;
 	}
 
 	/**
@@ -173,24 +174,41 @@ class Medoo
 	 */
 	public function exec($query)
 	{
-		if ($this->debug) {
-			echo $query;
-
-			$this->debug = false;
-
-			return false;
+		if (PRODUCTION_MODE) {
+			return $this->pdo->exec($query);
 		}
 
-		$this->logs[] = $query;
+		$this->event('sql', $query);
+		$return = $this->pdo->exec($query);
+		$this->event('query');
 
-		return $this->pdo->exec($query);
+		return $return;
 	}
 
-	public function release()
+	/**
+	 * @param mixed $result
+	 *
+	 * @return mixed
+	 */
+	public function release($result = null)
 	{
 		if ($this->extConnectPool) {
 			$this->pdo->release();
 		}
+
+		if (!PRODUCTION_MODE) {
+			if ($result === false &&
+				($error = $this->pdo->errorInfo()) &&
+				isset($error[0])
+			) {
+				$result = $error;
+				$this->event('error');
+			}
+
+			$this->event('done', $result);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -661,15 +679,15 @@ class Medoo
 	 */
 	public function headers($table)
 	{
-		$sth = $this->pdo->query('SELECT * FROM ' . $this->quoteTable($table));
+		$this->event('start', Event::SELECT);
+		$sth = $this->query('SELECT * FROM ' . $this->quoteTable($table));
 
 		$headers = [];
 		for ($i = 0, $n = $sth->columnCount(); $i < $n; ++$i) {
 			$headers[] = $sth->getColumnMeta($i);
 		}
-		$this->release();
 
-		return $headers;
+		return $this->release($headers);
 	}
 
 	/**
@@ -681,22 +699,21 @@ class Medoo
 	 */
 	public function select($struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
+		$this->event('start', Event::SELECT);
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
-		if (!$query) {
-			return false;
+		$return = false;
+		if ($query) {
+			if ($fetchArgs !== null) {
+				$return = $query->fetchAll($fetch, $fetchArgs);
+			} else {
+				$return = $query->fetchAll($fetch);
+			}
 		}
 
-		if ($fetchArgs !== null) {
-			$return = $query->fetchAll($fetch, $fetchArgs);
-		} else {
-			$return = $query->fetchAll($fetch);
-		}
-		$this->release();
-
-		return $return;
+		return $this->release($return);
 	}
 
 	protected function insertContext($table, $datas, $INSERT, $multi = false)
@@ -785,13 +802,15 @@ class Medoo
 	 */
 	public function insert($table, $datas = [], $INSERT = 'INSERT')
 	{
+		$this->event('start', Event::INSERT);
 		$sql = $this->insertContext($table, $datas, $INSERT, false);
 
 		$lastId = [];
 		foreach ($sql as $v) {
 			$result = $this->exec($v);
-			$lastId[] = $result === false ? $result : $this->pdo->lastInsertId();
-			$this->release();
+			$lastId[] = $this->release(
+				$result === false ? $result : $this->pdo->lastInsertId()
+			);
 		}
 
 		$return = count($lastId) > 1 ? $lastId : $lastId[0];
@@ -817,12 +836,12 @@ class Medoo
 	 */
 	public function multiInsert($table, $datas = [], $INSERT = 'INSERT')
 	{
+		$this->event('start', Event::INSERT);
 		$sql = $this->insertContext($table, $datas, $INSERT, true);
 
-		$return = $this->exec($sql);
-		$this->release();
-
-		return $return;
+		return $this->release(
+			$this->exec($sql)
+		);
 	}
 
 	/**
@@ -834,6 +853,7 @@ class Medoo
 	 */
 	public function update($table, $data = [], $where = null)
 	{
+		$this->event('start', Event::UPDATE);
 		if (is_array($table)) {
 			$data = $table['SET'] ?? $table['VALUES'];
 			$where = $this->suffixClause($table);
@@ -857,10 +877,9 @@ class Medoo
 			}
 		}
 
-		$return = $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . implode(', ', $fields) . $where);
-		$this->release();
-
-		return $return;
+		return $this->release(
+			$this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . implode(', ', $fields) . $where)
+		);
 	}
 
 	/**
@@ -871,6 +890,7 @@ class Medoo
 	 */
 	public function delete($table, $where = null)
 	{
+		$this->event('start', Event::DELETE);
 		if (is_array($table)) {
 			$where = $this->suffixClause($table);
 			$table = $table['FROM'] ?? $table['TABLE'] ?? $table['DELETE'];
@@ -878,10 +898,9 @@ class Medoo
 			$where = $this->whereClause($where);
 		}
 
-		$return = $this->exec('DELETE FROM ' . $this->quoteTable($table) . $where);
-		$this->release();
-
-		return $return;
+		return $this->release(
+			$this->exec('DELETE FROM ' . $this->quoteTable($table) . $where)
+		);
 	}
 
 	/**
@@ -895,6 +914,7 @@ class Medoo
 	 */
 	public function replace($table, $columns, $search = null, $replace = null, $where = null)
 	{
+		$this->event('start', Event::UPDATE);
 		if (is_array($columns)) {
 			$replace_query = [];
 
@@ -917,10 +937,9 @@ class Medoo
 			$replace_query = $columns . ' = REPLACE(' . $this->quoteColumn($columns) . ', ' . $this->quote($search) . ', ' . $this->quote($replace) . ')';
 		}
 
-		$return = $this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . $replace_query . $this->whereClause($where));
-		$this->release();
-
-		return $return;
+		return $this->release(
+			$this->exec('UPDATE ' . $this->quoteTable($table) . ' SET ' . $replace_query . $this->whereClause($where))
+		);
 	}
 
 	/**
@@ -932,13 +951,15 @@ class Medoo
 	 */
 	public function get($struct, $fetch = PDO::FETCH_ASSOC, $fetchArgs = null)
 	{
+		$this->event('start', Event::SELECT);
 		$query = $this->query(
 			$this->selectContext($struct) . ' LIMIT 1'
 		);
 
+		$return = false;
 		if ($query) {
 			if ($fetchArgs === null) {
-				$data = $query->fetch($fetch);
+				$return = $query->fetch($fetch);
 			} else {
 				$fetchArgs = (array) $fetchArgs;
 				array_unshift($fetchArgs, $fetch);
@@ -955,13 +976,10 @@ class Medoo
 						break;
 				}
 
-				$data = $query->fetch($fetch);
+				$return = $query->fetch($fetch);
 			}
-			$this->release();
 
-			if (is_object($data)) {
-				return $data;
-			} else if (!empty($data)) {
+			if (is_array($return) && !empty($return)) {
 				if (isset($struct['FROM']) || isset($struct['TABLE'])) {
 					$column = $struct['SELECT'] ?? $struct['COLUMNS'] ?? null;
 				} else {
@@ -969,16 +987,12 @@ class Medoo
 				}
 
 				if (is_string($column) && $column !== '*') {
-					return $data[$column];
+					$return = $return[$column];
 				}
-
-				return $data;
 			}
-
-			return [];
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -988,6 +1002,7 @@ class Medoo
 	 */
 	public function has(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		if (isset($struct['COLUMNS']) || isset($struct['SELECT'])) {
 			unset($struct['COLUMNS'], $struct['SELECT']);
 		}
@@ -997,14 +1012,12 @@ class Medoo
 			'SELECT EXISTS(' . $this->selectContext($struct) . ')'
 		);
 
+		$return = false;
 		if ($query) {
-			$return = $query->fetchColumn() === '1';
-			$this->release();
-
-			return $return;
+			$return = $query->fetchColumn();
 		}
 
-		return false;
+		return $this->release($return) === '1';
 	}
 
 	/**
@@ -1014,19 +1027,18 @@ class Medoo
 	 */
 	public function count(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		$struct['FUN'] = 'COUNT';
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
+		$return = false;
 		if ($query) {
 			$return = (int) $query->fetchColumn();
-			$this->release();
-
-			return $return;
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -1036,19 +1048,19 @@ class Medoo
 	 */
 	public function max(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		$struct['FUN'] = 'MAX';
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
+		$return = false;
 		if ($query) {
 			$max = $query->fetchColumn();
-			$this->release();
-
-			return is_numeric($max) ? (int) $max : $max;
+			$return = is_numeric($max) ? (int) $max : $max;
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -1058,19 +1070,19 @@ class Medoo
 	 */
 	public function min(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		$struct['FUN'] = 'MIN';
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
+		$return = false;
 		if ($query) {
 			$min = $query->fetchColumn();
-			$this->release();
-
-			return is_numeric($min) ? (int) $min : $min;
+			$return = is_numeric($min) ? (int) $min : $min;
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -1080,19 +1092,18 @@ class Medoo
 	 */
 	public function avg(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		$struct['FUN'] = 'AVG';
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
+		$return = false;
 		if ($query) {
 			$return = (int) $query->fetchColumn();
-			$this->release();
-
-			return $return;
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -1102,19 +1113,18 @@ class Medoo
 	 */
 	public function sum(array $struct)
 	{
+		$this->event('start', Event::SELECT);
 		$struct['FUN'] = 'SUM';
 		$query = $this->query(
 			$this->selectContext($struct)
 		);
 
+		$return = false;
 		if ($query) {
 			$return = (int) $query->fetchColumn();
-			$this->release();
-
-			return $return;
 		}
 
-		return false;
+		return $this->release($return);
 	}
 
 	/**
@@ -1124,12 +1134,11 @@ class Medoo
 	 */
 	public function truncate($table)
 	{
-		$return = $this->exec(
-			'TRUNCATE TABLE ' . $table
+		return $this->release(
+			$this->exec(
+				'TRUNCATE TABLE ' . $table
+			)
 		);
-		$this->release();
-
-		return $return;
 	}
 
 	/**
@@ -1139,42 +1148,75 @@ class Medoo
 	 */
 	public function action($actions)
 	{
-		if (is_callable($actions)) {
-			$this->pdo->beginTransaction();
+		$result = false;
+		if (is_callable($actions, true, $callable)) {
+			if (PRODUCTION_MODE) {
+				$this->pdo->beginTransaction();
+				$result = $callable($this);
+			} else {
+				$event = new Event($this->type, $this->database, Event::TRANSACTION);
 
-			$result = $actions($this);
+				$this->pdo->beginTransaction();
+				$result = $callable($this);
+
+				$event->query();
+				$this->event = $event;
+			}
 
 			if ($result === false) {
 				$this->pdo->rollBack();
 			} else {
 				$this->pdo->commit();
 			}
-			$this->release();
-		} else {
-			return false;
 		}
+
+		return $this->release($result);
 	}
 
-	public function debug()
+	protected function event($type, $arg = null)
 	{
-		$this->debug = true;
+		if (PRODUCTION_MODE) {
+			return;
+		}
 
-		return $this;
+		switch ($type) {
+			case 'start':
+				$this->event = new Event($this->type, $this->database, $arg);
+				break;
+
+			case 'sql':
+				if ($this->event === null) {
+					$this->event('start', Event::QUERY);
+					$this->event->sql($arg, false);
+				} else {
+					$this->event->sql($arg);
+				}
+				break;
+
+			case 'query':
+				if ($this->event !== null) {
+					$this->event->query();
+				}
+				break;
+
+			case 'done':
+				if ($this->event !== null) {
+					$this->event->done($arg);
+					$this->event = null;
+				}
+				break;
+
+			case 'error':
+				if ($this->event !== null) {
+					$this->event->error();
+				}
+				break;
+		}
 	}
 
 	public function error()
 	{
 		return $this->pdo->errorInfo();
-	}
-
-	public function lastQuery()
-	{
-		return end($this->logs);
-	}
-
-	public function log()
-	{
-		return $this->logs;
 	}
 
 	public function info()

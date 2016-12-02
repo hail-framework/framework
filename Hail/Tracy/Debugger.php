@@ -7,8 +7,6 @@
 
 namespace Hail\Tracy;
 
-require __DIR__ . '/shortcuts.php';
-
 /**
  * Debugger: displays and logs errors.
  *
@@ -116,9 +114,9 @@ class Debugger
 	/**
 	 * Enables displaying or logging errors and exceptions.
 	 *
-	 * @param  mixed $mode production, development mode, autodetection or IP address(es) whitelist.
+	 * @param  mixed  $mode         production, development mode, autodetection or IP address(es) whitelist.
 	 * @param  string $logDirectory error log directory
-	 * @param  string $email administrator email; enables email sending in production mode
+	 * @param  string $email        administrator email; enables email sending in production mode
 	 *
 	 * @return void
 	 * @throws \LogicException
@@ -162,6 +160,9 @@ class Debugger
 		if (self::$enabled) {
 			return;
 		}
+
+		define('PRODUCTION_MODE', self::$productionMode);
+
 		self::$enabled = true;
 
 		register_shutdown_function([__CLASS__, 'shutdownHandler']);
@@ -468,10 +469,13 @@ class Debugger
 			self::$bar->addPanel(new Bar\DefaultPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
 			self::$bar->addPanel(new Bar\RoutePanel(), 'Hail:route');
 			self::$bar->addPanel(new Bar\SessionPanel(), 'Session');
+			self::$bar->addPanel(new Bar\QueryPanel(), 'Query');
 			self::$bar->addPanel(new Bar\ProfilerPanel(), 'Profile');
 			if (extension_loaded('xdebug') && \ini_get('xdebug.auto_trace') !== 'on') {
 				self::$bar->addPanel(\DI::trace(), 'Hail:Trace');
 			}
+			self::$bar->addPanel(new Bar\GitPanel(), 'Git');
+			self::$bar->addPanel(new Bar\VendorPanel(), 'Vendor');
 		}
 
 		return self::$bar;
@@ -557,9 +561,9 @@ class Debugger
 	 *
 	 * @tracySkipLocation
 	 *
-	 * @param  mixed $var variable to dump
-	 * @param  string $title optional title
-	 * @param  array $options dumper options
+	 * @param  mixed  $var     variable to dump
+	 * @param  string $title   optional title
+	 * @param  array  $options dumper options
 	 *
 	 * @return mixed  variable itself
 	 */

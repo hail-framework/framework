@@ -125,8 +125,7 @@ abstract class Model
 	protected $data = [];
 
 	/**
-	 * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data
-	 *      into database.
+	 * @var array Stored the drity data of this object, when call "insert" or "update" function, will write this data into database.
 	 */
 	protected $dirty = [];
 

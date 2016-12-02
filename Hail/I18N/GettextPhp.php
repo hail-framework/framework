@@ -193,10 +193,11 @@ class Gettext
 			$transTable[$idx] = $this->parseEntry($fp, $entry);
 		}
 		$table = $this->parseOffsetTable($fp, $offsets['orig_offset'], $offsets['num_strings']);
+		$chr = chr(0);
 		foreach ($table as $idx => $entry) {
 			$entry = $this->parseEntry($fp, $entry);
-			$formes = explode(chr(0), $entry);
-			$translation = explode(chr(0), $transTable[$idx]);
+			$formes = explode($chr, $entry);
+			$translation = explode($chr, $transTable[$idx]);
 			foreach ($formes as $form) {
 				$this->translationTable[$locale][$domain][$form] = $translation;
 			}
@@ -313,7 +314,7 @@ class Gettext
 			return $translation[$count - 1];
 		}
 		/* not found, handle count */
-		if (1 == $count) {
+		if (1 === $count) {
 			return $msg;
 		} else {
 			return $msg_plural;

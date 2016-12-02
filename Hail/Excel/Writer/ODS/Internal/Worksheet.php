@@ -4,7 +4,6 @@ namespace Hail\Excel\Writer\ODS\Internal;
 
 use Hail\Excel\Common\Exception\InvalidArgumentException;
 use Hail\Excel\Common\Exception\IOException;
-use Hail\Excel\Common\Helper\StringHelper;
 use Hail\Excel\Writer\Common\Helper\CellHelper;
 use Hail\Excel\Writer\Common\Internal\WorksheetInterface;
 
@@ -26,9 +25,6 @@ class Worksheet implements WorksheetInterface
     /** @var \Hail\Excel\Common\Escaper\ODS Strings escaper */
     protected $stringsEscaper;
 
-    /** @var \Hail\Excel\Common\Helper\StringHelper To help with string manipulation */
-    protected $stringHelper;
-
     /** @var Resource Pointer to the temporary sheet data file (e.g. worksheets-temp/sheet1.xml) */
     protected $sheetFilePointer;
 
@@ -49,8 +45,6 @@ class Worksheet implements WorksheetInterface
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->stringsEscaper = \Hail\Excel\Common\Escaper\ODS::getInstance();
         $this->worksheetFilePath = $worksheetFilesFolder . '/sheet' . $externalSheet->getIndex() . '.xml';
-
-        $this->stringHelper = new StringHelper();
 
         $this->startSheet();
     }

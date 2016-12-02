@@ -224,4 +224,15 @@ class Dispatcher
 
 		return null;
 	}
+
+	public function error($code, $msg = null)
+	{
+		return $this->forward([
+			'controller' => 'Error',
+			'params' => [
+				'error' => $code,
+				'message' => $msg,
+			],
+		]);
+	}
 }

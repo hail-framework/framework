@@ -19,7 +19,7 @@ use Hail\DB\Medoo;
  * @method static mixed multiInsert(string $table, array $datas = [], string $INSERT = 'INSERT')
  * @method static bool|int update(string $table, array $data = [], array|null $where = null)
  * @method static bool|int delete(string $table, array|null $where = null)
- * @method static bool|int replace(string $table, array $columns, string|array|null $search = null, mixed $replace = null, array $where = null)
+ * @method static bool|int replace(string $table, array $columns, string|array|null $search = null, mixed $replace =null, array $where = null)
  * @method static mixed get(string|array $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
  * @method static bool has(array $struct)
  * @method static bool|int count(array $struct)
@@ -29,10 +29,7 @@ use Hail\DB\Medoo;
  * @method static bool|int sum(array $struct)
  * @method static bool|int truncate(string $table)
  * @method static bool action(callback|callable $action)
- * @method static Medoo debug()
  * @method static string error()
- * @method static string lastQuery
- * @method static array log()
  * @method static array info()
  */
 class DB extends Facade

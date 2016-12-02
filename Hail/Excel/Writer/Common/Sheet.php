@@ -2,7 +2,6 @@
 
 namespace Hail\Excel\Writer\Common;
 
-use Hail\Excel\Common\Helper\StringHelper;
 use Hail\Excel\Writer\Exception\InvalidSheetNameException;
 
 /**
@@ -30,16 +29,12 @@ class Sheet
     /** @var string Name of the sheet */
     protected $name;
 
-    /** @var \Hail\Excel\Common\Helper\StringHelper */
-    protected $stringHelper;
-
     /**
      * @param int $sheetIndex Index of the sheet, based on order in the workbook (zero-based)
      */
     public function __construct($sheetIndex)
     {
         $this->index = $sheetIndex;
-        $this->stringHelper = new StringHelper();
         $this->setName(self::DEFAULT_SHEET_NAME_PREFIX . ($sheetIndex + 1));
     }
 
@@ -75,14 +70,7 @@ class Sheet
      */
     public function setName($name)
     {
-        if (!$this->isNameValid($name)) {
-            $errorMessage = "The sheet's name is invalid. It did not meet at least one of these requirements:\n";
-            $errorMessage .= " - It should not be blank\n";
-            $errorMessage .= " - It should not exceed 31 characters\n";
-            $errorMessage .= " - It should not contain these characters: \\ / ? * : [ or ]\n";
-            $errorMessage .= " - It should be unique";
-            throw new InvalidSheetNameException($errorMessage);
-        }
+	    $this->throwIfNameIsInvalid($name);
 
         $this->name = $name;
         self::$SHEETS_NAME_USED[$this->index] = $name;
@@ -91,27 +79,49 @@ class Sheet
     }
 
     /**
-     * Returns whether the given sheet's name is valid.
+     * Throws an exception if the given sheet's name is not valid.
      * @see Sheet::setName for validity rules.
      *
      * @param string $name
-     * @return bool TRUE if the name is valid, FALSE otherwise.
+     * @return void
+     * @throws InvalidSheetNameException If the sheet's name is invalid.
      */
-    protected function isNameValid($name)
+	protected function throwIfNameIsInvalid($name)
     {
         if (!is_string($name)) {
-            return false;
+	        $actualType = gettype($name);
+            $errorMessage = "The sheet's name is invalid. It must be a string ($actualType given).";
+            throw new InvalidSheetNameException($errorMessage);
         }
 
-        $nameLength = $this->stringHelper->getStringLength($name);
+	    $failedRequirements = [];
+        $nameLength = mb_strlen($name);
 
-        return (
-            $nameLength > 0 &&
-            $nameLength <= self::MAX_LENGTH_SHEET_NAME &&
-            !$this->doesContainInvalidCharacters($name) &&
-            $this->isNameUnique($name) &&
-            !$this->doesStartOrEndWithSingleQuote($name)
-        );
+	    if (!$this->isNameUnique($name)) {
+            $failedRequirements[] = 'It should be unique';
+        } else {
+            if ($nameLength === 0) {
+                $failedRequirements[] = 'It should not be blank';
+            } else {
+                if ($nameLength > self::MAX_LENGTH_SHEET_NAME) {
+                    $failedRequirements[] = 'It should not exceed 31 characters';
+                }
+
+                if ($this->doesContainInvalidCharacters($name)) {
+                    $failedRequirements[] = 'It should not contain these characters: \\ / ? * : [ or ]';
+                }
+
+                if ($this->doesStartOrEndWithSingleQuote($name)) {
+                    $failedRequirements[] = 'It should not start or end with a single quote';
+                }
+            }
+        }
+
+        if (count($failedRequirements) !== 0) {
+            $errorMessage = "The sheet's name (\"$name\") is invalid. It did not respect these rules:\n - ";
+            $errorMessage .= implode("\n - ", $failedRequirements);
+            throw new InvalidSheetNameException($errorMessage);
+        }
     }
 
     /**
@@ -134,8 +144,8 @@ class Sheet
      */
     protected function doesStartOrEndWithSingleQuote($name)
     {
-        $startsWithSingleQuote = ($this->stringHelper->getCharFirstOccurrencePosition('\'', $name) === 0);
-        $endsWithSingleQuote = ($this->stringHelper->getCharLastOccurrencePosition('\'', $name) === ($this->stringHelper->getStringLength($name) - 1));
+        $startsWithSingleQuote = (mb_strpos($name, '\'') === 0);
+        $endsWithSingleQuote = (mb_strrpos($name, '\'') === (mb_strlen($name) - 1));
 
         return ($startsWithSingleQuote || $endsWithSingleQuote);
     }

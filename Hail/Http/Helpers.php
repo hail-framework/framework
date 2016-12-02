@@ -156,7 +156,10 @@ class Helpers
 			return $vars;
 		} elseif (isset($vars[$key])) {
 			return $vars[$key];
-		} elseif (array_key_exists($key, static::$cached[$type][$type])) {
+		} elseif (
+			!empty(static::$cached[$type][$type]) &&
+			array_key_exists($key, static::$cached[$type][$type])
+		) {
 			return static::$cached[$type][$key];
 		} elseif (static::keyCheck($key)) {
 			return self::$cached[$type][$key] = null;
