@@ -8,11 +8,12 @@
 
 namespace Hail\Utils\Exception;
 
-
 /**
- * The exception that indicates error of the last Regexp execution.
+ * Crypto Exception
+ *
+ * @package Hail\Utils\Exception
  */
-class Regexp extends \Exception
+class CryptoException extends \RuntimeException
 {
 
 }

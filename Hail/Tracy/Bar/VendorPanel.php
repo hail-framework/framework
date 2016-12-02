@@ -2,6 +2,7 @@
 
 namespace Hail\Tracy\Bar;
 
+use Hail\Utils\Exception\JsonException;
 use Hail\Utils\Json;
 
 /**
@@ -114,7 +115,7 @@ class VendorPanel implements PanelInterface
 
 		try {
 			return Json::decode($json);
-		} catch (\Hail\Utils\Exception\Json $e) {
+		} catch (JsonException $e) {
 			$this->error = $this->error ?: $e->getMessage();
 
 			return null;

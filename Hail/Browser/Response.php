@@ -2,8 +2,8 @@
 
 namespace Hail\Browser;
 
+use Hail\Utils\Exception\JsonException;
 use Hail\Utils\Json;
-use Hail\Utils\Exception;
 
 class Response
 {
@@ -27,7 +27,7 @@ class Response
 
 		try {
 			$this->body = Json::decode($rawBody);
-		} catch (Exception\Json $e) {
+		} catch (JsonException $e) {
 			$this->body = $rawBody;
 		}
 	}

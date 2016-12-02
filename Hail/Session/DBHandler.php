@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/15 0015
- * Time: 18:06
- */
-
 namespace Hail\Session;
 
 use Hail\Facades\DB;
@@ -14,15 +7,20 @@ use Hail\Facades\DB;
  * Class DBHandler
  *
  * @package Hail\Session
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class DBHandler extends BaseHandler
 {
-	protected $settings = [
-		'table' => 'sessions',
-		'id' => 'id',
-		'time' => 'time',
-		'data' => 'data',
-	];
+	public function __construct(array $settings = [])
+	{
+		$settings += [
+			'table' => 'sessions',
+			'id' => 'id',
+			'time' => 'time',
+			'data' => 'data',
+		];
+		parent::__construct($settings);
+	}
 
 	/**
 	 * {@inheritDoc}

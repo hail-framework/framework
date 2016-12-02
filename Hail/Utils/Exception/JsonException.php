@@ -11,7 +11,7 @@ namespace Hail\Utils\Exception;
 /**
  * The exception that indicates error of JSON encoding/decoding.
  */
-class Json extends \Exception
+class JsonException extends \Exception
 {
 
 }

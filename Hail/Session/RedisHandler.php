@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by IntelliJ IDEA.
- * User: FlyingHail
- * Date: 2016/2/15 0015
- * Time: 18:06
- */
-
 namespace Hail\Session;
 use Hail\Cache\Driver\Redis;
 
@@ -17,12 +10,13 @@ use Hail\Cache\Driver\Redis;
 class RedisHandler extends BaseHandler
 {
 	protected $redis;
-	protected $settings = [
-		'prefix' => 'sessions'
-	];
 
 	public function __construct(array $settings)
 	{
+		$settings += [
+			'prefix' => 'sessions'
+		];
+
 		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
 			$settings['lifeTime'] = ini_get('session.gc_maxlifetime');
 		}

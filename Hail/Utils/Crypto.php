@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Utils\Exception;
+use Hail\Utils\Exception\CryptoException;
 
 !defined('HAIL_CRYPTO_ASCII_TYPE') || define('HAIL_CRYPTO_ASCII_TYPE', 'hex');
 
@@ -153,14 +153,14 @@ class Crypto
 	 * @param string $return
 	 * @param bool $password
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
 	public static function encrypt($plaintext, string $key, $return = self::RETURN_HEX, $password = false)
 	{
 		if (mb_strlen($key, '8bit') !== self::KEY_BYTE_SIZE) {
-			throw new Exception\Crypto('Bad key length.');
+			throw new CryptoException('Bad key length.');
 		}
 
 		$salt = random_bytes(self::SALT_BYTE_SIZE);
@@ -178,7 +178,7 @@ class Crypto
 		);
 
 		if ($cipherText === false) {
-			throw new Exception\Crypto(
+			throw new CryptoException(
 				'openssl_encrypt() failed.'
 			);
 		}
@@ -198,7 +198,7 @@ class Crypto
 	 * @param string $password
 	 * @param string $return
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
@@ -215,7 +215,7 @@ class Crypto
 	 * @param string $from
 	 * @param bool $password
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
@@ -223,17 +223,17 @@ class Crypto
 	{
 		$cipherText = self::toBin($cipherText, $from);
 		if ($cipherText === false) {
-			throw new Exception\Crypto('Ciphertext has invalid base64 encoding.');
+			throw new CryptoException('Ciphertext has invalid base64 encoding.');
 		}
 
 		if (mb_strlen($cipherText, '8bit') < self::MINIMUM_CIPHERTEXT_SIZE) {
-			throw new Exception\Crypto('Ciphertext is too short.');
+			throw new CryptoException('Ciphertext is too short.');
 		}
 
 		// Get and check the version header.
 		$header = mb_substr($cipherText, 0, self::HEADER_VERSION_SIZE, '8bit');
 		if ($header !== self::CURRENT_VERSION) {
-			throw new Exception\Crypto('Bad version header.');
+			throw new CryptoException('Bad version header.');
 		}
 
 		// Get the salt.
@@ -244,7 +244,7 @@ class Crypto
 			'8bit'
 		);
 		if ($salt === false) {
-			throw new Exception\Crypto('Environment is broken');
+			throw new CryptoException('Environment is broken');
 		}
 
 		// Get the IV.
@@ -255,7 +255,7 @@ class Crypto
 			'8bit'
 		);
 		if ($iv === false) {
-			throw new Exception\Crypto('Environment is broken');
+			throw new CryptoException('Environment is broken');
 		}
 
 		// Get the HMAC.
@@ -266,7 +266,7 @@ class Crypto
 			'8bit'
 		);
 		if ($hmac === false) {
-			throw new Exception\Crypto('Environment is broken');
+			throw new CryptoException('Environment is broken');
 		}
 
 		// Get the actual encrypted ciphertext.
@@ -279,14 +279,14 @@ class Crypto
 			'8bit'
 		);
 		if ($encrypted === false) {
-			throw new Exception\Crypto('Environment is broken');
+			throw new CryptoException('Environment is broken');
 		}
 		// Derive the separate encryption and authentication keys from the key
 		// or password, whichever it is.
 		list($authKey, $encryptKey) = self::deriveKeys($key, $salt, $password);
 
 		if (false === self::verifyHMAC($hmac, $header . $salt . $iv . $encrypted, $authKey, self::RETURN_RAW)) {
-			throw new Exception\Crypto('Integrity check failed.');
+			throw new CryptoException('Integrity check failed.');
 		}
 
 		$plaintext = openssl_decrypt(
@@ -298,7 +298,7 @@ class Crypto
 		);
 
 		if ($plaintext === false) {
-			throw new Exception\Crypto('openssl_decrypt() failed.');
+			throw new CryptoException('openssl_decrypt() failed.');
 		}
 
 		return $plaintext;
@@ -312,7 +312,7 @@ class Crypto
 	 * @param string $password
 	 * @param string $from
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
@@ -329,7 +329,7 @@ class Crypto
 	 * @param $salt
 	 * @param bool $password
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return array
 	 */
@@ -427,7 +427,7 @@ class Crypto
 	 * @param string $info What sort of key are we deriving?
 	 * @param string $salt
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
@@ -435,7 +435,7 @@ class Crypto
 	{
 		$hashLength = self::$hashList[$hash] ?? mb_strlen(hash_hmac($hash, '', '', true), '8bit');
 		if (empty($length) || !is_int($length) || $length < 0 || $length > 255 * $hashLength) {
-			throw new Exception\Crypto('Bad output length requested of HKDF.');
+			throw new CryptoException('Bad output length requested of HKDF.');
 		}
 
 		if ($salt === null) {
@@ -473,7 +473,7 @@ class Crypto
 	 * @param int $length The length of the derived key in bytes.
 	 * @param bool $raw If true, the key is returned in raw binary format. Hex encoded otherwise.
 	 *
-	 * @throws Exception\Crypto
+	 * @throws CryptoException
 	 *
 	 * @return string A $key_length-byte key derived from the password and salt.
 	 */
@@ -482,11 +482,11 @@ class Crypto
 		$algorithm = strtolower($algorithm);
 		// Whitelist, or we could end up with people using CRC32.
 		if (!isset(self::$hashList[$algorithm])) {
-			throw new Exception\Crypto('Algorithm is not a secure cryptographic hash function.');
+			throw new CryptoException('Algorithm is not a secure cryptographic hash function.');
 		}
 
 		if ($count <= 0 || $length <= 0) {
-			throw new Exception\Crypto('Invalid PBKDF2 parameters.');
+			throw new CryptoException('Invalid PBKDF2 parameters.');
 		}
 
 		// The output length is in NIBBLES (4-bits) if $raw_output is false!
