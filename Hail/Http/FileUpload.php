@@ -7,6 +7,8 @@
 
 namespace Hail\Http;
 
+use Hail\Exception\InvalidStateException;
+
 
 /**
  * Provides access to individual files that have been uploaded by a client.
@@ -145,6 +147,13 @@ class FileUpload
 		return $this->error;
 	}
 
+	/**
+	 * @return bool
+	 */
+	public function hasFile()
+	{
+		return $this->error !== UPLOAD_ERR_NO_FILE;
+	}
 
 	/**
 	 * Is there any error?
@@ -172,16 +181,16 @@ class FileUpload
 		} else {
 			$dir = dirname($dest);
 			if (!is_dir($dir) && (!@mkdir($dir, 0777, true) && !is_dir($dir))) {
-				throw new \RuntimeException("Unable to create dir '$dir'.");
+				throw new InvalidStateException("Unable to create dir '$dir'.");
 			}
 		}
 
 		$moveFun = is_uploaded_file($this->tmpName) ? 'move_uploaded_file' : 'rename';
-		if (!$moveFun($this->tmpName, $dest)) {
-			throw new \RuntimeException("Unable to move uploaded file '$this->tmpName' to '$dest'.");
+		if (!@$moveFun($this->tmpName, $dest)) {
+			throw new InvalidStateException("Unable to move uploaded file '$this->tmpName' to '$dest'.");
 		}
 
-		chmod($dest, 0666);
+		@chmod($dest, 0666);
 		$this->tmpName = $dest;
 
 		return $this;

@@ -27,7 +27,7 @@ namespace Hail\Http;
 class UrlScript extends Url
 {
 	/** @var string */
-	private $scriptPath = '/';
+	private $scriptPath = '';
 
 	/**
 	 * DETECTS URI, base path and script path of the request.
@@ -94,7 +94,7 @@ class UrlScript extends Url
 	 */
 	public function getScriptPath()
 	{
-		return $this->scriptPath;
+		return $this->scriptPath ?: $this->path;
 	}
 
 
@@ -104,7 +104,7 @@ class UrlScript extends Url
 	 */
 	public function getBasePath()
 	{
-		$pos = strrpos($this->scriptPath, '/');
+		$pos = strrpos($this->getScriptPath(), '/');
 		return $pos === FALSE ? '' : substr($this->getPath(), 0, $pos + 1);
 	}
 
@@ -114,7 +114,7 @@ class UrlScript extends Url
 	 */
 	public function getPathInfo()
 	{
-		return (string) substr($this->getPath(), strlen($this->scriptPath));
+		return (string) substr($this->getPath(), strlen($this->getScriptPath()));
 	}
 
 	/**
