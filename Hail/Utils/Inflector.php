@@ -641,12 +641,7 @@ class Inflector
 		$result = static::_cache($cacheKey, $string);
 
 		if ($result === false) {
-			$result = explode(' ', str_replace($delimiter, ' ', $string));
-			foreach ($result as &$word) {
-				$word = mb_strtoupper(mb_substr($word, 0, 1)) . mb_substr($word, 1);
-			}
-			unset($word);
-			$result = implode(' ', $result);
+			$result = mb_convert_case(str_replace($delimiter, ' ', $string), MB_CASE_TITLE);
 			static::_cache($cacheKey, $string, $result);
 		}
 

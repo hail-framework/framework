@@ -7,7 +7,7 @@
 
 namespace Hail\Http;
 
-use Hail\Utils\Generator;
+use Hail\Facades\Generator;
 
 /**
  * HttpResponse class.

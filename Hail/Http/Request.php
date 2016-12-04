@@ -7,11 +7,11 @@
 
 namespace Hail\Http;
 
-use Hail\Utils\{
-	Arrays,
+use Hail\Facades\{
 	Strings,
 	Json
 };
+use Hail\Utils\Arrays;
 
 
 /**

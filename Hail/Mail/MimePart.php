@@ -11,8 +11,10 @@ use Hail\Exception\{
 	InvalidArgumentException,
 	InvalidStateException
 };
-use Hail\Utils\Generator;
-use Hail\Utils\Strings;
+use Hail\Facades\{
+	Generator,
+	Strings
+};
 use Hail\Utils\Validator;
 
 

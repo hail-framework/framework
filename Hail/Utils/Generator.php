@@ -10,11 +10,45 @@ use Hail\Exception\InvalidArgumentException;
 
 /**
  * Secure random string generator.
+ * This class provides the static methods `uuid3()`, `uuid4()`, and
+ * `uuid5()` for generating version 3, 4, and 5 UUIDs as specified in RFC 4122.
+ *
  * @author Hao Feng <flyinghail@msn.com>
  */
 class Generator
 {
 	use Singleton;
+
+	/**
+	 * When this namespace is specified, the name string is a fully-qualified domain name.
+	 *
+	 * @link http://tools.ietf.org/html/rfc4122#appendix-C
+	 */
+	const NAMESPACE_DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+	/**
+	 * When this namespace is specified, the name string is a URL.
+	 *
+	 * @link http://tools.ietf.org/html/rfc4122#appendix-C
+	 */
+	const NAMESPACE_URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+	/**
+	 * When this namespace is specified, the name string is an ISO OID.
+	 *
+	 * @link http://tools.ietf.org/html/rfc4122#appendix-C
+	 */
+	const NAMESPACE_OID = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
+	/**
+	 * When this namespace is specified, the name string is an X.500 DN in DER or a text output format.
+	 *
+	 * @link http://tools.ietf.org/html/rfc4122#appendix-C
+	 */
+	const NAMESPACE_X500 = '6ba7b814-9dad-11d1-80b4-00c04fd430c8';
+	/**
+	 * The nil UUID is special form of UUID that is specified to have all 128 bits set to zero.
+	 *
+	 * @link http://tools.ietf.org/html/rfc4122#section-4.1.7
+	 */
+	const NIL = '00000000-0000-0000-0000-000000000000';
 
 	/**
 	 * Generate random string.
@@ -25,7 +59,7 @@ class Generator
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public function random(int $length = 10, string $charList = '0-9a-zA-Z') :string
+	public function random(int $length = 10, string $charList = '0-9a-zA-Z'): string
 	{
 		$charList = count_chars(preg_replace_callback('#.-.#', function (array $m) {
 			return implode('', range($m[0][0], $m[0][2]));
@@ -46,7 +80,11 @@ class Generator
 		return $res;
 	}
 
-	public function unique()
+	/**
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	public function unique(): string
 	{
 		return uniqid(
 			$this->random(),
@@ -54,7 +92,10 @@ class Generator
 		);
 	}
 
-	public function guid()
+	/**
+	 * @return string
+	 */
+	public function guid(): string
 	{
 		if (function_exists('com_create_guid')) {
 			return trim(com_create_guid(), '{}');
@@ -66,116 +107,106 @@ class Generator
 		return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 	}
 
-	public function uuid3($namespace, $name)
+	/**
+	 * @param string $namespace
+	 * @param string $name
+	 *
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	public function uuid3(string $namespace, string $name): string
 	{
-		if (!$this->isUUID($namespace)) {
-			return false;
+		$bytes = $this->getBytes($namespace);
+
+		$hash = md5($bytes . $name);
+
+		return self::uuidFromHash($hash, 3);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function uuid4(): string
+	{
+		$bytes = random_bytes(16);
+		$hash = bin2hex($bytes);
+
+		return self::uuidFromHash($hash, 4);
+	}
+
+	/**
+	 * @param string $namespace
+	 * @param string $name
+	 *
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	public function uuid5(string $namespace, string $name): string
+	{
+		$bytes = $this->getBytes($namespace);
+
+		$hash = sha1($bytes . $name);
+
+		return self::uuidFromHash($hash, 5);
+	}
+
+	/**
+	 * @param string $uuid
+	 *
+	 * @return bool
+	 */
+	public function isUUID(string $uuid): bool
+	{
+		return preg_match('/^(urn:)?(uuid:)?(\{)?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}(?(3)\}|)$/i', $uuid) === 1;
+	}
+
+	/**
+	 * @param string $uuid
+	 *
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	private function getBytes(string $uuid): string
+	{
+		if (!$this->isUUID($uuid)) {
+			throw new InvalidArgumentException('Invalid UUID string: ' . $uuid);
 		}
 
-		// Get hexadecimal components of namespace
-		$nhex = str_replace(['-', '{', '}'], '', $namespace);
+		// Get hexadecimal components of UUID
+		$hex = str_replace([
+			'urn:',
+			'uuid:',
+			'-',
+			'{',
+			'}',
+		], '', $uuid);
 
 		// Binary Value
-		$nstr = '';
-
-		// Convert Namespace UUID to bits
-		for ($i = 0, $n = strlen($nhex); $i < $n; $i += 2) {
-			$nstr .= chr(hexdec($nhex[$i] . $nhex[$i + 1]));
+		$str = '';
+		// Convert UUID to bits
+		for ($i = 0, $n = strlen($hex); $i < $n; $i += 2) {
+			$str .= chr(hexdec($hex[$i] . $hex[$i + 1]));
 		}
 
-		// Calculate hash value
-		$hash = md5($nstr . $name);
+		return $str;
+	}
 
+	private static function uuidFromHash($hash, $version)
+	{
 		return sprintf('%08s-%04s-%04x-%04x-%12s',
-
 			// 32 bits for "time_low"
 			substr($hash, 0, 8),
-
 			// 16 bits for "time_mid"
 			substr($hash, 8, 4),
-
 			// 16 bits for "time_hi_and_version",
-			// four most significant bits holds version number 3
-			(hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x3000,
-
+			// four most significant bits holds version number
+			(hexdec(substr($hash, 12, 4)) & 0x0fff) | $version << 12,
 			// 16 bits, 8 bits for "clk_seq_hi_res",
 			// 8 bits for "clk_seq_low",
 			// two most significant bits holds zero and one for variant DCE1.1
 			(hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000,
-
 			// 48 bits for "node"
-			substr($hash, 20, 12)
-		);
+			substr($hash, 20, 12));
 	}
 
-	public function uuid4()
-	{
-		return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-
-			// 32 bits for "time_low"
-			random_int(0, 0xffff), random_int(0, 0xffff),
-
-			// 16 bits for "time_mid"
-			random_int(0, 0xffff),
-
-			// 16 bits for "time_hi_and_version",
-			// four most significant bits holds version number 4
-			random_int(0, 0x0fff) | 0x4000,
-
-			// 16 bits, 8 bits for "clk_seq_hi_res",
-			// 8 bits for "clk_seq_low",
-			// two most significant bits holds zero and one for variant DCE1.1
-			random_int(0, 0x3fff) | 0x8000,
-
-			// 48 bits for "node"
-			random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
-		);
-	}
-
-	public function uuid5($namespace, $name)
-	{
-		if (!$this->isUUID($namespace)) {
-			return false;
-		}
-
-		// Get hexadecimal components of namespace
-		$nhex = str_replace(['-', '{', '}'], '', $namespace);
-
-		// Binary Value
-		$nstr = '';
-
-		// Convert Namespace UUID to bits
-		for ($i = 0, $n = strlen($nhex); $i < $n; $i += 2) {
-			$nstr .= chr(hexdec($nhex[$i] . $nhex[$i + 1]));
-		}
-
-		// Calculate hash value
-		$hash = sha1($nstr . $name);
-
-		return sprintf('%08s-%04s-%04x-%04x-%12s',
-
-			// 32 bits for "time_low"
-			substr($hash, 0, 8),
-
-			// 16 bits for "time_mid"
-			substr($hash, 8, 4),
-
-			// 16 bits for "time_hi_and_version",
-			// four most significant bits holds version number 5
-			(hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x5000,
-
-			// 16 bits, 8 bits for "clk_seq_hi_res",
-			// 8 bits for "clk_seq_low",
-			// two most significant bits holds zero and one for variant DCE1.1
-			(hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000,
-
-			// 48 bits for "node"
-			substr($hash, 20, 12)
-		);
-	}
-
-	public function isUUID($uuid)
-	{
-		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
-	}
 }
