@@ -14,7 +14,7 @@ namespace Hail\Cache;
 
 use Hail\Cache\Adapter\HasExpirationDateInterface;
 use Hail\Utils\Crypto;
-use Hail\Utils\Serialize;
+use Hail\Facades\Serialize;
 use Psr\Cache\CacheItemInterface;
 
 /**

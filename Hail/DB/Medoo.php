@@ -11,7 +11,7 @@
 namespace Hail\DB;
 
 use PDO;
-use Hail\Utils\Json;
+use Hail\Facades\Json;
 
 
 /**
@@ -1149,15 +1149,15 @@ class Medoo
 	public function action($actions)
 	{
 		$result = false;
-		if (is_callable($actions, true, $callable)) {
+		if (is_callable($actions)) {
 			if (PRODUCTION_MODE) {
 				$this->pdo->beginTransaction();
-				$result = $callable($this);
+				$result = $actions($this);
 			} else {
 				$event = new Event($this->type, $this->database, Event::TRANSACTION);
 
 				$this->pdo->beginTransaction();
-				$result = $callable($this);
+				$result = $actions($this);
 
 				$event->query();
 				$this->event = $event;

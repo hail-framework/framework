@@ -4,7 +4,7 @@ namespace Hail;
 
 use Hail\Browser\Request;
 use Hail\Browser\Request\Body;
-use Hail\Utils\Json;
+use Hail\Facades\Json;
 
 class Browser
 {

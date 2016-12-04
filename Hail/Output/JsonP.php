@@ -6,7 +6,7 @@ use Hail\Facades\{
 	Response
 };
 use Hail\Exception\BadRequestException;
-use Hail\Utils\Json as Js;
+use Hail\Facades\Json as Js;
 
 /**
  * Class Jsonp

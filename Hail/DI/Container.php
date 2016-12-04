@@ -48,7 +48,7 @@ class Container implements ArrayAccess, ContainerInterface
 	public function set($id, $value)
 	{
 		if ($id === 'di' || isset($this->raw[$id])) {
-			throw new ContainerException(sprintf('Cannot override frozen service "%s".', $id));
+			throw new ContainerException('Cannot override frozen service "' . $id . '".');
 		}
 
 		$this->values[$id] = $value;
@@ -81,10 +81,8 @@ class Container implements ArrayAccess, ContainerInterface
 		if ($this->isFacade($raw)) {
 			/** @var Facade $raw */
 			$val = $raw::getInstance();
-		} elseif ($raw instanceof \Closure) {
+		} elseif (is_callable($raw)) {
 			$val = $raw($this);
-		} elseif (is_callable($raw, true, $call)) {
-			$val = $call($this);
 		}
 
 		$this->raw[$id] = $raw;

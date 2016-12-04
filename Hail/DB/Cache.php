@@ -2,7 +2,7 @@
 namespace Hail\DB;
 
 use Hail\Exception\InvalidArgumentException;
-use Hail\Utils\Serialize;
+use Hail\Facades\Serialize;
 use Hail\Facades\{
 	DB,
 	Cache as SimpleCache

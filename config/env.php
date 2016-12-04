@@ -5,5 +5,5 @@ return [
 	'debug' => true,
 	'proxies' => [],
 
-	'serialize' => 'msgpack',
+	'serialize' => 'serialize',
 ];

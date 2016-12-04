@@ -1,33 +1,19 @@
 <?php
 namespace Hail\Utils;
 
+use Hail\Exception\InvalidStateException;
+
 /**
  * Class Model
  *
  * @package Hail
  * @author  Hao Feng <flyinghail@msn.com>
- *
- * @property-read \App\Library\Menu         $menu
- * @property-read \App\Library\Data         $data
- * @property-read \App\Library\Enum         $enum
- * @property-read \App\Library\OperationLog $OperationLog
- * @property-read \App\Library\GameApi      $gameApi
- * @property-read \App\Library\GameTime     $gameTime
- * @property-read \App\Library\Organization $organization
- * @property-read \App\Library\Acl          $acl
- * @property-read \App\Library\Language     $language
- * @property-read \App\Library\Game         $game
- * @property-read \App\Library\Server       $server
- * @property-read \App\Library\Channel      $channel
- * @property-read \App\Library\Statistics   $statistics
- * @property-read \App\Library\Excel        $excel
  */
 class ObjectFactory implements \ArrayAccess
 {
 	use ArrayTrait;
 
 	private $namespace;
-	private $object;
 
 	public function __construct($namespace)
 	{
@@ -36,12 +22,12 @@ class ObjectFactory implements \ArrayAccess
 
 	public function __call($name, $arguments)
 	{
-		return $this->get($name);
+		return $this->$name ?? $this->get($name);
 	}
 
 	public function has($key)
 	{
-		if (!isset($this->object[$key])) {
+		if (!isset($this->$key)) {
 			return class_exists($this->namespace . ucfirst($key));
 		}
 
@@ -50,38 +36,38 @@ class ObjectFactory implements \ArrayAccess
 
 	public function get($key)
 	{
-		if (!isset($this->object[$key])) {
+		if (!isset($this->$key)) {
 			$class = $this->namespace . ucfirst($key);
-			if (!class_exists($class)) {
-				throw new \RuntimeException("Class $class Not Defined");
+			if (method_exists($class, 'getInstance')) {
+				return $this->$key = $class::getInstance();
+			} elseif (!class_exists($class)) {
+				throw new InvalidStateException("Class $class Not Defined");
 			}
 
-			return $this->object[$key] = new $class();
+			return $this->$key = new $class();
 		}
 
-		return $this->object[$key];
+		return $this->$key;
 	}
 
 	public function set($key, $value)
 	{
-		if (isset($this->object[$key])) {
-			return $this->object[$key];
+		if (isset($this->$key)) {
+			throw new InvalidStateException(sprintf('Cannot override frozen object "' . $key . '".'));
 		}
 
 		$class = $this->namespace . ucfirst($key);
 		if (!$value instanceof $class) {
-			throw new \RuntimeException("Object Not Instance of $class");
+			throw new InvalidStateException("Object Not Instance of $class");
 		}
 
-		$this->object[$key] = $value;
-
-		return $value;
+		return $this->$key = $value;
 	}
 
 	public function delete($key)
 	{
-		if (isset($this->object[$key])) {
-			unset($this->object[$key]);
+		if (isset($this->$key)) {
+			unset($this->$key);
 		}
 	}
 }

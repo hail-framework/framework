@@ -1,18 +1,22 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Utils\Exception\CryptoException;
-
-!defined('HAIL_CRYPTO_ASCII_TYPE') || define('HAIL_CRYPTO_ASCII_TYPE', 'hex');
+use Hail\Exception\{
+	InvalidArgumentException,
+	CryptoException
+};
+use Hail\Facades\Config;
 
 /**
  * Class Crypto
  *
  * @package Hail\Utils
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  */
 class Crypto
 {
+	use Singleton;
+
 	const HEADER_VERSION_SIZE = 4;
 	const MINIMUM_CIPHERTEXT_SIZE = 84;
 
@@ -29,6 +33,9 @@ class Crypto
 
 	const PBKDF2_ITERATIONS = 100000;
 
+	/**
+	 * @var array
+	 */
 	public static $hashList = [
 //		'md5' => 16,
 		'sha1' => 20,
@@ -43,17 +50,51 @@ class Crypto
 		'whirlpool' => 64,
 	];
 
-	const RETURN_RAW = 'raw';
-	const RETURN_HEX = 'hex';
-	const RETURN_STR = 'str';
-	const RETURN_BASE64 = 'base64';
+	const FORMAT_RAW = 'raw';
+	const FORMAT_HEX = 'hex';
+	const FORMAT_STR = 'str';
+	const FORMAT_BASE64 = 'base64';
+
+	protected $format;
+
+
+	protected function init()
+	{
+		$this->setFormat(
+			Config::get('crypto.format')
+		);
+	}
+
+	public function setFormat(string $format)
+	{
+		if (!in_array($format, [
+			self::FORMAT_RAW,
+			self::FORMAT_HEX,
+			self::FORMAT_STR,
+			self::FORMAT_BASE64,
+		], true)
+		) {
+			throw new InvalidArgumentException("Crypto return format $format not defined");
+		}
+
+		$this->format = $format;
+
+		return $this;
+	}
+
+	public function modify(string $format)
+	{
+		$crypto = clone $this;
+
+		return $crypto->setFormat($format);
+	}
 
 	/**
-	 * @param $password
+	 * @param string $password
 	 *
 	 * @return bool|string
 	 */
-	public static function password($password)
+	public function password(string $password)
 	{
 		return password_hash($password, PASSWORD_DEFAULT);
 	}
@@ -64,11 +105,11 @@ class Crypto
 	 *
 	 * @return bool|string
 	 */
-	public static function verifyPassword($password, $hash)
+	public function verifyPassword(string $password, string $hash)
 	{
 		if (password_verify($password, $hash)) {
 			if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
-				return self::password($password);
+				return $this->password($password);
 			}
 
 			return true;
@@ -79,69 +120,64 @@ class Crypto
 
 	/**
 	 * @param $text
-	 * @param string $return
 	 *
 	 * @return string
 	 */
-	public static function hash($text, $return = self::RETURN_HEX)
+	public function hash(string $text)
 	{
-		if (self::RETURN_HEX === $return) {
+		if (self::FORMAT_HEX === $this->format) {
 			return hash(self::HASH_TYPE, $text, false);
 		}
 
 		$raw = hash(self::HASH_TYPE, $text, true);
 
-		return self::fromBin($raw, $return);
+		return $this->fromBin($raw);
 	}
 
 	/**
 	 * @param $text
 	 * @param $hash
-	 * @param string $return
 	 *
 	 * @return bool|string
 	 */
-	public static function verifyHash($hash, $text, $return = self::RETURN_HEX)
+	public function verifyHash(string $hash, string $text)
 	{
-		return hash_equals($hash, self::hash($text, $return));
+		return hash_equals($hash, $this->hash($text));
 	}
 
 	/**
 	 * @param $text
 	 * @param $salt
-	 * @param string $return
 	 *
 	 * @return string
 	 */
-	public static function hmac($text, $salt, $return = self::RETURN_HEX)
+	public function hmac(string $text, string $salt)
 	{
-		if (self::RETURN_HEX === $return) {
+		if (self::FORMAT_HEX === $this->format) {
 			return hash_hmac(self::HASH_TYPE, $text, $salt, false);
 		}
 
 		$raw = hash_hmac(self::HASH_TYPE, $text, $salt, true);
 
-		return self::fromBin($raw, $return);
+		return $this->fromBin($raw);
 	}
 
 	/**
 	 * @param $text
 	 * @param $salt
 	 * @param $hash
-	 * @param string $return
 	 *
-	 * @return bool|string
+	 * @return bool
 	 */
-	public static function verifyHMAC($hash, $text, $salt, $return = self::RETURN_HEX)
+	public function verifyHMAC(string $hash, string $text, string $salt)
 	{
-		return hash_equals($hash, self::hmac($text, $salt, $return));
+		return hash_equals($hash, $this->hmac($text, $salt));
 	}
 
-	public static function createKey($return = self::RETURN_HEX)
+	public function createKey()
 	{
-		return self::fromBin(
-			random_bytes(self::KEY_BYTE_SIZE),
-			$return
+		return $this->fromBin(
+			random_bytes(self::KEY_BYTE_SIZE)
 		);
 	}
 
@@ -150,14 +186,13 @@ class Crypto
 	 *
 	 * @param string $plaintext
 	 * @param string $key
-	 * @param string $return
-	 * @param bool $password
+	 * @param bool   $password
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
-	public static function encrypt($plaintext, string $key, $return = self::RETURN_HEX, $password = false)
+	public function encrypt(string $plaintext, string $key, $password = false)
 	{
 		if (mb_strlen($key, '8bit') !== self::KEY_BYTE_SIZE) {
 			throw new CryptoException('Bad key length.');
@@ -165,7 +200,7 @@ class Crypto
 
 		$salt = random_bytes(self::SALT_BYTE_SIZE);
 
-		list($authKey, $encryptKey) = self::deriveKeys($key, $salt, $password);
+		list($authKey, $encryptKey) = $this->deriveKeys($key, $salt, $password);
 
 		$iv = random_bytes(self::BLOCK_BYTE_SIZE);
 
@@ -184,10 +219,10 @@ class Crypto
 		}
 
 		$cipherText = self::CURRENT_VERSION . $salt . $iv . $cipherText;
-		$auth = self::hmac($cipherText, $authKey, self::RETURN_RAW);
+		$auth = hash_hmac(self::HASH_TYPE, $cipherText, $authKey, true);
 		$cipherText .= $auth;
 
-		return self::fromBin($cipherText, $return);
+		return $this->fromBin($cipherText);
 	}
 
 	/**
@@ -196,15 +231,14 @@ class Crypto
 	 *
 	 * @param string $plaintext
 	 * @param string $password
-	 * @param string $return
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
-	public static function encryptWithPassword($plaintext, $password, $return = self::RETURN_HEX)
+	public function encryptWithPassword(string $plaintext, $password)
 	{
-		return self::encrypt($plaintext, $password, $return, true);
+		return $this->encrypt($plaintext, $password, true);
 	}
 
 	/**
@@ -212,16 +246,15 @@ class Crypto
 	 *
 	 * @param string $cipherText
 	 * @param string $key
-	 * @param string $from
-	 * @param bool $password
+	 * @param bool   $password
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
-	public static function decrypt($cipherText, string $key, $from = self::RETURN_HEX, $password = false)
+	public function decrypt(string $cipherText, string $key, $password = false)
 	{
-		$cipherText = self::toBin($cipherText, $from);
+		$cipherText = $this->toBin($cipherText);
 		if ($cipherText === false) {
 			throw new CryptoException('Ciphertext has invalid base64 encoding.');
 		}
@@ -283,9 +316,9 @@ class Crypto
 		}
 		// Derive the separate encryption and authentication keys from the key
 		// or password, whichever it is.
-		list($authKey, $encryptKey) = self::deriveKeys($key, $salt, $password);
+		list($authKey, $encryptKey) = $this->deriveKeys($key, $salt, $password);
 
-		if (false === self::verifyHMAC($hmac, $header . $salt . $iv . $encrypted, $authKey, self::RETURN_RAW)) {
+		if (false === hash_equals($hmac, hash_hmac(self::HASH_TYPE, $header . $salt . $iv . $encrypted, $authKey, true))) {
 			throw new CryptoException('Integrity check failed.');
 		}
 
@@ -310,34 +343,33 @@ class Crypto
 	 *
 	 * @param string $cipherText
 	 * @param string $password
-	 * @param string $from
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
-	public static function decryptWithPassword($cipherText, $password, $from = self::RETURN_HEX)
+	public function decryptWithPassword(string $cipherText, string $password)
 	{
-		return self::decrypt($cipherText, $password, $from, true);
+		return $this->decrypt($cipherText, $password, true);
 	}
 
 	/**
 	 * Derives authentication and encryption keys from the secret, using a slow
 	 * key derivation function if the secret is a password.
 	 *
-	 * @param string $key
-	 * @param $salt
-	 * @param bool $password
+	 * @param string  $key
+	 * @param  string $salt
+	 * @param bool    $password
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return array
 	 */
-	private static function deriveKeys(string $key, $salt, $password = false)
+	private function deriveKeys(string $key, string $salt, bool $password = false)
 	{
 		if ($password) {
-			$preHash = self::hash($key, self::RETURN_RAW);
-			$key = self::pbkdf2(
+			$preHash = hash(self::HASH_TYPE, $key, true);
+			$key = $this->pbkdf2(
 				self::HASH_TYPE,
 				$preHash,
 				$salt,
@@ -347,7 +379,7 @@ class Crypto
 			);
 		}
 
-		$authKey = self::hkdf(
+		$authKey = $this->hkdf(
 			self::HASH_TYPE,
 			$key,
 			self::KEY_BYTE_SIZE,
@@ -355,7 +387,7 @@ class Crypto
 			$salt
 		);
 
-		$encryptKey = self::hkdf(
+		$encryptKey = $this->hkdf(
 			self::HASH_TYPE,
 			$key,
 			self::KEY_BYTE_SIZE,
@@ -368,26 +400,27 @@ class Crypto
 
 	/**
 	 * @param $raw
-	 * @param $return
+	 * @param $format
 	 *
 	 * @return string
 	 */
-	public static function fromBin($raw, $return)
+	public function fromBin(string $raw, string $format = null)
 	{
-		switch ($return) {
-			case self::RETURN_HEX:
+		$format = $format ?? $this->format;
+		switch ($format) {
+			case self::FORMAT_HEX:
 				return bin2hex($raw);
 
-			case self::RETURN_BASE64:
+			case self::FORMAT_BASE64:
 				return base64_encode($raw);
 
-			case self::RETURN_STR:
+			case self::FORMAT_STR:
 				$field = strtoupper(bin2hex($raw));
 				$field = chunk_split($field, 2, '\x');
 
 				return '\x' . substr($field, 0, -2);
 
-			case self::RETURN_RAW:
+			case self::FORMAT_RAW:
 			default:
 				return $raw;
 		}
@@ -395,23 +428,24 @@ class Crypto
 
 	/**
 	 * @param $raw
-	 * @param $from
+	 * @param $format
 	 *
 	 * @return string
 	 */
-	public static function toBin($raw, $from)
+	public function toBin(string $raw, string $format = null)
 	{
-		switch ($from) {
-			case self::RETURN_HEX:
+		$format = $format ?? $this->format;
+		switch ($format) {
+			case self::FORMAT_HEX:
 				return hex2bin($raw);
 
-			case self::RETURN_BASE64:
+			case self::FORMAT_BASE64:
 				return base64_decode($raw);
 
-			case self::RETURN_STR:
+			case self::FORMAT_STR:
 				return hex2bin(str_replace('\x', '', $raw));
 
-			case self::RETURN_RAW:
+			case self::FORMAT_RAW:
 			default:
 				return $raw;
 		}
@@ -421,17 +455,17 @@ class Crypto
 	 * Computes the HKDF key derivation function specified in
 	 * http://tools.ietf.org/html/rfc5869.
 	 *
-	 * @param string $hash Hash Function
-	 * @param string $ikm Initial Keying Material
-	 * @param int $length How many bytes?
-	 * @param string $info What sort of key are we deriving?
+	 * @param string $hash   Hash Function
+	 * @param string $ikm    Initial Keying Material
+	 * @param int    $length How many bytes?
+	 * @param string $info   What sort of key are we deriving?
 	 * @param string $salt
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string
 	 */
-	public static function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
+	public function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
 	{
 		$hashLength = self::$hashList[$hash] ?? mb_strlen(hash_hmac($hash, '', '', true), '8bit');
 		if (empty($length) || !is_int($length) || $length < 0 || $length > 255 * $hashLength) {
@@ -467,17 +501,17 @@ class Crypto
 	 * Hornby, with improvements from http://www.variations-of-shadow.com/.
 	 *
 	 * @param string $algorithm The hash algorithm to use. Recommended: SHA256
-	 * @param string $password The password.
-	 * @param string $salt A salt that is unique to the password.
-	 * @param int $count Iteration count. Higher is better, but slower. Recommended: At least 1000.
-	 * @param int $length The length of the derived key in bytes.
-	 * @param bool $raw If true, the key is returned in raw binary format. Hex encoded otherwise.
+	 * @param string $password  The password.
+	 * @param string $salt      A salt that is unique to the password.
+	 * @param int    $count     Iteration count. Higher is better, but slower. Recommended: At least 1000.
+	 * @param int    $length    The length of the derived key in bytes.
+	 * @param bool   $raw       If true, the key is returned in raw binary format. Hex encoded otherwise.
 	 *
 	 * @throws CryptoException
 	 *
 	 * @return string A $key_length-byte key derived from the password and salt.
 	 */
-	public static function pbkdf2(string $algorithm, string $password, string $salt, int $count, int $length, bool $raw = false)
+	public function pbkdf2(string $algorithm, string $password, string $salt, int $count, int $length, bool $raw = false)
 	{
 		$algorithm = strtolower($algorithm);
 		// Whitelist, or we could end up with people using CRC32.
@@ -501,35 +535,37 @@ class Crypto
 	 * @param $data
 	 * @param $publicKey
 	 *
-	 * @return bool|string
+	 * @return string
+	 * @throws CryptoException
 	 */
-	public static function encryptRsa($data, $publicKey)
+	public function encryptRsa(string $data, string $publicKey)
 	{
 		$key = openssl_pkey_get_public($publicKey);
 
 		$encrypted = '';
 		if (!openssl_public_encrypt($data, $encrypted, $key)) {
-			return false;
+			throw new CryptoException('RSA encrypt error.');
 		}
 		openssl_pkey_free($key);
 
-		return base64_encode($encrypted);
+		return $this->fromBin($encrypted);
 	}
 
 	/**
 	 * @param $data
 	 * @param $privateKey
 	 *
-	 * @return bool|string
+	 * @return string
+	 * @throws CryptoException
 	 */
-	public static function decryptRsa($data, $privateKey)
+	public function decryptRsa(string $data, string $privateKey)
 	{
-		$data = base64_decode($data);
+		$data = $this->toBin($data);
 		$key = openssl_pkey_get_private($privateKey);
 
 		$decrypted = '';
 		if (!openssl_private_decrypt($data, $decrypted, $key)) {
-			return false;
+			throw new CryptoException('RSA decrypt error.');
 		}
 		openssl_pkey_free($key);
 
@@ -540,15 +576,16 @@ class Crypto
 	 * @param $data
 	 * @param $privateKey
 	 *
-	 * @return bool|string
+	 * @return string
+	 * @throws CryptoException
 	 */
-	public static function signatureRsa($data, $privateKey)
+	public function signatureRsa(string $data, string $privateKey)
 	{
 		$key = openssl_pkey_get_private($privateKey);
 		if (!openssl_sign($data, $signature, $key, OPENSSL_ALGO_SHA256)) {
-			return false;
+			throw new CryptoException('RSA sign error.');
 		}
 
-		return base64_encode($signature);
+		return $this->fromBin($signature);
 	}
 }

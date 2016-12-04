@@ -39,8 +39,6 @@ class Bootstrap
 			exit;
 		}
 
-		define('HAIL_SERIALIZE', Config::get('env.serialize'));
-
 		Alias::register();
 
 		date_default_timezone_set(

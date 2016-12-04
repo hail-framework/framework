@@ -133,7 +133,7 @@ class Optimize
 	protected static function key($prefix, $key)
 	{
 		$key = "{$prefix}|{$key}";
-		if (self::$type === 'yac' && strlen($key) > YAC_MAX_KEY_LEN) {
+		if (self::$type === 'yac' && strlen($key) > \YAC_MAX_KEY_LEN) {
 			$key = sha1($key);
 		}
 

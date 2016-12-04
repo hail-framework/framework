@@ -39,7 +39,9 @@ class DI extends Facade
 
 			/** @var Facade $class */
 			$class = '\\Hail\\Facades\\' . pathinfo($file, PATHINFO_FILENAME);
-			$set[$class::getName()] = $class;
+			if ($class::inDI()) {
+				$set[$class::getName()] = $class;
+			}
 		}
 
 		return $set;

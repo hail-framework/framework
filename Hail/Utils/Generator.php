@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of the Nette Framework (http://nette.org)
  * Copyright (c) 2004 David Grudl (http://davidgrudl.com)
@@ -11,9 +10,11 @@ use Hail\Exception\InvalidArgumentException;
 
 /**
  * Secure random string generator.
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Generator
 {
+	use Singleton;
 
 	/**
 	 * Generate random string.
@@ -24,7 +25,7 @@ class Generator
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public static function random(int $length = 10, string $charList = '0-9a-zA-Z') :string
+	public function random(int $length = 10, string $charList = '0-9a-zA-Z') :string
 	{
 		$charList = count_chars(preg_replace_callback('#.-.#', function (array $m) {
 			return implode('', range($m[0][0], $m[0][2]));
@@ -45,15 +46,15 @@ class Generator
 		return $res;
 	}
 
-	public static function unique()
+	public function unique()
 	{
 		return uniqid(
-			self::random(),
+			$this->random(),
 			true
 		);
 	}
 
-	public static function guid()
+	public function guid()
 	{
 		if (function_exists('com_create_guid')) {
 			return trim(com_create_guid(), '{}');
@@ -65,9 +66,9 @@ class Generator
 		return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 	}
 
-	public static function uuid3($namespace, $name)
+	public function uuid3($namespace, $name)
 	{
-		if (!self::isUUID($namespace)) {
+		if (!$this->isUUID($namespace)) {
 			return false;
 		}
 
@@ -107,7 +108,7 @@ class Generator
 		);
 	}
 
-	public static function uuid4()
+	public function uuid4()
 	{
 		return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
 
@@ -131,9 +132,9 @@ class Generator
 		);
 	}
 
-	public static function uuid5($namespace, $name)
+	public function uuid5($namespace, $name)
 	{
-		if (!self::isUUID($namespace)) {
+		if (!$this->isUUID($namespace)) {
 			return false;
 		}
 
@@ -173,7 +174,7 @@ class Generator
 		);
 	}
 
-	public static function isUUID($uuid)
+	public function isUUID($uuid)
 	{
 		return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
 	}

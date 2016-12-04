@@ -20,7 +20,7 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
-use Hail\Utils\Serialize;
+use Hail\Facades\Serialize;
 
 /**
  * Redis cache provider.

@@ -1,6 +1,8 @@
 <?php
 namespace Hail\Utils;
 
+use Hail\Exception\RegexpException;
+
 
 /**
  * String tools library.
@@ -117,22 +119,6 @@ class Strings
 		return false;
 	}
 
-
-	/**
-	 * Returns a part of UTF-8 string.
-	 *
-	 * @param  string
-	 * @param  int $start in characters (code points)
-	 * @param  int $length in characters (code points)
-	 *
-	 * @return string
-	 */
-	public static function substring($s, $start, $length = null)
-	{
-		return mb_substr($s, $start, $length, 'UTF-8');
-	}
-
-
 	/**
 	 * Removes special controls characters and normalizes line endings and spaces.
 	 *
@@ -248,8 +234,8 @@ class Strings
 	 */
 	public static function truncate($s, $maxLen, $append = "\xE2\x80\xA6")
 	{
-		if (self::length($s) > $maxLen) {
-			$maxLen = $maxLen - self::length($append);
+		if (mb_strlen($s) > $maxLen) {
+			$maxLen -= mb_strlen($append);
 			if ($maxLen < 1) {
 				return $append;
 
@@ -257,7 +243,7 @@ class Strings
 				return $matches[0] . $append;
 
 			} else {
-				return self::substring($s, 0, $maxLen) . $append;
+				return mb_substr($s, 0, $maxLen) . $append;
 			}
 		}
 
@@ -306,7 +292,7 @@ class Strings
 	 */
 	public static function firstLower($s)
 	{
-		return self::lower(self::substring($s, 0, 1)) . self::substring($s, 1);
+		return self::lower(mb_substr($s, 0, 1)) . mb_substr($s, 1);
 	}
 
 
@@ -332,7 +318,7 @@ class Strings
 	 */
 	public static function firstUpper($s)
 	{
-		return self::upper(self::substring($s, 0, 1)) . self::substring($s, 1);
+		return self::upper(mb_substr($s, 0, 1)) . mb_substr($s, 1);
 	}
 
 
@@ -361,11 +347,11 @@ class Strings
 	public static function compare($left, $right, $len = null)
 	{
 		if ($len < 0) {
-			$left = self::substring($left, $len, -$len);
-			$right = self::substring($right, $len, -$len);
+			$left = mb_substr($left, $len, -$len);
+			$right = mb_substr($right, $len, -$len);
 		} elseif ($len !== null) {
-			$left = self::substring($left, 0, $len);
-			$right = self::substring($right, 0, $len);
+			$left = mb_substr($left, 0, $len);
+			$right = mb_substr($right, 0, $len);
 		}
 
 		return self::lower($left) === self::lower($right);
@@ -400,21 +386,6 @@ class Strings
 		return $first;
 	}
 
-
-	/**
-	 * Returns number of characters (not bytes) in UTF-8 string.
-	 * That is the number of Unicode code points which may differ from the number of graphemes.
-	 *
-	 * @param  string
-	 *
-	 * @return int
-	 */
-	public static function length($s)
-	{
-		return mb_strlen($s, 'UTF-8');
-	}
-
-
 	/**
 	 * Strips whitespace.
 	 *
@@ -442,10 +413,10 @@ class Strings
 	 */
 	public static function padLeft($s, $length, $pad = ' ')
 	{
-		$length = max(0, $length - self::length($s));
-		$padLen = self::length($pad);
+		$length = max(0, $length - mb_strlen($s));
+		$padLen = mb_strlen($pad);
 
-		return str_repeat($pad, (int) ($length / $padLen)) . self::substring($pad, 0, $length % $padLen) . $s;
+		return str_repeat($pad, (int) ($length / $padLen)) . mb_substr($pad, 0, $length % $padLen) . $s;
 	}
 
 
@@ -460,10 +431,10 @@ class Strings
 	 */
 	public static function padRight($s, $length, $pad = ' ')
 	{
-		$length = max(0, $length - self::length($s));
-		$padLen = self::length($pad);
+		$length = max(0, $length - mb_strlen($s));
+		$padLen = mb_strlen($pad);
 
-		return $s . str_repeat($pad, (int) ($length / $padLen)) . self::substring($pad, 0, $length % $padLen);
+		return $s . str_repeat($pad, (int) ($length / $padLen)) . mb_substr($pad, 0, $length % $padLen);
 	}
 
 
@@ -539,7 +510,7 @@ class Strings
 
 		return $pos === false
 			? false
-			: self::length(substr($haystack, 0, $pos));
+			: mb_strlen(substr($haystack, 0, $pos));
 	}
 
 
@@ -583,7 +554,7 @@ class Strings
 	 * @param  int
 	 *
 	 * @return array
-	 * @throws Exception\Regexp
+	 * @throws RegexpException
 	 */
 	public static function split($subject, $pattern, $flags = 0)
 	{
@@ -600,7 +571,7 @@ class Strings
 	 * @param  int $offset offset in bytes
 	 *
 	 * @return mixed
-	 * @throws Exception\Regexp
+	 * @throws RegexpException
 	 */
 	public static function match($subject, $pattern, $flags = 0, $offset = 0)
 	{
@@ -623,7 +594,7 @@ class Strings
 	 * @param  int $offset offset in bytes
 	 *
 	 * @return array
-	 * @throws Exception\Regexp
+	 * @throws RegexpException
 	 */
 	public static function matchAll($subject, $pattern, $flags = 0, $offset = 0)
 	{
@@ -649,13 +620,13 @@ class Strings
 	 * @param  int $limit
 	 *
 	 * @return string
-	 * @throws Exception\Regexp
+	 * @throws RegexpException
 	 */
 	public static function replace($subject, $pattern, $replacement = null, $limit = -1)
 	{
 		if (is_object($replacement) || is_array($replacement)) {
 			if (!is_callable($replacement, false, $textual)) {
-				throw new Exception\Regexp("Callback '$textual' is not callable.");
+				throw new RegexpException("Callback '$textual' is not callable.");
 			}
 
 			return self::pcre('preg_replace_callback', [$pattern, $replacement, $subject, $limit]);
@@ -670,7 +641,7 @@ class Strings
 
 
 	/**
-	 * @throws Exception\Regexp
+	 * @throws RegexpException
 	 * @internal
 	 */
 	public static function pcre($func, $args)
@@ -688,7 +659,7 @@ class Strings
 		if (($code = preg_last_error()) // run-time error, but preg_last_error & return code are liars
 			&& ($res === null || !in_array($func, ['preg_filter', 'preg_replace_callback', 'preg_replace'], true))
 		) {
-			throw new Exception\Regexp(($messages[$code] ?? 'Unknown error')
+			throw new RegexpException(($messages[$code] ?? 'Unknown error')
 				. ' (pattern: ' . implode(' or ', (array) $args[0]) . ')', $code);
 		}
 

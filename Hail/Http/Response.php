@@ -7,7 +7,6 @@
 
 namespace Hail\Http;
 
-use Hail\Utils\DateTime;
 use Hail\Utils\Generator;
 
 /**
@@ -228,7 +227,7 @@ class Response
 			return $this;
 		}
 
-		$time = DateTime::from($time);
+		$time = Helpers::createDateTime($time);
 		$this->setHeader('Cache-Control', 'max-age=' . ($time->format('U') - time()));
 		$this->setHeader('Expires', Helpers::formatDate($time));
 		return $this;
@@ -324,7 +323,7 @@ class Response
 		setcookie(
 			$name,
 			$value,
-			$time ? (int) DateTime::from($time)->format('U') : 0,
+			$time ? (int) Helpers::createDateTime($time)->format('U') : 0,
 			$path === null ? $this->cookiePath : (string) $path,
 			$domain === null ? $this->cookieDomain : (string) $domain,
 			$secure === null ? $this->cookieSecure : (bool) $secure,

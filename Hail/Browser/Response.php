@@ -2,8 +2,8 @@
 
 namespace Hail\Browser;
 
-use Hail\Utils\Exception\JsonException;
-use Hail\Utils\Json;
+use Hail\Exception\JsonException;
+use Hail\Facades\Json;
 
 class Response
 {

@@ -11,28 +11,31 @@ namespace Hail\Utils;
  * 尺寸:     igbinary < hprose < msgpack < json << swoole < serialize
  * 序列化速度:   swoole << msgpack < serialize < igbinary =< json < hprose
  * 反序列化速度: swoole << igbinary < hprose < serialize < msgpack << json
+ *
  */
-use Hail\Exception;
-
-defined('HAIL_SERIALIZE') || define('HAIL_SERIALIZE', 'serialize');
+use Hail\Exception\{
+	InvalidArgumentException,
+	InvalidStateException
+};
+use Hail\Facades\Config;
 
 /**
  * Class Serialize
  *
  * @package Hail\Utils
  * @author  Hao Feng <flyinghail@msn.com>
- *
- * @method static string encode($value, string $engine = HAIL_SERIALIZE)
- * @method static string decode($value, string $engine = HAIL_SERIALIZE)
- * @method static string encodeToString($value, string $engine = HAIL_SERIALIZE)
- * @method static string decodeFromBase64($value, string $engine = HAIL_SERIALIZE)
- * @method static string encodeArray(array $array, string $engine = HAIL_SERIALIZE)
- * @method static string decodeArray(array $array, string $engine = HAIL_SERIALIZE)
- * @method static string encodeArrayToString(array $array, string $engine = HAIL_SERIALIZE)
- * @method static string decodeArrayFromBase64(array $array, string $engine = HAIL_SERIALIZE)
  */
 class Serialize
 {
+	use Singleton;
+
+	const EXT_SWOOL = 'swoole';
+	const EXT_MSGPACK = 'msgpack';
+	const EXT_IGBINARY = 'igbinary';
+	const EXT_HPROSE = 'hprose';
+	const EXT_JSON = 'json';
+	const EXT_SERIALIZE = 'serialize';
+
 	private static $set = [
 		'msgpack' => [
 			'ext' => 'msgpack',
@@ -70,116 +73,161 @@ class Serialize
 		],
 	];
 
-	private $engine;
+	private $extension;
+	private $type;
+	private $encoder;
+	private $decoder;
 
-	public function __construct($engine = HAIL_SERIALIZE)
+	protected function init()
 	{
-		if (!isset(self::$set[$engine])) {
-			throw new Exception\InvalidArgument("Serialize engine $engine not defined");
-		}
-
-		$set = self::$set[$engine];
-		if (isset($set['ext']) && !extension_loaded($set['ext'])) {
-			throw new Exception\InvalidArgument("Extension {$set['ext']} not loaded");
-		}
-
-		$this->engine = $engine;
-	}
-
-	public function __call($name, $arguments)
-	{
-		$name = '_' . $name;
-		if (isset($arguments[0]) && method_exists(__CLASS__, $name)) {
-			if (isset($arguments[1])) {
-				return self::$name($arguments[0], $arguments[1]);
-			}
-
-			return self::$name($arguments[0], $this->engine);
-		}
-
-		throw new \RuntimeException("Method $name not defined");
-	}
-
-	public static function __callStatic($name, $arguments)
-	{
-		$name = '_' . $name;
-		if (isset($arguments[0]) && method_exists(__CLASS__, $name)) {
-			if (isset($arguments[1])) {
-				return self::$name($arguments[0], $arguments[1]);
-			}
-
-			return self::$name($arguments[0]);
-		}
-
-		throw new \RuntimeException("Method $name not defined");
-	}
-
-	protected static function _encode($value, $engine = HAIL_SERIALIZE)
-	{
-		return (self::$set[$engine]['encoder'])($value);
-	}
-
-	protected static function _decode($value, $engine = HAIL_SERIALIZE)
-	{
-		$return = @(self::$set[$engine]['decoder'])($value);
-
-		return $return ?: null;
-	}
-
-	protected static function _encodeToString($value, $engine = HAIL_SERIALIZE)
-	{
-		if (self::$set[$engine]['type'] === 'text') {
-			return self::_encode($value);
-		}
-
-		return base64_encode(
-			self::_encode($value)
+		$this->ext(
+			Config::get('env.serialize')
 		);
 	}
 
-	protected static function _decodeFromBase64($value, $engine = HAIL_SERIALIZE)
+	/**
+	 * @param string $type
+	 *
+	 * @return $this
+	 * @throws InvalidArgumentException
+	 * @throws InvalidStateException
+	 */
+	public function ext(string $type)
 	{
-		if (self::$set[$engine]['type'] === 'text') {
-			return self::_decode($value);
+		if (!isset(self::$set[$type])) {
+			throw new InvalidArgumentException("Serialize type $type not defined");
 		}
 
-		return self::_decode(
+		$set = self::$set[$type];
+		if (isset($set['ext']) && !extension_loaded($set['ext'])) {
+			throw new InvalidStateException("Extension {$set['ext']} not loaded");
+		}
+
+		$this->extension = $type;
+		list(
+			'type' => $this->type,
+			'encoder' => $this->encoder,
+			'decoder' => $this->decoder,
+		) = $set;
+
+		return $this;
+	}
+
+	/**
+	 * @param string $type
+	 *
+	 * @return Serialize
+	 * @throws InvalidArgumentException
+	 * @throws InvalidStateException
+	 */
+	public function modify(string $type)
+	{
+		$clone = clone $this;
+
+		return $clone->ext($type);
+	}
+
+	/**
+	 * @param mixed $value
+	 *
+	 * @return string
+	 */
+	public function encode($value)
+	{
+		$fn = $this->encoder;
+
+		return $fn($value);
+	}
+
+	/**
+	 * @param string $value
+	 *
+	 * @return mixed
+	 */
+	protected function decode($value)
+	{
+		$fn = $this->decoder;
+
+		return $fn($value);
+	}
+
+	/**
+	 * @param string $value
+	 *
+	 * @return string
+	 */
+	protected function encodeToStr($value)
+	{
+		if ($this->type === 'text') {
+			return $this->encode($value);
+		}
+
+		return base64_encode(
+			$this->encode($value)
+		);
+	}
+
+	/**
+	 * @param string $value
+	 *
+	 * @return mixed
+	 */
+	protected function decodeFromStr($value)
+	{
+		if ($this->type === 'text') {
+			return $this->decode($value);
+		}
+
+		return $this->decode(
 			base64_decode($value)
 		);
 	}
 
-	protected static function _encodeArray(array $array, $engine = HAIL_SERIALIZE)
+	/**
+	 * @param array $array
+	 *
+	 * @return array
+	 */
+	protected function encodeArray(array $array)
 	{
-		return array_map(self::$set[$engine]['encoder'], $array);
+		return array_map($this->encoder, $array);
 	}
 
-	protected static function _decodeArray(array $array, $engine = HAIL_SERIALIZE)
+	/**
+	 * @param array $array
+	 *
+	 * @return array
+	 */
+	protected function decodeArray(array $array)
 	{
-		$return = [];
-		foreach ($array as $k => $v) {
-			$return[$k] = self::_decode($v, $engine);
-		}
-
-		return $return;
+		return array_map($this->decoder, $array);
 	}
 
-	protected static function _encodeArrayToString(array $array, $engine = HAIL_SERIALIZE)
+	/**
+	 * @param array $array
+	 *
+	 * @return array
+	 */
+	protected function encodeArrayToStr(array $array)
 	{
-		$return = [];
-		foreach ($array as $k => $v) {
-			$return[$k] = self::_encodeToString($v, $engine);
+		if ($this->type === 'text') {
+			return array_map($this->encoder, $array);
 		}
 
-		return $return;
+		return array_map([$this, 'encodeToStr'], $array);
 	}
 
-	protected static function _decodeArrayFromBase64(array $array, $engine = HAIL_SERIALIZE)
+	/**
+	 * @param array $array
+	 *
+	 * @return array
+	 */
+	protected function decodeArrayFromStr(array $array)
 	{
-		$return = [];
-		foreach ($array as $k => $v) {
-			$return[$k] = self::_decodeFromBase64($v, $engine);
+		if ($this->type === 'text') {
+			return array_map($this->decoder, $array);
 		}
 
-		return $return;
+		return array_map([$this, 'decodeFromStr'], $array);
 	}
 }

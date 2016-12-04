@@ -9,7 +9,7 @@ namespace Hail\Latte\Runtime;
 
 use Hail\Latte;
 use Hail\Latte\RegexpException;
-use Hail\Utils\Json;
+use Hail\Facades\Json;
 
 
 /**

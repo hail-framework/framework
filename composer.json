@@ -12,7 +12,7 @@
       "Psr\\": "Psr/"
     }
   },
-  "description": "PHP 7 Framework",
+  "description": "PHP 7.1 Framework",
   "homepage": "http://framework.flyinghail.com/",
   "keywords": [
     "hailframework",
@@ -30,7 +30,7 @@
   "require": {
     "ext-mbstring": "*",
 	"ext-openssl": "*",
-    "php": ">=7.0.0"
+    "php": ">=7.1.0"
   },
   "suggest": {
     "ext-iconv": "To handle non UTF-8 CSV files (if \"php-intl\" is not already installed or is too limited)",
@@ -41,5 +41,5 @@
     "ext-zip": "To handle XSLX/ODS files"
   },
   "type": "library",
-  "version": "0.0.1"
+  "version": "0.1.30"
 }

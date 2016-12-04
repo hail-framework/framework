@@ -39,7 +39,7 @@ Trait DITrait
 
 	public function __get($name)
 	{
-		return $this->{$name} = self::$_di->get($name);
+		return $this->$name = self::$_di->get($name);
 	}
 
 	final public static function initDI()

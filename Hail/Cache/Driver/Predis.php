@@ -4,7 +4,7 @@ namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
 use Hail\Utils\Arrays;
-use Hail\Utils\Serialize;
+use Hail\Facades\Serialize;
 
 /**
  * Predis cache provider.

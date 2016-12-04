@@ -1015,6 +1015,12 @@ class Validator
 		return false;
 	}
 
+	protected static function assertRuleCallback($callback)
+	{
+		if (!is_callable($callback)) {
+			throw new InvalidArgumentException('Second argument must be a valid callback. Given argument was not callable.');
+		}
+	}
 
 	/**
 	 * Adds a new validation rule callback that is tied to the current
@@ -1028,7 +1034,7 @@ class Validator
 	 */
 	public function addInstanceRule($name, $callback, $message = null)
 	{
-		Callback::check($callback);
+		static::assertRuleCallback($callback);
 
 		$this->_instanceRules[$name] = $callback;
 		$this->_instanceRuleMessage[$name] = $message;
@@ -1049,7 +1055,7 @@ class Validator
 			$message = static::ERROR_DEFAULT;
 		}
 
-		Callback::check($callback);
+		static::assertRuleCallback($callback);
 
 		static::$_rules[$name] = $callback;
 		static::$_ruleMessages[$name] = $message;

@@ -3,7 +3,7 @@ namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
 use Hail\DB\Medoo as DB;
-use Hail\Utils\Serialize;
+use Hail\Facades\Serialize;
 
 /**
  * Medoo DB cache provider.

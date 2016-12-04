@@ -8,7 +8,6 @@
 namespace Hail\Http;
 
 use Hail\Utils\Arrays;
-use Hail\Utils\DateTime;
 use Hail\Facades\Response as Res;
 use Hail\Facades\Request as Req;
 
@@ -30,7 +29,7 @@ class Helpers
 	 * Attempts to cache the sent entity by its last modification date.
 	 *
 	 * @param  string|int|\DateTime $lastModified last modified time
-	 * @param  string $etag strong entity tag validator
+	 * @param  string               $etag         strong entity tag validator
 	 *
 	 * @return bool
 	 */
@@ -85,12 +84,36 @@ class Helpers
 	 */
 	public static function formatDate($time)
 	{
-		$time = DateTime::from($time);
+		$time = self::createDateTime($time);
 		$time->setTimezone(new \DateTimeZone('GMT'));
 
 		return $time->format('D, d M Y H:i:s \G\M\T');
 	}
 
+	/**
+	 * DateTime object factory.
+	 *
+	 * @param  string|int|\DateTime
+	 *
+	 * @return \DateTime
+	 */
+	public static function createDateTime($time)
+	{
+		if ($time instanceof \DateTimeInterface) {
+			return new \DateTime($time->format('Y-m-d H:i:s'), $time->getTimezone());
+		} elseif (is_numeric($time)) {
+			// average year in seconds
+			if ($time <= 31557600) {
+				$time += time();
+			}
+
+			return new \DateTime('@' . $time,
+				new \DateTimeZone(date_default_timezone_get())
+			);
+		}
+
+		return new \DateTime($time);
+	}
 
 	/**
 	 * Is IP address in CIDR block?
@@ -138,8 +161,8 @@ class Helpers
 	}
 
 	/**
-	 * @param array $vars
-	 * @param string $type
+	 * @param array       $vars
+	 * @param string      $type
 	 * @param string|null $key
 	 *
 	 * @return array|FileUpload|mixed|null|string
@@ -163,10 +186,11 @@ class Helpers
 			return static::$cached[$type][$key];
 		} elseif (static::keyCheck($key)) {
 			return self::$cached[$type][$key] = null;
-		}  elseif ($type === '_FILES') {
+		} elseif ($type === '_FILES') {
 			if (($file = static::getFile($GLOBALS[$type][$key])) === null) {
 				return self::$cached[$type][$key] = null;
 			}
+
 			return $vars[$key] = $file;
 		} else {
 			$pos = strpos($key, '.');
@@ -264,9 +288,9 @@ class Helpers
 	/**
 	 * Converts to web safe characters [a-z0-9-] text.
 	 *
-	 * @param  string $s UTF-8 encoding
+	 * @param  string $s        UTF-8 encoding
 	 * @param  string $charlist allowed characters
-	 * @param  bool $lower
+	 * @param  bool   $lower
 	 *
 	 * @return string
 	 */
