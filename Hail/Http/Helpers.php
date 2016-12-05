@@ -7,9 +7,11 @@
 
 namespace Hail\Http;
 
-use Hail\Utils\Arrays;
-use Hail\Facades\Response as Res;
-use Hail\Facades\Request as Req;
+use Hail\Facades\{
+	Response as Res,
+	Request as Req,
+	Arrays
+};
 
 /**
  * Rendering helpers for HTTP.

@@ -2,7 +2,6 @@
 
 namespace Hail\DI;
 
-use ArrayAccess;
 use Hail\DI\Exception\{
 	ContainerException,
 	NotFoundException
@@ -16,7 +15,7 @@ use Psr\Container\ContainerInterface;
  *
  * @package Hail\DI
  */
-class Container implements ArrayAccess, ContainerInterface
+class Container implements \ArrayAccess, ContainerInterface
 {
 	use ArrayTrait;
 

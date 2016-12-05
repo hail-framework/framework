@@ -7,7 +7,8 @@
 
 namespace Hail\Http;
 
-use Hail\Utils\Arrays;
+use Hail\Facades\Arrays;
+use Hail\Utils\ArrayDot;
 use Hail\Utils\ArrayTrait;
 
 /**
@@ -20,19 +21,21 @@ class Input implements \ArrayAccess
 
 	protected $request;
 
-	/** @var array */
+	/** @var ArrayDot */
 	protected $items = [];
 
 	/** @var bool */
 	protected $all = false;
 
-	/** @var array */
+	/** @var ArrayDot */
 	protected $del = [];
 
 
 	public function __construct(Request $request)
 	{
 		$this->request = $request;
+		$this->items = Arrays::dot([]);
+		$this->del = Arrays::dot([]);
 	}
 
 	public function setAll(array $array)
@@ -43,36 +46,41 @@ class Input implements \ArrayAccess
 
 	/**
 	 * @param string $key
-	 * @param mixed $value
+	 * @param mixed  $value
 	 */
 	public function set($key, $value = null)
 	{
 		if (!$this->all) {
-			Arrays::delete($this->del, $key);
+			unset($this->del[$key]);
 		}
-		Arrays::set($this->items, $key, $value);
+		$this->items[$key] = $value;
 	}
 
 	public function delete($key)
 	{
 		if (!$this->all) {
-			Arrays::set($this->del, $key, true);
+			$this->del[$key] = true;
 		}
-		Arrays::delete($this->items, $key);
+		unset($this->items[$key]);
 	}
 
-	public function get($key = null)
+	/**
+	 * @param string|null $key
+	 *
+	 * @return array|FileUpload|mixed|null|string
+	 */
+	public function get(string $key = null)
 	{
 		if ($key === null) {
 			return $this->getAll();
 		} elseif ($this->all) {
-			return Arrays::get($this->items, $key);
+			return $this->items[$key];
 		}
 
-		if (Arrays::has($this->del, $key)) {
+		if (isset($this->del[$key])) {
 			return null;
-		} elseif (($return = Arrays::get($this->items, $key)) !== null) {
-			return $return;
+		} elseif ($this->items[$key] !== null) {
+			return $this->items[$key];
 		}
 
 		if ($this->request->isJson()) {
@@ -93,7 +101,7 @@ class Input implements \ArrayAccess
 		$return = $return ?? $this->request->getQuery($key);
 
 		if ($return !== null) {
-			Arrays::set($this->items, $key, $return);
+			$this->items[$key] = $return;
 		}
 
 		return $return;
@@ -105,7 +113,7 @@ class Input implements \ArrayAccess
 			return $this->items;
 		}
 
-		$return = $this->items;
+		$return = (array) $this->items;
 		if ($this->request->isJson()) {
 			$return += $this->request->getJson() ?? [];
 		} elseif (!$this->request->isMethod('GET')) {
@@ -128,10 +136,14 @@ class Input implements \ArrayAccess
 
 		$this->all = true;
 
-		return $this->items = $return;
+		return $this->items->init($return);
 	}
 
-	protected function clear(array &$array, array $del)
+	/**
+	 * @param array    $array
+	 * @param iterable $del
+	 */
+	protected function clear(array &$array, $del)
 	{
 		foreach ($del as $k => $v) {
 			if (is_array($v) && isset($array[$k])) {

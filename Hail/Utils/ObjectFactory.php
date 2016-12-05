@@ -27,11 +27,7 @@ class ObjectFactory implements \ArrayAccess
 
 	public function has($key)
 	{
-		if (!isset($this->$key)) {
-			return class_exists($this->namespace . ucfirst($key));
-		}
-
-		return true;
+		return isset($this->$key);
 	}
 
 	public function get($key)
@@ -39,12 +35,12 @@ class ObjectFactory implements \ArrayAccess
 		if (!isset($this->$key)) {
 			$class = $this->namespace . ucfirst($key);
 			if (method_exists($class, 'getInstance')) {
-				return $this->$key = $class::getInstance();
+				return $this->set($key, $class::getInstance());
 			} elseif (!class_exists($class)) {
 				throw new InvalidStateException("Class $class Not Defined");
 			}
 
-			return $this->$key = new $class();
+			return $this->set($key, new $class());
 		}
 
 		return $this->$key;
@@ -52,10 +48,6 @@ class ObjectFactory implements \ArrayAccess
 
 	public function set($key, $value)
 	{
-		if (isset($this->$key)) {
-			throw new InvalidStateException(sprintf('Cannot override frozen object "' . $key . '".'));
-		}
-
 		$class = $this->namespace . ucfirst($key);
 		if (!$value instanceof $class) {
 			throw new InvalidStateException("Object Not Instance of $class");

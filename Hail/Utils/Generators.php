@@ -15,7 +15,7 @@ use Hail\Exception\InvalidArgumentException;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Generator
+class Generators
 {
 	use Singleton;
 

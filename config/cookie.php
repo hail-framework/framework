@@ -1,4 +1,4 @@
 <?php
 return [
-	'prefix' => 'GP_',
+	'prefix' => 'HAIL_',
 ];

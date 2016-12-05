@@ -5,20 +5,34 @@ namespace Hail\Utils;
  * Class Arrays
  *
  * @package Hail\Utils
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  */
 class Arrays
 {
+	use Singleton;
+
+	/**
+	 * Convert array to ArrayDot
+	 *
+	 * @param array $init
+	 *
+	 * @return ArrayDot
+	 */
+	public function dot(array $init = []): ArrayDot
+	{
+		return new ArrayDot($init);
+	}
+
 	/**
 	 * Get an item from an array using "dot" notation.
 	 *
-	 * @param  array $array
-	 * @param  string $key
-	 * @param  mixed $default
+	 * @param array  $array
+	 * @param string $key
+	 * @param mixed  $default
 	 *
 	 * @return mixed
 	 */
-	public static function get(array $array, string $key, $default = null)
+	public function get(array $array, string $key = null, $default = null)
 	{
 		if ($key === null) {
 			return $array;
@@ -40,43 +54,6 @@ class Arrays
 	}
 
 	/**
-	 * Check if an item or items exist in an array using "dot" notation.
-	 *
-	 * @param  array $array
-	 * @param  string|array $keys
-	 *
-	 * @return bool
-	 */
-	public static function has(array $array, $keys)
-	{
-		if ($keys === null) {
-			return false;
-		}
-
-		$keys = (array) $keys;
-		if (!$array || $keys === []) {
-			return false;
-		}
-
-		foreach ($keys as $key) {
-			$subKeyArray = $array;
-			if (isset($array[$key])) {
-				continue;
-			}
-
-			foreach (explode('.', $key) as $segment) {
-				if (is_array($subKeyArray) && isset($subKeyArray[$segment])) {
-					$subKeyArray = $subKeyArray[$segment];
-				} else {
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * Determines if an array is associative.
 	 *
 	 * An array is "associative" if it doesn't have sequential numerical keys beginning with zero.
@@ -85,7 +62,7 @@ class Arrays
 	 *
 	 * @return bool
 	 */
-	public static function isAssoc(array $array)
+	public function isAssoc(array $array): bool
 	{
 		$keys = array_keys($array);
 
@@ -93,96 +70,11 @@ class Arrays
 	}
 
 	/**
-	 * Set an array item to a given value using "dot" notation.
-	 *
-	 * If no key is given to the method, the entire array will be replaced.
-	 *
-	 * @param  array $array
-	 * @param  string $key
-	 * @param  mixed $value
-	 *
-	 * @return mixed
-	 */
-	public static function set(array &$array, string $key, $value)
-	{
-		if ($key !== null) {
-			foreach (explode('.', $key) as $k) {
-				if (!isset($array[$k]) || !is_array($array[$k])) {
-					$array[$k] = [];
-				}
-				$array = &$array[$key];
-			}
-		}
-
-		return $array = $value;
-	}
-
-	/**
-	 * Flatten a multi-dimensional associative array with dots.
-	 *
-	 * @param  array $array
-	 * @param  string $prepend
+	 * @param array $array
 	 *
 	 * @return array
 	 */
-	public static function dot(array $array, string $prepend = '')
-	{
-		$results = [
-			0 => [],
-		];
-
-		foreach ($array as $key => $value) {
-			if (is_array($value) && !empty($value)) {
-				$results[] = static::dot($value, $prepend . $key . '.');
-			} else {
-				$results[0][$prepend . $key] = $value;
-			}
-		}
-
-		return call_user_func_array('array_merge', $results);
-	}
-
-	/**
-	 * Remove one or many array items from a given array using "dot" notation.
-	 *
-	 * @param  array $array
-	 * @param  array|string $keys
-	 *
-	 * @return void
-	 */
-	public static function delete(array &$array, $keys)
-	{
-		$keys = (array) $keys;
-		if ($keys === []) {
-			return;
-		}
-
-		$original = &$array;
-		foreach ($keys as $key) {
-			// if the exact key exists in the top-level, remove it
-			if (isset($array[$key])) {
-				unset($array[$key]);
-				continue;
-			}
-
-			// clean up before each pass
-			$array = &$original;
-
-			$parts = explode('.', $key);
-			$delKey = array_pop($parts);
-			foreach ($parts as $part) {
-				if (isset($array[$part]) && is_array($array[$part])) {
-					$array = &$array[$part];
-				} else {
-					continue 2;
-				}
-			}
-
-			unset($array[$delKey]);
-		}
-	}
-
-	public static function filter($array)
+	public function filter(array $array): array
 	{
 		return array_filter($array, [static::class, 'filterCallback']);
 	}

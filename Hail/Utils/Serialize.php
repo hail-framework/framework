@@ -104,11 +104,9 @@ class Serialize
 		}
 
 		$this->extension = $type;
-		list(
-			'type' => $this->type,
-			'encoder' => $this->encoder,
-			'decoder' => $this->decoder,
-		) = $set;
+		$this->type = $set['type'];
+		$this->encoder = $set['encoder'];
+		$this->decoder = $set['decoder'];
 
 		return $this;
 	}
@@ -144,7 +142,7 @@ class Serialize
 	 *
 	 * @return mixed
 	 */
-	protected function decode($value)
+	public function decode($value)
 	{
 		$fn = $this->decoder;
 
@@ -156,7 +154,7 @@ class Serialize
 	 *
 	 * @return string
 	 */
-	protected function encodeToStr($value)
+	public function encodeToStr($value)
 	{
 		if ($this->type === 'text') {
 			return $this->encode($value);
@@ -172,7 +170,7 @@ class Serialize
 	 *
 	 * @return mixed
 	 */
-	protected function decodeFromStr($value)
+	public function decodeFromStr($value)
 	{
 		if ($this->type === 'text') {
 			return $this->decode($value);
@@ -188,7 +186,7 @@ class Serialize
 	 *
 	 * @return array
 	 */
-	protected function encodeArray(array $array)
+	public function encodeArray(array $array)
 	{
 		return array_map($this->encoder, $array);
 	}
@@ -198,7 +196,7 @@ class Serialize
 	 *
 	 * @return array
 	 */
-	protected function decodeArray(array $array)
+	public function decodeArray(array $array)
 	{
 		return array_map($this->decoder, $array);
 	}
@@ -222,7 +220,7 @@ class Serialize
 	 *
 	 * @return array
 	 */
-	protected function decodeArrayFromStr(array $array)
+	public function decodeArrayFromStr(array $array)
 	{
 		if ($this->type === 'text') {
 			return array_map($this->decoder, $array);

@@ -29,20 +29,19 @@ class Alias extends Facade
 
 	private static function getConfig()
 	{
-		$di = DI::getInstance();
-
 		$alias = [
 			'Debugger' => '\\Hail\\Tracy\\Debugger',
 		];
 
-		foreach ($di->keys() as $v) {
-			$raw = $di->raw($v);
-			if ($di->isFacade($raw)) {
-				/** @var Facade $raw */
-				$alias[$raw::getClass()] = $raw;
+		foreach (scandir(__DIR__) as $file) {
+			if (in_array($file, ['.', '..', 'Facade.php'], true)) {
+				continue;
 			}
-		}
 
+			/** @var Facade $class */
+			$class = '\\Hail\\Facades\\' . pathinfo($file, PATHINFO_FILENAME);
+			$alias[$class::getClass()] = $class;
+		}
 
 		return $alias;
 	}

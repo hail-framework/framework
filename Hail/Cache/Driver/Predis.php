@@ -3,8 +3,10 @@
 namespace Hail\Cache\Driver;
 
 use Hail\Cache\Driver;
-use Hail\Utils\Arrays;
-use Hail\Facades\Serialize;
+use Hail\Facades\{
+	Arrays,
+	Serialize
+};
 
 /**
  * Predis cache provider.

@@ -26,9 +26,10 @@ use Hail\Facades\DI;
  * @property-read Cookie $cookie
  * @property-read Cache $cache
  * @property-read DB\Cache $cdb
- * @property-read Utils\ObjectFactory $lib
- * @property-read Utils\ObjectFactory $model
  * @property-read Browser $browser
+ * @property-read \LibraryFactory $lib
+ * @property-read \ModelFactory $model
+ * @property-read \UtilsFactory $utils
  */
 Trait DITrait
 {

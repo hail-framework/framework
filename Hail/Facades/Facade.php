@@ -1,9 +1,4 @@
 <?php
-/**
- * @from https://github.com/laravel/framework/blob/5.1/src/Illuminate/Support/Facades/Facade.php
- * Copyright (c) <Taylor Otwell>
- */
-
 namespace Hail\Facades;
 
 use Hail\Exception\InvalidStateException;
@@ -23,16 +18,17 @@ abstract class Facade
 	protected static $name = '';
 
 	/**
+	 * @var bool
+	 */
+	protected static $inDI = true;
+
+	/**
 	 * The resolved object instances.
 	 *
 	 * @var array
 	 */
-	protected static $resolvedInstance;
+	protected static $instances;
 
-	/**
-	 * @var bool
-	 */
-	protected static $inDI = true;
 
 	/**
 	 * Get the root object behind the facade.
@@ -42,11 +38,8 @@ abstract class Facade
 	public static function getInstance()
 	{
 		$name = static::class;
-		if (!isset(static::$resolvedInstance[$name])) {
-			return static::$resolvedInstance[$name] = static::instance();
-		}
 
-		return static::$resolvedInstance[$name];
+		return static::$instances[$name] ?? (static::$instances[$name] = static::instance());
 	}
 
 	/**
@@ -56,10 +49,11 @@ abstract class Facade
 	 * @param  array  $args
 	 *
 	 * @return mixed
+	 * @throws \Hail\Exception\InvalidStateException if instance() method not defined in sub class
 	 */
 	public static function __callStatic($method, $args)
 	{
-		$instance = static::$resolvedInstance[static::class] ?? static::getInstance();
+		$instance = static::$instances[static::class] ?? static::getInstance();
 		switch (count($args)) {
 			case 0:
 				return $instance->$method();
@@ -105,6 +99,6 @@ abstract class Facade
 
 	public static function inDI()
 	{
-		return self::$inDI;
+		return static::$inDI;
 	}
 }

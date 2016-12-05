@@ -7,16 +7,16 @@
  * ]
  */
 return [
-	'Panel' => [
-		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}/{do}',
-		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}',
-		'/{controller:[a-zA-Z0-9]+}',
-		'/',
-	],
 	'Api' => [
 		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}/{do}',
 		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}',
 		'/{version:v[0-9]+}/{controller:[a-zA-Z0-9]+}',
 		'/{version:v[0-9]+}',
+	],
+	'Panel' => [
+		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}/{do}',
+		'/{controller:[a-zA-Z0-9]+}/{action:[a-zA-Z0-9]+}',
+		'/{controller:[a-zA-Z0-9]+}',
+		'/',
 	],
 ];

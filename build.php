@@ -24,3 +24,52 @@ foreach ($alias as $k => $v) {
 	file_put_contents(__DIR__ . '/helper/' . $k . '.php', sprintf($template, $k, $v));
 }
 echo 'Alias Class Helper Generated', "\n";
+
+
+foreach (
+	[
+		['App\\Library', SYSTEM_PATH, function ($class) {
+			$ref = new ReflectionClass($class);
+			return $ref->isInstantiable();
+		}],
+		['App\\Model', SYSTEM_PATH, function ($class) {
+			$ref = new ReflectionClass($class);
+			return $ref->isInstantiable();
+		}],
+		['Hail\\Utils',  __DIR__ . '/', function ($class) {
+			$ref = new ReflectionClass($class);
+			return in_array('Hail\Utils\Singleton', $ref->getTraitNames(), true);
+		}]
+	] as $v
+) {
+	list($namespace, $root, $check) = $v;
+
+	$comment = '/**' . "\n";
+	$dir = $root . str_replace('\\', '/', $namespace);
+	foreach (scandir($dir) as $file) {
+		if (in_array($file, ['.', '..'], true) || strrchr($file, '.') !== '.php') {
+			continue;
+		}
+
+		$name = substr($file, 0, -4);
+		$classFull = '\\' . $namespace . '\\' . $name;
+
+		try {
+
+			if ($check($classFull)) {
+				$comment .= ' * @property-read ' . $classFull . ' ' . lcfirst($name) . "\n";
+			}
+		} catch (Exception $e) {
+		}
+	}
+	$comment .= ' */';
+	$template = <<<EOD
+<?php
+%s
+class %s {}
+EOD;
+
+	$class = substr(strrchr($namespace, '\\'), 1) . 'Factory';
+	file_put_contents(__DIR__ . '/helper/' . $class . '.php', sprintf($template, $comment, $class));
+}
+echo 'Object Factory Helper Generated', "\n";

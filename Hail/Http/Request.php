@@ -9,9 +9,9 @@ namespace Hail\Http;
 
 use Hail\Facades\{
 	Strings,
+	Arrays,
 	Json
 };
-use Hail\Utils\Arrays;
 
 
 /**

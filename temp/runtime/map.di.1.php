@@ -20,4 +20,5 @@
   'session' => '\\Hail\\Facades\\Session',
   'template' => '\\Hail\\Facades\\Template',
   'trace' => '\\Hail\\Facades\\Trace',
+  'utils' => '\\Hail\\Facades\\Utilities',
 );

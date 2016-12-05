@@ -1,9 +1,11 @@
 <?php
 namespace Hail;
 
-use Hail\Utils\Arrays;
-use Hail\Utils\ArrayTrait;
-use Hail\Utils\OptimizeTrait;
+use Hail\Facades\Arrays;
+use Hail\Utils\{
+	ArrayTrait,
+	OptimizeTrait
+};
 
 /**
  * Class Php
@@ -22,9 +24,14 @@ class Config implements \ArrayAccess
 	 */
 	protected $items = [];
 
+	public function __construct()
+	{
+		$this->items = Arrays::dot([]);
+	}
+
 	/**
 	 * @param string $key
-	 * @param mixed $value
+	 * @param mixed  $value
 	 */
 	public function set($key, $value)
 	{
@@ -33,7 +40,7 @@ class Config implements \ArrayAccess
 			return;
 		}
 
-		Arrays::set($this->items, $key, $value);
+		$this->items[$key] = $value;
 	}
 
 	/**
@@ -49,19 +56,18 @@ class Config implements \ArrayAccess
 			return $this->items[$key];
 		}
 
-		$pos = strpos($key, '.');
-		if ($pos === false) {
-			return $this->load($key);
+		$space = explode('.', $key)[0];
+		if (isset($this->items[$space])) {
+			return null;
 		}
 
-		$array = $this->load(substr($key, 0, $pos));
-
-		return Arrays::get($array, substr($key, $pos + 1));
+		$this->items[$space] = $this->load($space);
+		return $this->items[$key] ?? null;
 	}
 
 	public function delete($key)
 	{
-		Arrays::delete($this->items, $key);
+		unset($this->items[$key]);
 	}
 
 	/**
@@ -73,10 +79,6 @@ class Config implements \ArrayAccess
 	 */
 	protected function load($space)
 	{
-		if (isset($this->items[$space])) {
-			return $this->items[$space];
-		}
-
 		$file = $this->file($space);
 
 		$config = $this->optimizeGet($space, [
@@ -85,7 +87,7 @@ class Config implements \ArrayAccess
 		]);
 
 		if ($config !== false) {
-			return $this->items[$space] = $config;
+			return $config;
 		}
 
 		return $this->readFile($space);
@@ -127,7 +129,7 @@ class Config implements \ArrayAccess
 			HAIL_PATH . $file,
 		]);
 
-		return $this->items[$space] = $array;
+		return $array;
 	}
 
 	protected function file($space)

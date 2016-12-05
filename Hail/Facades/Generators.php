@@ -2,7 +2,7 @@
 namespace Hail\Facades;
 
 /**
- * Class Generator
+ * Class Generators
  *
  * @package Hail\Facades
  *
@@ -14,12 +14,12 @@ namespace Hail\Facades;
  * @method static string uuid5(string $namespace, string $name)
  * @method static bool isUUID(string $uuid)
  */
-class Generator extends Facade
+class Generators extends Facade
 {
 	protected static $inDI = false;
 
 	protected static function instance()
 	{
-		return \Hail\Utils\Generator::getInstance();
+		return \Hail\Utils\Generators::getInstance();
 	}
 }

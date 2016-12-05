@@ -12,7 +12,7 @@ return [
 	'port' => 3306,
 
 	// [optional] Table prefix
-	'prefix' => 'gp_',
+	'prefix' => 'hail_',
 
 	// driver_option for connection, read more from http://www.php.net/manual/en/pdo.setattribute.php
 	'option' => [
