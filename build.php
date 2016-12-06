@@ -37,8 +37,7 @@ foreach (
 			return $ref->isInstantiable();
 		}],
 		['Hail\\Utils',  __DIR__ . '/', function ($class) {
-			$ref = new ReflectionClass($class);
-			return in_array('Hail\Utils\Singleton', $ref->getTraitNames(), true);
+			return isset(class_uses($class)['Hail\Utils\Singleton']);
 		}]
 	] as $v
 ) {

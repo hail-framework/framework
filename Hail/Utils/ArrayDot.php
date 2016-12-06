@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Facades\Arrays as Arr;
-
 /**
  * Class ArrayDot
  *

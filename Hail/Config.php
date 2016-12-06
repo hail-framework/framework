@@ -3,6 +3,7 @@ namespace Hail;
 
 use Hail\Facades\Arrays;
 use Hail\Utils\{
+	ArrayDot,
 	ArrayTrait,
 	OptimizeTrait
 };
@@ -20,13 +21,13 @@ class Config implements \ArrayAccess
 	/**
 	 * All of the configuration items.
 	 *
-	 * @var array
+	 * @var ArrayDot
 	 */
 	protected $items = [];
 
 	public function __construct()
 	{
-		$this->items = Arrays::dot([]);
+		$this->items = Arrays::dot();
 	}
 
 	/**

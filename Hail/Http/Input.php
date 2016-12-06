@@ -34,8 +34,8 @@ class Input implements \ArrayAccess
 	public function __construct(Request $request)
 	{
 		$this->request = $request;
-		$this->items = Arrays::dot([]);
-		$this->del = Arrays::dot([]);
+		$this->items = Arrays::dot();
+		$this->del = Arrays::dot();
 	}
 
 	public function setAll(array $array)
@@ -131,7 +131,10 @@ class Input implements \ArrayAccess
 
 		$return += $this->request->getQuery();
 		if ($this->del !== []) {
-			$this->clear($return, $this->del);
+			$this->clear(
+				$return,
+				$this->del->get()
+			);
 		}
 
 		$this->all = true;
@@ -140,10 +143,10 @@ class Input implements \ArrayAccess
 	}
 
 	/**
-	 * @param array    $array
-	 * @param iterable $del
+	 * @param array $array
+	 * @param array $del
 	 */
-	protected function clear(array &$array, $del)
+	protected function clear(array &$array, array $del)
 	{
 		foreach ($del as $k => $v) {
 			if (is_array($v) && isset($array[$k])) {
