@@ -16,8 +16,6 @@ namespace Hail\Facades;
  */
 class Generators extends Facade
 {
-	protected static $inDI = false;
-
 	protected static function instance()
 	{
 		return \Hail\Utils\Generators::getInstance();

@@ -63,6 +63,7 @@ class Config implements \ArrayAccess
 		}
 
 		$this->items[$space] = $this->load($space);
+
 		return $this->items[$key] ?? null;
 	}
 
@@ -73,6 +74,8 @@ class Config implements \ArrayAccess
 
 	/**
 	 * Read config array from cache or file
+	 * 优先 {SYSTEM_PATH}/config/{$space}.php，其次 {HAIL_PATH}/config/{$space}.php
+	 * $space 为 __ 开头，只读取 {HAIL_PATH}/config/{$space}.php
 	 *
 	 * @param string $space
 	 *
@@ -82,55 +85,32 @@ class Config implements \ArrayAccess
 	{
 		$file = $this->file($space);
 
-		$config = $this->optimizeGet($space, [
-			SYSTEM_PATH . $file,
-			HAIL_PATH . $file,
-		]);
+		$baseFile = HAIL_PATH . $file;
+		$sysFile = SYSTEM_PATH . $file;
 
-		if ($config !== false) {
+		$check = [$sysFile, $baseFile];
+
+		if (($config = $this->optimizeGet($space, $check)) !== false) {
 			return $config;
 		}
 
-		return $this->readFile($space);
-	}
-
-	/**
-	 * 优先 {SYSTEM_PATH}/config/{$space}.php，其次 {HAIL_PATH}/config/{$space}.php
-	 * $space 为 __ 开头，只读取 {HAIL_PATH}/config/{$space}.php
-	 *
-	 * @param string $space
-	 *
-	 * @return null|string
-	 */
-	protected function readFile($space)
-	{
-		$file = $this->file($space);
-		$base = null;
-		if (file_exists(HAIL_PATH . $file)) {
-			$base = require HAIL_PATH . $file;
-		}
+		$config = [];
 
 		if (
 			SYSTEM_PATH !== HAIL_PATH &&
 			strpos($space, '__') !== 0 &&
-			file_exists(SYSTEM_PATH . $file)
+			file_exists($sysFile)
 		) {
-			$array = require SYSTEM_PATH . $file;
-			if ($base !== null) {
-				$array = array_merge($base, $array);
-			}
-		} elseif ($base === null) {
-			return null;
-		} else {
-			$array = $base;
+			$config = require $sysFile;
 		}
 
-		$this->optimizeSet($space, $array, [
-			SYSTEM_PATH . $file,
-			HAIL_PATH . $file,
-		]);
+		if (file_exists($baseFile)) {
+			$config += require $baseFile;
+		}
 
-		return $array;
+		$this->optimizeSet($space, $config, $check);
+
+		return $config;
 	}
 
 	protected function file($space)

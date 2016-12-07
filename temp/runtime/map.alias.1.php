@@ -28,5 +28,4 @@
   'Strings' => '\\Hail\\Facades\\Strings',
   'Template' => '\\Hail\\Facades\\Template',
   'Trace' => '\\Hail\\Facades\\Trace',
-  'Utilities' => '\\Hail\\Facades\\Utilities',
 );

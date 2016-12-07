@@ -27,9 +27,14 @@ use Hail\Facades\DI;
  * @property-read Cache $cache
  * @property-read DB\Cache $cdb
  * @property-read Browser $browser
+ * @property-read Utils\Arrays $arrays
+ * @property-read Utils\Crypto $crypto
+ * @property-read Utils\Generators $generators
+ * @property-read Utils\Json $json
+ * @property-read Utils\Serialize $serialize
+ * @property-read Utils\Strings $strings
  * @property-read \LibraryFactory $lib
  * @property-read \ModelFactory $model
- * @property-read \UtilsFactory $utils
  */
 Trait DITrait
 {

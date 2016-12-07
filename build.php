@@ -14,6 +14,16 @@ echo 'DI Map Generated', "\n";
 Alias::buildMap();
 echo 'Alias Map Generated', "\n";
 
+
+$helperDir = __DIR__ . '/helper/';
+foreach (scandir($helperDir) as $file) {
+	if (in_array($file, ['.', '..'], true)) {
+		continue;
+	}
+
+	unlink($helperDir . $file);
+}
+
 $alias = Alias::getAliases();
 $template = <<<EOD
 <?php
@@ -21,7 +31,7 @@ class %s extends %s {}
 EOD;
 
 foreach ($alias as $k => $v) {
-	file_put_contents(__DIR__ . '/helper/' . $k . '.php', sprintf($template, $k, $v));
+	file_put_contents($helperDir . $k . '.php', sprintf($template, $k, $v));
 }
 echo 'Alias Class Helper Generated', "\n";
 
@@ -35,9 +45,6 @@ foreach (
 		['App\\Model', SYSTEM_PATH, function ($class) {
 			$ref = new ReflectionClass($class);
 			return $ref->isInstantiable();
-		}],
-		['Hail\\Utils',  __DIR__ . '/', function ($class) {
-			return isset(class_uses($class)['Hail\Utils\Singleton']);
 		}]
 	] as $v
 ) {
@@ -69,6 +76,6 @@ class %s {}
 EOD;
 
 	$class = substr(strrchr($namespace, '\\'), 1) . 'Factory';
-	file_put_contents(__DIR__ . '/helper/' . $class . '.php', sprintf($template, $comment, $class));
+	file_put_contents($helperDir . $class . '.php', sprintf($template, $comment, $class));
 }
 echo 'Object Factory Helper Generated', "\n";

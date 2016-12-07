@@ -109,11 +109,11 @@ class Input implements \ArrayAccess
 
 	public function getAll()
 	{
+		$return = $this->items->get();
 		if ($this->all) {
-			return $this->items;
+			return $return;
 		}
 
-		$return = (array) $this->items;
 		if ($this->request->isJson()) {
 			$return += $this->request->getJson() ?? [];
 		} elseif (!$this->request->isMethod('GET')) {
@@ -138,7 +138,6 @@ class Input implements \ArrayAccess
 		}
 
 		$this->all = true;
-
 		return $this->items->init($return);
 	}
 

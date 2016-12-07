@@ -18,8 +18,6 @@ namespace Hail\Facades;
  */
 class Serialize extends Facade
 {
-	protected static $inDI = false;
-
 	protected static function instance()
 	{
 		return \Hail\Utils\Serialize::getInstance();

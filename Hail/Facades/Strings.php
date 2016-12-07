@@ -36,8 +36,6 @@ namespace Hail\Facades;
  */
 class Strings extends Facade
 {
-	protected static $inDI = false;
-
 	protected static function instance()
 	{
 		return \Hail\Utils\Strings::getInstance();

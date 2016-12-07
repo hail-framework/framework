@@ -1,5 +1,6 @@
 <?php
 namespace Hail\Session;
+
 use Hail\Cache\Driver\Redis;
 
 /**
@@ -14,7 +15,7 @@ class RedisHandler extends BaseHandler
 	public function __construct(array $settings)
 	{
 		$settings += [
-			'prefix' => 'sessions'
+			'prefix' => 'sessions',
 		];
 
 		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
@@ -22,8 +23,9 @@ class RedisHandler extends BaseHandler
 		}
 		$settings['namespace'] = 'sessions';
 
+		$this->redis = new Redis($settings);
+
 		parent::__construct($settings);
-		$this->redis = new Redis($this->settings);
 	}
 
 	protected function key($id)
@@ -37,6 +39,7 @@ class RedisHandler extends BaseHandler
 	public function close()
 	{
 		$this->redis = null;
+
 		return true;
 	}
 
@@ -48,6 +51,7 @@ class RedisHandler extends BaseHandler
 		$result = $this->redis->delete(
 			$this->key($id)
 		);
+
 		return $result !== false;
 	}
 
@@ -74,7 +78,7 @@ class RedisHandler extends BaseHandler
 	{
 		return $this->redis->fetch(
 			$this->key($id)
-		);
+		) ?: '';
 	}
 
 	/**

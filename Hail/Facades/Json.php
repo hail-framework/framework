@@ -10,8 +10,6 @@ namespace Hail\Facades;
  */
 class Json extends Facade
 {
-	protected static $inDI = false;
-
 	protected static function instance()
 	{
 		return \Hail\Utils\Json::getInstance();

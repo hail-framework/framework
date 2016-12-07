@@ -74,7 +74,7 @@ class DBHandler extends BaseHandler
 			'WHERE' => [$this->settings['id'] => $id],
 		]);
 
-		return $result;
+		return $result ?: '';
 	}
 
 	/**

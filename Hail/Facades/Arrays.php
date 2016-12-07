@@ -13,8 +13,6 @@ namespace Hail\Facades;
  */
 class Arrays extends Facade
 {
-	protected static $inDI = false;
-
 	protected static function instance()
 	{
 		return \Hail\Utils\Arrays::getInstance();
