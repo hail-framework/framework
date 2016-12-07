@@ -27,8 +27,6 @@ use Hail\Facades\Config;
  */
 class Serialize
 {
-	use Singleton;
-
 	const EXT_SWOOL = 'swoole';
 	const EXT_MSGPACK = 'msgpack';
 	const EXT_IGBINARY = 'igbinary';
@@ -78,11 +76,9 @@ class Serialize
 	private $encoder;
 	private $decoder;
 
-	protected function init()
+	public function __construct(string $type)
 	{
-		$this->ext(
-			Config::get('env.serialize')
-		);
+		$this->setExtension($type);
 	}
 
 	/**
@@ -92,7 +88,7 @@ class Serialize
 	 * @throws InvalidArgumentException
 	 * @throws InvalidStateException
 	 */
-	public function ext(string $type)
+	public function setExtension(string $type)
 	{
 		if (!isset(self::$set[$type])) {
 			throw new InvalidArgumentException("Serialize type $type not defined");
@@ -122,7 +118,7 @@ class Serialize
 	{
 		$clone = clone $this;
 
-		return $clone->ext($type);
+		return $clone->setExtension($type);
 	}
 
 	/**

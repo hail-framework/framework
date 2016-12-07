@@ -13,13 +13,15 @@ namespace Hail\Facades;
  * @method static array decodeArray(array $array)
  * @method static array encodeArrayToStr(array $array)
  * @method static array decodeArrayFromStr(array $array)
- * @method static \Hail\Utils\Serialize ext(string $type)
+ * @method static \Hail\Utils\Serialize setExtension(string $type)
  * @method static \Hail\Utils\Serialize modify(string $type)
  */
 class Serialize extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Serialize::getInstance();
+		return new \Hail\Utils\Serialize(
+			Config::get('env.serialize')
+		);
 	}
 }

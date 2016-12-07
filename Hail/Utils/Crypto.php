@@ -5,7 +5,6 @@ use Hail\Exception\{
 	InvalidArgumentException,
 	CryptoException
 };
-use Hail\Facades\Config;
 
 /**
  * Class Crypto
@@ -15,8 +14,6 @@ use Hail\Facades\Config;
  */
 class Crypto
 {
-	use Singleton;
-
 	const HEADER_VERSION_SIZE = 4;
 	const MINIMUM_CIPHERTEXT_SIZE = 84;
 
@@ -58,11 +55,9 @@ class Crypto
 	protected $format;
 
 
-	protected function init()
+	public function __construct($format)
 	{
-		$this->setFormat(
-			Config::get('crypto.format')
-		);
+		$this->setFormat($format);
 	}
 
 	public function setFormat(string $format)

@@ -29,6 +29,8 @@ class Crypto extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Crypto::getInstance();
+		return new \Hail\Utils\Crypto(
+			Config::get('crypto.format')
+		);
 	}
 }
