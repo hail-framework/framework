@@ -16,6 +16,7 @@
   'Event' => '\\Hail\\Facades\\Event',
   'Generators' => '\\Hail\\Facades\\Generators',
   'I18N' => '\\Hail\\Facades\\I18N',
+  'Inflector' => '\\Hail\\Facades\\Inflector',
   'Json' => '\\Hail\\Facades\\Json',
   'Library' => '\\Hail\\Facades\\Library',
   'Model' => '\\Hail\\Facades\\Model',

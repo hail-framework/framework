@@ -23,11 +23,11 @@ class Helpers
 	{
 		$file = strtr($origFile = $file, Debugger::$editorMapping);
 		if ($editor = self::editorUri($origFile, $line)) {
-			$file = strtr($file, '\\', '/');
+			$file = str_replace('\\', '/', $file);
 			if (preg_match('#(^[a-z]:)?/.{1,50}$#i', $file, $m) && strlen($file) > strlen($m[0])) {
 				$file = '...' . $m[0];
 			}
-			$file = strtr($file, '/', DIRECTORY_SEPARATOR);
+			$file = str_replace('/', DIRECTORY_SEPARATOR, $file);
 
 			return self::formatHtml('<a href="%" title="%">%<b>%</b>%</a>',
 				$editor,
@@ -122,13 +122,6 @@ class Helpers
 		return $exception;
 	}
 
-
-	public static function fixEncoding($s)
-	{
-		return htmlspecialchars_decode(htmlspecialchars($s, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES);
-	}
-
-
 	public static function errorTypeToString($type)
 	{
 		$types = [
@@ -157,11 +150,11 @@ class Helpers
 	{
 		if (isset($_SERVER['REQUEST_URI'])) {
 			return (!empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https://' : 'http://')
-			. (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')
-			. $_SERVER['REQUEST_URI'];
+				. (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')
+				. $_SERVER['REQUEST_URI'];
 		} else {
 			return 'CLI (PID: ' . getmypid() . ')'
-			. (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
+				. (empty($_SERVER['argv']) ? '' : ': ' . implode(' ', $_SERVER['argv']));
 		}
 	}
 
@@ -227,8 +220,8 @@ class Helpers
 	public static function isHtmlMode()
 	{
 		return empty($_SERVER['HTTP_X_REQUESTED_WITH']) && empty($_SERVER['HTTP_X_TRACY_AJAX'])
-		&& PHP_SAPI !== 'cli'
-		&& !preg_match('#^Content-Type: (?!text/html)#im', implode("\n", headers_list()));
+			&& PHP_SAPI !== 'cli'
+			&& !preg_match('#^Content-Type: (?!text/html)#im', implode("\n", headers_list()));
 	}
 
 	public static function isAjax()

@@ -1,11 +1,12 @@
 <?php
-
 /**
  * This file is part of the Tracy (https://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (https://davidgrudl.com) Modified by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
+
+use Hail\Facades\Strings;
 
 /**
  * Debug Bar.
@@ -97,7 +98,7 @@ class Bar
 		});
 		require __DIR__ . '/assets/Bar/panels.phtml';
 		require __DIR__ . '/assets/Bar/bar.phtml';
-		$content = Helpers::fixEncoding(ob_get_clean());
+		$content = Strings::fixEncoding(ob_get_clean());
 
 		if ($contentId) {
 			$queue = &$_SESSION['_tracy']['bar'];

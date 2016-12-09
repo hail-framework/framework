@@ -1,11 +1,12 @@
 <?php
-
 /**
  * This file is part of the Tracy (http://tracy.nette.org)
  * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modified by FlyingHail <flyinghail@msn.com>
  */
 
 namespace Hail\Tracy;
+
+use Hail\Facades\Trace;
 
 /**
  * Debugger: displays and logs errors.
@@ -472,7 +473,7 @@ class Debugger
 			self::$bar->addPanel(new Bar\QueryPanel(), 'Query');
 			self::$bar->addPanel(new Bar\ProfilerPanel(), 'Profile');
 			if (extension_loaded('xdebug') && \ini_get('xdebug.auto_trace') !== 'on') {
-				self::$bar->addPanel(\DI::trace(), 'Hail:Trace');
+				self::$bar->addPanel(Trace::getInstance(), 'Hail:Trace');
 			}
 			self::$bar->addPanel(new Bar\GitPanel(), 'Git');
 			self::$bar->addPanel(new Bar\VendorPanel(), 'Vendor');
