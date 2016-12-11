@@ -43,8 +43,8 @@ class Optimize
 		switch (self::$type) {
 			case 'yac':
 				self::$cache = new \Yac();
-				self::$set = 'set';
-				self::$get = 'get';
+				self::$set = [self::$cache, 'set'];
+				self::$get = [self::$cache, 'get'];
 				self::$multi = true;
 
 				return;
@@ -81,11 +81,7 @@ class Optimize
 			return false;
 		}
 
-		if (self::$cache === null) {
-			return (self::$set)(self::key($prefix, $key), $value);
-		}
-
-		return self::$cache->{self::$set}(self::key($prefix, $key), $value);
+		return (self::$set)(self::key($prefix, $key), $value);
 	}
 
 	public static function setMultiple($prefix, array $array)
@@ -110,11 +106,7 @@ class Optimize
 			$list[self::key($prefix, $k)] = $v;
 		}
 
-		if (self::$cache === null) {
-			return (self::$set)($list);
-		}
-
-		return self::$cache->{self::$set}($list);
+		return (self::$set)($list);
 	}
 
 	public static function get($prefix, $key)
@@ -123,11 +115,7 @@ class Optimize
 			return false;
 		}
 
-		if (self::$cache === null) {
-			return (self::$get)(self::key($prefix, $key));
-		}
-
-		return self::$cache->{self::$get}(self::key($prefix, $key));
+		return (self::$get)(self::key($prefix, $key));
 	}
 
 	protected static function key($prefix, $key)

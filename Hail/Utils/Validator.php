@@ -12,6 +12,8 @@ use Hail\Exception\InvalidArgumentException;
  */
 class Validator
 {
+	use Singleton;
+
 	/**
 	 * @var string
 	 */
@@ -53,16 +55,6 @@ class Validator
 	protected $_instanceRuleMessage = [];
 
 	/**
-	 * @var string
-	 */
-	protected static $_lang;
-
-	/**
-	 * @var string
-	 */
-	protected static $_langDir;
-
-	/**
 	 * @var array
 	 */
 	protected static $_rules = [];
@@ -78,42 +70,35 @@ class Validator
 	protected static $validUrlPrefixes = ['http://', 'https://', 'ftp://'];
 
 	/**
-	 * Setup validation
-	 *
-	 * @param  array  $data
-	 * @param  array  $fields
+	 * @inheritdoc
 	 */
-	public function __construct(array $data, array $fields = [])
+	protected function init()
 	{
-		// Allows filtering of used input fields against optional second array of field names allowed
-		// This is useful for limiting raw $_POST or $_GET data to only known fields
-		$this->_fields = $fields !== [] ? array_intersect_key($data, array_flip($fields)) : $data;
-
 		static::$_ruleMessages = [
-			'required' => _('²»ÄÜÎª¿Õ'),
-			'equals' => _('±ØĞëºÍ "%s" Ò»ÖÂ'),
-			'different' => _('±ØĞëºÍ "%s" ²»Ò»ÖÂ'),
-			'accepted' => _('±ØĞë½ÓÊÜ'),
-			'numeric' => _('Ö»ÄÜÊÇÊı×Ö'),
-			'integer' => _('Ö»ÄÜÊÇÕûÊı(0-9)'),
-			'length' => _('³¤¶È±ØĞë´óÓÚ %d'),
-			'min' => _('±ØĞë´óÓÚ %s'),
-			'max' => _('±ØĞëĞ¡ÓÚ %s'),
-			'in' => _('ÎŞĞ§µÄÖµ'),
-			'notIn' => _('ÎŞĞ§µÄÖµ'),
-			'ip' => _('ÎŞĞ§IPµØÖ·'),
-			'email' => _('ÎŞĞ§ÓÊÏäµØÖ·'),
-			'url' => _('ÎŞĞ§µÄURL'),
-			'urlActive' => _('±ØĞëÊÇ¿ÉÓÃµÄÓòÃû'),
-			'alpha' => _('Ö»ÄÜ°üÀ¨Ó¢ÎÄ×ÖÄ¸(a-z)'),
-			'alphaNum' => _('Ö»ÄÜ°üÀ¨Ó¢ÎÄ×ÖÄ¸(a-z)ºÍÊı×Ö(0-9)'),
-			'slug' => _('Ö»ÄÜ°üÀ¨Ó¢ÎÄ×ÖÄ¸(a-z)¡¢Êı×Ö(0-9)¡¢ÆÆÕÛºÅºÍÏÂ»®Ïß'),
-			'regex' => _('ÎŞĞ§¸ñÊ½'),
-			'date' => _('ÎŞĞ§µÄÈÕÆÚ'),
-			'dateFormat' => _('ÈÕÆÚµÄ¸ñÊ½Ó¦¸ÃÎª "%s"'),
-			'dateBefore' => _('ÈÕÆÚ±ØĞëÔÚ "%s" Ö®Ç°'),
-			'dateAfter' => _('ÈÕÆÚ±ØĞëÔÚ "%s" Ö®ºó'),
-			'contains' => _('±ØĞë°üº¬ %s'),
+			'required' => _('ä¸èƒ½ä¸ºç©º'),
+			'equals' => _('å¿…é¡»å’Œ "%s" ä¸€è‡´'),
+			'different' => _('å¿…é¡»å’Œ "%s" ä¸ä¸€è‡´'),
+			'accepted' => _('å¿…é¡»æ¥å—'),
+			'numeric' => _('åªèƒ½æ˜¯æ•°å­—'),
+			'integer' => _('åªèƒ½æ˜¯æ•´æ•°(0-9)'),
+			'length' => _('é•¿åº¦å¿…é¡»å¤§äº %d'),
+			'min' => _('å¿…é¡»å¤§äº %s'),
+			'max' => _('å¿…é¡»å°äº %s'),
+			'in' => _('æ— æ•ˆçš„å€¼'),
+			'notIn' => _('æ— æ•ˆçš„å€¼'),
+			'ip' => _('æ— æ•ˆIPåœ°å€'),
+			'email' => _('æ— æ•ˆé‚®ç®±åœ°å€'),
+			'url' => _('æ— æ•ˆçš„URL'),
+			'urlActive' => _('å¿…é¡»æ˜¯å¯ç”¨çš„åŸŸå'),
+			'alpha' => _('åªèƒ½åŒ…æ‹¬è‹±æ–‡å­—æ¯(a-z)'),
+			'alphaNum' => _('åªèƒ½åŒ…æ‹¬è‹±æ–‡å­—æ¯(a-z)å’Œæ•°å­—(0-9)'),
+			'slug' => _('åªèƒ½åŒ…æ‹¬è‹±æ–‡å­—æ¯(a-z)ã€æ•°å­—(0-9)ã€ç ´æŠ˜å·å’Œä¸‹åˆ’çº¿'),
+			'regex' => _('æ— æ•ˆæ ¼å¼'),
+			'date' => _('æ— æ•ˆçš„æ—¥æœŸ'),
+			'dateFormat' => _('æ—¥æœŸçš„æ ¼å¼åº”è¯¥ä¸º "%s"'),
+			'dateBefore' => _('æ—¥æœŸå¿…é¡»åœ¨ "%s" ä¹‹å‰'),
+			'dateAfter' => _('æ—¥æœŸå¿…é¡»åœ¨ "%s" ä¹‹å'),
+			'contains' => _('å¿…é¡»åŒ…å« %s'),
 		];
 	}
 
@@ -781,11 +766,28 @@ class Validator
 	}
 
 	/**
+	 * Set data for validator
+	 *
+	 * @param  array $data
+	 * @param  array $fields
+	 *
+	 * @return $this
+	 */
+	public function data(array $data, array $fields = [])
+	{
+		// Allows filtering of used input fields against optional second array of field names allowed
+		// This is useful for limiting raw $_POST or $_GET data to only known fields
+		$this->_fields = $fields !== [] ? array_intersect_key($data, array_flip($fields)) : $data;
+
+		return $this;
+	}
+
+	/**
 	 *  Get array of fields and data
 	 *
 	 * @return array
 	 */
-	public function data()
+	public function getData()
 	{
 		return $this->_fields;
 	}
@@ -797,7 +799,7 @@ class Validator
 	 *
 	 * @return array|bool
 	 */
-	public function errors($field = null)
+	public function errors(string $field = null)
 	{
 		if ($field !== null) {
 			return $this->_errors[$field] ?? false;
@@ -813,7 +815,7 @@ class Validator
 	 * @param string $msg
 	 * @param array  $params
 	 */
-	public function error($field, $msg, array $params = [])
+	public function error(string $field, string $msg, array $params = [])
 	{
 		$msg = $this->checkAndSetLabel($field, $msg, $params);
 
@@ -846,7 +848,7 @@ class Validator
 	 *
 	 * @return $this
 	 */
-	public function message($msg)
+	public function message(string $msg)
 	{
 		$this->_validations[count($this->_validations) - 1]['message'] = $msg;
 
@@ -855,6 +857,8 @@ class Validator
 
 	/**
 	 * Reset object properties
+	 *
+	 * @return $this
 	 */
 	public function reset()
 	{
@@ -862,6 +866,8 @@ class Validator
 		$this->_errors = [];
 		$this->_validations = [];
 		$this->_labels = [];
+
+		return $this;
 	}
 
 	protected function getPart($data, $identifiers)
@@ -1004,14 +1010,17 @@ class Validator
 	 * @param mixed  $callback
 	 * @param string $message
 	 *
+	 * @return $this
 	 * @throws InvalidArgumentException
 	 */
-	public function addInstanceRule($name, $callback, $message = null)
+	public function addInstanceRule(string $name, callable $callback, string $message = null)
 	{
 		static::assertRuleCallback($callback);
 
 		$this->_instanceRules[$name] = $callback;
 		$this->_instanceRuleMessage[$name] = $message;
+
+		return $this;
 	}
 
 	/**
@@ -1021,9 +1030,10 @@ class Validator
 	 * @param  mixed  $callback
 	 * @param  string $message
 	 *
+	 * @return $this
 	 * @throws InvalidArgumentException
 	 */
-	public static function addRule($name, $callback, $message = null)
+	public function addRule(string $name, callable $callback, string $message = null)
 	{
 		if ($message === null) {
 			$message = static::ERROR_DEFAULT;
@@ -1033,9 +1043,16 @@ class Validator
 
 		static::$_rules[$name] = $callback;
 		static::$_ruleMessages[$name] = $message;
+
+		return $this;
 	}
 
-	public function getUniqueRuleName($fields)
+	/**
+	 * @param string|array $fields
+	 *
+	 * @return string
+	 */
+	public function getUniqueRuleName($fields): string
 	{
 		if (is_array($fields)) {
 			$fields = implode('_', $fields);
@@ -1059,7 +1076,7 @@ class Validator
 	 *
 	 * @return bool
 	 */
-	public function hasValidator($name)
+	public function hasValidator(string $name): bool
 	{
 		$rules = $this->getRules();
 
@@ -1076,7 +1093,7 @@ class Validator
 	 * @return $this
 	 * @throws InvalidArgumentException
 	 */
-	public function rule($rule, $fields, ...$params)
+	public function rule($rule, array $fields, ...$params)
 	{
 		if (is_callable($rule)
 			&& !(is_string($rule) && $this->hasValidator($rule))
@@ -1128,7 +1145,7 @@ class Validator
 	 *
 	 * @return $this
 	 */
-	public function labels($labels = [])
+	public function labels(array $labels = [])
 	{
 		$this->_labels = array_merge($this->_labels, $labels);
 
@@ -1140,7 +1157,7 @@ class Validator
 	 * @param  string $msg
 	 * @param  array  $params
 	 *
-	 * @return array
+	 * @return string
 	 */
 	protected function checkAndSetLabel($field, $msg, $params)
 	{
@@ -1170,8 +1187,10 @@ class Validator
 	 * Convenience method to add multiple validation rules with an array
 	 *
 	 * @param array $rules
+	 *
+	 * @return $this
 	 */
-	public function rules($rules)
+	public function rules(array $rules)
 	{
 		foreach ($rules as $ruleType => $params) {
 			if (is_array($params)) {
@@ -1183,6 +1202,8 @@ class Validator
 				$this->rule($ruleType, $params);
 			}
 		}
+
+		return $this;
 	}
 
 	/**
@@ -1193,7 +1214,7 @@ class Validator
 	 *
 	 * @return Validator
 	 */
-	public function withData($data, $fields = [])
+	public function withData(array $data, array $fields = [])
 	{
 		$clone = clone $this;
 		$clone->reset();
