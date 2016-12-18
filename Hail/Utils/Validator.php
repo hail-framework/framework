@@ -1087,13 +1087,13 @@ class Validator
 	 * Convenience method to add a single validation rule
 	 *
 	 * @param  string|callback $rule
-	 * @param  array           $fields
+	 * @param  array|string    $fields
 	 * @param  mixed           ...$params
 	 *
 	 * @return $this
 	 * @throws InvalidArgumentException
 	 */
-	public function rule($rule, array $fields, ...$params)
+	public function rule($rule, $fields, ...$params)
 	{
 		if (is_callable($rule)
 			&& !(is_string($rule) && $this->hasValidator($rule))
@@ -1217,8 +1217,8 @@ class Validator
 	public function withData(array $data, array $fields = [])
 	{
 		$clone = clone $this;
-		$clone->reset();
 		$clone->_fields = !empty($fields) ? array_intersect_key($data, array_flip($fields)) : $data;
+		$clone->_errors = [];
 
 		return $clone;
 	}
