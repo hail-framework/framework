@@ -23,7 +23,7 @@ namespace Hail\Facades;
  * @method static \Hail\Utils\Validator labels(array $labels = [])
  * @method static \Hail\Utils\Validator rules(array $rules)
  */
-class Validator
+class Validator extends Facade
 {
 	protected static function instance()
 	{
