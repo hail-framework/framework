@@ -14,7 +14,7 @@ use Hail\Facades\Trace;
  */
 class Debugger
 {
-	const VERSION = '2.4.3';
+	const VERSION = '2.4.4';
 
 	/** server modes for Debugger::enable() */
 	const
@@ -164,8 +164,6 @@ class Debugger
 
 		define('PRODUCTION_MODE', self::$productionMode);
 
-		self::$enabled = true;
-
 		register_shutdown_function([__CLASS__, 'shutdownHandler']);
 		set_exception_handler([__CLASS__, 'exceptionHandler']);
 		set_error_handler([__CLASS__, 'errorHandler']);
@@ -175,21 +173,12 @@ class Debugger
 			'Hail\Tracy\FireLogger', 'Hail\Tracy\Helpers', 'Hail\Tracy\Logger',
 		]);
 
-		if (self::$productionMode) {
-			return;
-		} else if (headers_sent($file, $line) || ob_get_length()) {
-			throw new \LogicException(
-				__METHOD__ . '() called after some output has been sent. '
-				. ($file ? "Output started at $file:$line." : 'Try Tracy\OutputDebugger to find where output started.')
-			);
-		} else if (self::getBar()->dispatchAssets()) {
-			exit;
-		} else {
+		if (!self::$productionMode) {
 			Profiler::enable();
-			if (session_status() === PHP_SESSION_ACTIVE) {
-				self::dispatch();
-			}
 		}
+
+		self::dispatch();
+		self::$enabled = true;
 	}
 
 
@@ -209,7 +198,7 @@ class Debugger
 				. ($file ? "Output started at $file:$line." : 'Try Hail\Tracy\OutputDebugger to find where output started.')
 			);
 
-		} elseif (session_status() !== PHP_SESSION_ACTIVE) {
+		} elseif (self::$enabled && session_status() !== PHP_SESSION_ACTIVE) {
 			ini_set('session.use_cookies', '1');
 			ini_set('session.use_only_cookies', '1');
 			ini_set('session.use_trans_sid', '0');
@@ -218,7 +207,7 @@ class Debugger
 			session_start();
 		}
 
-		if (self::getBar()->dispatchContent()) {
+		if (self::getBar()->dispatchAssets()) {
 			exit;
 		}
 	}
@@ -612,6 +601,8 @@ class Debugger
 		if (!self::$productionMode) {
 			return ChromeLogger::getInstance()->log($message, $priority);
 		}
+
+		return false;
 	}
 
 	/**
@@ -626,6 +617,8 @@ class Debugger
 		if (!self::$productionMode) {
 			return FireLogger::getInstance()->log($message);
 		}
+
+		return false;
 	}
 
 	/**

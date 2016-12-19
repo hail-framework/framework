@@ -77,7 +77,7 @@ class Crypto
 		return $this;
 	}
 
-	public function modify(string $format)
+	public function withFormat(string $format)
 	{
 		$crypto = clone $this;
 
@@ -533,13 +533,13 @@ class Crypto
 	 * @return string
 	 * @throws CryptoException
 	 */
-	public function encryptRsa(string $data, string $publicKey)
+	public function encryptRsaPublic(string $data, string $publicKey)
 	{
 		$key = openssl_pkey_get_public($publicKey);
 
 		$encrypted = '';
-		if (!openssl_public_encrypt($data, $encrypted, $key)) {
-			throw new CryptoException('RSA encrypt error.');
+		if (!openssl_public_encrypt($data, $encrypted, $key, OPENSSL_PKCS1_OAEP_PADDING)) {
+			throw new CryptoException('RSA public encrypt error: ' . openssl_error_string());
 		}
 		openssl_pkey_free($key);
 
@@ -553,14 +553,55 @@ class Crypto
 	 * @return string
 	 * @throws CryptoException
 	 */
-	public function decryptRsa(string $data, string $privateKey)
+	public function decryptRsaPrivate(string $data, string $privateKey)
 	{
 		$data = $this->toBin($data);
 		$key = openssl_pkey_get_private($privateKey);
 
 		$decrypted = '';
-		if (!openssl_private_decrypt($data, $decrypted, $key)) {
-			throw new CryptoException('RSA decrypt error.');
+		if (!openssl_private_decrypt($data, $decrypted, $key, OPENSSL_PKCS1_OAEP_PADDING)) {
+			throw new CryptoException('RSA private decrypt error: ' . openssl_error_string());
+		}
+		openssl_pkey_free($key);
+
+		return $decrypted;
+	}
+
+	/**
+	 * @param $data
+	 * @param $privateKey
+	 *
+	 * @return string
+	 * @throws CryptoException
+	 */
+	public function encryptRsaPrivate(string $data, string $privateKey)
+	{
+		$key = openssl_pkey_get_private($privateKey);
+
+		$encrypted = '';
+		if (!openssl_private_encrypt($data, $encrypted, $key, OPENSSL_PKCS1_OAEP_PADDING)) {
+			throw new CryptoException('RSA private encrypt error: ' . openssl_error_string());
+		}
+		openssl_pkey_free($key);
+
+		return $this->fromBin($encrypted);
+	}
+
+	/**
+	 * @param $data
+	 * @param $publicKey
+	 *
+	 * @return string
+	 * @throws CryptoException
+	 */
+	public function decryptRsaPublic(string $data, string $publicKey)
+	{
+		$data = $this->toBin($data);
+		$key = openssl_pkey_get_public($publicKey);
+
+		$decrypted = '';
+		if (!openssl_public_decrypt($data, $decrypted, $key, OPENSSL_PKCS1_OAEP_PADDING)) {
+			throw new CryptoException('RSA public decrypt error: ' . openssl_error_string());
 		}
 		openssl_pkey_free($key);
 
@@ -578,9 +619,30 @@ class Crypto
 	{
 		$key = openssl_pkey_get_private($privateKey);
 		if (!openssl_sign($data, $signature, $key, OPENSSL_ALGO_SHA256)) {
-			throw new CryptoException('RSA sign error.');
+			throw new CryptoException('RSA signature error: ' . openssl_error_string());
 		}
 
 		return $this->fromBin($signature);
+	}
+
+	/**
+	 * @param $data
+	 * @param $signature
+	 * @param $publicKey
+	 *
+	 * @return bool
+	 * @throws CryptoException
+	 */
+	public function verifyRsa(string $data, string $signature, string $publicKey): bool
+	{
+		$signature = $this->toBin($signature);
+		$key = openssl_pkey_get_public($publicKey);
+
+		$return = openssl_verify($data, $signature, $key, OPENSSL_ALGO_SHA256);
+		if ($return === -1) {
+			throw new CryptoException('RSA signature check error: ' . openssl_error_string());
+		}
+
+		return $return === 1;
 	}
 }

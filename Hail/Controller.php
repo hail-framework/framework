@@ -20,6 +20,4 @@ abstract class Controller
 	{
 		$this->dispatcher = $dispatcher;
 	}
-
-	abstract public function indexAction();
 }

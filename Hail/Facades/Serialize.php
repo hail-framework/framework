@@ -14,7 +14,7 @@ namespace Hail\Facades;
  * @method static array encodeArrayToStr(array $array)
  * @method static array decodeArrayFromStr(array $array)
  * @method static \Hail\Utils\Serialize setExtension(string $type)
- * @method static \Hail\Utils\Serialize modify(string $type)
+ * @method static \Hail\Utils\Serialize withExtension(string $type)
  */
 class Serialize extends Facade
 {

@@ -29,4 +29,5 @@
   'Strings' => '\\Hail\\Facades\\Strings',
   'Template' => '\\Hail\\Facades\\Template',
   'Trace' => '\\Hail\\Facades\\Trace',
+  'Validator' => '\\Hail\\Facades\\Validator',
 );

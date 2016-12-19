@@ -114,7 +114,7 @@ class Serialize
 	 * @throws InvalidArgumentException
 	 * @throws InvalidStateException
 	 */
-	public function modify(string $type)
+	public function withExtension(string $type)
 	{
 		$clone = clone $this;
 

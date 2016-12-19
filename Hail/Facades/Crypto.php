@@ -3,10 +3,11 @@ namespace Hail\Facades;
 
 /**
  * Class Serialize
+ *
  * @package Hail\Facades
  *
  * @method static \Hail\Utils\Crypto setFormat(string $format)
- * @method static \Hail\Utils\Crypto modify(string $format)
+ * @method static \Hail\Utils\Crypto withFormat(string $format)
  * @method static bool|string password(string $password)
  * @method static bool|string verifyPassword(string $password, string $hash)
  * @method static string hash(string $text)
@@ -21,9 +22,12 @@ namespace Hail\Facades;
  * @method static string fromBin(string $raw, string $format = null)
  * @method static string hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
  * @method static string pbkdf2(string $algorithm, string $password, string $salt, int $count, int $length, bool $raw = false)
- * @method static string encryptRsa(string $data, string $publicKey)
- * @method static string decryptRsa(string $data, string $privateKey)
+ * @method static string encryptRsaPublic(string $data, string $publicKey)
+ * @method static string decryptRsaPrivate(string $data, string $privateKey)
+ * @method static string encryptRsaPrivate(string $data, string $privateKey)
+ * @method static string decryptRsaPublic(string $data, string $publicKey)
  * @method static string signatureRsa(string $data, string $privateKey)
+ * @method static bool verifyRsa(string $data, string $signature, string $publicKey)
  */
 class Crypto extends Facade
 {
