@@ -1,7 +1,11 @@
 <?php
 namespace Hail\Session;
 
-use Hail\Cache\Driver\Redis;
+use Hail\Facades\Config;
+use Hail\Redis\{
+	Exception\RedisException,
+	Factory as RedisFactory
+};
 
 /**
  * Class RedisHandler
@@ -10,8 +14,17 @@ use Hail\Cache\Driver\Redis;
  */
 class RedisHandler extends BaseHandler
 {
+	/**
+	 * @var \Hail\Redis\Driver
+	 */
 	protected $redis;
 
+	/**
+	 * RedisHandler constructor.
+	 *
+	 * @param array $settings
+	 * @throws RedisException
+	 */
 	public function __construct(array $settings)
 	{
 		$settings += [
@@ -19,11 +32,12 @@ class RedisHandler extends BaseHandler
 		];
 
 		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
-			$settings['lifeTime'] = ini_get('session.gc_maxlifetime');
+			$settings['lifetime'] = (int) ini_get('session.gc_maxlifetime');
 		}
-		$settings['namespace'] = 'sessions';
 
-		$this->redis = new Redis($settings);
+		$this->redis = RedisFactory::client(
+			$settings + Config::get('redis')
+		);
 
 		parent::__construct($settings);
 	}
@@ -48,7 +62,7 @@ class RedisHandler extends BaseHandler
 	 */
 	public function destroy($id)
 	{
-		$result = $this->redis->delete(
+		$result = $this->redis->del(
 			$this->key($id)
 		);
 
@@ -68,7 +82,7 @@ class RedisHandler extends BaseHandler
 	 */
 	public function open($path, $name)
 	{
-		return $this->redis ? true : false;
+		return $this->redis->isConnected();
 	}
 
 	/**
@@ -76,7 +90,7 @@ class RedisHandler extends BaseHandler
 	 */
 	public function read($id)
 	{
-		return $this->redis->fetch(
+		return $this->redis->get(
 			$this->key($id)
 		) ?: '';
 	}
@@ -86,8 +100,8 @@ class RedisHandler extends BaseHandler
 	 */
 	public function write($id, $data)
 	{
-		return $this->redis->save(
-			$this->key($id), $data
+		return $this->redis->setEx(
+			$this->key($id), $this->settings['lifetime'], $data
 		);
 	}
 }

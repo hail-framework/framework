@@ -1,7 +1,5 @@
 <?php
 return [
-	'servers' => [
-		['localhost', 6379],
-	],
-	'extConnectPool' => false,
+	'host' => 'localhost',
+	'port' => 6379,
 ];

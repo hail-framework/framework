@@ -2,6 +2,6 @@
 return [
 	'handler' => 'Redis',
 	'settings' => [
-		'database' => 1
+		'db' => 1
 	],
 ];

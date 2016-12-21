@@ -37,7 +37,7 @@ class Config implements \ArrayAccess
 	public function set($key, $value)
 	{
 		// 框架内置 config 不允许修改
-		if (strpos($key, '__') === 0) {
+		if ($key[0] === '.') {
 			return;
 		}
 
@@ -75,7 +75,7 @@ class Config implements \ArrayAccess
 	/**
 	 * Read config array from cache or file
 	 * 优先 {SYSTEM_PATH}/config/{$space}.php，其次 {HAIL_PATH}/config/{$space}.php
-	 * $space 为 __ 开头，只读取 {HAIL_PATH}/config/{$space}.php
+	 * $space 为 . 开头，只读取 {HAIL_PATH}/config/{$space}.php
 	 *
 	 * @param string $space
 	 *
@@ -98,7 +98,7 @@ class Config implements \ArrayAccess
 
 		if (
 			SYSTEM_PATH !== HAIL_PATH &&
-			strpos($space, '__') !== 0 &&
+			$key[0] !== '.' &&
 			file_exists($sysFile)
 		) {
 			$config = require $sysFile;

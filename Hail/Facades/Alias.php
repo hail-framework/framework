@@ -17,7 +17,7 @@ class Alias extends Facade
 {
 	protected static function instance()
 	{
-		$file = Config::get('__hail.map.alias');
+		$file = Config::get('.hail.map.alias');
 		if (file_exists($file)) {
 			$alias = include $file;
 		} else {
@@ -50,7 +50,7 @@ class Alias extends Facade
 	{
 		$set = self::getConfig();
 		file_put_contents(
-			Config::get('__hail.map.alias'),
+			Config::get('.hail.map.alias'),
 			'<?php return ' . var_export($set, true) . ';'
 		);
 	}

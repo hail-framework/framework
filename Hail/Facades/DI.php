@@ -19,7 +19,7 @@ class DI extends Facade
 {
 	protected static function instance()
 	{
-		$file = Config::get('__hail.map.di');
+		$file = Config::get('.hail.map.di');
 		if (file_exists($file)) {
 			$set = include $file;
 		} else {
@@ -51,7 +51,7 @@ class DI extends Facade
 	{
 		$set = self::getConfig();
 		file_put_contents(
-			Config::get('__hail.map.di'),
+			Config::get('.hail.map.di'),
 			'<?php return ' . var_export($set, true) . ';'
 		);
 	}
