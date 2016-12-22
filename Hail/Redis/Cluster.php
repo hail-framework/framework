@@ -65,7 +65,7 @@ class Cluster
 	 *
 	 * @var int
 	 */
-	protected $selectedDb = 0;
+	protected $database = 0;
 
 	/**
 	 * Creates an interface to a cluster of Redis servers
@@ -231,7 +231,7 @@ class Cluster
 	 */
 	public function select($index)
 	{
-		$this->selectedDb = (int) $index;
+		$this->database = (int) $index;
 	}
 
 	/**
@@ -252,8 +252,8 @@ class Cluster
 			$client = $this->byHash($args[0]);
 		}
 		// Ensure that current client is working on the same database as expected.
-		if ($client->getSelectedDb() !== $this->selectedDb) {
-			$client->select($this->selectedDb);
+		if ($client->getDatabase() !== $this->database) {
+			$client->select($this->database);
 		}
 
 		return call_user_func_array([$client, $name], $args);

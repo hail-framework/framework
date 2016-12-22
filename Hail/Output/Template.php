@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Output;
 
-use Hail\Facades\Template as Tpl;
+use Hail\Facades\Template as Latte;
 
 class Template
 {
@@ -11,6 +11,6 @@ class Template
 	 */
 	public function send($name, $params)
 	{
-		Tpl::render($name . '.latte', $params);
+		Latte::render($name . '.latte', $params);
 	}
 }

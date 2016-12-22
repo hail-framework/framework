@@ -128,11 +128,13 @@ class Response
 	 * Sets HTTP response code.
 	 *
 	 * @param  int
+	 * @param  string
+	 *
 	 * @return self
 	 * @throws \InvalidArgumentException  if code is invalid
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
-	public function setCode($code)
+	public function setCode($code, $reason = null)
 	{
 		$code = (int) $code;
 		if ($code < 100 || $code > 599) {
@@ -140,8 +142,20 @@ class Response
 		}
 		$this->checkHeaders();
 		$this->code = $code;
-		$protocol = isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
-		header($protocol . ' ' . $code, true, $code);
+		static $hasReason = [ // hardcoded in PHP
+			100, 101,
+			200, 201, 202, 203, 204, 205, 206,
+			300, 301, 302, 303, 304, 305, 307, 308,
+			400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 426, 428, 429, 431,
+			500, 501, 502, 503, 504, 505, 506, 511,
+		];
+		if ($reason || !in_array($code, $hasReason, true)) {
+			$protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
+			header("$protocol $code " . ($reason ?: 'Unknown status'));
+		} else {
+			http_response_code($code);
+		}
+
 		return $this;
 	}
 
@@ -160,8 +174,9 @@ class Response
 	/**
 	 * Sends a HTTP header and replaces a previous one.
 	 *
-	 * @param  string  header name
-	 * @param  string  header value
+	 * @param  string $name header name
+	 * @param  string $value header value
+	 *
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
@@ -175,6 +190,7 @@ class Response
 		} else {
 			header($name . ': ' . $value, true, $this->code);
 		}
+
 		return $this;
 	}
 
@@ -184,6 +200,7 @@ class Response
 	 *
 	 * @param  string  header name
 	 * @param  string  header value
+	 *
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
@@ -191,6 +208,7 @@ class Response
 	{
 		$this->checkHeaders();
 		header($name . ': ' . $value, false, $this->code);
+
 		return $this;
 	}
 
@@ -200,12 +218,14 @@ class Response
 	 *
 	 * @param  string  mime-type
 	 * @param  string  charset
+	 *
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setContentType($type, $charset = null)
 	{
 		$this->setHeader('Content-Type', $type . ($charset ? '; charset=' . $charset : ''));
+
 		return $this;
 	}
 
@@ -215,6 +235,7 @@ class Response
 	 *
 	 * @param  string  URL
 	 * @param  int     HTTP code
+	 *
 	 * @return void
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
@@ -233,21 +254,24 @@ class Response
 	 * Sets the number of seconds before a page cached on a browser expires.
 	 *
 	 * @param  string|int|\DateTime time , value 0 means "until the browser is closed"
+	 *
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
 	public function setExpiration($time)
 	{
-		$this->setHeader('Pragma', NULL);
+		$this->setHeader('Pragma', null);
 		if (!$time) { // no cache
 			$this->setHeader('Cache-Control', 's-maxage=0, max-age=0, must-revalidate');
 			$this->setHeader('Expires', 'Mon, 23 Jan 1978 10:00:00 GMT');
+
 			return $this;
 		}
 
 		$time = Helpers::createDateTime($time);
 		$this->setHeader('Cache-Control', 'max-age=' . ($time->format('U') - time()));
 		$this->setHeader('Expires', Helpers::formatDate($time));
+
 		return $this;
 	}
 
@@ -277,6 +301,7 @@ class Response
 	 *
 	 * @param  string
 	 * @param  mixed
+	 *
 	 * @return mixed
 	 */
 	public function getHeader($header, $default = null)
@@ -287,6 +312,7 @@ class Response
 				return ltrim(substr($item, strlen($header)));
 			}
 		}
+
 		return $default;
 	}
 
@@ -303,6 +329,7 @@ class Response
 			$a = strpos($header, ':');
 			$headers[substr($header, 0, $a)] = ltrim(substr($header, $a + 1));
 		}
+
 		return $headers;
 	}
 
@@ -325,13 +352,14 @@ class Response
 	/**
 	 * Sends a cookie.
 	 *
-	 * @param  string name of the cookie
-	 * @param  string value
+	 * @param                       string     name of the cookie
+	 * @param                       string     value
 	 * @param  string|int|\DateTime expiration time, value 0 means "until the browser is closed"
-	 * @param  string
-	 * @param  string
-	 * @param  bool
-	 * @param  bool
+	 * @param                       string
+	 * @param                       string
+	 * @param                       bool
+	 * @param                       bool
+	 *
 	 * @return self
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
@@ -348,6 +376,7 @@ class Response
 			$httpOnly === null ? $this->cookieHttpOnly : (bool) $httpOnly
 		);
 		Helpers::removeDuplicateCookies();
+
 		return $this;
 	}
 
@@ -358,6 +387,7 @@ class Response
 	 * @param  string
 	 * @param  string
 	 * @param  bool
+	 *
 	 * @return void
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */

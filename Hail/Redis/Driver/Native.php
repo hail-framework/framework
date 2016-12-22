@@ -79,11 +79,11 @@ class Native extends Driver
 			$this->setReadTimeout($this->readTimeout);
 		}
 
-		if ($this->authPassword) {
-			$this->auth($this->authPassword);
+		if ($this->password) {
+			$this->auth($this->password);
 		}
-		if ($this->selectedDb !== 0) {
-			$this->select($this->selectedDb);
+		if ($this->database !== 0) {
+			$this->select($this->database);
 		}
 	}
 
@@ -425,12 +425,6 @@ class Native extends Driver
 			}
 			$this->connected = false;
 			$this->connect();
-			if ($this->authPassword) {
-				$this->auth($this->authPassword);
-			}
-			if ($this->selectedDb !== 0) {
-				$this->select($this->selectedDb);
-			}
 		}
 
 		$commandLen = strlen($command);

@@ -205,12 +205,12 @@ abstract class Driver
 	/**
 	 * @var string
 	 */
-	protected $authPassword;
+	protected $password;
 
 	/**
 	 * @var int
 	 */
-	protected $selectedDb = 0;
+	protected $database = 0;
 
 	/**
 	 * @var bool
@@ -232,8 +232,8 @@ abstract class Driver
 		$this->port = (int) ($config['port'] ?? 6379);
 		$this->timeout = $config['timeout'] ?? null;
 		$this->persistent = (string) ($config['persistent'] ?? '');
-		$this->authPassword = $config['password'] ?? null;
-		$this->selectedDb = (int) ($config['db'] ?? 0);
+		$this->password = $config['password'] ?? null;
+		$this->database = (int) ($config['database'] ?? 0);
 		$this->readTimeout = (int) ($config['readTimeout'] ?? null);
 
 		if (preg_match('#^(tcp|unix)://(.*)$#', $this->host, $matches)) {
@@ -300,9 +300,9 @@ abstract class Driver
 	 *
 	 * @return int
 	 */
-	public function getSelectedDb()
+	public function getDatabase()
 	{
-		return $this->selectedDb;
+		return $this->database;
 	}
 
 	/**
@@ -374,7 +374,7 @@ abstract class Driver
 	public function auth($password)
 	{
 		$response = $this->__call('auth', [$password]);
-		$this->authPassword = $password;
+		$this->password = $password;
 
 		return $response;
 	}
@@ -387,7 +387,7 @@ abstract class Driver
 	public function select($index)
 	{
 		$response = $this->__call('select', [$index]);
-		$this->selectedDb = (int) $index;
+		$this->database = (int) $index;
 
 		return $response;
 	}

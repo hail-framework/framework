@@ -44,7 +44,7 @@ class Medoo
 	protected $option = [];
 
 	// use php-cp extension
-	protected $extConnectPool = false;
+	protected $connectPool = false;
 
 	// Variable
 	protected $lastId = [];
@@ -63,8 +63,8 @@ class Medoo
 			$this->$option = $value;
 		}
 
-		if ($this->extConnectPool) {
-			$this->extConnectPool = class_exists('\pdoProxy');
+		if ($this->connectPool) {
+			$this->connectPool = class_exists('\pdoProxy');
 		}
 
 		if (
@@ -133,7 +133,7 @@ class Medoo
 
 		$this->event('start', Event::CONNECT);
 
-		$class = $this->extConnectPool ? '\pdoProxy' : 'PDO';
+		$class = $this->connectPool ? '\pdoProxy' : 'PDO';
 		$this->pdo = new $class(
 			$dsn,
 			$this->username,
@@ -192,7 +192,7 @@ class Medoo
 	 */
 	public function release($result = null)
 	{
-		if ($this->extConnectPool) {
+		if ($this->connectPool) {
 			$this->pdo->release();
 		}
 

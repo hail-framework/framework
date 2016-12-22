@@ -264,9 +264,7 @@ class Debugger
 		self::$reserved = null;
 
 		if (!headers_sent()) {
-			$protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
-			$code = isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== false ? 503 : 500;
-			header("$protocol $code", true, $code);
+			http_response_code(isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== false ? 503 : 500);
 			if (Helpers::isHtmlMode()) {
 				header('Content-Type: text/html; charset=UTF-8');
 			}
