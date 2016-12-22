@@ -31,12 +31,35 @@ class PhpRedis extends Driver
 	protected $requests = 0;
 
 	protected static $typeMap = [
-		'none',
-		'string',
-		'set',
-		'list',
-		'zset',
-		'hash',
+		\Redis::REDIS_NOT_FOUND => 'none',
+		\Redis::REDIS_STRING => 'string',
+		\Redis::REDIS_SET => 'set',
+		\Redis::REDIS_LIST => 'list',
+		\Redis::REDIS_ZSET => 'zset',
+		\Redis::REDIS_HASH => 'hash',
+	];
+
+	protected static $skipMap = [
+		'get' => true,
+		'set' => true,
+		'hget' => true,
+		'hset' => true,
+		'setex' => true,
+		'mset' => true,
+		'msetnx' => true,
+		'hmset' => true,
+		'hmget' => true,
+		'del' => true,
+		'zrangebyscore' => true,
+		'zrevrangebyscore' => true,
+		'zrange' => true,
+		'zrevrange' => true,
+		'subscribe' => true,
+		'psubscribe' => true,
+		'scan' => true,
+		'sscan' => true,
+		'hscan' => true,
+		'zscan' => true,
 	];
 
 	/**
@@ -137,107 +160,101 @@ class PhpRedis extends Driver
 	{
 		$name = strtolower($name);
 
+		// Use aliases to be compatible with phpredis wrapper
+		if (isset(self::$wrapperMethods[$name])) {
+			$name = self::$wrapperMethods[$name];
+		}
+
 		// Tweak arguments
-		switch ($name) {
-			case 'get':   // optimize common cases
-			case 'set':
-			case 'hget':
-			case 'hset':
-			case 'setex':
-			case 'mset':
-			case 'msetnx':
-			case 'hmset':
-			case 'hmget':
-			case 'del':
-			case 'zrangebyscore':
-			case 'zrevrangebyscore':
-			case 'zrange':
-			case 'zrevrange':
-				break;
-			case 'mget':
-				if (isset($args[0]) && !is_array($args[0])) {
-					$args = [$args];
-				}
-				break;
-			case 'lrem':
-				$args = [$args[0], $args[2], $args[1]];
-				break;
-			case 'eval':
-			case 'evalsha':
-				$cKeys = $cArgs = [];
-				if (isset($args[1])) {
-					if (is_array($args[1])) {
-						$cKeys = $args[1];
-					} elseif (is_string($args[1])) {
-						$cKeys = [$args[1]];
+		if (!isset(self::$skipMap[$name])) {
+			switch ($name) {
+				case 'mget':
+					if (isset($args[0]) && !is_array($args[0])) {
+						$args = [$args];
 					}
-				}
-				if (isset($args[2])) {
-					if (is_array($args[2])) {
-						$cArgs = $args[2];
-					} elseif (is_string($args[2])) {
-						$cArgs = [$args[2]];
+					break;
+				case 'lrem':
+					$args = [$args[0], $args[2], $args[1]];
+					break;
+				case 'eval':
+				case 'evalsha':
+					$cKeys = $cArgs = [];
+					if (isset($args[1])) {
+						if (is_array($args[1])) {
+							$cKeys = $args[1];
+						} elseif (is_string($args[1])) {
+							$cKeys = [$args[1]];
+						}
 					}
-				}
-				$args = [$args[0], array_merge($cKeys, $cArgs), count($cKeys)];
-				break;
-			case 'subscribe':
-			case 'psubscribe':
-				break;
-			case 'scan':
-			case 'sscan':
-			case 'hscan':
-			case 'zscan':
-				// allow phpredis to see the caller's reference
-				//$param_ref =& $args[0];
-				break;
-			default:
-				// Flatten arguments
-				$args = self::flattenArguments($args);
+					if (isset($args[2])) {
+						if (is_array($args[2])) {
+							$cArgs = $args[2];
+						} elseif (is_string($args[2])) {
+							$cArgs = [$args[2]];
+						}
+					}
+					$args = [$args[0], array_merge($cKeys, $cArgs), count($cKeys)];
+					break;
+				case 'pipeline':
+				case 'multi':
+					if ($this->redisMulti !== null) {
+						return $this;
+					}
+					break;
+				default:
+					// Flatten arguments
+					$args = self::flattenArguments($args);
+			}
 		}
 
 		try {
+			// Send request, retry one time when using persistent connections on the first request only
+			if ($this->persistent && $this->requests === 0) {
+				$this->requests = 1;
+				try {
+					$response = call_user_func_array([$this->redis, $name], $args);
+				} catch (\RedisException $e) {
+					if ($e->getMessage() === 'read error on connection') {
+						$this->connected = false;
+						$this->connect();
+						$response = call_user_func_array([$this->redis, $name], $args);
+					} else {
+						throw $e;
+					}
+				}
+			} else {
+				switch (count($args)) {
+					case 0:
+						$response = $this->redis->$name();
+						break;
+					case 1:
+						$response = $this->redis->$name($args[0]);
+						break;
+					case 2:
+						$response = $this->redis->$name($args[0], $args[1]);
+						break;
+					case 3:
+						$response = $this->redis->$name($args[0], $args[1], $args[2]);
+						break;
+					case 4:
+						$response = $this->redis->$name($args[0], $args[1], $args[2], $args[3]);
+						break;
+					default:
+						$response = call_user_func_array([$this->redis, $name], $args);
+				}
+			}
+
 			// Proxy pipeline mode to the phpredis library
 			if ($name === 'pipeline' || $name === 'multi') {
-				if ($this->redisMulti !== null) {
-					return $this;
-				}
-
-				$this->redisMulti = call_user_func_array([$this->redis, $name], $args);
+				$this->redisMulti = $response;
 
 				return $this;
 			} elseif ($name === 'exec' || $name === 'discard') {
-				$response = $this->redisMulti->$name();
 				$this->redisMulti = null;
 
-				#echo "> $name : ".substr(print_r($response, TRUE),0,100)."\n";
 				return $response;
-			}
-
-			// Use aliases to be compatible with phpredis wrapper
-			if (isset(self::$wrapperMethods[$name])) {
-				$name = self::$wrapperMethods[$name];
-			}
-
-			// Multi and pipeline return self for chaining
-			if ($this->redisMulti !== null) {
-				call_user_func_array([$this->redisMulti, $name], $args);
-
+			} elseif ($this->redisMulti !== null) { // Multi and pipeline return self for chaining
 				return $this;
-			}
-
-			// Send request, retry one time when using persistent connections on the first request only
-			++$this->requests;
-			try {
-				$response = call_user_func_array([$this->redis, $name], $args);
-			} catch (\RedisException $e) {
-				if ($this->persistent && $this->requests === 1 && $e->getMessage() === 'read error on connection') {
-					$this->connected = false;
-					$this->connect();
-					$response = call_user_func_array([$this->redis, $name], $args);
-				} else {
-					throw $e;
-				}
 			}
 		} catch (\RedisException $e) {
 			$code = 0;

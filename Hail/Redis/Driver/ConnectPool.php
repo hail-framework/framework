@@ -25,18 +25,17 @@ class ConnectPool extends PhpRedis
 	 */
 	public function close()
 	{
+		$this->redis = null;
 		$this->connected = false;
 		return true;
 	}
 
 	public function __call($name, $args)
 	{
-		try {
-			$response = parent::__call($name, $args);
-		} finally {
-			if ($this->redisMulti === null) {
-				$this->redis->release();
-			}
+		$response = parent::__call($name, $args);
+
+		if ($this->redisMulti === null) {
+			$this->redis->release();
 		}
 
 		return $response;

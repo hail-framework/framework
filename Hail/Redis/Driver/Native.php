@@ -52,8 +52,8 @@ class Native extends Driver
 		$remote_socket = $this->port === null
 			? 'unix://' . $this->host
 			: 'tcp://' . $this->host . ':' . $this->port;
+		// Persistent connections to UNIX sockets are not supported
 		if ($this->persistent && $this->port !== null) {
-			// Persistent connections to UNIX sockets are not supported
 			$remote_socket .= '/' . $this->persistent;
 			$flags |= STREAM_CLIENT_PERSISTENT;
 		}
@@ -317,10 +317,7 @@ class Native extends Driver
 				$this->commands = null;
 
 				// Read response
-				$response = [];
-				foreach ($this->commandNames as $command) {
-					$response[] = $this->readReply($command);
-				}
+				$response = array_map([$this, 'readReply'], $this->commandNames);
 				$this->commandNames = null;
 
 				if ($this->isMulti) {
