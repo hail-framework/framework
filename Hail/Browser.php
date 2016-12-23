@@ -2,8 +2,10 @@
 
 namespace Hail;
 
-use Hail\Browser\Request;
-use Hail\Browser\Request\Body;
+use Hail\Browser\{
+	Request,
+	RequestBody as Body
+};
 use Hail\Facades\Json;
 
 class Browser

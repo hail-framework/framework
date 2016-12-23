@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 
 /**
  * Validates input against certain criteria

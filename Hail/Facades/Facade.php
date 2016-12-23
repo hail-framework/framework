@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\Exception\InvalidStateException;
-
 /**
  * Class Facade
  * @package Hail\Facades
@@ -49,7 +47,7 @@ abstract class Facade
 	 * @param  array  $args
 	 *
 	 * @return mixed
-	 * @throws \Hail\Exception\InvalidStateException if instance() method not defined in sub class
+	 * @throws \LogicException if instance() method not defined in sub class
 	 */
 	public static function __callStatic($method, $args)
 	{
@@ -74,11 +72,11 @@ abstract class Facade
 	 * 由子类定义获取实例的具体实现
 	 *
 	 * @return object
-	 * @throws \Hail\Exception\InvalidStateException
+	 * @throws \LogicException
 	 */
 	protected static function instance()
 	{
-		throw new InvalidStateException('Class should define instance() method');
+		throw new \LogicException('Class should define instance() method');
 	}
 
 	public static function getName()

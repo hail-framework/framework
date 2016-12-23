@@ -28,8 +28,8 @@ use Hail\Redis\Exception\RedisException;
  * static, a lightweight Redis PHP standalone client and phpredis wrapper
  *
  * Server/Connection:
- * @method Driver pipeline()
- * @method Driver multi()
+ * @method Driver        pipeline()
+ * @method Driver        multi()
  * @method array         exec()
  * @method string        flushAll()
  * @method string        flushDb()
@@ -132,6 +132,8 @@ use Hail\Redis\Exception\RedisException;
  * Pub/Sub
  * @method int           publish(string $channel, string $message)
  * @method int|array     pubsub(string $subCommand, $arg = null)
+ * @method void          subscribe(string|array $channels, callable $callback)
+ * @method void          pSubscribe(string|array $patterns, callable $callback)
  *
  * Scripting:
  * @method string|int    script(string $command, string $arg1 = null)

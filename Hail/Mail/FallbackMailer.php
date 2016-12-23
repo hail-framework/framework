@@ -8,7 +8,7 @@
 namespace Hail\Mail;
 
 
-use Hail\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use Hail\Mail\Exception\{
 	SendException,
 	FallbackMailerException

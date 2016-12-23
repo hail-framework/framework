@@ -1,10 +1,8 @@
 <?php
+namespace Hail\Browser;
 
-namespace Hail\Browser\Request;
 
-use Hail\Browser\Request;
-
-class Body
+class RequestBody
 {
 	/**
 	 * Prepares a file for upload. To be used inside the parameters declaration for a request.

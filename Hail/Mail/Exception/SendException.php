@@ -9,9 +9,7 @@
 namespace Hail\Mail\Exception;
 
 
-use Hail\Exception\InvalidStateException;
-
-class SendException extends InvalidStateException
+class SendException extends \RuntimeException
 {
 
 }

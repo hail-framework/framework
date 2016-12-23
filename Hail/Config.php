@@ -98,7 +98,7 @@ class Config implements \ArrayAccess
 
 		if (
 			SYSTEM_PATH !== HAIL_PATH &&
-			$key[0] !== '.' &&
+			$space[0] !== '.' &&
 			file_exists($sysFile)
 		) {
 			$config = require $sysFile;

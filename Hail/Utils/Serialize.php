@@ -13,11 +13,6 @@ namespace Hail\Utils;
  * 反序列化速度: swoole << igbinary < hprose < serialize < msgpack << json
  *
  */
-use Hail\Exception\{
-	InvalidArgumentException,
-	InvalidStateException
-};
-use Hail\Facades\Config;
 
 /**
  * Class Serialize
@@ -85,18 +80,18 @@ class Serialize
 	 * @param string $type
 	 *
 	 * @return $this
-	 * @throws InvalidArgumentException
-	 * @throws InvalidStateException
+	 * @throws \InvalidArgumentException
+	 * @throws \LogicException
 	 */
 	public function setExtension(string $type)
 	{
 		if (!isset(self::$set[$type])) {
-			throw new InvalidArgumentException("Serialize type $type not defined");
+			throw new \InvalidArgumentException("Serialize type $type not defined");
 		}
 
 		$set = self::$set[$type];
 		if (isset($set['ext']) && !extension_loaded($set['ext'])) {
-			throw new InvalidStateException("Extension {$set['ext']} not loaded");
+			throw new \LogicException("Extension {$set['ext']} not loaded");
 		}
 
 		$this->extension = $type;
@@ -111,8 +106,8 @@ class Serialize
 	 * @param string $type
 	 *
 	 * @return Serialize
-	 * @throws InvalidArgumentException
-	 * @throws InvalidStateException
+	 * @throws \InvalidArgumentException
+	 * @throws \LogicException
 	 */
 	public function withExtension(string $type)
 	{

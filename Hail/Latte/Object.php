@@ -22,7 +22,7 @@ abstract class Object
 	 */
 	public function __call($name, $args)
 	{
-		$class = method_exists($this, $name) ? 'parent' : get_class($this);
+		$class = method_exists($this, $name) ? 'parent' : static::class;
 		$rc = new \ReflectionClass($this);
 		$hint = ($t = Helpers::getSuggestion($rc->getMethods(\ReflectionMethod::IS_PUBLIC), $name)) ? ", did you mean $t()?" : '.';
 		throw new LogicException("Call to undefined method $class::$name()$hint");
@@ -83,7 +83,7 @@ abstract class Object
 	 */
 	public function __unset($name)
 	{
-		$class = get_class($this);
+		$class = static::class;
 		throw new LogicException("Attempt to unset undeclared property $class::$$name.");
 	}
 

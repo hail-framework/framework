@@ -1,7 +1,7 @@
 <?php
 namespace Hail\DB;
 
-use Hail\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use Hail\Facades\Serialize;
 use Hail\Facades\{
 	DB,

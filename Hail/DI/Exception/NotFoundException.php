@@ -1,7 +1,6 @@
 <?php
 namespace Hail\DI\Exception;
 
-use Hail\Exception\InvalidArgumentException;
 use Psr\Container\NotFoundException as PsrNotFoundException;
 
 /**
@@ -10,7 +9,7 @@ use Psr\Container\NotFoundException as PsrNotFoundException;
  * @package Hail\DI\Exception
  * @author  Hao Feng <flyinghail@msn.com>
  */
-class NotFoundException extends InvalidArgumentException implements PsrNotFoundException
+class NotFoundException extends \InvalidArgumentException implements PsrNotFoundException
 {
 
 }

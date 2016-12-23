@@ -7,12 +7,10 @@
 
 namespace Hail\Mail;
 
-use Hail\Exception\{
-	InvalidArgumentException,
-	InvalidStateException
-};
+use InvalidArgumentException;
+use RuntimeException;
 use Hail\Facades\{
-	Generator,
+	Generators,
 	Strings
 };
 use Hail\Utils\Validator;
@@ -73,13 +71,16 @@ class MimePart
 			}
 
 			foreach ($value as $email => $recipient) {
-				if ($recipient !== null && !Strings::checkEncoding($recipient)) {
-					Validator::assert($recipient, 'unicode', "header '$name'");
+				if ($recipient !== null && !Strings::checkEncoding($recipient) && !preg_match('##u', $recipient)) {
+					throw new InvalidArgumentException('Name is not valid unicode string.');
 				}
 				if (preg_match('#[\r\n]#', $recipient)) {
 					throw new InvalidArgumentException('Name must not contain line separator.');
 				}
-				Validator::assert($email, 'email', "header '$name'");
+				if (!filter_var($email, \FILTER_VALIDATE_EMAIL)) {
+					throw new InvalidArgumentException('Name must match the email structure.');
+				}
+
 				$tmp[$email] = $recipient;
 			}
 
@@ -93,7 +94,6 @@ class MimePart
 
 		return $this;
 	}
-
 
 	/**
 	 * Returns a header.
@@ -257,12 +257,12 @@ class MimePart
 	 *
 	 * @return string
 	 * @throws InvalidArgumentException
-	 * @throws InvalidStateException
+	 * @throws RuntimeException
 	 */
 	public function getEncodedMessage()
 	{
 		$output = '';
-		$boundary = '--------' . Generator::random();
+		$boundary = '--------' . Generators::random();
 
 		foreach ($this->headers as $name => $value) {
 			$output .= $name . ': ' . $this->getEncodedHeader($name);
@@ -293,7 +293,7 @@ class MimePart
 					break;
 
 				default:
-					throw new InvalidStateException('Unknown encoding.');
+					throw new RuntimeException('Unknown encoding.');
 			}
 		}
 

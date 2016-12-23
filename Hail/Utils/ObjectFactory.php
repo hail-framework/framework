@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Utils;
 
-use Hail\Exception\InvalidStateException;
-
 /**
  * Class Model
  *
@@ -37,7 +35,7 @@ class ObjectFactory implements \ArrayAccess
 			if (method_exists($class, 'getInstance')) {
 				return $this->set($key, $class::getInstance());
 			} elseif (!class_exists($class)) {
-				throw new InvalidStateException("Class $class Not Defined");
+				throw new \LogicException("Class $class Not Defined");
 			}
 
 			return $this->set($key, new $class());
@@ -50,7 +48,7 @@ class ObjectFactory implements \ArrayAccess
 	{
 		$class = $this->namespace . ucfirst($key);
 		if (!$value instanceof $class) {
-			throw new InvalidStateException("Object Not Instance of $class");
+			throw new \LogicException("Object Not Instance of $class");
 		}
 
 		return $this->$key = $value;
