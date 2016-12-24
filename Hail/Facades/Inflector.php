@@ -24,6 +24,6 @@ class Inflector extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Inflector::getInstance();
+		return \Hail\Util\Inflector::getInstance();
 	}
 }

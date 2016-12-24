@@ -2,7 +2,7 @@
 
 namespace Hail\Excel\Reader\XLSX\Helper\SharedStringsCaching;
 
-use Hail\Utils\Singleton;
+use Hail\Util\Singleton;
 
 /**
  * Class CachingStrategyFactory

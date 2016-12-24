@@ -13,7 +13,7 @@ use Hail\Facades\{
 	Generators,
 	Strings
 };
-use Hail\Utils\Validator;
+use Hail\Util\Validator;
 
 
 /**

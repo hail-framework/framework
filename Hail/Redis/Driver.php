@@ -22,6 +22,7 @@
 namespace Hail\Redis;
 
 use Hail\Redis\Exception\RedisException;
+use Hail\Util\SafeStorage;
 
 
 /**
@@ -205,9 +206,9 @@ abstract class Driver
 	protected $connectFailures = 0;
 
 	/**
-	 * @var string
+	 * @var SafeStorage
 	 */
-	protected $password;
+	protected $safeStorage;
 
 	/**
 	 * @var int
@@ -234,9 +235,11 @@ abstract class Driver
 		$this->port = (int) ($config['port'] ?? 6379);
 		$this->timeout = $config['timeout'] ?? null;
 		$this->persistent = (string) ($config['persistent'] ?? '');
-		$this->password = $config['password'] ?? null;
 		$this->database = (int) ($config['database'] ?? 0);
 		$this->readTimeout = (int) ($config['readTimeout'] ?? null);
+
+		$this->sageStorage = new SafeStorage();
+		$this->setPassword($config['password'] ?? null);
 
 		if (preg_match('#^(tcp|unix)://(.*)$#', $this->host, $matches)) {
 			if ($matches[1] === 'tcp') {
@@ -347,6 +350,16 @@ abstract class Driver
 		return $this->connected;
 	}
 
+	public function setPassword($password)
+	{
+		$this->safeStorage->set('password', $password);
+	}
+
+	public function getPassword()
+	{
+		return $this->safeStorage->get('password');
+	}
+
 	/**
 	 * @throws RedisException
 	 */
@@ -376,7 +389,7 @@ abstract class Driver
 	public function auth($password)
 	{
 		$response = $this->__call('auth', [$password]);
-		$this->password = $password;
+		$this->setPassword($password);
 
 		return $response;
 	}

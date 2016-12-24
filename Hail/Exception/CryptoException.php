@@ -4,7 +4,7 @@ namespace Hail\Exception;
 /**
  * Crypto Exception
  *
- * @package Hail\Utils\Exception
+ * @package Hail\Util\Exception
  */
 class CryptoException extends \RuntimeException
 {

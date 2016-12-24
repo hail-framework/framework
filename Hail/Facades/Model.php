@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\Utils\ObjectFactory;
+use Hail\Util\ObjectFactory;
 
 /**
  * Class Model

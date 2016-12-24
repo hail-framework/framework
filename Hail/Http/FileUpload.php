@@ -208,11 +208,11 @@ class FileUpload
 
 //	/**
 //	 * Returns the image.
-//	 * @return Hail\Utils\Image
+//	 * @return Hail\Util\Image
 //	 */
 //	public function toImage()
 //	{
-//		return Hail\Utils\Image::fromFile($this->tmpName);
+//		return Hail\Util\Image::fromFile($this->tmpName);
 //	}
 
 

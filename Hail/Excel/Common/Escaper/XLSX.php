@@ -2,7 +2,7 @@
 
 namespace Hail\Excel\Common\Escaper;
 
-use Hail\Utils\Singleton;
+use Hail\Util\Singleton;
 
 /**
  * Class XLSX

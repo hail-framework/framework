@@ -2,8 +2,8 @@
 namespace Hail\Http;
 
 use Hail\Facades\Arrays;
-use Hail\Utils\ArrayDot;
-use Hail\Utils\ArrayTrait;
+use Hail\Util\ArrayDot;
+use Hail\Util\ArrayTrait;
 
 /**
  * HttpRequest provides access scheme for request sent via HTTP.

@@ -2,7 +2,7 @@
 
 namespace Hail\Tracy;
 
-use Hail\Utils\Singleton;
+use Hail\Util\Singleton;
 
 
 /**

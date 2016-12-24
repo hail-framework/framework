@@ -7,7 +7,7 @@ use Hail\DI\Exception\{
 	NotFoundException
 };
 use Hail\Facades\Facade;
-use Hail\Utils\ArrayTrait;
+use Hail\Util\ArrayTrait;
 use Psr\Container\ContainerInterface;
 
 /**

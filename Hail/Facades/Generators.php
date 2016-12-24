@@ -18,6 +18,6 @@ class Generators extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Generators::getInstance();
+		return \Hail\Util\Generators::getInstance();
 	}
 }

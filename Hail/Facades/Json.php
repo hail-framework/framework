@@ -12,6 +12,6 @@ class Json extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Json::getInstance();
+		return \Hail\Util\Json::getInstance();
 	}
 }

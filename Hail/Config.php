@@ -2,7 +2,7 @@
 namespace Hail;
 
 use Hail\Facades\Arrays;
-use Hail\Utils\{
+use Hail\Util\{
 	ArrayDot,
 	ArrayTrait,
 	OptimizeTrait

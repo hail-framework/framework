@@ -6,8 +6,8 @@ namespace Hail\Facades;
  *
  * @package Hail\Facades
  *
- * @method static \Hail\Utils\Crypto setFormat(string $format)
- * @method static \Hail\Utils\Crypto withFormat(string $format)
+ * @method static \Hail\Util\Crypto setFormat(string $format)
+ * @method static \Hail\Util\Crypto withFormat(string $format)
  * @method static bool|string password(string $password)
  * @method static bool|string verifyPassword(string $password, string $hash)
  * @method static string hash(string $text)
@@ -33,7 +33,7 @@ class Crypto extends Facade
 {
 	protected static function instance()
 	{
-		return new \Hail\Utils\Crypto(
+		return new \Hail\Util\Crypto(
 			Config::get('crypto.format')
 		);
 	}

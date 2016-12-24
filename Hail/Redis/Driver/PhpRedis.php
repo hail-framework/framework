@@ -105,9 +105,10 @@ class PhpRedis extends Driver
 			$this->setReadTimeout($this->readTimeout);
 		}
 
-		if ($this->password) {
-			$this->auth($this->password);
+		if ($password = $this->getPassword()) {
+			$this->auth($password);
 		}
+
 		if ($this->database !== 0) {
 			$this->select($this->database);
 		}

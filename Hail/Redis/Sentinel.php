@@ -2,6 +2,7 @@
 namespace Hail\Redis;
 use Hail\Redis\Driver\Native;
 use Hail\Redis\Exception\RedisException;
+use Hail\Util\SafeStorage;
 
 /**
  * Sentinel
@@ -51,9 +52,9 @@ class Sentinel
 	/**
 	 * Store the AUTH password used by Client instances
 	 *
-	 * @var string
+	 * @var SafeStorage
 	 */
-	protected $_password = '';
+	protected $safeStorage;
 
 	/**
 	 * Connect with a Sentinel node. Sentinel will do the master and slave discovery
@@ -70,10 +71,12 @@ class Sentinel
 		}
 
 		$this->_client = $client;
-		$this->_password = $password;
 		$this->_timeout = null;
 		$this->_persistent = '';
 		$this->_db = 0;
+
+		$this->safeStorage = new SafeStorage();
+		$this->setClientPassword($password);
 	}
 
 	/**
@@ -119,9 +122,14 @@ class Sentinel
 	 */
 	public function setClientPassword($password)
 	{
-		$this->_password = $password;
+		$this->safeStorage->set('password', $password);
 
 		return $this;
+	}
+
+	public function getClientPassword()
+	{
+		return $this->safeStorage->get('password');
 	}
 
 	/**
@@ -188,7 +196,7 @@ class Sentinel
 					'timeout' => $this->_timeout,
 					'persistent' => $this->_persistent,
 					'db' => $this->_db,
-					'password' => $this->_password
+					'password' => $this->getClientPassword()
 				]);
 			}
 		}
@@ -239,20 +247,20 @@ class Sentinel
 		$slaves = $this->slaves($name);
 		foreach ($slaves as $slave) {
 			if (false === strpos($slave[9], 's_down') && false === strpos($slave[9], 'disconnected')) {
-				$workingClients[] = ['host' => $slave[3], 'port' => $slave[5], 'master' => false, 'db' => $db, 'password' => $this->_password];
+				$workingClients[] = ['host' => $slave[3], 'port' => $slave[5], 'master' => false, 'db' => $db, 'password' => $this->getClientPassword()];
 			}
 		}
 		if (count($workingClients) > 0) {
 			if ($selectRandomSlave) {
 				if (!$writeOnly) {
-					$workingClients[] = ['host' => $master[3], 'port' => $master[5], 'master' => false, 'db' => $db, 'password' => $this->_password];
+					$workingClients[] = ['host' => $master[3], 'port' => $master[5], 'master' => false, 'db' => $db, 'password' => $this->getClientPassword()];
 				}
 				$clients[] = $workingClients[random_int(0, count($workingClients) - 1)];
 			} else {
 				$clients = $workingClients;
 			}
 		}
-		$clients[] = ['host' => $master[3], 'port' => $master[5], 'db' => $db, 'master' => true, 'write_only' => $writeOnly, 'password' => $this->_password];
+		$clients[] = ['host' => $master[3], 'port' => $master[5], 'db' => $db, 'master' => true, 'write_only' => $writeOnly, 'password' => $this->getClientPassword()];
 
 		return new Cluster($clients, $replicas);
 	}

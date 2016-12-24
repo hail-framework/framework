@@ -10,6 +10,7 @@
 
 namespace Hail\DB;
 
+use Hail\Util\SafeStorage;
 use PDO;
 use Hail\Facades\Json;
 
@@ -29,8 +30,8 @@ class Medoo
 
 	// For MySQL, MariaDB, MSSQL, Sybase, PostgreSQL, Oracle
 	protected $server;
-	protected $username;
-	protected $password;
+	/** @var  SafeStorage */
+	protected $safeStorage;
 
 	// For SQLite
 	protected $file;
@@ -59,32 +60,48 @@ class Medoo
 
 	public function __construct(array $options)
 	{
+		$this->safeStorage = new SafeStorage();
+		$this->connect($options);
+	}
+
+	/**
+	 * @param array $options
+	 */
+	public function config(array $options)
+	{
 		foreach ($options as $option => $value) {
-			$this->$option = $value;
+			if ($option === 'type') {
+				$this->type = strtolower($value);
+			} elseif ($option === 'port') {
+				$this->port = ((int) $value) ?: null;
+			} elseif ($option === 'connectPool' && $value) {
+				$this->connectPool = class_exists('\pdoProxy');
+			} elseif ($option === 'username' || $option === 'password') {
+				$this->safeStorage->set($option, $value);
+			} else {
+				$this->$option = $value;
+			}
 		}
+	}
 
-		if ($this->connectPool) {
-			$this->connectPool = class_exists('\pdoProxy');
+	/**
+	 * @param array $options
+	 */
+	public function connect(array $options = [])
+	{
+		if ($options !== []) {
+			$this->config($options);
 		}
-
-		if (
-			isset($this->port) &&
-			is_int($this->port * 1)
-		) {
-			$port = $this->port;
-		}
-
-		$this->type = $type = strtolower($this->type);
 
 		$dsn = '';
 		$commands = [];
-		switch ($type) {
+		switch ($this->type) {
 			case 'mariadb':
 			case 'mysql':
 				if ($this->socket) {
 					$dsn = 'mysql:unix_socket=' . $this->socket . ';dbname=' . $this->database;
 				} else {
-					$dsn = 'mysql:host=' . $this->server . ';port=' . ($port ?? '3306') . ';dbname=' . $this->database;
+					$dsn = 'mysql:host=' . $this->server . ';port=' . ($this->port ?? '3306') . ';dbname=' . $this->database;
 				}
 
 				// Make MySQL using standard quoted identifier
@@ -92,16 +109,16 @@ class Medoo
 				break;
 
 			case 'pgsql':
-				$dsn = 'pgsql:host=' . $this->server . ';port=' . ($port ?? '5432') . ';dbname=' . $this->database;
+				$dsn = 'pgsql:host=' . $this->server . ';port=' . ($this->port ?? '5432') . ';dbname=' . $this->database;
 				break;
 
 			case 'sybase':
-				$dsn = 'dblib:host=' . $this->server . ':' . ($port ?? '5000') . ';dbname=' . $this->database;
+				$dsn = 'dblib:host=' . $this->server . ':' . ($this->port ?? '5000') . ';dbname=' . $this->database;
 				break;
 
 			case 'oracle':
 				$dbname = $this->server ?
-					'//' . $this->server . ':' . ($port ?? '1521') . '/' . $this->database :
+					'//' . $this->server . ':' . ($this->port ?? '1521') . '/' . $this->database :
 					$this->database;
 
 				$dsn = 'oci:dbname=' . $dbname . ($this->charset ? ';charset=' . $this->charset : '');
@@ -109,8 +126,8 @@ class Medoo
 
 			case 'mssql':
 				$dsn = strstr(PHP_OS, 'WIN') ?
-					'sqlsrv:server=' . $this->server . ',' . ($port ?? '1433') . ';database=' . $this->database :
-					'dblib:host=' . $this->server . ':' . ($port ?? '1433') . ';dbname=' . $this->database;
+					'sqlsrv:server=' . $this->server . ',' . ($this->port ?? '1433') . ';database=' . $this->database :
+					'dblib:host=' . $this->server . ':' . ($this->port ?? '1433') . ';dbname=' . $this->database;
 
 				// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
 				$commands[] = 'SET QUOTED_IDENTIFIER ON';
@@ -118,14 +135,14 @@ class Medoo
 
 			case 'sqlite':
 				$dsn = 'sqlite:' . $this->file;
-				$this->username = null;
-				$this->password = null;
+				$this->safeStorage->set('username', null);
+				$this->safeStorage->set('password', null);
 				break;
 		}
 
 		if (
 			$this->charset &&
-			in_array($type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql'], true)
+			in_array($this->type, ['mariadb', 'mysql', 'pgsql', 'sybase', 'mssql'], true)
 
 		) {
 			$commands[] = "SET NAMES '" . $this->charset . "'";
@@ -136,8 +153,8 @@ class Medoo
 		$class = $this->connectPool ? '\pdoProxy' : 'PDO';
 		$this->pdo = new $class(
 			$dsn,
-			$this->username,
-			$this->password,
+			$this->safeStorage->get('username'),
+			$this->safeStorage->get('password'),
 			$this->option
 		);
 		$this->event('done');
@@ -372,23 +389,17 @@ class Medoo
 								$wheres[] = $column . ' != ' . $this->quoteFn($key, $value);
 								break;
 						}
-					}
-
-					if ($operator === '<>' || $operator === '><') {
-						if ($type === 'array') {
-							if ($operator === '><') {
-								$column .= ' NOT';
-							}
-
-							if (is_numeric($value[0]) && is_numeric($value[1])) {
-								$wheres[] = '(' . $column . ' BETWEEN ' . $value[0] . ' AND ' . $value[1] . ')';
-							} else {
-								$wheres[] = '(' . $column . ' BETWEEN ' . $this->quote($value[0]) . ' AND ' . $this->quote($value[1]) . ')';
-							}
+					} elseif (($operator === '<>' || $operator === '><') && $type === 'array') {
+						if ($operator === '><') {
+							$column .= ' NOT';
 						}
-					}
 
-					if ($operator === '~' || $operator === '!~') {
+						if (is_numeric($value[0]) && is_numeric($value[1])) {
+							$wheres[] = '(' . $column . ' BETWEEN ' . $value[0] . ' AND ' . $value[1] . ')';
+						} else {
+							$wheres[] = '(' . $column . ' BETWEEN ' . $this->quote($value[0]) . ' AND ' . $this->quote($value[1]) . ')';
+						}
+					} elseif ($operator === '~' || $operator === '!~') {
 						if ($type !== 'array') {
 							$value = [$value];
 						}
@@ -412,9 +423,7 @@ class Medoo
 						}
 
 						$wheres[] = implode(' OR ', $like);
-					}
-
-					if (in_array($operator, ['>', '>=', '<', '<='], true)) {
+					} elseif (in_array($operator, ['>', '>=', '<', '<='], true)) {
 						$condition = $column . ' ' . $operator . ' ';
 						if (is_numeric($value)) {
 							$condition .= $value;

@@ -22,7 +22,7 @@ namespace Hail\Facades;
  * @method static string firstUpper(string $s)
  * @method static bool compare(string $left, string $right, int $len = null)
  * @method static string findPrefix(...$strings)
- * @method static string trim(string $s, string $charList = \Hail\Utils\Strings::TRIM_CHARACTERS)
+ * @method static string trim(string $s, string $charList = \Hail\Util\Strings::TRIM_CHARACTERS)
  * @method static string padLeft(string $s, int $length, string $pad = ' ')
  * @method static string padRight(string $s, int $length, string $pad = ' ')
  * @method static string reverse(string $s)
@@ -38,6 +38,6 @@ class Strings extends Facade
 {
 	protected static function instance()
 	{
-		return \Hail\Utils\Strings::getInstance();
+		return \Hail\Util\Strings::getInstance();
 	}
 }

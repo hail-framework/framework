@@ -1,7 +1,7 @@
 <?php
 namespace Hail;
 
-use Hail\Utils\ArrayTrait;
+use Hail\Util\ArrayTrait;
 
 /**
  * Class Session

@@ -6,7 +6,7 @@
 
 namespace Hail\I18N;
 
-use Hail\Utils\OptimizeTrait;
+use Hail\Util\OptimizeTrait;
 
 class Gettext
 {

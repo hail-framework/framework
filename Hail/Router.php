@@ -6,7 +6,7 @@
 
 namespace Hail;
 
-use Hail\Utils\OptimizeTrait;
+use Hail\Util\OptimizeTrait;
 use Hail\Facades\Serialize;
 
 /**
@@ -21,7 +21,7 @@ class Router
 
 	const PARAM_REGEXP = '/^{((([^:]+):(.+))|(.+))}$/';
 	const SEPARATOR_TRIM = "/ \t\n\r";
-	private $routes = ['childs' => [], 'regexps' => []];
+	private $routes = ['children' => [], 'regexps' => []];
 	private $result = [];
 
 	public function __construct($config)
@@ -40,24 +40,25 @@ class Router
 		$params = [];
 		$current = $this->routes;
 		foreach ($parts as $v) {
-			if (isset($current['childs'][$v])) {
-				$current = $current['childs'][$v];
-			} else {
-				foreach ($current['regexps'] as $regexp => $route) {
-					if (preg_match($regexp, $v)) {
-						$current = $route;
-						$params[$current['name']] = $v;
-						continue 2;
-					}
-				}
-
-				if (!isset($current['others'])) {
-					return null;
-				}
-
-				$current = $current['others'];
-				$params[$current['name']] = $v;
+			if (isset($current['children'][$v])) {
+				$current = $current['children'][$v];
+				continue;
 			}
+
+			foreach ($current['regexps'] as $regexp => $route) {
+				if (preg_match($regexp, $v)) {
+					$current = $route;
+					$params[$current['name']] = $v;
+					continue 2;
+				}
+			}
+
+			if (!isset($current['others'])) {
+				return null;
+			}
+
+			$current = $current['others'];
+			$params[$current['name']] = $v;
 		}
 
 		if (!isset($current['methods'])) {
@@ -76,8 +77,8 @@ class Router
 	 */
 	protected function addRoutes($config)
 	{
-		$sign = hash('sha1', Serialize::encode($config));
-		$check = $this->optimizeGet('routes_sign');
+		$sign = hash('sha256', Serialize::encode($config));
+		$check = $this->optimizeGet('routesSign');
 		if ($check === $sign) {
 			$this->routes = $this->optimizeGet('routes');
 
@@ -110,7 +111,7 @@ class Router
 
 		$this->optimizeSet([
 			'routes' => $this->routes,
-			'routes_sign' => $sign,
+			'routesSign' => $sign,
 		]);
 	}
 
@@ -135,7 +136,7 @@ class Router
 					$paramsMatches[4] = '/^' . addcslashes($paramsMatches[4], '/') . '$/';
 					if (!isset($current['regexps'][$paramsMatches[4]])) {
 						$current['regexps'][$paramsMatches[4]] = [
-							'childs' => [],
+							'children' => [],
 							'regexps' => [],
 							'name' => $paramsMatches[3],
 						];
@@ -144,7 +145,7 @@ class Router
 				} else {
 					if (!isset($current['others'])) {
 						$current['others'] = [
-							'childs' => [],
+							'children' => [],
 							'regexps' => [],
 							'name' => $paramsMatches[5],
 						];
@@ -152,13 +153,13 @@ class Router
 					$current = &$current['others'];
 				}
 			} else {
-				if (!isset($current['childs'][$v])) {
-					$current['childs'][$v] = [
-						'childs' => [],
+				if (!isset($current['children'][$v])) {
+					$current['children'][$v] = [
+						'children' => [],
 						'regexps' => [],
 					];
 				}
-				$current = &$current['childs'][$v];
+				$current = &$current['children'][$v];
 			}
 		}
 
@@ -167,6 +168,7 @@ class Router
 		if (!isset($current['methods'])) {
 			$current['methods'] = [];
 		}
+
 		foreach ($methods as $v) {
 			$current['methods'][strtoupper($v)] = $handler;
 		}
