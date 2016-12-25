@@ -137,10 +137,8 @@ class EncodingHelper
 
 		if (function_exists('iconv')) {
 			$convertedString = iconv($sourceEncoding, $targetEncoding, $string);
-		} else if (function_exists('mb_convert_encoding')) {
-			$convertedString = mb_convert_encoding($string, $sourceEncoding, $targetEncoding);
 		} else {
-			throw new EncodingConversionException("The conversion from $sourceEncoding to $targetEncoding is not supported. Please install \"iconv\" or \"PHP Intl\".");
+			$convertedString = mb_convert_encoding($string, $sourceEncoding, $targetEncoding);
 		}
 
 		if ($convertedString === false) {

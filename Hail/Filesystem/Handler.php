@@ -9,17 +9,17 @@ abstract class Handler
     protected $path;
 
     /**
-     * @var FilesystemInterface
+     * @var Filesystem
      */
     protected $filesystem;
 
     /**
      * Constructor.
      *
-     * @param FilesystemInterface $filesystem
+     * @param Filesystem $filesystem
      * @param string              $path
      */
-    public function __construct(FilesystemInterface $filesystem = null, $path = null)
+    public function __construct(Filesystem $filesystem = null, $path = null)
     {
         $this->path = $path;
         $this->filesystem = $filesystem;
@@ -60,11 +60,11 @@ abstract class Handler
     /**
      * Set the Filesystem object.
      *
-     * @param FilesystemInterface $filesystem
+     * @param Filesystem $filesystem
      *
      * @return $this
      */
-    public function setFilesystem(FilesystemInterface $filesystem)
+    public function setFilesystem(Filesystem $filesystem)
     {
         $this->filesystem = $filesystem;
 
@@ -74,7 +74,7 @@ abstract class Handler
     /**
      * Retrieve the Filesystem object.
      *
-     * @return FilesystemInterface
+     * @return Filesystem
      */
     public function getFilesystem()
     {
@@ -109,22 +109,34 @@ abstract class Handler
      * Plugins pass-through.
      *
      * @param string $method
-     * @param array  $arguments
+     * @param array  $args
      *
      * @return mixed
      * @throws \BadMethodCallException
      */
-    public function __call($method, array $arguments)
+    public function __call($method, array $args)
     {
-        array_unshift($arguments, $this->path);
-        $callback = [$this->filesystem, $method];
+        array_unshift($args, $this->path);
 
         try {
-            return call_user_func_array($callback, $arguments);
+        	switch (count($args)) {
+		        case 0:
+		        	return $this->filesystem->$method();
+		        case 1:
+			        return $this->filesystem->$method($args[0]);
+		        case 2:
+			        return $this->filesystem->$method($args[0], $args[1]);
+		        case 3:
+			        return $this->filesystem->$method($args[0], $args[1], $args[2]);
+		        case 4:
+			        return $this->filesystem->$method($args[0], $args[1], $args[2], $args[3]);
+		        default:
+			        return call_user_func_array([$this->filesystem, $method], $args);
+	        }
         } catch (\BadMethodCallException $e) {
             throw new \BadMethodCallException(
                 'Call to undefined method '
-                . get_called_class()
+                . static::class
                 . '::' . $method
             );
         }

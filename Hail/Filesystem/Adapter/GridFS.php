@@ -9,6 +9,7 @@ use Hail\Filesystem\Adapter\Polyfill\{
 	StreamedReadingTrait
 };
 use Hail\Filesystem\Util;
+use InvalidArgumentException;
 use LogicException;
 use MongoGridFs;
 use MongoGridFSException;
@@ -29,10 +30,16 @@ class GridFS extends AbstractAdapter
 	/**
 	 * Constructor.
 	 *
-	 * @param MongoGridFs $client
+	 * @param array $config
+	 *
+	 * @throws InvalidArgumentException
 	 */
-	public function __construct(MongoGridFs $client)
+	public function __construct(array $config)
 	{
+		if (!isset($config['client']) || ($client = $config['client']) instanceof MongoGridFs) {
+			throw new \InvalidArgumentException('MongoGridFs client not defined');
+		}
+
 		$this->client = $client;
 	}
 

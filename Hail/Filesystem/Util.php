@@ -90,10 +90,11 @@ class Util
 			);
 		}
 
-		$normalized = preg_replace('#\\\{2,}#', '\\', trim($normalized, '\\'));
-		$normalized = preg_replace('#/{2,}#', '/', trim($normalized, '/'));
-
-		return $normalized;
+		return preg_replace(
+			['#\\\{2,}#', '#/{2,}#'],
+			['\\', '/'],
+			trim($normalized, '\\/')
+		);
 	}
 
 	/**
@@ -140,7 +141,7 @@ class Util
 	 */
 	public static function contentSize($contents)
 	{
-		return defined('MB_OVERLOAD_STRING') ? mb_strlen($contents, '8bit') : strlen($contents);
+		return mb_strlen($contents, '8bit');
 	}
 
 	/**
@@ -245,7 +246,7 @@ class Util
 
 		$parent = $object['dirname'];
 
-		while (!empty($parent) && !in_array($parent, $directories)) {
+		while (!empty($parent) && !in_array($parent, $directories, true)) {
 			$directories[] = $parent;
 			$parent = static::dirname($parent);
 		}

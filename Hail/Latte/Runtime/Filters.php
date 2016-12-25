@@ -326,11 +326,7 @@ class Filters
 		if ($length === null) {
 			$length = self::length($s);
 		}
-		if (function_exists('mb_substr')) {
-			return mb_substr($s, $start, $length, 'UTF-8'); // MB is much faster
-		}
-
-		return iconv_substr($s, $start, $length, 'UTF-8');
+		mb_substr($s, $start, $length); // MB is much faster
 	}
 
 
@@ -369,7 +365,7 @@ class Filters
 	 */
 	public static function lower($s)
 	{
-		return mb_strtolower($s, 'UTF-8');
+		return mb_strtolower($s);
 	}
 
 
@@ -380,7 +376,7 @@ class Filters
 	 */
 	public static function upper($s)
 	{
-		return mb_strtoupper($s, 'UTF-8');
+		return mb_strtoupper($s);
 	}
 
 
@@ -402,7 +398,7 @@ class Filters
 	 */
 	public static function capitalize($s)
 	{
-		return mb_convert_case($s, MB_CASE_TITLE, 'UTF-8');
+		return mb_convert_case($s, MB_CASE_TITLE);
 	}
 
 

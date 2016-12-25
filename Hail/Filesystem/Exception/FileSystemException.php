@@ -2,7 +2,7 @@
 
 namespace Hail\Filesystem\Exception;
 
-class FlySystemException extends \Exception
+class FileSystemException extends \Exception
 {
     //
 }

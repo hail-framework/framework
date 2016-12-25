@@ -14,7 +14,7 @@ trait StreamedReadingTrait
      *
      * @return array|false
      *
-     * @see Hail\Filesystem\ReadInterface::readStream()
+     * @see \Hail\Filesystem\ReadInterface::readStream()
      */
     public function readStream($path)
     {
@@ -38,7 +38,7 @@ trait StreamedReadingTrait
      *
      * @return array|false
      *
-     * @see Hail\Filesystem\ReadInterface::read()
+     * @see \Hail\Filesystem\ReadInterface::read()
      */
     abstract public function read($path);
 }

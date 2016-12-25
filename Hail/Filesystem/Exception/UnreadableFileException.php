@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Filesystem\Exception;
 
-class UnreadableFileException extends FlySystemException
+class UnreadableFileException extends FileSystemException
 {
     public static function forFileInfo(\SplFileInfo $fileInfo)
     {

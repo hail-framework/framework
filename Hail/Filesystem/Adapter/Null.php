@@ -5,7 +5,7 @@ namespace Hail\Filesystem\Adapter;
 use Hail\Filesystem\Adapter\Polyfill\StreamedCopyTrait;
 use Hail\Filesystem\Adapter\Polyfill\StreamedTrait;
 
-class NullAdapter extends AbstractAdapter
+class Null extends AbstractAdapter
 {
     use StreamedTrait;
     use StreamedCopyTrait;

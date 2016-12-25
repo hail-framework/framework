@@ -9,7 +9,7 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 use finfo as Finfo;
 use Hail\Filesystem\Exception\{
-	FlySystemException,
+	FileSystemException,
 	NotSupportedException,
 	UnreadableFileException
 };
@@ -62,18 +62,23 @@ class Local extends AbstractAdapter
 	/**
 	 * Constructor.
 	 *
-	 * @param string $root
-	 * @param int    $writeFlags
-	 * @param int    $linkHandling
-	 * @param array  $permissions
+	 * @param array $config
 	 *
 	 * @throws \LogicException
+	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($root, $writeFlags = LOCK_EX, $linkHandling = self::DISALLOW_LINKS, array $permissions = [])
+	public function __construct(array $config)
 	{
+		if (!isset($config['root'])) {
+			throw new \InvalidArgumentException('Root directory not defined.');
+		}
+
 		$this->pathSeparator = DIRECTORY_SEPARATOR;
 
+		$root = $config['root'];
 		$root = is_link($root) ? realpath($root) : $root;
+
+		$permissions = (array) $config['permissions'] ?? [];
 		$this->permissionMap = array_replace_recursive(static::$permissions, $permissions);
 		$this->ensureDirectory($root);
 
@@ -82,8 +87,9 @@ class Local extends AbstractAdapter
 		}
 
 		$this->setPathPrefix($root);
-		$this->writeFlags = $writeFlags;
-		$this->linkHandling = $linkHandling;
+
+		$this->writeFlags = $config['writeFlags'] ?? LOCK_EX;
+		$this->linkHandling = $config['linkHandling'] ?? self::DISALLOW_LINKS;
 	}
 
 	/**
@@ -93,7 +99,7 @@ class Local extends AbstractAdapter
 	 *
 	 * @return void
 	 *
-	 * @throws FlySystemException in case the root directory can not be created
+	 * @throws FileSystemException in case the root directory can not be created
 	 */
 	protected function ensureDirectory($root)
 	{
@@ -103,7 +109,7 @@ class Local extends AbstractAdapter
 			umask($umask);
 
 			if (!is_dir($root)) {
-				throw new FlySystemException(sprintf('Impossible to create the root directory "%s".', $root));
+				throw new FileSystemException('Impossible to create the root directory "' . $root . '".');
 			}
 		}
 	}

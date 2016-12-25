@@ -2,7 +2,7 @@
 
 namespace Hail\Filesystem\Exception;
 
-class FileExistsException extends FlySystemException
+class FileExistsException extends FileSystemException
 {
 	/**
 	 * @var string

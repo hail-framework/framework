@@ -5,49 +5,46 @@ namespace Hail\Filesystem\Util;
 use Hail\Filesystem\Util;
 
 /**
- * @internal
+ * Class ContentListingFormatter
+ *
+ * @package Hail\Filesystem\Util
  */
-class ContentListingFormatter
+final class ContentListingFormatter
 {
     /**
      * @var string
      */
-    private $directory;
+    private static $directory;
     /**
      * @var bool
      */
-    private $recursive;
-
-    /**
-     * @param string $directory
-     * @param bool   $recursive
-     */
-    public function __construct($directory, $recursive)
-    {
-        $this->directory = $directory;
-        $this->recursive = $recursive;
-    }
+    private static $recursive;
 
     /**
      * Format contents listing.
      *
+     * @param string $directory
+     * @param bool   $recursive
      * @param array $listing
      *
      * @return array
      */
-    public function formatListing(array $listing)
+    public static function formatListing(string $directory, bool $recursive, array $listing)
     {
-        $listing = array_values(
+	    self::$directory = $directory;
+	    self::$recursive = $recursive;
+
+    	$listing = array_values(
             array_map(
-                [$this, 'addPathInfo'],
-                array_filter($listing, [$this, 'isEntryOutOfScope'])
+                ['self', 'addPathInfo'],
+                array_filter($listing, ['self', 'isEntryOutOfScope'])
             )
         );
 
-        return $this->sortListing($listing);
+        return self::sortListing($listing);
     }
 
-    private function addPathInfo(array $entry)
+    private static function addPathInfo(array $entry)
     {
         return $entry + Util::pathinfo($entry['path']);
     }
@@ -59,17 +56,17 @@ class ContentListingFormatter
      *
      * @return bool
      */
-    private function isEntryOutOfScope(array $entry)
+    private static function isEntryOutOfScope(array $entry)
     {
         if (empty($entry['path']) && $entry['path'] !== '0') {
             return false;
         }
 
-        if ($this->recursive) {
-            return $this->residesInDirectory($entry);
+        if (self::$recursive) {
+            return self::residesInDirectory($entry);
         }
 
-        return $this->isDirectChild($entry);
+        return self::isDirectChild($entry);
     }
 
     /**
@@ -79,13 +76,13 @@ class ContentListingFormatter
      *
      * @return bool
      */
-    private function residesInDirectory(array $entry)
+    private static function residesInDirectory(array $entry)
     {
-        if ($this->directory === '') {
+        if (self::$directory === '') {
             return true;
         }
 
-        return strpos($entry['path'], $this->directory . '/') === 0;
+        return strpos($entry['path'], self::$directory . '/') === 0;
     }
 
     /**
@@ -95,9 +92,9 @@ class ContentListingFormatter
      *
      * @return bool
      */
-    private function isDirectChild(array $entry)
+    private static function isDirectChild(array $entry)
     {
-        return Util::dirname($entry['path']) === $this->directory;
+        return Util::dirname($entry['path']) === self::$directory;
     }
 
     /**
@@ -105,7 +102,7 @@ class ContentListingFormatter
      *
      * @return array
      */
-    private function sortListing(array $listing)
+    private static function sortListing(array $listing)
     {
         usort(
             $listing,

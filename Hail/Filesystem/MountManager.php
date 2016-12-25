@@ -2,10 +2,9 @@
 
 namespace Hail\Filesystem;
 
+use Hail\Filesystem\Exception\FileNotFoundException;
 use InvalidArgumentException;
 use LogicException;
-use Hail\Filesystem\Exception\PluginNotFoundException;
-use Hail\Filesystem\Plugin\PluggableTrait;
 
 
 /**
@@ -29,8 +28,6 @@ use Hail\Filesystem\Plugin\PluggableTrait;
  * @method bool delete($path)
  * @method bool deleteDir($dirname)
  * @method bool createDir($dirname, $config = [])
- * @method array listFiles($directory = '', $recursive = false)
- * @method array listPaths($directory = '', $recursive = false)
  * @method array getWithMetadata($path, array $metadata)
  * @method string|false getMimetype($path)
  * @method string|false getTimestamp($path)
@@ -42,11 +39,10 @@ use Hail\Filesystem\Plugin\PluggableTrait;
  * @method Filesystem flushCache()
  * @method void assertPresent($path)
  * @method void assertAbsent($path)
- * @method Filesystem addPlugin(PluginInterface $plugin)
  */
 class MountManager
 {
-	use PluggableTrait;
+	use PluginTrait;
 
 	/**
 	 * @var array
@@ -57,6 +53,8 @@ class MountManager
 	 * Constructor.
 	 *
 	 * @param array $filesystems
+	 *
+	 * @throws InvalidArgumentException
 	 */
 	public function __construct(array $filesystems = [])
 	{
@@ -69,6 +67,7 @@ class MountManager
 	 * @param array $filesystems [:prefix => Filesystem,]
 	 *
 	 * @return $this
+	 * @throws InvalidArgumentException
 	 */
 	public function mountFilesystems(array $filesystems)
 	{
@@ -82,16 +81,17 @@ class MountManager
 	/**
 	 * Mount filesystems.
 	 *
-	 * @param string              $prefix
-	 * @param FilesystemInterface $filesystem
+	 * @param string           $prefix
+	 * @param array|Filesystem $filesystem
 	 *
 	 * @return $this
 	 * @throws InvalidArgumentException
 	 */
-	public function mountFilesystem($prefix, FilesystemInterface $filesystem)
+	public function mountFilesystem(string $prefix, $filesystem)
 	{
-		if (!is_string($prefix)) {
-			throw new InvalidArgumentException(__METHOD__ . ' expects argument #1 to be a string.');
+		if (is_array($filesystem)) {
+			$filesystem = new Filesystem($filesystem);
+
 		}
 
 		$this->filesystems[$prefix] = $filesystem;
@@ -104,7 +104,7 @@ class MountManager
 	 *
 	 * @param string $prefix
 	 *
-	 * @return FilesystemInterface
+	 * @return Filesystem
 	 * @throws LogicException
 	 */
 	public function getFilesystem($prefix)
@@ -176,9 +176,24 @@ class MountManager
 	 */
 	public function __call($method, $arguments)
 	{
-		list($prefix, $arguments) = $this->filterPrefix($arguments);
+		list($prefix, $args) = $this->filterPrefix($arguments);
 
-		return $this->invokePluginOnFilesystem($method, $arguments, $prefix);
+		$fs = $this->getFilesystem($prefix);
+
+		switch (count($args)) {
+			case 0:
+				return $fs->$method();
+			case 1:
+				return $fs->$method($args[0]);
+			case 2:
+				return $fs->$method($args[0], $args[1]);
+			case 3:
+				return $fs->$method($args[0], $args[1], $args[2]);
+			case 4:
+				return $fs->$method($args[0], $args[1], $args[2], $args[3]);
+			default:
+				return call_user_func_array([$fs, $method], $args);
+		}
 	}
 
 	/**
@@ -193,7 +208,7 @@ class MountManager
 		list($prefixFrom, $arguments) = $this->filterPrefix([$from]);
 
 		$fsFrom = $this->getFilesystem($prefixFrom);
-		$buffer = call_user_func_array([$fsFrom, 'readStream'], $arguments);
+		$buffer = $fsFrom->readStream($arguments[0]);
 
 		if ($buffer === false) {
 			return false;
@@ -202,7 +217,7 @@ class MountManager
 		list($prefixTo, $arguments) = $this->filterPrefix([$to]);
 
 		$fsTo = $this->getFilesystem($prefixTo);
-		$result = call_user_func_array([$fsTo, 'writeStream'], array_merge($arguments, [$buffer, $config]));
+		$result = $fsTo->writeStream($arguments[0], $buffer, $config);
 
 		if (is_resource($buffer)) {
 			fclose($buffer);
@@ -212,7 +227,7 @@ class MountManager
 	}
 
 	/**
-	 * List with plugin adapter.
+	 * List contents with metadata.
 	 *
 	 * @param array  $keys
 	 * @param string $directory
@@ -223,10 +238,9 @@ class MountManager
 	public function listWith(array $keys = [], $directory = '', $recursive = false)
 	{
 		list($prefix, $arguments) = $this->filterPrefix([$directory]);
-		$directory = $arguments[0];
-		$arguments = [$keys, $directory, $recursive];
+		$fs = $this->getFilesystem($prefix);
 
-		return $this->invokePluginOnFilesystem('listWith', $arguments, $prefix);
+		return $fs->listWith($keys, $arguments[0], $recursive);
 	}
 
 	/**
@@ -250,26 +264,25 @@ class MountManager
 	}
 
 	/**
-	 * Invoke a plugin on a filesystem mounted on a given prefix.
+	 * Renames a file, overwriting the destination if it exists.
 	 *
-	 * @param $method
-	 * @param $arguments
-	 * @param $prefix
+	 * @param string $path    Path to the existing file.
+	 * @param string $newpath The new path of the file.
 	 *
-	 * @return mixed
+	 * @return bool True on success, false on failure.
+	 * @throws FileNotFoundException Thrown if $path does not exist.
 	 */
-	public function invokePluginOnFilesystem($method, $arguments, $prefix)
+	public function forceRename(string $path, string $newpath)
 	{
-		$filesystem = $this->getFilesystem($prefix);
-
-		try {
-			return $this->invokePlugin($method, $arguments, $filesystem);
-		} catch (PluginNotFoundException $e) {
-			// Let it pass, it's ok, don't panic.
+		$deleted = true;
+		if ($this->has($newpath)) {
+			$deleted = $this->delete($newpath);
 		}
 
-		$callback = [$filesystem, $method];
+		if ($deleted) {
+			return $this->move($path, $newpath);
+		}
 
-		return call_user_func_array($callback, $arguments);
+		return false;
 	}
 }

@@ -32,6 +32,18 @@ class Bootstrap
 			return;
 		}
 
+		if (!extension_loaded('mbstring')) {
+			throw new \RuntimeException('Must be enabled mbstring extension');
+		}
+
+		if (mb_internal_encoding() !== 'UTF-8') {
+			mb_internal_encoding('UTF-8');
+		}
+
+		if ((ini_get('mbstring.func_overload') & MB_OVERLOAD_STRING) !== 0) {
+			ini_set('mbstring.func_overload', '0');
+		}
+
 		$hailPath = substr(__DIR__, 0, -4);
 		if (!defined('HAIL_PATH')) {
 			define('HAIL_PATH', $hailPath);
@@ -40,6 +52,7 @@ class Bootstrap
 		}
 
 		Alias::register();
+
 
 		date_default_timezone_set(
 			Config::get('app.timezone')

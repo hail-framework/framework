@@ -4,6 +4,8 @@ namespace Hail\Filesystem\Adapter;
 
 use Hail\Filesystem\AdapterInterface;
 use Hail\Filesystem\Exception\FileNotFoundException;
+use Hail\Filesystem\Filesystem;
+use InvalidArgumentException;
 
 class FallbackAdapter implements AdapterInterface
 {
@@ -25,15 +27,19 @@ class FallbackAdapter implements AdapterInterface
 	/**
 	 * Constructor.
 	 *
-	 * @param AdapterInterface $mainAdapter
-	 * @param AdapterInterface $fallback
-	 * @param boolean          $forceCopyOnMain
+	 * @param array $config
+	 * @throws InvalidArgumentException
 	 */
-	public function __construct(AdapterInterface $mainAdapter, AdapterInterface $fallback, $forceCopyOnMain = false)
+	public function __construct(array $config)
 	{
-		$this->mainAdapter = $mainAdapter;
-		$this->fallback = $fallback;
-		$this->forceCopyOnMain = $forceCopyOnMain;
+		if (!isset($config['main'], $config['fallback'])) {
+			throw new InvalidArgumentException('Fallback file system not defined');
+		}
+
+		$this->mainAdapter = new Filesystem($config['main']);
+		$this->fallback = new Filesystem($config['fallback']);
+
+		$this->forceCopyOnMain = (bool) $config['forceCopyOnMain'] ?? false;
 	}
 
 	/**

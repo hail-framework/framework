@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Filesystem\Exception;
 
-class FileNotFoundException extends FlySystemException
+class FileNotFoundException extends FileSystemException
 {
 	/**
 	 * @var string

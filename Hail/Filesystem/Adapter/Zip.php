@@ -30,15 +30,19 @@ class Zip extends AbstractAdapter
 	protected $archive;
 
 	/**
-	 * @param             $location
-	 * @param ZipArchive  $archive
-	 * @param string|null $prefix
+	 * @param array $config
+	 *
+	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($location, ZipArchive $archive = null, $prefix = null)
+	public function __construct(array $config)
 	{
-		$this->setArchive($archive ?: new ZipArchive());
-		$this->openArchive($location);
-		$this->setPathPrefix($prefix);
+		if (!isset($config['file'])) {
+			throw new \InvalidArgumentException('Zip file not defined');
+		}
+
+		$this->archive = new ZipArchive();
+		$this->openArchive($config['file']);
+		$this->setPathPrefix($config['prefix'] ?? null);
 	}
 
 	/**
@@ -49,16 +53,6 @@ class Zip extends AbstractAdapter
 		$path = $this->archive->filename;
 		$this->archive->close();
 		$this->openArchive($path);
-	}
-
-	/**
-	 * ZipArchive setter.
-	 *
-	 * @param ZipArchive $archive
-	 */
-	public function setArchive(ZipArchive $archive)
-	{
-		$this->archive = $archive;
 	}
 
 	/**
