@@ -6,7 +6,10 @@ use Hail\DI\Exception\{
 	ContainerException,
 	NotFoundException
 };
-use Hail\Facades\Facade;
+use Hail\Facades\{
+	Facade,
+	DI
+};
 use Hail\Util\ArrayTrait;
 use Psr\Container\ContainerInterface;
 
@@ -23,18 +26,12 @@ class Container implements \ArrayAccess, ContainerInterface
 	private $raw = [];
 
 	/**
-	 * Instantiate the container.
-	 *
-	 * Objects and parameters can be passed as argument to the constructor.
-	 *
-	 * @param array $values The parameters or objects.
-	 *
-	 * @throws ContainerException
+	 * @param array $values.
 	 */
 	public function __construct(array $values = [])
 	{
 		foreach ($values as $key => $value) {
-			$this->set($key, $value);
+			$this->values[$key] = $value;
 		}
 	}
 
@@ -66,10 +63,8 @@ class Container implements \ArrayAccess, ContainerInterface
 	{
 		if ($id === 'di') {
 			return $this;
-		}
-
-		if (!isset($this->values[$id])) {
-			throw new NotFoundException(sprintf('Identifier "%s" is not defined.', $id));
+		} elseif (!isset($this->values[$id])) {
+			throw new NotFoundException('Identifier "' . $id . '" is not defined.');
 		}
 
 		if (isset($this->raw[$id])) {
@@ -77,7 +72,10 @@ class Container implements \ArrayAccess, ContainerInterface
 		}
 
 		$val = $raw = $this->values[$id];
-		if ($this->isFacade($raw)) {
+		if (is_string($raw) &&
+			strpos($raw, '\\Hail\\Facades\\') === 0 &&
+			class_exists($raw)
+		) {
 			/** @var Facade $raw */
 			$val = $raw::getInstance();
 		} elseif (is_callable($raw)) {
@@ -87,13 +85,6 @@ class Container implements \ArrayAccess, ContainerInterface
 		$this->raw[$id] = $raw;
 
 		return $this->values[$id] = $val;
-	}
-
-	public function isFacade($raw)
-	{
-		return is_string($raw) &&
-		strpos($raw, '\\Hail\\Facades\\') === 0 &&
-		class_exists($raw);
 	}
 
 	public function has($id)
@@ -108,9 +99,7 @@ class Container implements \ArrayAccess, ContainerInterface
 	 */
 	public function delete($id)
 	{
-		if (isset($this->values[$id])) {
-			unset($this->values[$id], $this->raw[$id]);
-		}
+		unset($this->values[$id], $this->raw[$id]);
 	}
 
 	/**
@@ -125,9 +114,9 @@ class Container implements \ArrayAccess, ContainerInterface
 	public function raw($id)
 	{
 		if ($id === 'di') {
-			return '\\Hail\\Facades\\DI';
+			return '\\' . DI::class;
 		} elseif (!isset($this->values[$id])) {
-			throw new NotFoundException(sprintf('Identifier "%s" is not defined.', $id));
+			throw new NotFoundException('Identifier "' . $id . '" is not defined.');
 		}
 
 		if (isset($this->raw[$id])) {
