@@ -2,7 +2,7 @@
 
 namespace Hail\Excel\Common\Escaper;
 
-use Hail\Util\Singleton;
+use Hail\Util\SingletonTrait;
 
 /**
  * Class XLSX
@@ -12,7 +12,7 @@ use Hail\Util\Singleton;
  */
 class XLSX implements EscaperInterface
 {
-    use Singleton;
+    use SingletonTrait;
 
     /** @var string Regex pattern to detect control characters that need to be escaped */
     protected $escapableControlCharactersPattern;

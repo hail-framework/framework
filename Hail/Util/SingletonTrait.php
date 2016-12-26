@@ -3,12 +3,12 @@
 namespace Hail\Util;
 
 /**
- * Class Singleton
+ * Class SingletonTrait
  * Defines a class as a singleton.
  *
  * @package Hail\Util
  */
-trait Singleton
+trait SingletonTrait
 {
 	protected static $instance;
 

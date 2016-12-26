@@ -17,7 +17,7 @@ use InvalidArgumentException;
  */
 class Generators
 {
-	use Singleton;
+	use SingletonTrait;
 
 	/**
 	 * When this namespace is specified, the name string is a fully-qualified domain name.

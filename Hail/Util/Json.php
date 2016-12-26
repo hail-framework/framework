@@ -5,7 +5,7 @@ use Hail\Exception\JsonException;
 
 class Json
 {
-	use Singleton;
+	use SingletonTrait;
 
 	/**
 	 * Encodes the given value into a JSON string.

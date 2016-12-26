@@ -9,7 +9,7 @@ namespace Hail\Util;
  */
 class Arrays
 {
-	use Singleton;
+	use SingletonTrait;
 
 	/**
 	 * Convert array to ArrayDot

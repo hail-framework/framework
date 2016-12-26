@@ -12,7 +12,7 @@ use InvalidArgumentException;
  */
 class Validator
 {
-	use Singleton;
+	use SingletonTrait;
 
 	/**
 	 * @var string

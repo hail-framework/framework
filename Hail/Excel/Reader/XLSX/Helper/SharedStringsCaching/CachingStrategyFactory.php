@@ -2,7 +2,7 @@
 
 namespace Hail\Excel\Reader\XLSX\Helper\SharedStringsCaching;
 
-use Hail\Util\Singleton;
+use Hail\Util\SingletonTrait;
 
 /**
  * Class CachingStrategyFactory
@@ -11,7 +11,7 @@ use Hail\Util\Singleton;
  */
 class CachingStrategyFactory
 {
-	use Singleton;
+	use SingletonTrait;
 
     /**
      * The memory amount needed to store a string was obtained empirically from this data:

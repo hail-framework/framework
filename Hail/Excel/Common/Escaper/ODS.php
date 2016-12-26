@@ -2,7 +2,7 @@
 
 namespace Hail\Excel\Common\Escaper;
 
-use Hail\Util\Singleton;
+use Hail\Util\SingletonTrait;
 
 /**
  * Class ODS
@@ -12,7 +12,7 @@ use Hail\Util\Singleton;
  */
 class ODS implements EscaperInterface
 {
-    use Singleton;
+    use SingletonTrait;
 
     /**
      * Escapes the given string to make it compatible with XLSX

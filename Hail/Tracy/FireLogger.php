@@ -6,7 +6,7 @@
  */
 
 namespace Hail\Tracy;
-use Hail\Util\Singleton;
+use Hail\Util\SingletonTrait;
 
 
 /**
@@ -16,7 +16,7 @@ use Hail\Util\Singleton;
  */
 class FireLogger implements LoggerInterface
 {
-	use Singleton;
+	use SingletonTrait;
 
 	/** @var int */
 	public $maxDepth = 3;
