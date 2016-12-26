@@ -51,13 +51,18 @@ class Config implements \ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	public function get($key)
+	public function get(string $key)
 	{
 		if (isset($this->items[$key])) {
 			return $this->items[$key];
+		} elseif ($key === '' || $key === '.') {
+			return null;
 		}
 
-		$space = explode('.', $key)[0];
+		$space = $key[0] === '.' ?
+			'.' . explode('.', $key)[1] :
+			explode('.', $key)[0];
+
 		if (isset($this->items[$space])) {
 			return null;
 		}

@@ -238,7 +238,7 @@ abstract class Driver
 		$this->database = (int) ($config['database'] ?? 0);
 		$this->readTimeout = (int) ($config['readTimeout'] ?? null);
 
-		$this->sageStorage = new SafeStorage();
+		$this->safeStorage = new SafeStorage();
 		$this->setPassword($config['password'] ?? null);
 
 		if (preg_match('#^(tcp|unix)://(.*)$#', $this->host, $matches)) {
