@@ -5,7 +5,9 @@ namespace Hail\Filesystem\Util;
 use finfo as Finfo;
 
 /**
- * @internal
+ * Class MimeType
+ *
+ * @package Hail\Filesystem\Util
  */
 class MimeType
 {

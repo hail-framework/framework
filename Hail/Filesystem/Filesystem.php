@@ -3,8 +3,7 @@
 namespace Hail\Filesystem;
 
 use Hail\Filesystem\Exception\{
-	FileNotFoundException,
-	RootViolationException
+	FileExistsException, FileNotFoundException, RootViolationException
 };
 use InvalidArgumentException;
 use Hail\Filesystem\Util\ContentListingFormatter;
@@ -98,6 +97,7 @@ class Filesystem
 	 */
 	public function write($path, $contents, array $config = [])
 	{
+		$this->assertAbsent($path);
 		$path = Util::normalizePath($path);
 		$config += $this->config;
 
@@ -121,6 +121,7 @@ class Filesystem
 			throw new InvalidArgumentException(__METHOD__ . ' expects argument #2 to be a valid resource.');
 		}
 
+		$this->assertAbsent($path);
 		$path = Util::normalizePath($path);
 		$config += $this->config;
 
@@ -184,9 +185,11 @@ class Filesystem
 	 * @param string $path The path to the file.
 	 *
 	 * @return string|false The file contents, or false on failure.
+	 * @throws FileNotFoundException
 	 */
 	public function readAndDelete($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		$contents = $this->read($path);
 
@@ -206,17 +209,13 @@ class Filesystem
 	 * @param string $contents The file contents.
 	 * @param array  $config   An optional configuration array.
 	 *
-	 * @throws FileNotFoundException
-	 *
 	 * @return bool True on success, false on failure.
+	 * @throws FileNotFoundException
 	 */
 	public function update($path, $contents, array $config = [])
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
-		if (!$this->has($path)) {
-			throw new FileNotFoundException($path);
-		}
-
 		$config += $this->config;
 
 		return (bool) $this->adapter->update($path, $contents, $config);
@@ -240,11 +239,8 @@ class Filesystem
 			throw new InvalidArgumentException(__METHOD__ . ' expects argument #2 to be a valid resource.');
 		}
 
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
-		if (!$this->has($path)) {
-			throw new FileNotFoundException($path);
-		}
-
 		$config += $this->config;
 		Util::rewindStream($resource);
 
@@ -257,9 +253,11 @@ class Filesystem
 	 * @param string $path The path to the file.
 	 *
 	 * @return string|false The file contents or false on failure.
+	 * @throws FileNotFoundException
 	 */
 	public function read($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		if (!($object = $this->adapter->read($path))) {
 			return false;
@@ -274,9 +272,11 @@ class Filesystem
 	 * @param string $path The path to the file.
 	 *
 	 * @return resource|false The path resource or false on failure.
+	 * @throws FileNotFoundException
 	 */
 	public function readStream($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		if (!$object = $this->adapter->readStream($path)) {
 			return false;
@@ -292,9 +292,13 @@ class Filesystem
 	 * @param string $newpath The new path of the file.
 	 *
 	 * @return bool True on success, false on failure.
+	 * @throws FileExistsException   Thrown if $newpath exists.
+	 * @throws FileNotFoundException Thrown if $path does not exist.
 	 */
 	public function rename($path, $newpath)
 	{
+		$this->assertPresent($path);
+		$this->assertAbsent($newpath);
 		$path = Util::normalizePath($path);
 		$newpath = Util::normalizePath($newpath);
 
@@ -308,9 +312,13 @@ class Filesystem
 	 * @param string $newpath The new path of the file.
 	 *
 	 * @return bool True on success, false on failure.
+	 * @throws FileExistsException   Thrown if $newpath exists.
+	 * @throws FileNotFoundException Thrown if $path does not exist.
 	 */
 	public function copy($path, $newpath)
 	{
+		$this->assertPresent($path);
+		$this->assertAbsent($newpath);
 		$path = Util::normalizePath($path);
 		$newpath = Util::normalizePath($newpath);
 
@@ -326,6 +334,7 @@ class Filesystem
 	 */
 	public function delete($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 
 		return $this->adapter->delete($path);
@@ -394,6 +403,7 @@ class Filesystem
 	 */
 	public function getMimetype($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		if (!$object = $this->adapter->getMimetype($path)) {
 			return false;
@@ -413,6 +423,7 @@ class Filesystem
 	 */
 	public function getTimestamp($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		if (!$object = $this->adapter->getTimestamp($path)) {
 			return false;
@@ -432,6 +443,7 @@ class Filesystem
 	 */
 	public function getVisibility($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 		if (($object = $this->adapter->getVisibility($path)) === false) {
 			return false;
@@ -484,6 +496,7 @@ class Filesystem
 	 */
 	public function getMetadata($path)
 	{
+		$this->assertPresent($path);
 		$path = Util::normalizePath($path);
 
 		return $this->adapter->getMetadata($path);
@@ -608,5 +621,37 @@ class Filesystem
 		$object[$key] = $this->{$method}($object['path']);
 
 		return $object;
+	}
+
+	/**
+	 * Assert a file is present.
+	 *
+	 * @param string $path path to file
+	 *
+	 * @throws FileNotFoundException
+	 *
+	 * @return void
+	 */
+	public function assertPresent($path)
+	{
+		if ($this->getConfig('disable_asserts', false) === false && !$this->has($path)) {
+			throw new FileNotFoundException($path);
+		}
+	}
+
+	/**
+	 * Assert a file is absent.
+	 *
+	 * @param string $path path to file
+	 *
+	 * @throws FileExistsException
+	 *
+	 * @return void
+	 */
+	public function assertAbsent($path)
+	{
+		if ($this->getConfig('disable_asserts', false) === false && $this->has($path)) {
+			throw new FileExistsException($path);
+		}
 	}
 }

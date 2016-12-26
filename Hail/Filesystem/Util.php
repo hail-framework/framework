@@ -7,6 +7,8 @@ use LogicException;
 
 class Util
 {
+	protected static $normalizePath;
+
 	/**
 	 * Get normalized pathinfo.
 	 *
@@ -80,6 +82,10 @@ class Util
 	 */
 	public static function normalizePath($path)
 	{
+		if (isset(self::$normalizePath[$path])) {
+			return self::$normalizePath[$path];
+		}
+
 		// Remove any kind of funky unicode whitespace
 		$normalized = preg_replace('#\p{C}+|^\./#u', '', $path);
 		$normalized = static::normalizeRelativePath($normalized);
@@ -90,7 +96,7 @@ class Util
 			);
 		}
 
-		return preg_replace(
+		return self::$normalizePath[$path] = preg_replace(
 			['#\\\{2,}#', '#/{2,}#'],
 			['\\', '/'],
 			trim($normalized, '\\/')
