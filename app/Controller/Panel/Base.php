@@ -13,14 +13,5 @@ use Hail\Controller;
 
 abstract class Base extends Controller
 {
-	public function error($no, $msg = null)
-	{
-		return $this->dispatcher->forward([
-			'controller' => 'Error',
-			'params' => [
-				'error' => $no,
-				'message' => $msg,
-			],
-		]);
-	}
+
 }
