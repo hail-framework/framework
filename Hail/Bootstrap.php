@@ -72,7 +72,7 @@ class Bootstrap
 		I18N::init(
 			SYSTEM_PATH . 'lang/',
 			Config::get('app.i18n.domain'),
-			Config::get('app.i18n.local')
+			Config::get('app.i18n.locale')
 		);
 
 		self::$inited = true;
