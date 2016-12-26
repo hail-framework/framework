@@ -95,7 +95,7 @@ class Config implements \ArrayAccess
 
 		$check = [$sysFile, $baseFile];
 
-		if (($config = $this->optimizeGet($space, $check)) !== false) {
+		if (($config = static::optimizeGet($space, $check)) !== false) {
 			return $config;
 		}
 
@@ -113,7 +113,7 @@ class Config implements \ArrayAccess
 			$config += require $baseFile;
 		}
 
-		$this->optimizeSet($space, $config, $check);
+		static::optimizeSet($space, $config, $check);
 
 		return $config;
 	}

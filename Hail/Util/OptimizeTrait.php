@@ -5,30 +5,31 @@ defined('HAIL_OPTIMIZE_CHECK_DELAY') || define('HAIL_OPTIMIZE_CHECK_DELAY', 5);
 
 trait OptimizeTrait
 {
-	protected function optimizeGet($key, $file = null)
+	protected static function optimizeGet($key, $file = null)
 	{
+		$prefix = static::class;
 		if (HAIL_OPTIMIZE_CHECK_DELAY > 0 && $file !== null) {
 			$time = $key . '|time';
-			$check = Optimize::get(__CLASS__, $time);
+			$check = Optimize::get($prefix, $time);
 			if ($check !== false && NOW >= ($check[0] + HAIL_OPTIMIZE_CHECK_DELAY)) {
-				if ($this->optimizeVerifyMTime($file, $check[1])) {
+				if (static::optimizeVerifyMTime($file, $check[1])) {
 					return false;
 				}
 
 				$check[0] = NOW;
-				Optimize::set(__CLASS__, $time, $check);
+				Optimize::set($prefix, $time, $check);
 			}
 		}
 
 		return Optimize::get(
-			__CLASS__, $key
+			$prefix, $key
 		);
 	}
 
-	protected function optimizeSet($key, $value = null, $file = null)
+	protected static function optimizeSet($key, $value = null, $file = null)
 	{
 		if ($file !== null) {
-			$mtime = $this->optimizeFileMTime($file);
+			$mtime = static::optimizeFileMTime($file);
 			if ($mtime !== []) {
 				$key = [
 					$key => $value,
@@ -39,16 +40,16 @@ trait OptimizeTrait
 
 		if (is_array($key)) {
 			return Optimize::setMultiple(
-				__CLASS__, $key
+				static::class, $key
 			);
 		}
 
 		return Optimize::set(
-			__CLASS__, $key, $value
+			static::class, $key, $value
 		);
 	}
 
-	protected function optimizeVerifyMTime($file, $check)
+	protected static function optimizeVerifyMTime($file, $check)
 	{
 		$file = array_unique((array) $file);
 
@@ -65,7 +66,7 @@ trait OptimizeTrait
 		return false;
 	}
 
-	protected function optimizeFileMTime($file)
+	protected static function optimizeFileMTime($file)
 	{
 		$file = array_unique((array) $file);
 

@@ -18,6 +18,6 @@ class I18N extends Facade
 {
 	protected static function instance()
 	{
-		return new Hail\I18N\Gettext();
+		return new Hail\I18N\I18N();
 	}
 }

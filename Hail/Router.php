@@ -78,9 +78,9 @@ class Router
 	protected function addRoutes($config)
 	{
 		$sign = hash('sha256', Serialize::encode($config));
-		$check = $this->optimizeGet('routesSign');
+		$check = static::optimizeGet('routesSign');
 		if ($check === $sign) {
-			$this->routes = $this->optimizeGet('routes');
+			$this->routes = static::optimizeGet('routes');
 
 			return;
 		}
@@ -109,7 +109,7 @@ class Router
 			}
 		}
 
-		$this->optimizeSet([
+		static::optimizeSet([
 			'routes' => $this->routes,
 			'routesSign' => $sign,
 		]);

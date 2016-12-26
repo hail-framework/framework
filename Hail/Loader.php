@@ -95,13 +95,6 @@ class Loader
 					$prefix . str_replace($path, '', substr($file, 0, -4))
 				);
 
-				if (in_array($class, [
-					'Hail\\I18N\\GettextExt',
-					'Hail\\I18N\\GettextPhp',
-				], true)) {
-					continue;
-				}
-
 				$map[$class] = realpath($file);
 			}
 		}
