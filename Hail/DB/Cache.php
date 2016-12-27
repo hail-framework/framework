@@ -56,7 +56,7 @@ class Cache
 	{
 		$key = $this->key($name, $arguments);
 
-		$result = SimpleCache::fetch($key);
+		$result = SimpleCache::get($key);
 		if (!$result) {
 			if ($name === 'get' || $name === 'select') {
 				switch (count($arguments)) {
@@ -80,7 +80,7 @@ class Cache
 				throw new InvalidArgumentException('Cache only support select/get method');
 			}
 
-			SimpleCache::save($key, $result, $this->lifetime);
+			SimpleCache::set($key, $result, $this->lifetime);
 		}
 
 		$this->reset();
