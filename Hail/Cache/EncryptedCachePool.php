@@ -28,13 +28,13 @@ class EncryptedCachePool implements CacheItemPoolInterface
     private $cachePool;
 
     /**
-     * @type Key
+     * @type string
      */
     private $key;
 
     /**
      * @param CacheItemPoolInterface $cachePool
-     * @param Key                    $key
+     * @param string                    $key
      */
     public function __construct(CacheItemPoolInterface $cachePool, string $key)
     {

@@ -17,39 +17,34 @@ use Hail\Cache\Exception\CachePoolException;
 use Hail\Cache\Exception\InvalidArgumentException;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * @author Aaron Scherer <aequasi@gmail.com>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-abstract class AbstractCachePool implements CacheItemPoolInterface, LoggerAwareInterface
+abstract class AbstractCachePool implements CacheItemPoolInterface
 {
-    /**
-     * @type LoggerInterface
-     */
-    private $logger;
-
     /**
      * @type CacheItemInterface[] deferred
      */
     protected $deferred = [];
 
     /**
-     * @param CacheItemInterface $item
-     * @param int|null           $ttl  seconds from now
+     * @param PhpCacheItem $item
+     * @param int|null     $ttl  seconds from now
      *
      * @return bool true if saved
      */
-    abstract protected function storeItemInCache(CacheItemInterface $item, $ttl);
+    abstract protected function storeItemInCache(PhpCacheItem $item, $ttl);
 
     /**
      * Fetch an object from the cache implementation.
      *
+     * If it is a cache miss, it MUST return [false, null, [], null]
+     *
      * @param string $key
      *
-     * @return array with [isHit, value, [tags]]
+     * @return array with [isHit, value, tags[], expirationTimestamp]
      */
     abstract protected function fetchObjectFromCache($key);
 
@@ -178,13 +173,14 @@ abstract class AbstractCachePool implements CacheItemPoolInterface, LoggerAwareI
     public function save(CacheItemInterface $item)
     {
         $timeToLive = null;
-        if ($item instanceof HasExpirationDateInterface) {
-            if (null !== $expirationDate = $item->getExpirationDate()) {
-                $timeToLive = $expirationDate->getTimestamp() - time();
+        if (
+        	$item instanceof HasExpirationTimestampInterface &&
+	        null !== $timestamp = $item->getExpirationTimestamp()
+        ) {
+            $timeToLive = $timestamp - time();
 
-                if ($timeToLive < 0) {
-                    return $this->deleteItem($item->getKey());
-                }
+            if ($timeToLive < 0) {
+                return $this->deleteItem($item->getKey());
             }
         }
 
@@ -243,28 +239,6 @@ abstract class AbstractCachePool implements CacheItemPoolInterface, LoggerAwareI
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
-     * Logs with an arbitrary level if the logger exists.
-     *
-     * @param mixed  $level
-     * @param string $message
-     * @param array  $context
-     */
-    protected function log($level, $message, array $context = [])
-    {
-        if ($this->logger !== null) {
-            $this->logger->log($level, $message, $context);
-        }
-    }
-
-    /**
      * Log exception and rethrow it.
      *
      * @param \Exception $e
@@ -274,14 +248,8 @@ abstract class AbstractCachePool implements CacheItemPoolInterface, LoggerAwareI
      */
     private function handleException(\Exception $e, $function)
     {
-        $level = 'alert';
-        if ($e instanceof InvalidArgumentException) {
-            $level = 'warning';
-        }
-
-        $this->log($level, $e->getMessage(), ['exception' => $e]);
         if (!$e instanceof CacheException) {
-            $e = new CachePoolException(sprintf('Exception thrown when executing "%s". ', $function), 0, $e);
+            $e = new CachePoolException('Exception thrown when executing "' . $function . '". ', 0, $e);
         }
 
         throw $e;

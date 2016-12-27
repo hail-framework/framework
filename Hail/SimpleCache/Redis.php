@@ -1,7 +1,6 @@
 <?php
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 use Hail\Facades\{
 	Config,
 	Serialize
@@ -16,7 +15,7 @@ use Hail\Redis\{
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Redis extends Driver
+class Redis extends AbtractDriver
 {
 	/**
 	 * @var \Hail\Redis\Driver|null
@@ -27,11 +26,12 @@ class Redis extends Driver
 	 * Redis constructor.
 	 *
 	 * @param array $params
+	 *
 	 * @throws RedisException
 	 */
 	public function __construct(array $params)
 	{
-		$params +=  Config::get('redis');
+		$params += Config::get('redis');
 
 		$this->redis = RedisFactory::client($params);
 
@@ -41,32 +41,34 @@ class Redis extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doGet(string $key)
 	{
-		return Serialize::decode(
-			$this->redis->get($id)
-		);
+		$value = $this->redis->get($key);
+		if ($value === false) {
+			return null;
+		}
+
+		return Serialize::decode($value);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
 		$success = true;
 
-		$lifetime = (int) $lifetime;
-		if ($lifetime > 0) {
+		if ($ttl > 0) {
 			// Keys have lifetime, use SETEX for each of them
-			foreach ($keysAndValues as $key => $value) {
-				if (!$this->redis->setEx($key, $lifetime, Serialize::encode($value))) {
+			foreach ($values as $key => $value) {
+				if (!$this->redis->setEx($key, $ttl, Serialize::encode($value))) {
 					$success = false;
 				}
 			}
 		} else {
 			// No lifetime, use MSET
 			$success = $this->redis->mSet(
-				Serialize::encodeArray($keysAndValues)
+				Serialize::encodeArray($values)
 			);
 		}
 
@@ -76,7 +78,7 @@ class Redis extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		$fetchedItems = array_combine($keys, $this->redis->mGet($keys));
 
@@ -94,54 +96,39 @@ class Redis extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
-		return $this->redis->exists($id);
+		return $this->redis->exists($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		$data = Serialize::encode($data);
-		if ($lifetime > 0) {
-			return $this->redis->setEx($id, $lifetime, $data);
+		$data = Serialize::encode($value);
+		if ($ttl > 0) {
+			return $this->redis->setEx($key, $ttl, $data);
 		} else {
-			return $this->redis->set($id, $data);
+			return $this->redis->set($key, $data);
 		}
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
-		$return = $this->redis->del($id);
+		$return = $this->redis->del($key);
+
 		return $return >= 0;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		return $this->redis->flushDb();
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		$info = $this->redis->info();
-
-		return [
-			Driver::STATS_HITS => $info['keyspace_hits'],
-			Driver::STATS_MISSES => $info['keyspace_misses'],
-			Driver::STATS_UPTIME => $info['uptime_in_seconds'],
-			Driver::STATS_MEMORY_USAGE => $info['used_memory'],
-			Driver::STATS_MEMORY_AVAILABLE => false,
-		];
 	}
 }

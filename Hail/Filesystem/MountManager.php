@@ -91,7 +91,6 @@ class MountManager
 	{
 		if (is_array($filesystem)) {
 			$filesystem = new Filesystem($filesystem);
-
 		}
 
 		$this->filesystems[$prefix] = $filesystem;

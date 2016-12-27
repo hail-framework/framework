@@ -17,65 +17,61 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 
 /**
- * Void cache driver. The cache could be of use in tests where you don`t need to cache anything.
+ * Zend Data Cache cache driver.
  *
  * @link   www.doctrine-project.org
- * @since  1.5
- * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
+ * @since  2.0
+ * @author Ralph Schindler <ralph.schindler@zend.com>
+ * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Void extends Driver
+class ZendData extends AbtractDriver
 {
-	public function __construct($params)
-	{
-		parent::__construct($params);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doGet(string $key)
+    {
+        return zend_shm_cache_fetch($key);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doFetch($id)
-	{
-		return false;
-	}
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doContains($id)
-	{
-		return false;
-	}
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doSave($id, $data, $lifeTime = 0)
-	{
-		return true;
-	}
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doDelete($id)
-	{
-		return true;
-	}
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doFlush()
-	{
-		return true;
-	}
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doGetStats()
-	{
-		return;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doHas(string $key)
+    {
+        return (null !== zend_shm_cache_fetch($key));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doSet(string $key, $value, int $ttl = 0)
+    {
+        return zend_shm_cache_store($key, $value, $ttl);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doDelete(string $key)
+    {
+        return zend_shm_cache_delete($key);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doClear()
+    {
+        $namespace = $this->getNamespace();
+        if (empty($namespace)) {
+            return zend_shm_cache_clear();
+        }
+        return zend_shm_cache_clear($namespace);
+    }
 }

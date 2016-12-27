@@ -2,17 +2,17 @@
 
 namespace Hail;
 
-use Hail\Cache\Driver;
+use Hail\SimpleCache\AbtractDriver;
 
 /**
  * Class Cache
  *
  * @package Hail
  */
-class Cache extends Driver
+class Cache extends AbtractDriver
 {
 	/**
-	 * @var Driver[]
+	 * @var AbtractDriver[]
 	 */
 	private $drivers = [];
 
@@ -39,12 +39,12 @@ class Cache extends Driver
 					$k = ucfirst($k);
 			}
 
-			$class = 'Hail\\Cache\\Driver\\' . $k;
+			$class = __NAMESPACE__ . '\\SimpleCache\\' . $k;
 			$this->drivers[] = new $class($v);
 		}
 
-		if (isset($params['lifetime'])) {
-			unset($params['lifetime']);
+		if (isset($params['ttl'])) {
+			unset($params['ttl']);
 		}
 
 		parent::__construct($params);
@@ -53,7 +53,7 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setNamespace($namespace)
+	public function setNamespace(string $namespace)
 	{
 		parent::setNamespace($namespace);
 
@@ -65,39 +65,37 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doFetch($id)
+	protected function doGet(string $key)
 	{
-		foreach ($this->drivers as $key => $driver) {
-			if ($driver->doContains($id)) {
-				$value = $driver->doFetch($id);
-
+		foreach ($this->drivers as $k => $driver) {
+			if (($value = $driver->doGet($key)) !== null) {
 				// We populate all the previous cache layers (that are assumed to be faster)
-				for ($subKey = $key - 1; $subKey >= 0; $subKey--) {
-					$this->drivers[$subKey]->doSave($id, $value);
+				for ($subKey = $k - 1; $subKey >= 0; $subKey--) {
+					$this->drivers[$subKey]->doSet($key, $value);
 				}
 
 				return $value;
 			}
 		}
 
-		return false;
+		return null;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		$count = count($keys);
 		$values = [];
 
 		foreach ($this->drivers as $key => $driver) {
-			$values = $driver->doFetchMultiple($keys);
+			$values = $driver->doGetMultiple($keys);
 
 			// We populate all the previous cache layers (that are assumed to be faster)
 			if (count($values) === $count) {
 				for ($subKey = $key - 1; $subKey >= 0; $subKey--) {
-					$this->$driver[$subKey]->doSaveMultiple($values);
+					$this->$driver[$subKey]->doSetMultiple($values);
 				}
 
 				return $values;
@@ -110,10 +108,10 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
 		foreach ($this->drivers as $driver) {
-			if ($driver->doContains($id)) {
+			if ($driver->doHas($key)) {
 				return true;
 			}
 		}
@@ -124,13 +122,13 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $data, int $ttl = 0)
 	{
 		$stored = true;
 
 		foreach ($this->drivers as $driver) {
-			$lifetime = $driver->getLifetime($lifetime);
-			$stored = $driver->doSave($id, $data, $lifetime) && $stored;
+			$ttl = $driver->ttl($ttl);
+			$stored = $driver->doSet($key, $data, $ttl) && $stored;
 		}
 
 		return $stored;
@@ -139,12 +137,12 @@ class Cache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
 		$stored = true;
 
 		foreach ($this->drivers as $driver) {
-			$stored = $driver->doSaveMultiple($keysAndValues, $lifetime) && $stored;
+			$stored = $driver->doSetMultiple($values, $ttl) && $stored;
 		}
 
 		return $stored;
@@ -153,12 +151,12 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
 		$deleted = true;
 
 		foreach ($this->drivers as $driver) {
-			$deleted = $driver->doDelete($id) && $deleted;
+			$deleted = $driver->doDelete($key) && $deleted;
 		}
 
 		return $deleted;
@@ -181,29 +179,14 @@ class Cache extends Driver
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		$flushed = true;
 
 		foreach ($this->drivers as $driver) {
-			$flushed = $driver->doFlush() && $flushed;
+			$flushed = $driver->doClear() && $flushed;
 		}
 
 		return $flushed;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function doGetStats()
-	{
-		// We return all the stats from all adapters
-		$stats = [];
-
-		foreach ($this->drivers as $driver) {
-			$stats[] = $driver->doGetStats();
-		}
-
-		return $stats;
 	}
 }

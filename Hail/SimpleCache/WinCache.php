@@ -17,9 +17,8 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 
 /**
  * WinCache cache provider.
@@ -33,43 +32,43 @@ use Hail\Cache\Driver;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class WinCache extends Driver
+class WinCache extends AbtractDriver
 {
-	public function __construct($params)
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function doGet(string $key)
 	{
-		parent::__construct($params);
+		$value = wincache_ucache_get($key, $success);
+		if ($success === false) {
+			return null;
+		}
+
+		return $value;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doHas(string $key)
 	{
-		return wincache_ucache_get($id);
+		return wincache_ucache_exists($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		return wincache_ucache_exists($id);
+		return wincache_ucache_set($key, $value, $ttl);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
-		return wincache_ucache_set($id, $data, $lifetime);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
-	{
-		$result = wincache_ucache_set($keysAndValues, null, $lifetime);
+		$result = wincache_ucache_set($values, null, $ttl);
 
 		if ($result === false || count($result)) {
 			return false;
@@ -81,15 +80,15 @@ class WinCache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
-		return wincache_ucache_delete($id);
+		return wincache_ucache_delete($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		return wincache_ucache_clear();
 	}
@@ -97,25 +96,8 @@ class WinCache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		return wincache_ucache_get($keys);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		$info = wincache_ucache_info();
-		$meminfo = wincache_ucache_meminfo();
-
-		return array(
-			Driver::STATS_HITS => $info['total_hit_count'],
-			Driver::STATS_MISSES => $info['total_miss_count'],
-			Driver::STATS_UPTIME => $info['total_cache_uptime'],
-			Driver::STATS_MEMORY_USAGE => $meminfo['memory_total'],
-			Driver::STATS_MEMORY_AVAILABLE => $meminfo['memory_free'],
-		);
 	}
 }

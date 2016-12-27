@@ -12,9 +12,10 @@
 
 namespace Hail\Cache;
 
-use Hail\Cache\Adapter\HasExpirationDateInterface;
+use Hail\Cache\Adapter\PhpCacheItem;
 use Hail\Facades\Crypto;
 use Hail\Facades\Serialize;
+use Hail\Util\SafeStorage;
 use Psr\Cache\CacheItemInterface;
 
 /**
@@ -22,7 +23,7 @@ use Psr\Cache\CacheItemInterface;
  *
  * @author Daniel Bannert <d.bannert@anolilab.de>
  */
-class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInterface, TaggableItemInterface
+class EncryptedItemDecorator implements PhpCacheItem, TaggableItemInterface
 {
 	/**
 	 * @type CacheItemInterface
@@ -30,9 +31,9 @@ class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInt
 	private $cacheItem;
 
 	/**
-	 * @type string
+	 * @var SafeStorage
 	 */
-	private $key;
+	private $safeStorage;
 
 	/**
 	 * @param CacheItemInterface $cacheItem
@@ -41,7 +42,8 @@ class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInt
 	public function __construct(CacheItemInterface $cacheItem, string $key)
 	{
 		$this->cacheItem = $cacheItem;
-		$this->key = $key;
+		$this->safeStorage = new SafeStorage();
+		$this->safeStorage->set('key', $key);
 	}
 
 	/**
@@ -57,9 +59,11 @@ class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInt
 	 */
 	public function set($value)
 	{
-		$serialized = Serialize::encode($value);
 		$this->cacheItem->set(
-			Crypto::encrypt($serialized, $this->key)
+			Crypto::encrypt(
+				Serialize::encode($value),
+				$this->safeStorage->get('key')
+			)
 		);
 
 		return $this;
@@ -75,7 +79,10 @@ class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInt
 		}
 
 		return Serialize::decode(
-			Crypto::decrypt($this->cacheItem->get(), $this->key)
+			Crypto::decrypt(
+				$this->cacheItem->get(),
+				$this->safeStorage->get('key')
+			)
 		);
 	}
 
@@ -90,9 +97,9 @@ class EncryptedItemDecorator implements CacheItemInterface, HasExpirationDateInt
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getExpirationDate()
+	public function getExpirationTimestamp()
 	{
-		return $this->cacheItem->getExpirationDate();
+		return $this->cacheItem->getExpirationTimestamp();
 	}
 
 	/**

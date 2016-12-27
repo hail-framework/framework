@@ -17,9 +17,8 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 
 /**
  * Memcache cache provider.
@@ -33,7 +32,7 @@ use Hail\Cache\Driver;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Memcache extends Driver
+class Memcache extends AbtractDriver
 {
 	/**
 	 * @var \Memcache|null
@@ -75,15 +74,15 @@ class Memcache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doGet(string $key)
 	{
-		return $this->memcache->get($id);
+		return $this->memcache->get($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		return $this->memcache->get($keys) ?: [];
 	}
@@ -91,10 +90,10 @@ class Memcache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
 		$flags = null;
-		$this->memcache->get($id, $flags);
+		$this->memcache->get($key, $flags);
 
 		//if memcache has changed the value of "flags", it means the value exists
 		return ($flags !== null);
@@ -103,46 +102,30 @@ class Memcache extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		if ($lifetime > 30 * 24 * 3600) {
-			$lifetime = NOW + $lifetime;
+		if ($ttl > 2592000) {
+			$ttl = NOW + $ttl;
 		}
 
-		return $this->memcache->set($id, $data, 0, (int) $lifetime);
+		return $this->memcache->set($key, $value, 0, $ttl);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
 		// Memcache::delete() returns false if entry does not exist
-		return $this->memcache->delete($id) || !$this->doContains($id);
+		$this->memcache->delete($key);
+		return true;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		return $this->memcache->flush();
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		$stats = $this->memcache->getStats();
-
-		return [
-			Driver::STATS_HITS => $stats['get_hits'],
-			Driver::STATS_MISSES => $stats['get_misses'],
-			Driver::STATS_UPTIME => $stats['uptime'],
-			Driver::STATS_MEMORY_USAGE => $stats['bytes'],
-			Driver::STATS_MEMORY_AVAILABLE => $stats['limit_maxbytes'],
-		];
-
 	}
 }

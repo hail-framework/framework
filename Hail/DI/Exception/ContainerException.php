@@ -9,7 +9,7 @@ use Psr\Container\ContainerException as PsrContainerException;
  * @package Hail\DI\Exception
  * @author  Hao Feng <flyinghail@msn.com>
  */
-class ContainerException extends \Exception implements PsrContainerException
+class ContainerException extends \RuntimeException implements PsrContainerException
 {
 
 }

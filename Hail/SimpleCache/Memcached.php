@@ -17,9 +17,8 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 
 /**
  * Memcached cache provider.
@@ -33,7 +32,7 @@ use Hail\Cache\Driver;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Memcached extends Driver
+class Memcached extends AbtractDriver
 {
 	/**
 	 * @var \Memcached|null
@@ -119,7 +118,7 @@ class Memcached extends Driver
 					}
 				break;
 				default:
-					continue;
+					continue 2;
 			}
 
 			if (!@$memcached->setOption(constant('\Memcached::OPT_' . $name), $value)) {
@@ -133,51 +132,30 @@ class Memcached extends Driver
 	}
 
 	/**
-	 * Sets the memcache instance to use.
-	 *
-	 * @param \Memcached $memcached
-	 *
-	 * @return void
+	 * {@inheritdoc}
 	 */
-	public function setMemcached(\Memcached $memcached)
+	protected function doGet(string $key)
 	{
-		$this->memcached = $memcached;
-	}
-
-	/**
-	 * Gets the memcached instance used by the cache.
-	 *
-	 * @return \Memcached|null
-	 */
-	public function getMemcached()
-	{
-		return $this->memcached;
+		$return = $this->memcached->get($key);
+		return $return === false ? null : $return;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
-		return $this->memcached->get($id);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
-	{
-		if ($lifetime > 30 * 24 * 3600) {
-			$lifetime = NOW + $lifetime;
+		if ($ttl > 2592000) {
+			$ttl = NOW + $ttl;
 		}
 
-		return $this->memcached->setMulti($keysAndValues, null, $lifetime);
+		return $this->memcached->setMulti($values, $ttl);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		return $this->memcached->getMulti($keys) ?: [];
 	}
@@ -185,30 +163,30 @@ class Memcached extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
-		return false !== $this->memcached->get($id)
-		|| $this->memcached->getResultCode() !== Memcached::RES_NOTFOUND;
+		return false !== $this->memcached->get($key)
+		|| $this->memcached->getResultCode() !== \Memcached::RES_NOTFOUND;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		if ($lifetime > 30 * 24 * 3600) {
-			$lifetime = NOW + $lifetime;
+		if ($ttl > 2592000) {
+			$ttl = NOW + $ttl;
 		}
 
-		return $this->memcached->set($id, $data, (int) $lifetime);
+		return $this->memcached->set($key, $value, $ttl);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
-		return $this->memcached->delete($id)
+		return $this->memcached->delete($key)
 		|| $this->memcached->getResultCode() === \Memcached::RES_NOTFOUND;
 	}
 
@@ -224,27 +202,8 @@ class Memcached extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		return $this->memcached->flush();
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		$stats = $this->memcached->getStats();
-		$servers = $this->memcached->getServerList();
-		$key = $servers[0]['host'] . ':' . $servers[0]['port'];
-		$stats = $stats[$key];
-
-		return [
-			Driver::STATS_HITS => $stats['get_hits'],
-			Driver::STATS_MISSES => $stats['get_misses'],
-			Driver::STATS_UPTIME => $stats['uptime'],
-			Driver::STATS_MEMORY_USAGE => $stats['bytes'],
-			Driver::STATS_MEMORY_AVAILABLE => $stats['limit_maxbytes'],
-		];
 	}
 }

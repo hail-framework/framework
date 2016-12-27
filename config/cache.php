@@ -3,9 +3,9 @@ return [
 	'namespace' => 'gps_data',
 	'drivers' => [
 		'array' => [],
-		'yac' => ['lifetime' => 86400],
+		'yac' => ['ttl' => 86400],
 		'redis' => [
-			'lifetime' => 7 * 86400
+			'ttl' => 7 * 86400
 		]
 	]
 ];

@@ -166,6 +166,11 @@ class Medoo
 		}
 	}
 
+	public function getType()
+	{
+		return $this->type;
+	}
+
 	/**
 	 * @param $query
 	 *

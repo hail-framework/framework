@@ -16,12 +16,12 @@ namespace Hail\Cache\Adapter;
  * @author Aaron Scherer <aequasi@gmail.com>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-interface HasExpirationDateInterface
+interface HasExpirationTimestampInterface
 {
     /**
-     * The date and time when the object expires.
+     * The timestamp when the object expires.
      *
-     * @return \DateTimeInterface|null
+     * @return int|null
      */
-    public function getExpirationDate();
+    public function getExpirationTimestamp();
 }

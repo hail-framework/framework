@@ -17,76 +17,68 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
-
-use Hail\Cache\Driver;
-
+namespace Hail\SimpleCache;
 
 /**
- * Zend Data Cache cache driver.
+ * Xcache cache driver.
  *
  * @link   www.doctrine-project.org
  * @since  2.0
- * @author Ralph Schindler <ralph.schindler@zend.com>
+ * @author Benjamin Eberlei <kontakt@beberlei.de>
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author Jonathan Wage <jonwage@gmail.com>
+ * @author Roman Borschel <roman@code-factory.org>
+ * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class ZendData extends Driver
+class Xcache extends AbtractDriver
 {
-	public function __construct($params)
-	{
-		parent::__construct($params);
-	}
-
     /**
      * {@inheritdoc}
      */
-    protected function doFetch($id)
+    protected function doGet(string $key)
     {
-        return zend_shm_cache_fetch($id);
+        return xcache_isset($key) ? xcache_get($key) : null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doContains($id)
+    protected function doHas(string $key)
     {
-        return (false !== zend_shm_cache_fetch($id));
+        return xcache_isset($key);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doSave($id, $data, $lifetime = 0)
+    protected function doSet(string $key, $value, int $ttl = 0)
     {
-        return zend_shm_cache_store($id, $data, $lifetime);
+        return xcache_set($key, $value, $ttl);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doDelete($id)
+    protected function doDelete(string $key)
     {
-        return zend_shm_cache_delete($id);
+        return xcache_unset($key);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doFlush()
+    protected function doClear()
     {
-        $namespace = $this->getNamespace();
-        if (empty($namespace)) {
-            return zend_shm_cache_clear();
-        }
-        return zend_shm_cache_clear($namespace);
-    }
+	    if (ini_get('xcache.admin.enable_auth')) {
+		    throw new \BadMethodCallException(
+			    'To use all features of \Hail\SimpleCache\Xcache, '
+			    . 'you must set "xcache.admin.enable_auth" to "Off" in your php.ini.'
+		    );
+	    }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function doGetStats()
-    {
-        return null;
+        xcache_clear_cache(\XC_TYPE_VAR);
+
+        return true;
     }
 }

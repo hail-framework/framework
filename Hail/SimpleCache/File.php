@@ -17,9 +17,8 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 
 /**
  * Base file cache driver.
@@ -29,9 +28,10 @@ use Hail\Cache\Driver;
  * @author Tobias Schultze <http://tobion.de>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class File extends Driver
+class File extends AbtractDriver
 {
 	const EXTENSION = '.cache.php';
+	const EXTENSION_LENGTH = 10;
 
 	/**
 	 * The cache directory.
@@ -39,13 +39,6 @@ class File extends Driver
 	 * @var string
 	 */
 	protected $directory;
-
-	/**
-	 * The cache file extension.
-	 *
-	 * @var string
-	 */
-	private $extension;
 
 	/**
 	 * @var int
@@ -56,11 +49,6 @@ class File extends Driver
 	 * @var int
 	 */
 	private $directoryStringLength;
-
-	/**
-	 * @var int
-	 */
-	private $extensionStringLength;
 
 	/**
 	 * @var bool
@@ -83,7 +71,7 @@ class File extends Driver
 		}
 		$this->umask = $umask;
 
-		$directory = $params['directory'] ?? '';
+		$directory = $params['directory'] ?? TEMP_PATH . 'cache/';
 		if (!$this->createPathIfNeeded($directory)) {
 			throw new \InvalidArgumentException("The directory '$directory' does not exist and could not be created.");
 		}
@@ -95,34 +83,10 @@ class File extends Driver
 		// YES, this needs to be *after* createPathIfNeeded()
 		$this->directory = realpath($directory) . '/';
 
-		$extension = $params['extension'] ?? self::EXTENSION;
-		$this->extension = (string) $extension;
-
 		$this->directoryStringLength = strlen($this->directory);
-		$this->extensionStringLength = strlen($this->extension);
 		$this->isRunningOnWindows = defined('PHP_WINDOWS_VERSION_BUILD');
 
 		parent::__construct($params);
-	}
-
-	/**
-	 * Gets the cache directory.
-	 *
-	 * @return string
-	 */
-	public function getDirectory()
-	{
-		return $this->directory;
-	}
-
-	/**
-	 * Gets the cache file extension.
-	 *
-	 * @return string
-	 */
-	public function getExtension()
-	{
-		return $this->extension;
 	}
 
 	/**
@@ -137,8 +101,8 @@ class File extends Driver
 		// This ensures that the filename is unique and that there are no invalid chars in it.
 		if (
 			'' === $id
-			|| ((strlen($id) * 2 + $this->extensionStringLength) > 255)
-			|| ($this->isRunningOnWindows && ($this->directoryStringLength + 4 + strlen($id) * 2 + $this->extensionStringLength) > 258)
+			|| ((strlen($id) * 2 + self::EXTENSION_LENGTH) > 255)
+			|| ($this->isRunningOnWindows && ($this->directoryStringLength + 4 + strlen($id) * 2 + self::EXTENSION_LENGTH) > 258)
 		) {
 			// Most filesystems have a limit of 255 chars for each path component. On Windows the the whole path is limited
 			// to 260 chars (including terminating null char). Using long UNC ("\\?\" prefix) does not work with the PHP API.
@@ -151,19 +115,19 @@ class File extends Driver
 		}
 
 		return $this->directory . $id
-		. DIRECTORY_SEPARATOR
-		. substr($hash, 0, 2)
-		. DIRECTORY_SEPARATOR
-		. $filename
-		. $this->extension;
+			. DIRECTORY_SEPARATOR
+			. substr($hash, 0, 2)
+			. DIRECTORY_SEPARATOR
+			. $filename
+			. self::EXTENSION;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
-		$filename = $this->getFilename($id);
+		$filename = $this->getFilename($key);
 
 		return @unlink($filename) || !file_exists($filename);
 	}
@@ -171,7 +135,7 @@ class File extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		foreach ($this->getIterator() as $name => $file) {
 			if ($file->isDir()) {
@@ -190,32 +154,10 @@ class File extends Driver
 	}
 
 	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		$usage = 0;
-		foreach ($this->getIterator() as $name => $file) {
-			if (!$file->isDir() && $this->isFilenameEndingWithExtension($name)) {
-				$usage += $file->getSize();
-			}
-		}
-
-		$free = disk_free_space($this->directory);
-
-		return [
-			Driver::STATS_HITS => null,
-			Driver::STATS_MISSES => null,
-			Driver::STATS_UPTIME => null,
-			Driver::STATS_MEMORY_USAGE => $usage,
-			Driver::STATS_MEMORY_AVAILABLE => $free,
-		];
-	}
-
-	/**
 	 * Create path if needed.
 	 *
 	 * @param string $path
+	 *
 	 * @return bool TRUE on success or if path already exists, FALSE if path cannot be created.
 	 */
 	private function createPathIfNeeded($path)
@@ -233,7 +175,7 @@ class File extends Driver
 	 * Writes a string content to file in an atomic way.
 	 *
 	 * @param string $filename Path to the file where to write the data.
-	 * @param string $content The content to write
+	 * @param string $content  The content to write
 	 *
 	 * @return bool TRUE on success, FALSE if path cannot be created, if path is not writable or an any other error.
 	 */
@@ -281,36 +223,25 @@ class File extends Driver
 	 */
 	private function isFilenameEndingWithExtension($name)
 	{
-		return '' === $this->extension
-		|| strrpos($name, $this->extension) === (strlen($name) - $this->extensionStringLength);
+		return strrpos($name, self::EXTENSION) === (strlen($name) - self::EXTENSION_LENGTH);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doGet(string $key)
 	{
-		$value = $this->includeFileForId($id);
-
-		if (!$value) {
-			return false;
-		}
-
-		return $value;
+		return $this->includeFileForId($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
-		$value = $this->includeFileForId($id);
+		$value = $this->includeFileForId($key);
 
-		if (!$value) {
-			return false;
-		}
-
-		return true;
+		return $value !== null;
 	}
 
 	/**
@@ -318,25 +249,20 @@ class File extends Driver
 	 *
 	 * @throws \InvalidArgumentException
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		$lifetime = (int) $lifetime;
-		if ($lifetime > 0) {
-			$lifetime = NOW + $lifetime;
+		if ($ttl > 0) {
+			$ttl = NOW + $ttl;
 		}
 
-		$filename = $this->getFilename($id);
+		$filename = $this->getFilename($key);
 		$code = '<?php return ';
 
-		if ($lifetime > 0) {
-			$code .= '(NOW > ' . $lifetime . ') ? false : ';
+		if ($ttl > 0) {
+			$code .= '(NOW > ' . $ttl . ') ? null : ';
 		}
 
-		if (is_object($data) && !method_exists($data, '__set_state')) {
-			$code .= 'unserialize(' . var_export(serialize($data), true) . ');';
-		} else {
-			$code .= var_export($data, true) . ';';
-		}
+		$code .= var_export($value, true) . ';';
 
 		return $this->writeFile($filename, $code);
 	}
@@ -350,7 +276,10 @@ class File extends Driver
 	{
 		$fileName = $this->getFilename($id);
 
-		// note: error suppression is still faster than `file_exists`, `is_file` and `is_readable`
-		return @include $fileName;
+		if (file_exists($fileName)) {
+			return include $fileName;
+		}
+
+		return null;
 	}
 }

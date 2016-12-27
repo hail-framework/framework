@@ -49,11 +49,11 @@ trait HierarchicalCachePoolTrait
 			return $key;
 		}
 
-		$key = $this->explodeKey($key);
+		$keys = $this->explodeKey($key);
 
 		$keyString = '';
 		// The comments below is for a $key = ["foo!tagHash", "bar!tagHash"]
-		foreach ($key as $name) {
+		foreach ($keys as $name) {
 			// 1) $keyString = "foo!tagHash"
 			// 2) $keyString = "foo!tagHash![foo_index]!bar!tagHash"
 			$keyString .= $name;
@@ -95,14 +95,14 @@ trait HierarchicalCachePoolTrait
 	 */
 	private function isHierarchyKey($key)
 	{
-		return strpos($key, HierarchicalPoolInterface::HIERARCHY_SEPARATOR) === 0;
+		return $key[0] === HierarchicalPoolInterface::HIERARCHY_SEPARATOR;
 	}
 
 	/**
 	 * This will take a hierarchy key ("|foo|bar") with tags ("|foo|bar!tagHash") and return an array with
 	 * each level in the hierarchy appended with the tags. ["foo!tagHash", "bar!tagHash"].
 	 *
-	 * @param string $key
+	 * @param string $string
 	 *
 	 * @return array
 	 */

@@ -1,7 +1,6 @@
 <?php
-namespace Hail\Cache\Driver;
+namespace Hail\SimpleCache;
 
-use Hail\Cache\Driver;
 use Hail\DB\Medoo as DB;
 use Hail\Facades\Serialize;
 
@@ -10,10 +9,10 @@ use Hail\Facades\Serialize;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Medoo extends Driver
+class Medoo extends AbtractDriver
 {
 	/**
-	 * @var Redis|null
+	 * @var DB|null
 	 */
 	private $db;
 	private $schema;
@@ -32,32 +31,35 @@ class Medoo extends Driver
 		if (isset($params['schema']) && is_array($params['schema'])) {
 			$this->schema = array_merge($this->schema, $params['schema']);
 		}
+
+		if ($this->db->getType() === 'sqlite') {
+			$table = $this->schema['table'];
+			$id = $this->schema['id'];
+			$data = $this->schema['data'];
+			$exp = $this->schema['expire'];
+			$this->db->exec("CREATE TABLE IF NOT EXISTS {$table} ($id TEXT PRIMARY KEY NOT NULL, $data BLOB, $exp INTEGER)");
+		}
+
 		parent::__construct($params);
 	}
 
-	/**
-	 * Gets the redis instance used by the cache.
-	 *
-	 * @return Redis|null
-	 */
-	public function getDB()
-	{
-		return $this->db;
-	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetch($id)
+	protected function doGet(string $key)
 	{
 		$data = $this->db->get([
 			'SELECT' => [$this->schema['value'], $this->schema['expire']],
 			'FROM' => $this->schema['table'],
-			'WHERE' => [$this->schema['key'] => $id]
+			'WHERE' => [$this->schema['key'] => $key]
 		]);
 
-		if ($data[$this->schema['expire']] > 0 && $data[$this->schema['expire']] < NOW) {
-			return false;
+		if (
+			!isset($data[$this->schema['expire']]) ||
+			($data[$this->schema['expire']] > 0 && $data[$this->schema['expire']] < NOW)
+		) {
+			return null;
 		}
 
 		return Serialize::decode($data[$this->schema['value']]);
@@ -66,12 +68,12 @@ class Medoo extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
-		$expire = $lifetime > 0 ? NOW + $lifetime : 0;
+		$expire = $ttl > 0 ? NOW + $ttl : 0;
 
 		$data = [];
-		foreach ($keysAndValues as $k => $v) {
+		foreach ($values as $k => $v) {
 			$data[] = [
 				$this->schema['key'] => $k,
 				$this->schema['value'] => Serialize::encode($v),
@@ -84,7 +86,7 @@ class Medoo extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFetchMultiple(array $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		$data = $this->db->get([
 			'SELECT' => [$this->schema['key'], $this->schema['value'], $this->schema['expire']],
@@ -107,13 +109,13 @@ class Medoo extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
+	protected function doHas(string $key)
 	{
 		return $this->db->has([
 			'FROM' => $this->schema['table'],
 			'WHERE' => [
 				'AND' => [
-					$this->schema['key'] => $id,
+					$this->schema['key'] => $key,
 					'OR' => [
 						[$this->schema['expire'] => 0],
 						[$this->schema['expire'] . '[>]' => NOW],
@@ -127,13 +129,13 @@ class Medoo extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifetime = 0)
+	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		$expire = $lifetime > 0 ? NOW + $lifetime : 0;
+		$expire = $ttl > 0 ? NOW + $ttl : 0;
 
 		$data = [
-			$this->schema['key'] => $id,
-			$this->schema['value'] => Serialize::encode($data),
+			$this->schema['key'] => $key,
+			$this->schema['value'] => Serialize::encode($value),
 			$this->schema['expire'] => $expire
 		];
 
@@ -143,30 +145,16 @@ class Medoo extends Driver
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
+	protected function doDelete(string $key)
 	{
-		return $this->db->delete($this->schema['table'], [$this->schema['key'] => $id]);
+		return $this->db->delete($this->schema['table'], [$this->schema['key'] => $key]);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
+	protected function doClear()
 	{
 		return $this->db->truncate($this->schema['table']);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetStats()
-	{
-		return [
-			Driver::STATS_HITS => null,
-			Driver::STATS_MISSES => null,
-			Driver::STATS_UPTIME => null,
-			Driver::STATS_MEMORY_USAGE => null,
-			Driver::STATS_MEMORY_AVAILABLE => null,
-		];
 	}
 }

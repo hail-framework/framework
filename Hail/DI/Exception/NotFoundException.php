@@ -9,7 +9,7 @@ use Psr\Container\NotFoundException as PsrNotFoundException;
  * @package Hail\DI\Exception
  * @author  Hao Feng <flyinghail@msn.com>
  */
-class NotFoundException extends \InvalidArgumentException implements PsrNotFoundException
+class NotFoundException extends ContainerException implements PsrNotFoundException
 {
 
 }
