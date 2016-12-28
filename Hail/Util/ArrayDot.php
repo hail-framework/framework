@@ -150,7 +150,7 @@ class ArrayDot implements \ArrayAccess, \Countable, \Iterator
 			if (!isset($array[$k]) || !is_array($array[$k])) {
 				$array[$k] = [];
 			}
-			$array = &$array[$key];
+			$array = &$array[$k];
 		}
 
 		if (is_array($value)) {

@@ -12,6 +12,7 @@
   'crypto' => '\\Hail\\Facades\\Crypto',
   'db' => '\\Hail\\Facades\\DB',
   'event' => '\\Hail\\Facades\\Event',
+  'filesystem' => '\\Hail\\Facades\\Filesystem',
   'generators' => '\\Hail\\Facades\\Generators',
   'i18n' => '\\Hail\\Facades\\I18N',
   'inflector' => '\\Hail\\Facades\\Inflector',

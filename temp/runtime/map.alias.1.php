@@ -14,6 +14,7 @@
   'DB' => '\\Hail\\Facades\\DB',
   'DI' => '\\Hail\\Facades\\DI',
   'Event' => '\\Hail\\Facades\\Event',
+  'Filesystem' => '\\Hail\\Facades\\Filesystem',
   'Generators' => '\\Hail\\Facades\\Generators',
   'I18N' => '\\Hail\\Facades\\I18N',
   'Inflector' => '\\Hail\\Facades\\Inflector',

@@ -24,7 +24,7 @@ foreach (scandir($helperDir) as $file) {
 	unlink($helperDir . $file);
 }
 
-$alias = Alias::getAliases();
+$alias = include Config::get('.hail.map.alias');
 $template = <<<EOD
 <?php
 class %s extends %s {}

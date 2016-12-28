@@ -33,6 +33,7 @@ use Hail\Facades\DI;
  * @property-read Util\Json $json
  * @property-read Util\Serialize $serialize
  * @property-read Util\Strings $strings
+ * @property-read Filesystem\MountManager $filesystem
  * @property-read \LibraryFactory $lib
  * @property-read \ModelFactory $model
  */

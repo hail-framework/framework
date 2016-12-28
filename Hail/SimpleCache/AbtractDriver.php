@@ -33,7 +33,6 @@ use \Psr\SimpleCache\CacheInterface;
  * @author Roman Borschel <roman@code-factory.org>
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
- * @author Hao Feng <flyinghail@msn.com>
  */
 abstract class AbtractDriver implements \ArrayAccess, CacheInterface
 {

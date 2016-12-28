@@ -36,7 +36,6 @@ use LogicException;
  * @method bool setVisibility($path, $visibility)
  * @method array|false getMetadata($path)
  * @method Handler get($path, Handler $handler = null)
- * @method Filesystem flushCache()
  * @method void assertPresent($path)
  * @method void assertAbsent($path)
  */
@@ -48,6 +47,11 @@ class MountManager
 	 * @var array
 	 */
 	protected $filesystems = [];
+
+	/**
+	 * @var array
+	 */
+	protected $lazy = [];
 
 	/**
 	 * Constructor.
@@ -90,11 +94,10 @@ class MountManager
 	public function mountFilesystem(string $prefix, $filesystem)
 	{
 		if (is_array($filesystem)) {
-			$filesystem = new Filesystem($filesystem);
+			$this->lazy[$prefix] = $filesystem;
+		} else {
+			$this->filesystems[$prefix] = $filesystem;
 		}
-
-		$this->filesystems[$prefix] = $filesystem;
-
 		return $this;
 	}
 
@@ -106,9 +109,13 @@ class MountManager
 	 * @return Filesystem
 	 * @throws LogicException
 	 */
-	public function getFilesystem($prefix)
+	public function getFilesystem(string $prefix)
 	{
 		if (!isset($this->filesystems[$prefix])) {
+			if (isset($this->lazy[$prefix])) {
+				return $this->filesystems[$prefix] = new Filesystem($this->lazy[$prefix]);
+			}
+
 			throw new LogicException('No filesystem mounted with prefix ' . $prefix);
 		}
 
@@ -154,7 +161,7 @@ class MountManager
 	public function listContents($directory = '', $recursive = false)
 	{
 		list($prefix, $arguments) = $this->filterPrefix([$directory]);
-		$filesystem = $this->getFilesystem($prefix);
+		$filesystem = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
 		$directory = array_shift($arguments);
 		$result = $filesystem->listContents($directory, $recursive);
 
@@ -177,7 +184,7 @@ class MountManager
 	{
 		list($prefix, $args) = $this->filterPrefix($arguments);
 
-		$fs = $this->getFilesystem($prefix);
+		$fs = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
 
 		switch (count($args)) {
 			case 0:
@@ -206,7 +213,7 @@ class MountManager
 	{
 		list($prefixFrom, $arguments) = $this->filterPrefix([$from]);
 
-		$fsFrom = $this->getFilesystem($prefixFrom);
+		$fsFrom = $this->filesystems[$prefixFrom] ?? $this->getFilesystem($prefixFrom);
 		$buffer = $fsFrom->readStream($arguments[0]);
 
 		if ($buffer === false) {
@@ -215,7 +222,7 @@ class MountManager
 
 		list($prefixTo, $arguments) = $this->filterPrefix([$to]);
 
-		$fsTo = $this->getFilesystem($prefixTo);
+		$fsTo = $this->filesystems[$prefixTo] ?? $this->getFilesystem($prefixTo);
 		$result = $fsTo->writeStream($arguments[0], $buffer, $config);
 
 		if (is_resource($buffer)) {
@@ -237,7 +244,7 @@ class MountManager
 	public function listWith(array $keys = [], $directory = '', $recursive = false)
 	{
 		list($prefix, $arguments) = $this->filterPrefix([$directory]);
-		$fs = $this->getFilesystem($prefix);
+		$fs = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
 
 		return $fs->listWith($keys, $arguments[0], $recursive);
 	}
