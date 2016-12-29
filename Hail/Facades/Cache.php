@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\SimpleCache\SimpleCacheFactory;
+use Hail\SimpleCache\Chain;
 
 /**
  * Class Cache
@@ -25,8 +25,37 @@ class Cache extends Facade
 {
 	protected static function instance()
 	{
-		return SimpleCacheFactory::get(
-			Config::get('cache')
-		);
+		$config = Config::get('cache');
+
+		if (isset($config['drivers'])) {
+			$drivers = $config['drivers'];
+			if (count($drivers) > 1) {
+				return new Chain($config);
+			}
+
+			unset($config['drivers']);
+
+			$driver = key($drivers);
+			$config += $drivers[$driver];
+		} else {
+			$driver = $config['driver'] ?? 'void';
+			unset($config['driver']);
+		}
+
+		switch ($driver) {
+			case 'array':
+			case 'zend':
+				$driver = ucfirst($driver) . 'Data';
+				break;
+			case 'apc':
+				$driver = 'Apcu';
+				break;
+			default:
+				$driver = ucfirst($driver);
+		}
+
+		$class = 'Hail\\SimpleCache\\' . $driver;
+
+		return new $class($config);
 	}
 }

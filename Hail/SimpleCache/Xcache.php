@@ -17,26 +17,28 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache\Adapter;
-
+namespace Hail\SimpleCache;
 
 /**
- * Zend Data Cache cache driver.
+ * Xcache cache driver.
  *
  * @link   www.doctrine-project.org
  * @since  2.0
- * @author Ralph Schindler <ralph.schindler@zend.com>
+ * @author Benjamin Eberlei <kontakt@beberlei.de>
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author Jonathan Wage <jonwage@gmail.com>
+ * @author Roman Borschel <roman@code-factory.org>
+ * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class ZendData extends AbtractAdapter
+class Xcache extends AbtractAdapter
 {
     /**
      * {@inheritdoc}
      */
     protected function doGet(string $key)
     {
-        return zend_shm_cache_fetch($key);
+        return xcache_isset($key) ? xcache_get($key) : null;
     }
 
     /**
@@ -44,7 +46,7 @@ class ZendData extends AbtractAdapter
      */
     protected function doHas(string $key)
     {
-        return (null !== zend_shm_cache_fetch($key));
+        return xcache_isset($key);
     }
 
     /**
@@ -52,7 +54,7 @@ class ZendData extends AbtractAdapter
      */
     protected function doSet(string $key, $value, int $ttl = 0)
     {
-        return zend_shm_cache_store($key, $value, $ttl);
+        return xcache_set($key, $value, $ttl);
     }
 
     /**
@@ -60,7 +62,7 @@ class ZendData extends AbtractAdapter
      */
     protected function doDelete(string $key)
     {
-        return zend_shm_cache_delete($key);
+        return xcache_unset($key);
     }
 
     /**
@@ -68,10 +70,15 @@ class ZendData extends AbtractAdapter
      */
     protected function doClear()
     {
-        $namespace = $this->getNamespace();
-        if (empty($namespace)) {
-            return zend_shm_cache_clear();
-        }
-        return zend_shm_cache_clear($namespace);
+	    if (ini_get('xcache.admin.enable_auth')) {
+		    throw new \BadMethodCallException(
+			    'To use all features of \Hail\SimpleCache\Xcache, '
+			    . 'you must set "xcache.admin.enable_auth" to "Off" in your php.ini.'
+		    );
+	    }
+
+        xcache_clear_cache(\XC_TYPE_VAR);
+
+        return true;
     }
 }

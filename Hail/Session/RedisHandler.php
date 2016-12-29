@@ -4,7 +4,7 @@ namespace Hail\Session;
 use Hail\Facades\Config;
 use Hail\Redis\{
 	Exception\RedisException,
-	RedisFactory
+	Client
 };
 
 /**
@@ -15,7 +15,7 @@ use Hail\Redis\{
 class RedisHandler extends BaseHandler
 {
 	/**
-	 * @var \Hail\Redis\Driver
+	 * @var \Hail\Redis\Client\AbstractClient
 	 */
 	protected $redis;
 
@@ -37,7 +37,7 @@ class RedisHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->redis = RedisFactory::client(
+		$this->redis = Client::get(
 			$settings + Config::get('redis')
 		);
 

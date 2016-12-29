@@ -12,6 +12,7 @@
 namespace Hail\Cache\Adapter;
 
 use Hail\Facades\Cache;
+use Hail\Cache\CacheItemInterface as HailCacheItem;
 use Hail\Cache\TaggableItemInterface;
 use Hail\Cache\TaggablePoolInterface;
 use Hail\Cache\TaggablePoolTrait;
@@ -27,7 +28,7 @@ use Psr\Cache\CacheItemInterface;
 class SimpleCachePool extends AbstractCachePool implements TaggablePoolInterface
 {
 	/**
-	 * @var \Psr\SimpleCache\CacheInterface
+	 * @var \Hail\SimpleCache\CacheInterface
 	 */
 	private $cache;
 
@@ -83,7 +84,7 @@ class SimpleCachePool extends AbstractCachePool implements TaggablePoolInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function storeItemInCache(PhpCacheItem $item, $ttl)
+	protected function storeItemInCache(HailCacheItem $item, $ttl)
 	{
 		if ($ttl === null) {
 			$ttl = 0;

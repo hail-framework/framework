@@ -17,87 +17,51 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache\Adapter;
-
+namespace Hail\SimpleCache;
 
 /**
- * WinCache cache provider.
+ * Void cache driver. The cache could be of use in tests where you don`t need to cache anything.
  *
  * @link   www.doctrine-project.org
- * @since  2.2
- * @author Benjamin Eberlei <kontakt@beberlei.de>
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
- * @author David Abdemoulaie <dave@hobodave.com>
+ * @since  1.5
+ * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class WinCache extends AbtractAdapter
+class Void extends AbtractAdapter
 {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function doGet(string $key)
 	{
-		$value = wincache_ucache_get($key, $success);
-		if ($success === false) {
-			return null;
-		}
-
-		return $value;
+		return false;
 	}
-
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function doHas(string $key)
 	{
-		return wincache_ucache_exists($key);
+		return false;
 	}
-
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function doSet(string $key, $value, int $ttl = 0)
 	{
-		return wincache_ucache_set($key, $value, $ttl);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doSetMultiple(array $values, int $ttl = 0)
-	{
-		$result = wincache_ucache_set($values, null, $ttl);
-
-		if ($result === false || count($result)) {
-			return false;
-		}
-
 		return true;
 	}
-
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function doDelete(string $key)
 	{
-		return wincache_ucache_delete($key);
+		return true;
 	}
-
 	/**
-	 * {@inheritdoc}
+	 * {@inheritDoc}
 	 */
 	protected function doClear()
 	{
-		return wincache_ucache_clear();
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetMultiple(array $keys)
-	{
-		return wincache_ucache_get($keys);
+		return true;
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Hail\Redis;
-use Hail\Redis\Driver\Native;
+
+use Hail\Redis\Client\Native;
 use Hail\Redis\Exception\RedisException;
 use Hail\Util\SafeStorage;
 
@@ -55,6 +56,11 @@ class Sentinel
 	 * @var SafeStorage
 	 */
 	protected $safeStorage;
+
+	/**
+	 * @var bool
+	 */
+	protected $extension;
 
 	/**
 	 * Connect with a Sentinel node. Sentinel will do the master and slave discovery
@@ -137,7 +143,7 @@ class Sentinel
 	 *
 	 * @param string $name
 	 *
-	 * @return Driver
+	 * @return Client\AbstractClient
 	 * @throws RedisException
 	 */
 	public function createMasterClient($name)
@@ -147,13 +153,13 @@ class Sentinel
 			throw new RedisException('Master not found');
 		}
 
-		return RedisFactory::client([
+		return Client::get([
 			'host' => $master[0],
 			'port' => $master[1],
 			'timeout' => $this->_timeout,
 			'persistent' => $this->_persistent,
 			'db' => $this->_db,
-			'password' => $this->_password
+			'password' => $this->getClientPassword()
 		]);
 	}
 
@@ -162,7 +168,7 @@ class Sentinel
 	 *
 	 * @param string $name
 	 *
-	 * @return Driver
+	 * @return Client\AbstractClient
 	 */
 	public function getMasterClient($name)
 	{
@@ -178,7 +184,7 @@ class Sentinel
 	 *
 	 * @param string $name
 	 *
-	 * @return Driver[]
+	 * @return Client\AbstractClient[]
 	 * @throws RedisException
 	 */
 	public function createSlaveClients($name)
@@ -190,7 +196,7 @@ class Sentinel
 				throw new RedisException('Can\' retrieve slave status');
 			}
 			if (false === strpos($slave[9], 's_down') && false === strpos($slave[9], 'disconnected')) {
-				$workingSlaves[] = Factory::client([
+				$workingSlaves[] = Client::get([
 					'host' => $slave[3],
 					'port' => $slave[5],
 					'timeout' => $this->_timeout,
@@ -209,7 +215,7 @@ class Sentinel
 	 *
 	 * @param string $name
 	 *
-	 * @return Driver[]
+	 * @return Client\AbstractClient[]
 	 */
 	public function getSlaveClients($name)
 	{

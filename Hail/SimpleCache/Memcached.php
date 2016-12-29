@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache\Adapter;
+namespace Hail\SimpleCache;
 
 
 /**

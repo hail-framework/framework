@@ -1,5 +1,5 @@
 <?php
-namespace Hail\Redis\Driver;
+namespace Hail\Redis\Client;
 
 use Hail\Redis\Exception\RedisException;
 

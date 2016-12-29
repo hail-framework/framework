@@ -1,8 +1,9 @@
 <?php
-namespace Hail\SimpleCache\Adapter;
+namespace Hail\SimpleCache;
 
 use Hail\Facades\Filesystem as FS;
 use Hail\Facades\Serialize;
+use Hail\Filesystem\MountManager;
 
 /**
  * Base file cache driver.
@@ -21,6 +22,11 @@ class Filesystem extends AbtractAdapter
 	protected $directory;
 
 	/**
+	 * @var MountManager
+	 */
+	protected $filesystem;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param array $params [directory => The cache directory].
@@ -34,7 +40,9 @@ class Filesystem extends AbtractAdapter
 		}
 
 		$this->directory = $directory = $params['directory'] ?? 'local://cache';
-		FS::createDir($directory);
+		$this->filesystem = FS::getInstance();
+
+		$this->filesystem->createDir($directory);
 
 		parent::__construct($params);
 	}
@@ -56,7 +64,7 @@ class Filesystem extends AbtractAdapter
 	{
 		$filename = $this->getFilename($key);
 
-		return FS::delete($filename);
+		return $this->filesystem->delete($filename);
 	}
 
 	/**
@@ -64,8 +72,8 @@ class Filesystem extends AbtractAdapter
 	 */
 	protected function doClear()
 	{
-		FS::deleteDir($this->directory);
-		FS::createDir($this->directory);
+		$this->filesystem->deleteDir($this->directory);
+		$this->filesystem->createDir($this->directory);
 
 		return true;
 	}
@@ -78,7 +86,7 @@ class Filesystem extends AbtractAdapter
 		$filename = $this->getFilename($key);
 
 		try {
-			if (($content = FS::read($filename)) === false) {
+			if (($content = $this->filesystem->read($filename)) === false) {
 				return null;
 			}
 
@@ -88,7 +96,7 @@ class Filesystem extends AbtractAdapter
 		}
 
 		if ($data['expire'] > NOW) {
-			FS::delete($filename);
+			$this->filesystem->delete($filename);
 
 			return null;
 		}
@@ -103,7 +111,7 @@ class Filesystem extends AbtractAdapter
 	{
 		$filename = $this->getFilename($key);
 
-		return FS::has($filename);
+		return $this->filesystem->has($filename);
 	}
 
 	/**
@@ -123,6 +131,6 @@ class Filesystem extends AbtractAdapter
 			'expire' => $ttl,
 		]);
 
-		return FS::put($filename, $content);
+		return $this->filesystem->put($filename, $content);
 	}
 }

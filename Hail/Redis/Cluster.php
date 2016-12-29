@@ -21,13 +21,13 @@ class Cluster
 	/**
 	 * Collection of Client objects attached to Redis servers
 	 *
-	 * @var Driver[]
+	 * @var Client\AbstractClient[]
 	 */
 	protected $clients;
 	/**
 	 * If a server is set as master, all write commands go to that one
 	 *
-	 * @var Driver
+	 * @var Client\AbstractClient
 	 */
 	protected $masterClient;
 	/**
@@ -98,7 +98,7 @@ class Cluster
 		foreach ($servers as $server) {
 			if (is_array($server)) {
 				$server['timeout'] = $server['timeout'] ?? 2.5;
-				$client = RedisFactory::client($server);
+				$client = Client::get($server);
 				if (isset($server['alias'])) {
 					$this->aliases[$server['alias']] = $client;
 				}
@@ -108,7 +108,7 @@ class Cluster
 						continue;
 					}
 				}
-			} elseif ($server instanceof Driver) {
+			} elseif ($server instanceof Client\AbstractClient) {
 				$client = $server;
 			} else {
 				throw new RedisException('Server should either be an array or an instance of Client');
@@ -139,15 +139,15 @@ class Cluster
 	}
 
 	/**
-	 * @param Driver $masterClient
-	 * @param bool   $writeOnly
+	 * @param Client\AbstractClient $masterClient
+	 * @param bool                  $writeOnly
 	 *
 	 * @return static
 	 * @throws RedisException
 	 */
-	public function setMasterClient(Driver $masterClient, bool $writeOnly = false)
+	public function setMasterClient(Client\AbstractClient $masterClient, bool $writeOnly = false)
 	{
-		if (!$masterClient instanceof Driver) {
+		if (!$masterClient instanceof Client\AbstractClient) {
 			throw new RedisException('Master client should be an instance of Client');
 		}
 		$this->masterClient = $masterClient;
@@ -172,7 +172,7 @@ class Cluster
 	 * @param string|int $alias
 	 *
 	 * @throws RedisException
-	 * @return Driver
+	 * @return Client\AbstractClient
 	 */
 	public function client($alias)
 	{
@@ -187,7 +187,7 @@ class Cluster
 	/**
 	 * Get an array of all clients
 	 *
-	 * @return array|Driver[]
+	 * @return array|Client\AbstractClient[]
 	 */
 	public function clients()
 	{
@@ -217,7 +217,7 @@ class Cluster
 	 *
 	 * @param string $key
 	 *
-	 * @return Driver
+	 * @return Client\AbstractClient
 	 */
 	public function byHash($key)
 	{

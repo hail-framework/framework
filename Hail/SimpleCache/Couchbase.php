@@ -1,5 +1,5 @@
 <?php
-namespace Hail\SimpleCache\Adapter;
+namespace Hail\SimpleCache;
 
 use CouchbaseCluster;
 use CouchbaseBucket;

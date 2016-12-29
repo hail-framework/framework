@@ -1,8 +1,6 @@
 <?php
 
-namespace Hail\SimpleCache\Adapter;
-
-use Hail\SimpleCache\SimpleCacheFactory;
+namespace Hail\SimpleCache;
 
 /**
  * Class Cache
@@ -23,7 +21,19 @@ class Chain extends AbtractAdapter
 	public function __construct($params)
 	{
 		foreach ($params['drivers'] as $k => $v) {
-			$class = SimpleCacheFactory::getAdapter($k);
+			switch ($k) {
+				case 'array':
+				case 'zend':
+					$k = ucfirst($k) . 'Data';
+					break;
+				case 'apc':
+					$k = 'Apcu';
+					break;
+				default:
+					$k = ucfirst($k);
+			}
+
+			$class = __NAMESPACE__ . '\\' . $k;
 			$this->drivers[] = new $class($v);
 		}
 

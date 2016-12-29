@@ -4,7 +4,7 @@ namespace Hail\Filesystem\Adapter;
 use Hail\Filesystem\Adapter\Polyfill\StreamedTrait as StreamPolyfill;
 use Hail\Filesystem\Exception\FileNotFoundException;
 use Hail\Filesystem\Util;
-use Hail\Redis\RedisFactory;
+use Hail\Redis\Client;
 use Hail\Facades\Serialize;
 
 class Redis extends AbstractAdapter
@@ -12,7 +12,7 @@ class Redis extends AbstractAdapter
 	use StreamPolyfill;
 
 	/**
-	 * @type \Hail\Redis\Driver
+	 * @type \Hail\Redis\Client\AbstractClient
 	 */
 	protected $redis;
 
@@ -25,7 +25,7 @@ class Redis extends AbstractAdapter
 			throw new \InvalidArgumentException('Config not defined');
 		}
 
-		$this->redis = RedisFactory::client($config['client']);
+		$this->redis = Client::get($config['client']);
 		$this->pathSeparator = ':';
 
 		$this->setPathPrefix($config['prefix'] ?? 'HailFS:');

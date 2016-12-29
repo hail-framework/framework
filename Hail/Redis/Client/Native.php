@@ -5,9 +5,8 @@
  * @license   http://www.opensource.org/licenses/mit-license.php The MIT License
  * @package   static
  */
-namespace Hail\Redis\Driver;
+namespace Hail\Redis\Client;
 
-use Hail\Redis\Driver;
 use Hail\Redis\Exception\RedisException;
 
 /**
@@ -16,7 +15,7 @@ use Hail\Redis\Exception\RedisException;
  * @package Hail\Redis\Driver
  * @inheritdoc
  */
-class Native extends Driver
+class Native extends AbstractClient
 {
 	/**
 	 * @var bool

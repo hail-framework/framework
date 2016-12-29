@@ -19,7 +19,7 @@
  * @license   http://www.opensource.org/licenses/mit-license.php The MIT License
  * @package   static
  */
-namespace Hail\Redis;
+namespace Hail\Redis\Client;
 
 use Hail\Redis\Exception\RedisException;
 use Hail\Util\SafeStorage;
@@ -141,7 +141,7 @@ use Hail\Util\SafeStorage;
  * @method string|int|array|bool eval(string $script, array $keys = null, array $args = null)
  * @method string|int|array|bool evalSha(string $script, array $keys = null, array $args = null)
  */
-abstract class Driver
+abstract class AbstractClient
 {
 	/**
 	 * Socket connection to the Redis server or Redis library instance
