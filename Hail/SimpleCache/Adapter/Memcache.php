@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 
 /**
@@ -32,7 +32,7 @@ namespace Hail\SimpleCache;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Memcache extends AbtractDriver
+class Memcache extends AbtractAdapter
 {
 	/**
 	 * @var \Memcache|null

@@ -1,6 +1,6 @@
 <?php
 return [
-	'temp' => [
+	'local' => [
 		'adapter' => 'local',
 		'root' => TEMP_PATH,
 	],

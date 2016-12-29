@@ -17,28 +17,26 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
+
 
 /**
- * Xcache cache driver.
+ * Zend Data Cache cache driver.
  *
  * @link   www.doctrine-project.org
  * @since  2.0
- * @author Benjamin Eberlei <kontakt@beberlei.de>
+ * @author Ralph Schindler <ralph.schindler@zend.com>
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
- * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Xcache extends AbtractDriver
+class ZendData extends AbtractAdapter
 {
     /**
      * {@inheritdoc}
      */
     protected function doGet(string $key)
     {
-        return xcache_isset($key) ? xcache_get($key) : null;
+        return zend_shm_cache_fetch($key);
     }
 
     /**
@@ -46,7 +44,7 @@ class Xcache extends AbtractDriver
      */
     protected function doHas(string $key)
     {
-        return xcache_isset($key);
+        return (null !== zend_shm_cache_fetch($key));
     }
 
     /**
@@ -54,7 +52,7 @@ class Xcache extends AbtractDriver
      */
     protected function doSet(string $key, $value, int $ttl = 0)
     {
-        return xcache_set($key, $value, $ttl);
+        return zend_shm_cache_store($key, $value, $ttl);
     }
 
     /**
@@ -62,7 +60,7 @@ class Xcache extends AbtractDriver
      */
     protected function doDelete(string $key)
     {
-        return xcache_unset($key);
+        return zend_shm_cache_delete($key);
     }
 
     /**
@@ -70,15 +68,10 @@ class Xcache extends AbtractDriver
      */
     protected function doClear()
     {
-	    if (ini_get('xcache.admin.enable_auth')) {
-		    throw new \BadMethodCallException(
-			    'To use all features of \Hail\SimpleCache\Xcache, '
-			    . 'you must set "xcache.admin.enable_auth" to "Off" in your php.ini.'
-		    );
-	    }
-
-        xcache_clear_cache(\XC_TYPE_VAR);
-
-        return true;
+        $namespace = $this->getNamespace();
+        if (empty($namespace)) {
+            return zend_shm_cache_clear();
+        }
+        return zend_shm_cache_clear($namespace);
     }
 }

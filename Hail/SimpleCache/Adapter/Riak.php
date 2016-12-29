@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use Hail\Facades\Serialize;
 use Riak\Bucket;
@@ -34,7 +34,7 @@ use Riak\Object;
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Riak extends AbtractDriver
+class Riak extends AbtractAdapter
 {
 	const EXPIRES_HEADER = 'X-Riak-Meta-Expires';
 

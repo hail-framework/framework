@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 /**
  * APCu cache provider.
@@ -27,7 +27,7 @@ namespace Hail\SimpleCache;
  * @author Kévin Dunglas <dunglas@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Apcu extends AbtractDriver
+class Apcu extends AbtractAdapter
 {
     /**
      * {@inheritdoc}

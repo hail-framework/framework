@@ -8,7 +8,7 @@ use Hail\Redis\Driver\{
 };
 use Hail\Redis\Exception\RedisException;
 
-class Factory
+class RedisFactory
 {
 	/**
 	 * @param array $config

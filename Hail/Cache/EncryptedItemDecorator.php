@@ -12,18 +12,16 @@
 
 namespace Hail\Cache;
 
-use Hail\Cache\Adapter\PhpCacheItem;
 use Hail\Facades\Crypto;
 use Hail\Facades\Serialize;
 use Hail\Util\SafeStorage;
-use Psr\Cache\CacheItemInterface;
 
 /**
  * Encrypt and Decrypt all the stored items.
  *
  * @author Daniel Bannert <d.bannert@anolilab.de>
  */
-class EncryptedItemDecorator implements PhpCacheItem, TaggableItemInterface
+class EncryptedItemDecorator implements CacheItemInterface
 {
 	/**
 	 * @type CacheItemInterface

@@ -1,5 +1,5 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use Hail\DB\Medoo as DB;
 use Hail\Facades\Serialize;
@@ -9,7 +9,7 @@ use Hail\Facades\Serialize;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Medoo extends AbtractDriver
+class Medoo extends AbtractAdapter
 {
 	/**
 	 * @var DB|null

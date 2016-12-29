@@ -17,12 +17,12 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use Hail\Cache\HierarchicalPoolInterface;
-use Hail\SimpleCache\Exception\InvalidArgumentException;
 use Hail\Util\ArrayTrait;
-use \Psr\SimpleCache\CacheInterface;
+use Hail\SimpleCache\Exception\InvalidArgumentException;
+use Hail\SimpleCache\CacheInterface;
 
 /**
  * Base class for cache provider implementations.
@@ -34,7 +34,7 @@ use \Psr\SimpleCache\CacheInterface;
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-abstract class AbtractDriver implements \ArrayAccess, CacheInterface
+abstract class AbtractAdapter implements CacheInterface
 {
 	use ArrayTrait;
 

@@ -1,5 +1,5 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use Hail\Facades\{
 	Config,
@@ -7,7 +7,7 @@ use Hail\Facades\{
 };
 use Hail\Redis\{
 	Exception\RedisException,
-	Factory as RedisFactory
+	RedisFactory
 };
 
 /**
@@ -15,7 +15,7 @@ use Hail\Redis\{
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Redis extends AbtractDriver
+class Redis extends AbtractAdapter
 {
 	/**
 	 * @var \Hail\Redis\Driver|null

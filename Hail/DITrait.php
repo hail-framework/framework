@@ -24,7 +24,7 @@ use Hail\Facades\DI;
  * @property-read Acl $acl
  * @property-read Session $session
  * @property-read Cookie $cookie
- * @property-read Cache $cache
+ * @property-read SimpleCache\CacheInterface $cache
  * @property-read DB\Cache $cdb
  * @property-read Browser $browser
  * @property-read Util\Arrays $arrays

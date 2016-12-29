@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use Hail\Facades\Serialize;
 use MongoBinData;
@@ -32,7 +32,7 @@ use MongoDate;
  * @author Jeremy Mikola <jmikola@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class MongoDB extends AbtractDriver
+class MongoDB extends AbtractAdapter
 {
 	/**
 	 * The data field will store the serialized PHP value.

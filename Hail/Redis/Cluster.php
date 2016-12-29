@@ -98,7 +98,7 @@ class Cluster
 		foreach ($servers as $server) {
 			if (is_array($server)) {
 				$server['timeout'] = $server['timeout'] ?? 2.5;
-				$client = Factory::client($server);
+				$client = RedisFactory::client($server);
 				if (isset($server['alias'])) {
 					$this->aliases[$server['alias']] = $client;
 				}

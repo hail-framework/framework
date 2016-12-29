@@ -1,12 +1,12 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 /**
  * Array cache driver.
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class ArrayData extends AbtractDriver
+class ArrayData extends AbtractAdapter
 {
 	/**
 	 * @var array $data

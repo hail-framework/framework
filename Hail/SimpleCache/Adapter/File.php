@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 
 /**
@@ -28,7 +28,7 @@ namespace Hail\SimpleCache;
  * @author Tobias Schultze <http://tobion.de>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class File extends AbtractDriver
+class File extends AbtractAdapter
 {
 	const EXTENSION = '.cache.php';
 	const EXTENSION_LENGTH = 10;
@@ -44,16 +44,6 @@ class File extends AbtractDriver
 	 * @var int
 	 */
 	private $umask;
-
-	/**
-	 * @var int
-	 */
-	private $directoryStringLength;
-
-	/**
-	 * @var bool
-	 */
-	private $isRunningOnWindows;
 
 	/**
 	 * Constructor.
@@ -83,43 +73,18 @@ class File extends AbtractDriver
 		// YES, this needs to be *after* createPathIfNeeded()
 		$this->directory = realpath($directory) . '/';
 
-		$this->directoryStringLength = strlen($this->directory);
-		$this->isRunningOnWindows = defined('PHP_WINDOWS_VERSION_BUILD');
-
 		parent::__construct($params);
 	}
 
 	/**
-	 * @param string $id
+	 * @param string $key
 	 *
 	 * @return string
+	 * @throws \InvalidArgumentException
 	 */
-	protected function getFilename($id)
+	protected function getFilename(string $key): string
 	{
-		$hash = sha1($id);
-
-		// This ensures that the filename is unique and that there are no invalid chars in it.
-		if (
-			'' === $id
-			|| ((strlen($id) * 2 + self::EXTENSION_LENGTH) > 255)
-			|| ($this->isRunningOnWindows && ($this->directoryStringLength + 4 + strlen($id) * 2 + self::EXTENSION_LENGTH) > 258)
-		) {
-			// Most filesystems have a limit of 255 chars for each path component. On Windows the the whole path is limited
-			// to 260 chars (including terminating null char). Using long UNC ("\\?\" prefix) does not work with the PHP API.
-			// And there is a bug in PHP (https://bugs.php.net/bug.php?id=70943) with path lengths of 259.
-			// So if the id in hex representation would surpass the limit, we use the hash instead. The prefix prevents
-			// collisions between the hash and bin2hex.
-			$filename = '_' . $hash;
-		} else {
-			$filename = bin2hex($id);
-		}
-
-		return $this->directory . $id
-			. DIRECTORY_SEPARATOR
-			. substr($hash, 0, 2)
-			. DIRECTORY_SEPARATOR
-			. $filename
-			. self::EXTENSION;
+		return $this->directory . $key . self::EXTENSION;
 	}
 
 	/**

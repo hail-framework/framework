@@ -23,4 +23,13 @@ abstract class BaseHandler implements \SessionHandlerInterface
 			$this->settings = array_merge($this->settings, $settings);
 		}
 	}
+
+	protected function key($id)
+	{
+		if (!empty($this->settings['prefix'])) {
+			return $this->settings['prefix'] . '_' . $id;
+		}
+
+		return $id;
+	}
 }

@@ -1,12 +1,12 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 /**
  * YAC cache provider.
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Yac extends AbtractDriver
+class Yac extends AbtractAdapter
 {
 	/**
 	 * @var \Yac

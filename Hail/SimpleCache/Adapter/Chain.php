@@ -1,50 +1,30 @@
 <?php
 
-namespace Hail;
+namespace Hail\SimpleCache\Adapter;
 
-use Hail\SimpleCache\AbtractDriver;
+use Hail\SimpleCache\SimpleCacheFactory;
 
 /**
  * Class Cache
  *
  * @package Hail
  */
-class Cache extends AbtractDriver
+class Chain extends AbtractAdapter
 {
 	/**
-	 * @var AbtractDriver[]
+	 * @var AbtractAdapter[]
 	 */
 	private $drivers = [];
 
 	/**
 	 *
-	 * @param array $params
+	 * @param array('drivers' => []) $params
 	 */
 	public function __construct($params)
 	{
-		if (!isset($params['drivers'])) {
-			$params['drivers'] = ['void' => []];
-		}
-
 		foreach ($params['drivers'] as $k => $v) {
-			switch ($k) {
-				case 'array':
-				case 'zend':
-					$k = ucfirst($k) . 'Data';
-				break;
-				case 'apc':
-					$k = 'Apcu';
-				break;
-				default:
-					$k = ucfirst($k);
-			}
-
-			$class = __NAMESPACE__ . '\\SimpleCache\\' . $k;
+			$class = SimpleCacheFactory::getAdapter($k);
 			$this->drivers[] = new $class($v);
-		}
-
-		if (isset($params['ttl'])) {
-			unset($params['ttl']);
 		}
 
 		parent::__construct($params);

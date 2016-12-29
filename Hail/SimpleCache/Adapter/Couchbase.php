@@ -1,5 +1,5 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\SimpleCache\Adapter;
 
 use CouchbaseCluster;
 use CouchbaseBucket;
@@ -9,7 +9,7 @@ use CouchbaseBucket;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Couchbase extends AbtractDriver
+class Couchbase extends AbtractAdapter
 {
     /**
      * @var CouchbaseCluster

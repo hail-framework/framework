@@ -4,7 +4,7 @@ namespace Hail\Session;
 use Hail\Facades\Config;
 use Hail\Redis\{
 	Exception\RedisException,
-	Factory as RedisFactory
+	RedisFactory
 };
 
 /**
@@ -28,23 +28,20 @@ class RedisHandler extends BaseHandler
 	public function __construct(array $settings)
 	{
 		$settings += [
-			'prefix' => 'sessions',
+			'prefix' => 'RedisSes',
 		];
 
 		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
 			$settings['lifetime'] = (int) ini_get('session.gc_maxlifetime');
 		}
 
+		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
+
 		$this->redis = RedisFactory::client(
 			$settings + Config::get('redis')
 		);
 
 		parent::__construct($settings);
-	}
-
-	protected function key($id)
-	{
-		return $this->settings['prefix'] . '_' . $id;
 	}
 
 	/**

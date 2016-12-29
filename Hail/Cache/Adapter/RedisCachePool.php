@@ -11,6 +11,7 @@
 
 namespace Hail\Cache\Adapter;
 
+use Hail\Cache\CacheItemInterface as HailCacheItem;
 use Hail\Cache\HierarchicalCachePoolTrait;
 use Hail\Cache\HierarchicalPoolInterface;
 use Hail\Cache\TaggableItemInterface;
@@ -77,7 +78,7 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
     /**
      * {@inheritdoc}
      */
-    protected function storeItemInCache(PhpCacheItem $item, $ttl)
+    protected function storeItemInCache(HailCacheItem $item, $ttl)
     {
         $key  = $this->getHierarchyKey($item->getKey());
         $data = Serialize::encode([true, $item->get(), $item->getTags(), $item->getExpirationTimestamp()]);

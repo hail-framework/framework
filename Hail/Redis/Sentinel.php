@@ -147,7 +147,7 @@ class Sentinel
 			throw new RedisException('Master not found');
 		}
 
-		return Factory::client([
+		return RedisFactory::client([
 			'host' => $master[0],
 			'port' => $master[1],
 			'timeout' => $this->_timeout,
