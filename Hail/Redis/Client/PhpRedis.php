@@ -12,7 +12,8 @@ use Hail\Redis\Exception\RedisException;
 /**
  * Class PhpRedis
  *
- * @package Hail\Redis\Driver
+ * @package Hail\Redis\Client
+ * @author Hao Feng <flyinghail@msn.com>
  * @inheritdoc
  */
 class PhpRedis extends AbstractClient

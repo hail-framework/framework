@@ -242,7 +242,6 @@ class Debugger
 			);
 
 		} elseif (self::$showBar && !self::$productionMode) {
-			self::$reserved = null;
 			self::removeOutputBuffers(false);
 			self::getBar()->render();
 		}
@@ -251,14 +250,15 @@ class Debugger
 	/**
 	 * Handler to catch uncaught exception.
 	 *
-	 * @param  \Exception|\Throwable
+	 * @param \Exception|\Throwable $exception
+	 * @param bool                  $exit
 	 *
 	 * @return void
 	 * @internal
 	 */
 	public static function exceptionHandler($exception, $exit = true)
 	{
-		if (!self::$reserved) {
+		if (!self::$reserved && $exit) {
 			return;
 		}
 		self::$reserved = null;

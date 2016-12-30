@@ -1,12 +1,4 @@
 <?php
-/**
- * Credis, a Redis interface for the modest
- *
- * @author    Justin Poliey <jdp34@njit.edu>
- * @copyright 2009 Justin Poliey <jdp34@njit.edu>
- * @license   http://www.opensource.org/licenses/mit-license.php The MIT License
- * @package   Credis
- */
 namespace Hail\Redis;
 
 use Hail\Redis\Client\{
@@ -35,4 +27,3 @@ class Client
 		return new PhpRedis($config);
 	}
 }
-

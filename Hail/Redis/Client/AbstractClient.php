@@ -29,8 +29,8 @@ use Hail\Util\SafeStorage;
  * static, a lightweight Redis PHP standalone client and phpredis wrapper
  *
  * Server/Connection:
- * @method Driver        pipeline()
- * @method Driver        multi()
+ * @method $this        pipeline()
+ * @method $this        multi()
  * @method array         exec()
  * @method string        flushAll()
  * @method string        flushDb()
@@ -133,8 +133,8 @@ use Hail\Util\SafeStorage;
  * Pub/Sub
  * @method int           publish(string $channel, string $message)
  * @method int|array     pubsub(string $subCommand, $arg = null)
- * @method void          subscribe(string|array $channels, callable $callback)
- * @method void          pSubscribe(string|array $patterns, callable $callback)
+ * @method void          subscribe(string | array $channels, callable $callback)
+ * @method void          pSubscribe(string | array $patterns, callable $callback)
  *
  * Scripting:
  * @method string|int    script(string $command, string $arg1 = null)
@@ -225,7 +225,7 @@ abstract class AbstractClient
 	 * Creates a Redisent connection to the Redis server on host {@link $host} and port {@link $port}.
 	 * $host may also be a path to a unix socket or a string in the form of tcp://[hostname]:[port] or unix://[path]
 	 *
-	 * @param array  $config
+	 * @param array $config
 	 *
 	 * @throws RedisException
 	 */
