@@ -37,9 +37,7 @@ class RedisHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->redis = Client::get(
-			$settings + Config::get('redis')
-		);
+		$this->redis = Client::get($settings);
 
 		parent::__construct($settings);
 	}

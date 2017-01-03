@@ -2,7 +2,7 @@
 
 namespace Hail\Session;
 
-use Hail\Facades\Cache;
+use Hail\Facades\CachePool;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
@@ -10,7 +10,7 @@ use Psr\Cache\CacheItemPoolInterface;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class CachePoolHandler extends BaseHandler
+class CacheHandler extends BaseHandler
 {
 	/**
 	 * @type CacheItemPoolInterface Cache driver.
@@ -29,7 +29,7 @@ class CachePoolHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->cache = Cache::getInstance();
+		$this->cache = CachePool::getInstance();
 
 		parent::__construct($settings);
 	}

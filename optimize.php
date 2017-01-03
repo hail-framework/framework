@@ -14,7 +14,6 @@ echo 'DI Map Generated', "\n";
 Alias::buildMap();
 echo 'Alias Map Generated', "\n";
 
-
 $helperDir = __DIR__ . '/helper/';
 foreach (scandir($helperDir) as $file) {
 	if (in_array($file, ['.', '..'], true)) {
@@ -61,7 +60,6 @@ foreach (
 		$classFull = '\\' . $namespace . '\\' . $name;
 
 		try {
-
 			if ($check($classFull)) {
 				$comment .= ' * @property-read ' . $classFull . ' ' . lcfirst($name) . "\n";
 			}

@@ -29,8 +29,6 @@ class Redis extends AbtractAdapter
 	 */
 	public function __construct(array $params)
 	{
-		$params += Config::get('redis');
-
 		$this->redis = Client::get($params);
 
 		parent::__construct($params);

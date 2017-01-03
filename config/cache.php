@@ -2,10 +2,9 @@
 return [
 	'namespace' => 'gps_data',
 	'drivers' => [
-		'array' => [],
 		'yac' => ['ttl' => 86400],
 		'redis' => [
-			'ttl' => 7 * 86400
+			'ttl' => 604800 // 7 days
 		]
 	]
 ];

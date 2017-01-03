@@ -44,6 +44,8 @@ abstract class AbtractAdapter implements CacheInterface
 
 	const CACHE_KEY = 'CacheVersion';
 
+	const SEPARATOR = '!';
+
 	/**
 	 * The namespace to prefix all cache ids with.
 	 *
@@ -290,10 +292,8 @@ abstract class AbtractAdapter implements CacheInterface
 			$version = $this->getNamespaceVersion();
 		}
 
-		return HierarchicalPoolInterface::HIERARCHY_SEPARATOR .
-			$this->namespace . HierarchicalPoolInterface::HIERARCHY_SEPARATOR .
-			$version . HierarchicalPoolInterface::HIERARCHY_SEPARATOR .
-			$key;
+		return $this->namespace . static::SEPARATOR .
+			$version . static::SEPARATOR . $key;
 	}
 
 
@@ -304,9 +304,7 @@ abstract class AbtractAdapter implements CacheInterface
 	 */
 	private function getNamespaceCacheKey()
 	{
-		return HierarchicalPoolInterface::HIERARCHY_SEPARATOR .
-			$this->namespace . HierarchicalPoolInterface::HIERARCHY_SEPARATOR .
-			self::CACHE_KEY;
+		return $this->namespace . static::SEPARATOR . self::CACHE_KEY;
 	}
 
 	/**
