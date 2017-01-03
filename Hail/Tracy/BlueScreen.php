@@ -119,6 +119,7 @@ class BlueScreen
 				Dumper::LOCATION => Dumper::LOCATION_CLASS,
 			]);
 		};
+		$nonce = Helpers::getNonce();
 
 		require $template;
 	}

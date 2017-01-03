@@ -1,55 +1,27 @@
 <?php
-
-/*
- * This file is part of php-cache organization.
- *
- * (c) 2015-2016 Aaron Scherer <aequasi@gmail.com>, Tobias Nyholm <tobias.nyholm@gmail.com>
- *
- * This source file is subject to the MIT license that is bundled
- * with this source code in the file LICENSE.
- */
-
 namespace Hail\Cache\Adapter;
 
 use Hail\Facades\Cache;
-use Hail\Cache\CacheItemInterface as HailCacheItem;
-use Hail\Cache\TaggableItemInterface;
-use Hail\Cache\TaggablePoolInterface;
-use Hail\Cache\TaggablePoolTrait;
-use Psr\Cache\CacheItemInterface;
+use Hail\Cache\CacheItemInterface;
 
 /**
  * This is a bridge between PSR-6 and PSR-16 cache.
  *
- * @author Aaron Scherer <aequasi@gmail.com>
- * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class SimpleCachePool extends AbstractCachePool implements TaggablePoolInterface
+class SimpleCachePool extends AbstractCachePool
 {
 	/**
 	 * @var \Hail\SimpleCache\CacheInterface
 	 */
 	private $cache;
 
-	use TaggablePoolTrait;
 
 	public function __construct()
 	{
 		$this->cache = Cache::getInstance();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function save(CacheItemInterface $item)
-	{
-		if ($item instanceof TaggableItemInterface) {
-			$this->saveTags($item);
-		}
-
-		return parent::save($item);
-	}
 
 	/**
 	 * {@inheritdoc}
@@ -76,25 +48,19 @@ class SimpleCachePool extends AbstractCachePool implements TaggablePoolInterface
 	 */
 	protected function clearOneObjectFromCache($key)
 	{
-		$this->preRemoveItem($key);
-
 		return $this->cache->delete($key);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function storeItemInCache(HailCacheItem $item, $ttl)
+	protected function storeItemInCache(CacheItemInterface $item, $ttl)
 	{
 		if ($ttl === null) {
 			$ttl = 0;
 		}
 
-		$tags = [];
-		if ($item instanceof TaggableItemInterface) {
-			$tags = $item->getTags();
-		}
-		$data = [true, $item->get(), $tags, $item->getExpirationTimestamp()];
+		$data = [true, $item->get(), $item->getTags(), $item->getExpirationTimestamp()];
 
 		return $this->cache->set($item->getKey(), $data, $ttl);
 	}

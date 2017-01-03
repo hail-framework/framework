@@ -113,6 +113,7 @@ class Bar
 		}
 
 		if (Helpers::isHtmlMode()) {
+			$nonce = Helpers::getNonce();
 			require __DIR__ . '/assets/Bar/loader.phtml';
 		}
 	}

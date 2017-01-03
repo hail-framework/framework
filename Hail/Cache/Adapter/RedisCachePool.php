@@ -3,7 +3,7 @@
 /*
  * This file is part of php-cache organization.
  *
- * (c) 2015-2016 Aaron Scherer <aequasi@gmail.com>, Tobias Nyholm <tobias.nyholm@gmail.com>
+ * (c) 2015 Aaron Scherer <aequasi@gmail.com>, Tobias Nyholm <tobias.nyholm@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -11,22 +11,17 @@
 
 namespace Hail\Cache\Adapter;
 
-use Hail\Cache\CacheItemInterface as HailCacheItem;
+use Hail\Cache\CacheItemInterface;
 use Hail\Cache\HierarchicalCachePoolTrait;
 use Hail\Cache\HierarchicalPoolInterface;
-use Hail\Cache\TaggableItemInterface;
-use Hail\Cache\TaggablePoolInterface;
-use Hail\Cache\TaggablePoolTrait;
 use Hail\Facades\Serialize;
-use Psr\Cache\CacheItemInterface;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterface, TaggablePoolInterface
+class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterface
 {
     use HierarchicalCachePoolTrait;
-    use TaggablePoolTrait;
 
     /**
      * @type \Redis
@@ -66,10 +61,10 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
      */
     protected function clearOneObjectFromCache($key)
     {
-        $this->commit();
-        $this->preRemoveItem($key);
         $keyString = $this->getHierarchyKey($key, $path);
-        $this->cache->incr($path);
+        if ($path) {
+            $this->cache->incr($path);
+        }
         $this->clearHierarchyKeyCache();
 
         return $this->cache->del($keyString) >= 0;
@@ -78,7 +73,7 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
     /**
      * {@inheritdoc}
      */
-    protected function storeItemInCache(HailCacheItem $item, $ttl)
+    protected function storeItemInCache(CacheItemInterface $item, $ttl)
     {
         $key  = $this->getHierarchyKey($item->getKey());
         $data = Serialize::encode([true, $item->get(), $item->getTags(), $item->getExpirationTimestamp()]);
@@ -92,19 +87,7 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
     /**
      * {@inheritdoc}
      */
-    public function save(CacheItemInterface $item)
-    {
-        if ($item instanceof TaggableItemInterface) {
-            $this->saveTags($item);
-        }
-
-        return parent::save($item);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getValueFormStore($key)
+    protected function getDirectValue($key)
     {
         return $this->cache->get($key);
     }

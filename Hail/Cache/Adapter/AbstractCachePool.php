@@ -16,7 +16,7 @@ use Hail\Cache\Exception\CacheException;
 use Hail\Cache\Exception\CachePoolException;
 use Hail\Cache\Exception\InvalidArgumentException;
 use Hail\Cache\CacheItemInterface as HailCacheItem;
-use Psr\Cache\CacheItemPoolInterface;
+use Hail\Cache\CacheItemPoolInterface;
 use Psr\Cache\CacheItemInterface;
 
 /**
@@ -26,10 +26,12 @@ use Psr\Cache\CacheItemInterface;
  */
 abstract class AbstractCachePool implements CacheItemPoolInterface
 {
-	/**
-	 * @type CacheItemInterface[] deferred
-	 */
-	protected $deferred = [];
+    const SEPARATOR_TAG = '!';
+
+    /**
+     * @type HailCacheItem[] deferred
+     */
+    protected $deferred = [];
 
 	/**
 	 * @param HailCacheItem $item
@@ -66,25 +68,61 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 	 */
 	abstract protected function clearOneObjectFromCache($key);
 
-	/**
-	 * Make sure to commit before we destruct.
-	 */
-	public function __destruct()
-	{
-		$this->commit();
-	}
+    /**
+     * Get an array with all the values in the list named $name.
+     *
+     * @param string $name
+     *
+     * @return array
+     */
+    abstract protected function getList($name);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getItem($key)
-	{
-		$this->validateKey($key);
-		if (isset($this->deferred[$key])) {
-			$item = $this->deferred[$key];
+    /**
+     * Remove the list.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    abstract protected function removeList($name);
 
-			return is_object($item) ? clone $item : $item;
-		}
+    /**
+     * Add a item key on a list named $name.
+     *
+     * @param string $name
+     * @param string $key
+     */
+    abstract protected function appendListItem($name, $key);
+
+    /**
+     * Remove an item from the list.
+     *
+     * @param string $name
+     * @param string $key
+     */
+    abstract protected function removeListItem($name, $key);
+
+    /**
+     * Make sure to commit before we destruct.
+     */
+    public function __destruct()
+    {
+        $this->commit();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getItem($key)
+    {
+        $this->validateKey($key);
+        if (isset($this->deferred[$key])) {
+            /** @type CacheItem $item */
+            $item = clone $this->deferred[$key];
+            $item->moveTagsToPrevious();
+
+            return $item;
+        }
 
 		$func = function () use ($key) {
 			try {
@@ -161,24 +199,32 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 			// Delete form deferred
 			unset($this->deferred[$key]);
 
-			if (!$this->clearOneObjectFromCache($key)) {
-				$deleted = false;
-			}
-		}
+            // We have to commit here to be able to remove deferred hierarchy items
+            $this->commit();
+            $this->preRemoveItem($key);
+
+            if (!$this->clearOneObjectFromCache($key)) {
+                $deleted = false;
+            }
+        }
 
 		return $deleted;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function save(CacheItemInterface $item)
-	{
-		$timeToLive = null;
-		if ($item instanceof HailCacheItem &&
-			null !== $timestamp = $item->getExpirationTimestamp()
-		) {
-			$timeToLive = $timestamp - NOW;
+    /**
+     * {@inheritdoc}
+     */
+    public function save(CacheItemInterface $item)
+    {
+        if (!$item instanceof HailCacheItem) {
+            throw new InvalidArgumentException('Cache items are not transferable between pools. Item MUST implement PhpCacheItem.');
+        }
+
+        $this->removeTagEntries($item);
+        $this->saveTags($item);
+        $timeToLive = null;
+        if (null !== $timestamp = $item->getExpirationTimestamp()) {
+            $timeToLive = $timestamp - time();
 
 			if ($timeToLive < 0) {
 				return $this->deleteItem($item->getKey());
@@ -253,6 +299,86 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 			$e = new CachePoolException('Exception thrown when executing "' . $function . '". ', 0, $e);
 		}
 
-		throw $e;
-	}
+        throw $e;
+    }
+
+    /**
+     * @param array $tags
+     *
+     * @return bool
+     */
+    public function invalidateTags(array $tags)
+    {
+        $itemIds = [];
+        foreach ($tags as $tag) {
+            $itemIds = array_merge($itemIds, $this->getList($this->getTagKey($tag)));
+        }
+
+        // Remove all items with the tag
+        $success = $this->deleteItems($itemIds);
+
+        if ($success) {
+            // Remove the tag list
+            foreach ($tags as $tag) {
+                $this->removeList($this->getTagKey($tag));
+                $l = $this->getList($this->getTagKey($tag));
+            }
+        }
+
+        return $success;
+    }
+
+    public function invalidateTag($tag)
+    {
+        return $this->invalidateTags([$tag]);
+    }
+
+    /**
+     * @param HailCacheItem $item
+     */
+    protected function saveTags(HailCacheItem $item)
+    {
+        $tags = $item->getTags();
+        foreach ($tags as $tag) {
+            $this->appendListItem($this->getTagKey($tag), $item->getKey());
+        }
+    }
+
+    /**
+     * Removes the key form all tag lists. When an item with tags is removed
+     * we MUST remove the tags. If we fail to remove the tags a new item with
+     * the same key will automatically get the previous tags.
+     *
+     * @param string $key
+     *
+     * @return $this
+     */
+    protected function preRemoveItem($key)
+    {
+        $item = $this->getItem($key);
+        $this->removeTagEntries($item);
+
+        return $this;
+    }
+
+    /**
+     * @param HailCacheItem $item
+     */
+    private function removeTagEntries(HailCacheItem $item)
+    {
+        $tags = $item->getPreviousTags();
+        foreach ($tags as $tag) {
+            $this->removeListItem($this->getTagKey($tag), $item->getKey());
+        }
+    }
+
+    /**
+     * @param string $tag
+     *
+     * @return string
+     */
+    protected function getTagKey($tag)
+    {
+        return 'tag'.self::SEPARATOR_TAG.$tag;
+    }
 }
