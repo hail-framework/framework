@@ -16,7 +16,7 @@ class Chain extends AbtractAdapter
 
 	/**
 	 *
-	 * @param array('drivers' => []) $params
+	 * @param array $params
 	 */
 	public function __construct($params)
 	{

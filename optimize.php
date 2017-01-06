@@ -61,7 +61,7 @@ foreach (
 
 		try {
 			if ($check($classFull)) {
-				$comment .= ' * @property-read ' . $classFull . ' ' . lcfirst($name) . "\n";
+				$comment .= ' * @property-read ' . $classFull . ' $' . lcfirst($name) . "\n";
 			}
 		} catch (Exception $e) {
 		}
