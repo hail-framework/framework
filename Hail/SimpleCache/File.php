@@ -46,6 +46,15 @@ class File extends AbtractAdapter
 	private $umask;
 
 	/**
+	 * @var int
+	 */
+	private $directoryLength;
+	/**
+	 * @var bool
+	 */
+	private $isWindows;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param array $params [directory => The cache directory].
@@ -72,6 +81,8 @@ class File extends AbtractAdapter
 
 		// YES, this needs to be *after* createPathIfNeeded()
 		$this->directory = realpath($directory) . '/';
+		$this->directoryLength = strlen($this->directory);
+		$this->isWindows = defined('PHP_WINDOWS_VERSION_BUILD');
 
 		parent::__construct($params);
 	}
@@ -80,11 +91,27 @@ class File extends AbtractAdapter
 	 * @param string $key
 	 *
 	 * @return string
-	 * @throws \InvalidArgumentException
 	 */
 	protected function getFilename(string $key): string
 	{
-		return $this->directory . $key . self::EXTENSION;
+		$hash = hash('sha256', $key);
+		$name = base64_encode($key);
+
+		if (
+			'' === $key
+			|| ((strlen($name) + self::EXTENSION_LENGTH) > 255)
+			|| ($this->isWindows && ($this->directoryLength + 4 + strlen($name) + self::EXTENSION_LENGTH) > 258)
+		) {
+			// Most filesystems have a limit of 255 chars for each path component. On Windows the the whole path is limited
+			// to 260 chars (including terminating null char). Using long UNC ("\\?\" prefix) does not work with the PHP API.
+			// And there is a bug in PHP (https://bugs.php.net/bug.php?id=70943) with path lengths of 259.
+			// So if the id in hex representation would surpass the limit, we use the hash instead.
+			$name = '_' . $hash;
+		}
+
+		return $this->directory . DIRECTORY_SEPARATOR .
+			substr($hash, 0, 2) . DIRECTORY_SEPARATOR .
+			$name . self::EXTENSION;
 	}
 
 	/**
@@ -148,26 +175,33 @@ class File extends AbtractAdapter
 	{
 		$filepath = pathinfo($filename, PATHINFO_DIRNAME);
 
-		if (!$this->createPathIfNeeded($filepath)) {
-			return false;
-		}
-
-		if (!is_writable($filepath)) {
+		if (!$this->createPathIfNeeded($filepath) || !is_writable($filepath)) {
 			return false;
 		}
 
 		$tmpFile = tempnam($filepath, 'swap');
 		@chmod($tmpFile, 0666 & (~$this->umask));
 
-		if (file_put_contents($tmpFile, $content) !== false) {
-			if (@rename($tmpFile, $filename)) {
-				return true;
-			}
-
-			@unlink($tmpFile);
+		if (file_put_contents($tmpFile, $content) !== strlen($content)) {
+			return false;
 		}
 
-		return false;
+		if (@rename($tmpFile, $filename) === false) {
+			@unlink($tmpFile);
+
+			return false;
+		}
+
+		// If opcache is switched on, it will try to cache the PHP data file
+		// The new php opcode caching system only revalidates against the source files once every few seconds,
+		// so some changes will not be caught.
+		// This fix immediately invalidates that opcode cache after a file is written,
+		// so that future includes are not using the stale opcode cached file.
+		if (function_exists('opcache_invalidate')) {
+			opcache_invalidate($filename, true);
+		}
+
+		return true;
 	}
 
 	/**

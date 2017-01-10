@@ -162,9 +162,7 @@ class PhpRedis extends AbstractClient
 		$name = strtolower($name);
 
 		// Use aliases to be compatible with phpredis wrapper
-		if (isset(self::$wrapperMethods[$name])) {
-			$name = self::$wrapperMethods[$name];
-		}
+		$name = self::$wrapperMethods[$name] ?? $name;
 
 		// Tweak arguments
 		if (!isset(self::$skipMap[$name])) {

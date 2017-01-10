@@ -15,6 +15,10 @@ Alias::buildMap();
 echo 'Alias Map Generated', "\n";
 
 $helperDir = __DIR__ . '/helper/';
+if (!is_dir($helperDir)) {
+	exit;
+}
+
 foreach (scandir($helperDir) as $file) {
 	if (in_array($file, ['.', '..'], true)) {
 		continue;

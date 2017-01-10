@@ -25,7 +25,7 @@ class Yac extends AbtractAdapter
 	protected function doGet(string $key)
 	{
 		$value = $this->yac->get(
-			$this->key($id)
+			$this->key($key)
 		);
 		return $value === false ? null : $value;
 	}

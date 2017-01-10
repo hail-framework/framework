@@ -44,7 +44,7 @@ abstract class AbtractAdapter implements CacheInterface
 
 	const CACHE_KEY = 'CacheVersion';
 
-	const SEPARATOR = '!';
+	const SEPARATOR = '#';
 
 	/**
 	 * The namespace to prefix all cache ids with.

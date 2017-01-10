@@ -54,7 +54,8 @@ class Filesystem extends AbtractAdapter
 	 */
 	protected function getFilename(string $key): string
 	{
-		return $this->directory . '/' . $key . self::EXTENSION;
+		$sub = substr(hash('sha256', $key), 0, 2);
+		return $this->directory . '/' . $sub . '/' . base64_encode($key) . self::EXTENSION;
 	}
 
 	/**
@@ -90,6 +91,7 @@ class Filesystem extends AbtractAdapter
 				return null;
 			}
 
+			$content = substr($content, 8, -2);
 			$data = Serialize::decode($content);
 		} catch (\Exception $e) {
 			return null;
@@ -126,10 +128,10 @@ class Filesystem extends AbtractAdapter
 		}
 
 		$filename = $this->getFilename($key);
-		$content = Serialize::encode([
-			'value' => $value,
-			'expire' => $ttl,
-		]);
+		$content = '<?php /*' . Serialize::encode([
+				'value' => $value,
+				'expire' => $ttl,
+			]) . '*/';
 
 		return $this->filesystem->put($filename, $content);
 	}
