@@ -1,6 +1,6 @@
 <?php
 return [
-	'namespace' => 'gps_data',
+	'namespace' => 'hail_data',
 	'drivers' => [
 		'yac' => ['ttl' => 86400],
 		'redis' => [

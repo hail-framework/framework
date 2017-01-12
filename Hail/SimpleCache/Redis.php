@@ -2,18 +2,17 @@
 namespace Hail\SimpleCache;
 
 use Hail\Facades\{
-	Config,
 	Serialize
 };
 use Hail\Redis\Exception\RedisException;
-use Hail\Redis\Client;
+use Hail\Factory\RedisFactory;
 
 /**
  * Redis cache provider.
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Redis extends AbtractAdapter
+class Redis extends AbstractAdapter
 {
 	/**
 	 * @var \Hail\Redis\Client\AbstractClient|null
@@ -29,7 +28,7 @@ class Redis extends AbtractAdapter
 	 */
 	public function __construct(array $params)
 	{
-		$this->redis = Client::get($params);
+		$this->redis = RedisFactory::get($params);
 
 		parent::__construct($params);
 	}

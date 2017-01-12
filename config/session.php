@@ -1,7 +1,6 @@
 <?php
 return [
-	'handler' => 'Redis',
-	'settings' => [
-		'database' => 1
-	],
+	'handler' => 'redis',
+	'connect' => ['database' => 1],
+	'settings' => [],
 ];

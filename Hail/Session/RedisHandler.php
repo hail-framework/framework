@@ -1,11 +1,8 @@
 <?php
 namespace Hail\Session;
 
-use Hail\Facades\Config;
-use Hail\Redis\{
-	Exception\RedisException,
-	Client
-};
+use Hail\Factory\RedisFactory;
+use Hail\Redis\Exception\RedisException;
 
 /**
  * Class RedisHandler
@@ -22,10 +19,11 @@ class RedisHandler extends BaseHandler
 	/**
 	 * RedisHandler constructor.
 	 *
+	 * @param $redis
 	 * @param array $settings
 	 * @throws RedisException
 	 */
-	public function __construct(array $settings)
+	public function __construct($redis, array $settings)
 	{
 		$settings += [
 			'prefix' => 'RedisSes',
@@ -37,7 +35,7 @@ class RedisHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->redis = Client::get($settings);
+		$this->redis = $redis;
 
 		parent::__construct($settings);
 	}

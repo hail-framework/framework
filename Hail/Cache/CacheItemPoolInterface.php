@@ -32,18 +32,4 @@ interface CacheItemPoolInterface extends PsrCacheItemPoolInterface
 	 * @return bool True on success
 	 */
 	public function invalidateTags(array $tags);
-
-	/**
-	 * {@inheritdoc}
-	 *
-	 * @return CacheItemInterface
-	 */
-	public function getItem($key);
-
-	/**
-	 * {@inheritdoc}
-	 *
-	 * @return array|\Traversable|CacheItemInterface[]
-	 */
-	public function getItems(array $keys = []);
 }

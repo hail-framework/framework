@@ -32,7 +32,7 @@ namespace Hail\SimpleCache;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Memcached extends AbtractAdapter
+class Memcached extends AbstractAdapter
 {
 	/**
 	 * @var \Memcached|null

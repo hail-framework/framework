@@ -10,9 +10,8 @@
  */
 
 
-namespace Hail\Cache\Adapter;
+namespace Hail\Cache;
 
-use Hail\Cache\CacheItemInterface;
 use Hail\Cache\Exception\InvalidArgumentException;
 
 /**

@@ -29,7 +29,7 @@ namespace Hail\SimpleCache;
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class ZendData extends AbtractAdapter
+class ZendData extends AbstractAdapter
 {
     /**
      * {@inheritdoc}

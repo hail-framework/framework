@@ -9,7 +9,7 @@ use CouchbaseBucket;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Couchbase extends AbtractAdapter
+class Couchbase extends AbstractAdapter
 {
     /**
      * @var CouchbaseCluster

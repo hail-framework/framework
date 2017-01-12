@@ -6,7 +6,7 @@ namespace Hail\SimpleCache;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class ArrayData extends AbtractAdapter
+class ArrayData extends AbstractAdapter
 {
 	/**
 	 * @var array $data

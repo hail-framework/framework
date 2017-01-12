@@ -27,7 +27,7 @@ namespace Hail\SimpleCache;
  * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Void extends AbtractAdapter
+class Void extends AbstractAdapter
 {
 	/**
 	 * {@inheritDoc}

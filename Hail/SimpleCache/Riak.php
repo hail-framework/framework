@@ -34,7 +34,7 @@ use Riak\Object;
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Riak extends AbtractAdapter
+class Riak extends AbstractAdapter
 {
 	const EXPIRES_HEADER = 'X-Riak-Meta-Expires';
 

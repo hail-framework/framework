@@ -6,7 +6,7 @@ namespace Hail\SimpleCache;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Yac extends AbtractAdapter
+class Yac extends AbstractAdapter
 {
 	/**
 	 * @var \Yac

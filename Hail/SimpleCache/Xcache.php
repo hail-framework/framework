@@ -31,7 +31,7 @@ namespace Hail\SimpleCache;
  * @author David Abdemoulaie <dave@hobodave.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Xcache extends AbtractAdapter
+class Xcache extends AbstractAdapter
 {
     /**
      * {@inheritdoc}

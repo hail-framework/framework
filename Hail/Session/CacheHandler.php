@@ -17,7 +17,7 @@ class CacheHandler extends BaseHandler
 	 */
 	private $cache;
 
-	public function __construct(array $settings)
+	public function __construct(CacheItemPoolInterface $cache, array $settings)
 	{
 		$settings += [
 			'prefix' => 'PSR6Ses',
@@ -29,7 +29,7 @@ class CacheHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->cache = CachePool::getInstance();
+		$this->cache = $cache;
 
 		parent::__construct($settings);
 	}

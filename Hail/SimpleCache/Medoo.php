@@ -9,7 +9,7 @@ use Hail\Facades\Serialize;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Medoo extends AbtractAdapter
+class Medoo extends AbstractAdapter
 {
 	/**
 	 * @var DB|null

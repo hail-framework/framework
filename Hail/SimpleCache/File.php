@@ -28,7 +28,7 @@ namespace Hail\SimpleCache;
  * @author Tobias Schultze <http://tobion.de>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class File extends AbtractAdapter
+class File extends AbstractAdapter
 {
 	const EXTENSION = '.cache.php';
 	const EXTENSION_LENGTH = 10;

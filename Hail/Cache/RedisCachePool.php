@@ -9,11 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Hail\Cache\Adapter;
+namespace Hail\Cache;
 
-use Hail\Cache\CacheItemInterface;
-use Hail\Cache\HierarchicalCachePoolTrait;
-use Hail\Cache\HierarchicalPoolInterface;
+use Hail\Redis\Client\AbstractClient;
 use Hail\Facades\Serialize;
 
 /**
@@ -24,17 +22,101 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
     use HierarchicalCachePoolTrait;
 
     /**
-     * @type \Redis
+     * @type \Hail\Redis\Client\AbstractClient
      */
     protected $cache;
 
-    /**
-     * @param \Redis $cache
-     */
-    public function __construct(\Redis $cache)
+	/**
+	 * @type string
+	 */
+	private $namespace;
+
+    public function __construct(AbstractClient $redis, $namespace = '')
     {
-        $this->cache = $cache;
+        $this->cache = $redis;
+        $this->namespace = $namespace;
     }
+
+	/**
+	 * Add namespace prefix on the key.
+	 *
+	 * @param string $key
+	 */
+	private function prefixValue(&$key)
+	{
+		// |namespace|key
+		$key = HierarchicalPoolInterface::HIERARCHY_SEPARATOR . $this->namespace . HierarchicalPoolInterface::HIERARCHY_SEPARATOR . $key;
+	}
+
+	/**
+	 * @param array $keys
+	 */
+	private function prefixValues(array &$keys)
+	{
+		foreach ($keys as &$key) {
+			$this->prefixValue($key);
+		}
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getItem($key)
+	{
+		$this->namespace && $this->prefixValue($key);
+
+		return parent::getItem($key);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getItems(array $keys = [])
+	{
+		$this->namespace && $this->prefixValues($keys);
+
+		return parent::getItems($keys);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function hasItem($key)
+	{
+		$this->namespace && $this->prefixValue($key);
+
+		return parent::hasItem($key);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function clear()
+	{
+		return $this->namespace ?
+			parent::deleteItem(HierarchicalPoolInterface::HIERARCHY_SEPARATOR . $this->namespace) :
+			parent::clear();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function deleteItem($key)
+	{
+		$this->namespace && $this->prefixValue($key);
+
+		return parent::deleteItem($key);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function deleteItems(array $keys)
+	{
+		$this->namespace && $this->prefixValues($keys);
+
+		return parent::deleteItems($keys);
+	}
 
     /**
      * {@inheritdoc}
@@ -81,7 +163,7 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
             return $this->cache->set($key, $data);
         }
 
-        return $this->cache->setex($key, $ttl, $data);
+        return $this->cache->setEx($key, $ttl, $data);
     }
 
     /**
@@ -121,6 +203,6 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
      */
     protected function removeListItem($name, $key)
     {
-        return $this->cache->lrem($name, $key, 0);
+        return $this->cache->lRem($name, $key, 0);
     }
 }

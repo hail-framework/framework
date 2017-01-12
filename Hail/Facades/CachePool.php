@@ -21,10 +21,12 @@ use Hail\Factory\CacheFactory;
  * @method static bool clear()
  * @method static bool deleteAll()
  */
-class Cache extends Facade
+class CachePool extends Facade
 {
+	protected static $name = 'cachePool';
+
 	protected static function instance()
 	{
-		return CacheFactory::simple();
+		return CacheFactory::pool();
 	}
 }

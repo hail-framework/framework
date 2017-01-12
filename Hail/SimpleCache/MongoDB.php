@@ -32,7 +32,7 @@ use MongoDate;
  * @author Jeremy Mikola <jmikola@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class MongoDB extends AbtractAdapter
+class MongoDB extends AbstractAdapter
 {
 	/**
 	 * The data field will store the serialized PHP value.

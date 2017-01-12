@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Session;
 
-use Hail\Facades\DB;
+use Hail\DB\Medoo;
 
 /**
  * Class DBHandler
@@ -11,7 +11,12 @@ use Hail\Facades\DB;
  */
 class DBHandler extends BaseHandler
 {
-	public function __construct(array $settings = [])
+	/**
+	 * @var Medoo
+	 */
+	private $db;
+
+	public function __construct(Medoo $db, array $settings = [])
 	{
 		$settings += [
 			'table' => 'sessions',
@@ -19,6 +24,8 @@ class DBHandler extends BaseHandler
 			'time' => 'time',
 			'data' => 'data',
 		];
+		$this->db = $db;
+
 		parent::__construct($settings);
 	}
 
@@ -35,7 +42,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function destroy($id)
 	{
-		$result = DB::delete(
+		$result = $this->db->delete(
 			$this->settings['table'],
 			[$this->settings['id'] => $id]
 		);
@@ -47,7 +54,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function gc($lifetime)
 	{
-		$result = DB::delete(
+		$result = $this->db->delete(
 			$this->settings['table'], [
 				$this->settings['time'] . '[<]' => NOW - $lifetime,
 			]
@@ -60,7 +67,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function open($path, $name)
 	{
-		return DB::getInstance() ? true : false;
+		return $this->db ? true : false;
 	}
 
 	/**
@@ -68,7 +75,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function read($id)
 	{
-		$result = DB::get([
+		$result = $this->db->get([
 			'SELECT' => $this->settings['data'],
 			'FROM' => $this->settings['table'],
 			'WHERE' => [$this->settings['id'] => $id],
@@ -82,7 +89,7 @@ class DBHandler extends BaseHandler
 	 */
 	public function write($id, $data)
 	{
-		$result = DB::insert(
+		$result = $this->db->insert(
 			$this->settings['table'], [
 			$this->settings['id'] => $id,
 			$this->settings['time'] => NOW,

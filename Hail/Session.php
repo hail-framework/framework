@@ -1,6 +1,16 @@
 <?php
 namespace Hail;
 
+use Hail\DB\Medoo;
+use Hail\Facades\{
+	DB
+};
+use Hail\Factory\CacheFactory;
+use Hail\Factory\RedisFactory;
+use Hail\Session\CacheHandler;
+use Hail\Session\DBHandler;
+use Hail\Session\RedisHandler;
+use Hail\Session\SimpleCacheHandler;
 use Hail\Util\ArrayTrait;
 
 /**
@@ -27,14 +37,43 @@ class Session implements \ArrayAccess
 			$this->cookieParams = $cookie;
 		}
 
-		if (in_array($config['handler'], ['DB', 'Embedded', 'Redis'], true)) {
-			$handlerClass = 'Hail\\Session\\' . $config['handler'] . 'Handler';
+		if ($config['handler']) {
+			$connect = $config['connect'] ?? [];
 
-			$settings = $config['settings'] ?? [];
-			if (!isset($settings['lifetime']) && isset($this->cookieParams['lifetime'])) {
-				$settings['lifetime'] = $this->cookieParams['lifetime'];
+			switch (strtolower($config['handler'])) {
+				case 'simple':
+				case 'simplecache':
+					$class = SimpleCacheHandler::class;
+					$conn = CacheFactory::simple($connect);
+					break;
+
+				case 'db':
+					$class = DBHandler::class;
+					$conn = $connect ? new Medoo($connect) : DB::getInstance();
+					break;
+
+				case 'cache':
+					$class = CacheHandler::class;
+					$conn = CacheFactory::pool($connect);
+					break;
+
+				case 'redis':
+					$class = RedisHandler::class;
+					$conn = RedisFactory::get($connect);
+					break;
+
+				default:
+					$class = $conn = null;
 			}
-			$this->handler = new $handlerClass($settings);
+
+			if (null !== $class) {
+				$settings = $config['settings'] ?? [];
+				if (!isset($settings['lifetime']) && isset($this->cookieParams['lifetime'])) {
+					$settings['lifetime'] = $this->cookieParams['lifetime'];
+				}
+
+				$this->handler = new $class($conn, $settings);
+			}
 		}
 
 		$this->start();

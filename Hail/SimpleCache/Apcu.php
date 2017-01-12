@@ -27,7 +27,7 @@ namespace Hail\SimpleCache;
  * @author Kévin Dunglas <dunglas@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Apcu extends AbtractAdapter
+class Apcu extends AbstractAdapter
 {
     /**
      * {@inheritdoc}

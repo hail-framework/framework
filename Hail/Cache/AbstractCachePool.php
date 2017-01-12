@@ -10,13 +10,14 @@
  */
 
 
-namespace Hail\Cache\Adapter;
+namespace Hail\Cache;
 
-use Hail\Cache\Exception\CacheException;
-use Hail\Cache\Exception\CachePoolException;
-use Hail\Cache\Exception\InvalidArgumentException;
+use Hail\Cache\Exception\{
+	CacheException,
+	CachePoolException,
+	InvalidArgumentException
+};
 use Hail\Cache\CacheItemInterface as HailCacheItem;
-use Hail\Cache\CacheItemPoolInterface;
 use Psr\Cache\CacheItemInterface;
 
 /**

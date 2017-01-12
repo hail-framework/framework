@@ -19,7 +19,6 @@
 
 namespace Hail\SimpleCache;
 
-use Hail\Cache\HierarchicalPoolInterface;
 use Hail\Util\ArrayTrait;
 use Hail\SimpleCache\Exception\InvalidArgumentException;
 
@@ -33,7 +32,7 @@ use Hail\SimpleCache\Exception\InvalidArgumentException;
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Hao Feng <flyinghail@msn.com>
  */
-abstract class AbtractAdapter implements CacheInterface
+abstract class AbstractAdapter implements CacheInterface
 {
 	use ArrayTrait;
 

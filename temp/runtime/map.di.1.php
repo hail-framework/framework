@@ -5,6 +5,7 @@
   'arrays' => '\\Hail\\Facades\\Arrays',
   'browser' => '\\Hail\\Facades\\Browser',
   'cache' => '\\Hail\\Facades\\Cache',
+  'cachePool' => '\\Hail\\Facades\\CachePool',
   'cdb' => '\\Hail\\Facades\\CachedDB',
   'config' => '\\Hail\\Facades\\Config',
   'console' => '\\Hail\\Facades\\Console',

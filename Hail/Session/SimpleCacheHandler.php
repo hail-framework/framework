@@ -16,7 +16,7 @@ class SimpleCacheHandler extends BaseHandler
 	 */
 	private $cache;
 
-	public function __construct(array $settings)
+	public function __construct(CacheInterface $cache, array $settings)
 	{
 		$settings += [
 			'prefix' => 'PSR16Ses',
@@ -28,7 +28,7 @@ class SimpleCacheHandler extends BaseHandler
 
 		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
-		$this->cache = Cache::getInstance();
+		$this->cache = $cache;
 
 		parent::__construct($settings);
 	}

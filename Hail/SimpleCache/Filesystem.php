@@ -10,7 +10,7 @@ use Hail\Filesystem\MountManager;
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Filesystem extends AbtractAdapter
+class Filesystem extends AbstractAdapter
 {
 	const EXTENSION = '.cache.php';
 

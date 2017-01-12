@@ -7,10 +7,10 @@ namespace Hail\SimpleCache;
  *
  * @package Hail
  */
-class Chain extends AbtractAdapter
+class Chain extends AbstractAdapter
 {
 	/**
-	 * @var AbtractAdapter[]
+	 * @var AbstractAdapter[]
 	 */
 	private $drivers = [];
 

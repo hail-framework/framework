@@ -1,8 +1,7 @@
 <?php
-namespace Hail\Cache\Adapter;
+namespace Hail\Cache;
 
-use Hail\Facades\Cache;
-use Hail\Cache\CacheItemInterface;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  * This is a bridge between PSR-6 and PSR-16 cache.
@@ -12,14 +11,14 @@ use Hail\Cache\CacheItemInterface;
 class SimpleCachePool extends AbstractCachePool
 {
 	/**
-	 * @var \Hail\SimpleCache\CacheInterface
+	 * @var CacheInterface
 	 */
 	private $cache;
 
 
-	public function __construct()
+	public function __construct(CacheInterface $cache)
 	{
-		$this->cache = Cache::getInstance();
+		$this->cache = $cache;
 	}
 
 
