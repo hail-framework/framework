@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\Factory\CacheFactory;
+use Hail\Factory\Cache as CacheFactory;
 
 /**
  * Class Cache

@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\DB\Medoo;
+use Hail\Factory\DB as DBFactory;
 
 /**
  * Class DB
@@ -36,8 +36,6 @@ class DB extends Facade
 {
 	protected static function instance()
 	{
-		return new Medoo(
-			Config::get('database')
-		);
+		return DBFactory::pdo();
 	}
 }

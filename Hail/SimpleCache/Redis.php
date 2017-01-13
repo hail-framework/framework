@@ -1,11 +1,9 @@
 <?php
 namespace Hail\SimpleCache;
 
-use Hail\Facades\{
-	Serialize
-};
+use Hail\Facades\Serialize;
 use Hail\Redis\Exception\RedisException;
-use Hail\Factory\RedisFactory;
+use Hail\Factory\Redis as RedisFactory;
 
 /**
  * Redis cache provider.
@@ -28,7 +26,7 @@ class Redis extends AbstractAdapter
 	 */
 	public function __construct(array $params)
 	{
-		$this->redis = RedisFactory::get($params);
+		$this->redis = RedisFactory::client($params);
 
 		parent::__construct($params);
 	}

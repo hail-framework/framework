@@ -1,11 +1,10 @@
 <?php
 namespace Hail;
 
-use Hail\DB\Medoo;
-use Hail\Facades\DB;
 use Hail\Factory\{
-	CacheFactory,
-	RedisFactory
+	Cache,
+	Redis,
+	DB
 };
 use Hail\Session\{
 	CacheHandler,
@@ -45,23 +44,23 @@ class Session implements \ArrayAccess
 			switch (strtolower($config['handler'])) {
 				case 'redis':
 					$class = RedisHandler::class;
-					$conn = RedisFactory::get($connect);
+					$conn = Redis::client($connect);
 					break;
 
 				case 'simple':
 				case 'simplecache':
 					$class = SimpleCacheHandler::class;
-					$conn = CacheFactory::simple($connect);
+					$conn = Cache::simple($connect);
 					break;
 
 				case 'cache':
 					$class = CacheHandler::class;
-					$conn = CacheFactory::pool($connect);
+					$conn = Cache::pool($connect);
 					break;
 
 				case 'db':
 					$class = DBHandler::class;
-					$conn = $connect ? new Medoo($connect) : DB::getInstance();
+					$conn = DB::pdo($connect);
 					break;
 
 				default:

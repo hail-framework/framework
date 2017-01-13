@@ -1,7 +1,6 @@
 <?php
 namespace Hail\Session;
 
-use Hail\Factory\RedisFactory;
 use Hail\Redis\Exception\RedisException;
 
 /**

@@ -13,12 +13,8 @@ use Hail\Facades\{
 	Serialize
 };
 
-class RedisFactory
+class Redis extends AbstractFactory
 {
-	/**
-	 * @var AbstractClient[]
-	 */
-	protected static $pool = [];
 	protected static $extension;
 	protected static $connectPool;
 
@@ -28,13 +24,13 @@ class RedisFactory
 	 * @return AbstractClient
 	 * @throws RedisException
 	 */
-	public static function get(array $config)
-	{
-		return static::client($config);
-	}
-
 	public static function client(array $config = []): AbstractClient
 	{
+		if (static::$pool === []) {
+			static::$extension = extension_loaded('redis');
+			static::$connectPool = class_exists('\redisProxy', false);
+		}
+
 		$config += Config::get('redis');
 		$hash = sha1(Serialize::encode($config));
 
@@ -44,15 +40,9 @@ class RedisFactory
 
 		$driver = $config['driver'] ?? '';
 
-		if ($driver === 'native' || !(
-				static::$extension ?? (static::$extension = extension_loaded('redis'))
-			)
-		) {
+		if ($driver === 'native' || !static::$extension) {
 			return static::$pool[$hash] = new Native($config);
-		} elseif ($driver === 'connectPool' && (
-				static::$connectPool ?? (static::$connectPool = class_exists('\redisProxy', false))
-			)
-		) {
+		} elseif ($driver === 'connectPool' && static::$connectPool) {
 			return static::$pool[$hash] = new ConnectPool($config);
 		}
 

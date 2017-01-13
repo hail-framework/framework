@@ -10,22 +10,12 @@ use Hail\SimpleCache\{
 	Chain
 };
 use Hail\Facades\{
-	Cache, Config, Serialize
+	Config, Serialize
 };
 
 
-class CacheFactory
+class Cache extends AbstractFactory
 {
-	/**
-	 * @var CacheInterface[]
-	 */
-	protected static $pool = [];
-
-	public static function get($type, array $config = [])
-	{
-		return static::$type($config);
-	}
-
 	/**
 	 * @param array $config
 	 *
@@ -81,24 +71,24 @@ class CacheFactory
 			return static::$pool[$hash];
 		}
 
-		if ($config['adapter'] === 'redis') {
-			$config = $config['config'] ?? [];
-			$namespace = $config['namespace'] ?? '';
-			unset($config['namespace']);
+		switch (strtolower($config['driver'])) {
+			case 'redis':
+				$config = $config['config'] ?? [];
+				$namespace = $config['namespace'] ?? '';
+				unset($config['namespace']);
 
-			$redis = RedisFactory::get($config);
+				$redis = Redis::client($config);
 
-			return static::$pool[$hash] = new RedisCachePool($redis, $namespace);
-		} elseif ($config['adapter'] === 'simple' || $config['adapter'] === 'simpleCache') {
-			if (empty($config['config'])) {
-				$cache = Cache::getInstance();
-			} else {
+				return static::$pool[$hash] = new RedisCachePool($redis, $namespace);
+
+			case 'simple':
+			case 'simplecache':
 				$cache = static::simple($config['config']);
-			}
 
-			return static::$pool[$hash] = new SimpleCachePool($cache);
+				return static::$pool[$hash] = new SimpleCachePool($cache);
+
+			default:
+				throw new \LogicException("PSR6 cache adapter {$config['adapter']} not defined! ");
 		}
-
-		throw new \LogicException("PSR6 cache adapter {$config['adapter']} not defined! ");
 	}
 }

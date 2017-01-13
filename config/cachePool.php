@@ -1,6 +1,6 @@
 <?php
 return [
-	'adapter' => 'redis', // simple
+	'driver' => 'redis', // simple
 	'config' => [
 		'namespace' => 'HAIL_CACHE'
 	]
