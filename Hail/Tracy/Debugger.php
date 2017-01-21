@@ -14,7 +14,7 @@ use Hail\Facades\Trace;
  */
 class Debugger
 {
-	const VERSION = '2.4.4';
+	const VERSION = '2.4.5';
 
 	/** server modes for Debugger::enable() */
 	const
@@ -128,7 +128,7 @@ class Debugger
 			self::$productionMode = is_bool($mode) ? $mode : !self::detectDebugMode($mode);
 		}
 
-		self::$reserved = str_repeat('t', 3e5);
+		self::$reserved = str_repeat('t', 30000);
 		self::$time = START_TIME;
 		self::$obLevel = ob_get_level();
 		self::$cpuUsage = !self::$productionMode && function_exists('getrusage') ? getrusage() : null;
@@ -148,9 +148,9 @@ class Debugger
 
 		// php configuration
 		if (function_exists('ini_set')) {
-			ini_set('display_errors', !self::$productionMode); // or 'stderr'
-			ini_set('html_errors', false);
-			ini_set('log_errors', false);
+			ini_set('display_errors', self::$productionMode ? '0' : '1'); // or 'stderr'
+			ini_set('html_errors', '0');
+			ini_set('log_errors', '0');
 		} else if (($displayErrors = ini_get('display_errors')) != !self::$productionMode // intentionally ==
 			&& $displayErrors !== (self::$productionMode ? 'stderr' : 'stdout')
 		) {

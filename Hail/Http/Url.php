@@ -432,7 +432,7 @@ class Url implements \JsonSerializable
 	 */
 	public function getRelativeUrl()
 	{
-		return (string) substr($this->getAbsoluteUrl(), strlen($this->getBaseUrl()));
+		return substr($this->getAbsoluteUrl(), strlen($this->getBaseUrl()));
 	}
 
 

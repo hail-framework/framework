@@ -7,7 +7,7 @@
 
 namespace Hail\Http;
 
-use Hail\Facades\Generator;
+use Hail\Facades\Generators;
 
 /**
  * HttpResponse class.
@@ -343,7 +343,7 @@ class Response
 			&& in_array($this->code, [400, 403, 404, 405, 406, 408, 409, 410, 500, 501, 505], true)
 			&& preg_match('#^text/html(?:;|$)#', $this->getHeader('Content-Type', 'text/html'))
 		) {
-			echo Generator::random(2e3, " \t\r\n"); // sends invisible garbage for IE
+			echo Generators::random(2000, " \t\r\n"); // sends invisible garbage for IE
 			self::$fixIE = false;
 		}
 	}

@@ -44,10 +44,11 @@
 		el.classList.toggle('tracy-collapsed', !show);
 		dest.classList.toggle('tracy-collapsed', !show);
 
+        var toggleEvent;
 		if (typeof window.Event === 'function') {
-			var toggleEvent = new Event('tracy-toggle', {bubbles: true});
+			toggleEvent = new Event('tracy-toggle', {bubbles: true});
 		} else {
-			var toggleEvent = document.createEvent('Event');
+			toggleEvent = document.createEvent('Event');
 			toggleEvent.initEvent('tracy-toggle', true, false);
 		}
 		el.dispatchEvent(toggleEvent);
@@ -89,7 +90,7 @@
 			});
 			sessionStorage.setItem('tracy-toggles-' + baseEl.id, JSON.stringify(toggles));
 		});
-	}
+	};
 
 
 	// finds closing maching element

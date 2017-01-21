@@ -456,7 +456,7 @@ class Strings
 
 		return $pos === false
 			? false
-			: (string) substr($haystack, $pos + strlen($needle));
+			: substr($haystack, $pos + strlen($needle));
 	}
 
 

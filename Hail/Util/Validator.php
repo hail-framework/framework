@@ -1212,7 +1212,7 @@ class Validator
 	 * @param  array $data
 	 * @param  array $fields
 	 *
-	 * @return Validator
+	 * @return \Hail\Util\Validator
 	 */
 	public function withData(array $data, array $fields = [])
 	{
