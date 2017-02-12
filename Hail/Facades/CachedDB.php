@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\DB;
+use Hail\Database;
 
 /**
  * Class CachedDB
@@ -10,9 +10,9 @@ use Hail\DB;
  *
  * @method static mixed select(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
  * @method static mixed get(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
- * @method static DB\Cache expiresAfter(int $lifetime = 0)
- * @method static DB\Cache name(string $name)
- * @method static DB\Cache reset()
+ * @method static Database\Cache expiresAfter(int $lifetime = 0)
+ * @method static Database\Cache name(string $name)
+ * @method static Database\Cache reset()
  * @method static bool delete(string $name, mixed $arguments = null)
  */
 class CachedDB extends Facade
@@ -21,6 +21,6 @@ class CachedDB extends Facade
 
 	protected static function instance()
 	{
-		return new DB\Cache();
+		return new Database\Cache();
 	}
 }

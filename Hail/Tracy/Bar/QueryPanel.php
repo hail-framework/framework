@@ -9,8 +9,8 @@
 namespace Hail\Tracy\Bar;
 
 
-use Hail\DB\Collector;
-use Hail\DB\Event;
+use Hail\Database\Collector;
+use Hail\Database\Event;
 
 class QueryPanel implements PanelInterface
 {

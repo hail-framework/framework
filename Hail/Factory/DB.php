@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Factory;
 
-use Hail\DB\Medoo;
+use Hail\Database\Database;
 use Hail\Facades\{
 	Config, Serialize
 };
@@ -11,7 +11,7 @@ class DB extends AbstractFactory
 	/**
 	 * @param array $config
 	 *
-	 * @return Medoo
+	 * @return Database
 	 */
 	public static function pdo(array $config = [])
 	{
@@ -22,6 +22,6 @@ class DB extends AbstractFactory
 			return static::$pool[$hash];
 		}
 
-		return static::$pool[$hash] = new Medoo($config);
+		return static::$pool[$hash] = new Database($config);
 	}
 }

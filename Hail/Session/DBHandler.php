@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Session;
 
-use Hail\DB\Medoo;
+use Hail\Database\Database;
 
 /**
  * Class DBHandler
@@ -12,11 +12,11 @@ use Hail\DB\Medoo;
 class DBHandler extends BaseHandler
 {
 	/**
-	 * @var Medoo
+	 * @var Database
 	 */
 	private $db;
 
-	public function __construct(Medoo $db, array $settings = [])
+	public function __construct(Database $db, array $settings = [])
 	{
 		$settings += [
 			'table' => 'sessions',

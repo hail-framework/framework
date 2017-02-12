@@ -1,5 +1,5 @@
 <?php
-namespace Hail\DB\Exception;
+namespace Hail\Database\Exception;
 
 class ModelException extends \RuntimeException
 {

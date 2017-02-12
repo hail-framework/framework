@@ -20,13 +20,13 @@ use Hail\Facades\DI;
  * @property-read Application $app
  * @property-read Output $output
  * @property-read Latte\Engine $template
- * @property-read DB\Medoo $db
+ * @property-read Database\Database $db
  * @property-read Acl $acl
  * @property-read Session $session
  * @property-read Cookie $cookie
  * @property-read SimpleCache\CacheInterface $cache
  * @property-read Cache\CacheItemPoolInterface $cachePool
- * @property-read DB\Cache $cdb
+ * @property-read Database\Cache $cdb
  * @property-read Browser $browser
  * @property-read Util\Arrays $arrays
  * @property-read Util\Crypto $crypto

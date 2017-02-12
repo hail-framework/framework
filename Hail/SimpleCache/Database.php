@@ -1,15 +1,15 @@
 <?php
 namespace Hail\SimpleCache;
 
-use Hail\DB\Medoo as DB;
+use Hail\Database\Database as DB;
 use Hail\Facades\Serialize;
 
 /**
- * Medoo DB cache provider.
+ * Database cache provider.
  *
  * @author Hao Feng <flyinghail@msn.com>
  */
-class Medoo extends AbstractAdapter
+class Database extends AbstractAdapter
 {
 	/**
 	 * @var DB|null
