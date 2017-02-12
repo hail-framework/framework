@@ -17,7 +17,7 @@ trait SingletonTrait
 	 */
 	final public static function getInstance()
 	{
-		return static::$instance ?? (static::$instance = new static);
+		return static::$instance[static::class] ?? (static::$instance[static::class] = new static);
 	}
 
 	/**
