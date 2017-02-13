@@ -2,7 +2,12 @@
 
 namespace Hail\Filesystem\Adapter;
 
+if (!class_exists('\\sinacloud\\sae\\Storage')) {
+	require __DIR__ . '/../Client/SaeStorage.php';
+}
+
 use Hail\Filesystem\Util;
+use sinacloud\sae\Storage;
 
 class SaeStorage extends AbstractAdapter
 {
@@ -15,16 +20,11 @@ class SaeStorage extends AbstractAdapter
 			throw new \InvalidArgumentException('Config not defined');
 		}
 
-		$class = '\\Hail\\Filesystem\\Client\\SaeStorage';
-		if (class_exists('\\sinacloud\\sae\\Storage')) {
-			$class = '\\sinacloud\\sae\\Storage';
-		}
-
-		$this->storage = new $class($config['accessKey'] ?? null, $config['secretKey'] ?? null);
+		$this->storage = new Storage($config['accessKey'] ?? null, $config['secretKey'] ?? null);
 		$this->bucket = $config['bucket'];
 
-		if (!$this->storage->getBucketInfo($this->bucket, false)) {
-			$this->storage->putBucket($this->bucket);
+		if (!Storage::getBucketInfo($this->bucket, false)) {
+			Storage::putBucket($this->bucket);
 		}
 	}
 
@@ -38,7 +38,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function has($path)
 	{
-		return $this->storage->getObjectInfo($this->bucket, $path, false);
+		return Storage::getObjectInfo($this->bucket, $path, false);
 	}
 
 
@@ -51,7 +51,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function read($path)
 	{
-		$response = $this->storage->getObject($this->bucket, $path);
+		$response = Storage::getObject($this->bucket, $path);
 		if ($response->error !== true) {
 			$content['contents'] = $response->body;
 
@@ -71,7 +71,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function readStream($path)
 	{
-		$response = $this->storage->getObject($this->bucket, $path);
+		$response = Storage::getObject($this->bucket, $path);
 		if ($response->error !== true) {
 			$content['stream'] = $response->body;
 
@@ -99,24 +99,29 @@ class SaeStorage extends AbstractAdapter
 		}
 
 		if ($recursive === false) {
-			$dirs = $this->storage->getBucket($this->bucket, $directory, null, 10000, '/');
+			$dirs = Storage::getBucket($this->bucket, $directory, null, 10000, '/');
 			foreach ($dirs as $dir) {
 				if (!array_key_exists('subdir', $dir)) {
-					array_push($results, Util::map($dir, [
+					$results[] = Util::map($dir, [
 						'content_type' => 'type',
 						'name' => 'path',
 						'last_modified' => 'timestamp',
 						'bytes' => 'size'
-					]));
+					]);
 				}
 			}
 
 			return $results;
 		} else {
-			$dirs = $this->storage->getBucket($this->bucket, $directory, null, 10000, '/');
+			$dirs = Storage::getBucket($this->bucket, $directory, null, 10000, '/');
 			foreach ($dirs as $dir) {
 				if (!array_key_exists('subdir', $dir)) {
-					array_push($results, Util::map($dir, ['content_type' => 'type', 'name' => 'path', 'last_modified' => 'timestamp', 'bytes' => 'size']));
+					$results[] = Util::map($dir, [
+						'content_type' => 'type',
+						'name' => 'path',
+						'last_modified' => 'timestamp',
+						'bytes' => 'size'
+					]);
 				} else {
 					$results = array_merge($results, $this->listContents($dir['subdir'], true));
 				}
@@ -136,7 +141,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function getMetadata($path)
 	{
-		return $this->storage->getObjectInfo($this->bucket, $path, true);
+		return Storage::getObjectInfo($this->bucket, $path, true);
 	}
 
 
@@ -149,7 +154,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function getSize($path)
 	{
-		$result = $this->getObjectInfo($this->bucket, $path, true);
+		$result = Storage::getObjectInfo($this->bucket, $path, true);
 
 		return $result['size'];
 	}
@@ -164,7 +169,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function getMimetype($path)
 	{
-		$result = $this->getObjectInfo($this->bucket, $path, true);
+		$result = Storage::getObjectInfo($this->bucket, $path, true);
 
 		return $result['type'];
 	}
@@ -179,7 +184,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function getTimestamp($path)
 	{
-		$result = $this->getObjectInfo($this->bucket, $path, true);
+		$result = Storage::getObjectInfo($this->bucket, $path, true);
 
 		return $result['date'];
 	}
@@ -208,7 +213,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function write($path, $contents, array $config)
 	{
-		if ((bool) $this->storage->putObject($contents, $this->bucket, $path)) {
+		if ((bool) Storage::putObject($contents, $this->bucket, $path)) {
 			return $this->getMetadata($path);
 		} else {
 			return false;
@@ -227,7 +232,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function writeStream($path, $resource, array $config)
 	{
-		if ((bool) $this->storage->putObject($resource, $this->bucket, $path)) {
+		if ((bool) Storage::putObject($resource, $this->bucket, $path)) {
 			return $this->getMetadata($path);
 		} else {
 			return false;
@@ -303,7 +308,7 @@ class SaeStorage extends AbstractAdapter
 		if (!$this->has($path)) {
 			return false;
 		} else {
-			return (bool) !$this->storage->copyObject($this->bucket, $path, $this->bucket, $newpath);
+			return Storage::copyObject($this->bucket, $path, $this->bucket, $newpath) ? true : false;
 		}
 	}
 
@@ -320,7 +325,7 @@ class SaeStorage extends AbstractAdapter
 		if (!$this->has($path)) {
 			return false;
 		} else {
-			return (bool) $this->storage->deleteObject($this->bucket, $path);
+			return (bool) Storage::deleteObject($this->bucket, $path);
 		}
 	}
 
@@ -334,7 +339,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function deleteDir($dirname)
 	{
-		foreach ($this->listContents($dirname, ture) as $obj) {
+		foreach ($this->listContents($dirname, true) as $obj) {
 			$this->delete($obj['path']);
 		}
 
@@ -352,7 +357,7 @@ class SaeStorage extends AbstractAdapter
 	 */
 	public function createDir($dirname, array $config)
 	{
-		$this->storage->write($dirname, '', $config);
+		$this->write($dirname, '', $config);
 	}
 
 

@@ -163,6 +163,7 @@ class Qiniu extends AbstractAdapter
 
 	public function createDir($dirname, array $config)
 	{
+		$this->write($dirname, '', $config);
 		return ['path' => $dirname];
 	}
 

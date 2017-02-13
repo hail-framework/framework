@@ -1,8 +1,7 @@
 <?php
-namespace Hail\Filesystem\Client;
-//namespace sinacloud\sae;
 // SAE 官方 Storage客户端 代码，非SAE环境中使用
 // 本文件已经在SAE中预置，在SAE中不需要
+namespace sinacloud\sae;
 
 if (defined('SAE_APPNAME')) {
 	define('DEFAULT_STORAGE_ENDPOINT', 'api.i.sinas3.com:81');
