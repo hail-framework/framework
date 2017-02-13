@@ -1,6 +1,5 @@
 <?php
 namespace Hail\Filesystem\Client;
-
 //namespace sinacloud\sae;
 // SAE 官方 Storage客户端 代码，非SAE环境中使用
 // 本文件已经在SAE中预置，在SAE中不需要
@@ -1563,5 +1562,5 @@ final class StorageWrapper extends Storage
 	}
 }
 
-stream_wrapper_register('storage', 'Litp\Flysystem\StorageWrapper');
+stream_wrapper_register('storage', StorageWrapper::class);
 

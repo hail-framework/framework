@@ -15,14 +15,17 @@ class SaeStorage extends AbstractAdapter
 			throw new \InvalidArgumentException('Config not defined');
 		}
 
+		$class = '\\Hail\\Filesystem\\Client\\SaeStorage';
 		if (class_exists('\\sinacloud\\sae\\Storage')) {
 			$class = '\\sinacloud\\sae\\Storage';
-		} else {
-			$class = '\\Hail\\Filesystem\\Client\\SaeStorage';
 		}
 
 		$this->storage = new $class($config['accessKey'] ?? null, $config['secretKey'] ?? null);
 		$this->bucket = $config['bucket'];
+
+		if (!$this->storage->getBucketInfo($this->bucket, false)) {
+			$this->storage->putBucket($this->bucket);
+		}
 	}
 
 
@@ -193,18 +196,6 @@ class SaeStorage extends AbstractAdapter
 	{
 		return true;
 	}
-
-
-	/////////////////////////////////////////////////////
-	/**
-	 * @const  VISIBILITY_PUBLIC  public visibility
-	 */
-	const VISIBILITY_PUBLIC = 'public';
-	/**
-	 * @const  VISIBILITY_PRIVATE  private visibility
-	 */
-	const VISIBILITY_PRIVATE = 'private';
-
 
 	/**
 	 * Write a new file.

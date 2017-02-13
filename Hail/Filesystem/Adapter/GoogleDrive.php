@@ -1,6 +1,7 @@
 <?php
 namespace Hail\Filesystem\Adapter;
 
+use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
 use Google_Service_Drive_FileList;
@@ -112,16 +113,27 @@ class GoogleDriveAdapter extends AbstractAdapter
 	 */
 	private $options = [];
 
-	public function __construct(Google_Service_Drive $service, $root = null, $options = [])
+	public function __construct(array $config)
 	{
-		if (!$root) {
-			$root = 'root';
+		if (!isset($config['clientId'], $config['clientSecret'], $config['refreshToken'])) {
+			throw new \InvalidArgumentException('Config not defined');
 		}
+
+		//Google_Service_Drive $service, $root = null, $options = []
+		$root = $config['root'] ?? 'root';
+
+		$client = new Google_Client();
+		$client->setClientId($config['clientId'] . '.apps.googleusercontent.com');
+		$client->setClientSecret($config['clientSecret']);
+		$client->refreshToken($config['refreshToken']);
+
+		$service = new Google_Service_Drive($client);
+
 		$this->service = $service;
 		$this->setPathPrefix($root);
 		$this->root = $root;
 
-		$this->options = array_replace_recursive(static::$defaultOptions, $options);
+		$this->options = array_replace_recursive(static::$defaultOptions, $config['options'] ?? []);
 
 		$this->spaces = $this->options['spaces'];
 		$this->useHasDir = $this->options['useHasDir'];
