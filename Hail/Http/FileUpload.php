@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Nette Framework (http://nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modified by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Nette Framework (https://nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
 namespace Hail\Http;
@@ -62,10 +62,8 @@ class FileUpload
 
 	/**
 	 * Returns the file name.
-	 *
-	 * @return string
 	 */
-	public function getName()
+	public function getName(): string
 	{
 		return $this->name;
 	}
@@ -73,10 +71,8 @@ class FileUpload
 
 	/**
 	 * Returns the sanitized file name.
-	 *
-	 * @return string
 	 */
-	public function getSanitizedName()
+	public function getSanitizedName(): string
 	{
 		return trim(Helpers::webalize($this->name, '.', false), '.-');
 	}
@@ -84,10 +80,8 @@ class FileUpload
 
 	/**
 	 * Returns the MIME content type of an uploaded file.
-	 *
-	 * @return string|NULL
 	 */
-	public function getContentType()
+	public function getContentType(): ?string
 	{
 		if ($this->type === null && $this->isOk()) {
 			$this->type = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $this->tmpName);
@@ -99,10 +93,8 @@ class FileUpload
 
 	/**
 	 * Returns the size of an uploaded file.
-	 *
-	 * @return int
 	 */
-	public function getSize()
+	public function getSize(): int
 	{
 		return $this->size;
 	}
@@ -110,10 +102,8 @@ class FileUpload
 
 	/**
 	 * Returns the path to an uploaded file.
-	 *
-	 * @return string
 	 */
-	public function getTemporaryFile()
+	public function getTemporaryFile(): string
 	{
 		return $this->tmpName;
 	}
@@ -126,41 +116,34 @@ class FileUpload
 
 	/**
 	 * Returns the path to an uploaded file.
-	 *
-	 * @return string
 	 */
-	public function __toString()
+	public function __toString(): string
 	{
-		return (string) $this->tmpName;
+		return $this->tmpName;
 	}
 
 
 	/**
 	 * Returns the error code. {@link http://php.net/manual/en/features.file-upload.errors.php}
-	 *
-	 * @return int
 	 */
-	public function getError()
+	public function getError(): int
 	{
 		return $this->error;
 	}
 
-	/**
-	 * @return bool
-	 */
-	public function hasFile()
-	{
-		return $this->error !== UPLOAD_ERR_NO_FILE;
-	}
 
 	/**
 	 * Is there any error?
-	 *
-	 * @return bool
 	 */
-	public function isOk()
+	public function isOk(): bool
 	{
 		return $this->error === UPLOAD_ERR_OK;
+	}
+
+
+	public function hasFile(): bool
+	{
+		return $this->error !== UPLOAD_ERR_NO_FILE;
 	}
 
 
@@ -169,10 +152,10 @@ class FileUpload
 	 *
 	 * @param  string
 	 *
-	 * @return self
+	 * @return static
 	 * @throws \RuntimeException
 	 */
-	public function move($dest)
+	public function move(string $dest)
 	{
 		if (file_exists($dest)) {
 			unlink($dest);
@@ -197,10 +180,8 @@ class FileUpload
 
 	/**
 	 * Is uploaded file GIF, PNG or JPEG?
-	 *
-	 * @return bool
 	 */
-	public function isImage()
+	public function isImage(): bool
 	{
 		return in_array($this->getContentType(), ['image/gif', 'image/png', 'image/jpeg'], true);
 	}
@@ -218,10 +199,8 @@ class FileUpload
 
 	/**
 	 * Returns the dimensions of an uploaded image as array.
-	 *
-	 * @return array|NULL
 	 */
-	public function getImageSize()
+	public function getImageSize(): ?array
 	{
 		return $this->isOk() ? @getimagesize($this->tmpName) : null; // @ - files smaller than 12 bytes causes read error
 	}
@@ -229,10 +208,8 @@ class FileUpload
 
 	/**
 	 * Get file contents.
-	 *
-	 * @return string|NULL
 	 */
-	public function getContents()
+	public function getContents(): ?string
 	{
 		// future implementation can try to work around safe_mode and open_basedir limitations
 		return $this->isOk() ? file_get_contents($this->tmpName) : null;

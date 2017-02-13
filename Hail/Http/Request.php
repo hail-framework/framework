@@ -21,6 +21,15 @@ use Hail\Facades\{
  */
 class Request
 {
+	const
+		GET = 'GET',
+		POST = 'POST',
+		HEAD = 'HEAD',
+		PUT = 'PUT',
+		DELETE = 'DELETE',
+		PATCH = 'PATCH',
+		OPTIONS = 'OPTIONS';
+
 	/** @var string */
 	private $method;
 
@@ -55,12 +64,17 @@ class Request
 	/** @var Input */
 	public $input;
 
-	public function __construct(Url $url, $method = null, $remoteAddress = null, $remoteHost = null)
+	public function __construct(Url $url, $method = null, $remoteAddress = null, $remoteHost = null, $input = null)
 	{
 		$this->url = $url;
 		$this->method = $method ?: 'GET';
 		$this->remoteAddress = $remoteAddress;
 		$this->remoteHost = $remoteHost;
+
+		$this->post = (array) $input['post'] ?? [];
+		$this->files = (array) $input['files'] ?? [];
+		$this->cookies = (array) $input['cookies'] ?? [];
+		$this->headers = array_change_key_case((array) $input['headers'] ?? [], CASE_LOWER);
 
 		$this->input = new Input($this);
 	}
@@ -83,28 +97,21 @@ class Request
 
 	/**
 	 * Returns URL object.
-	 *
-	 * @return Url
 	 */
-	public function getUrl()
+	public function getUrl(): Url
 	{
 		return $this->url;
 	}
 
 	/**
 	 * Returns URL object.
-	 *
-	 * @return Url
 	 */
-	public function cloneUrl()
+	public function cloneUrl(): Url
 	{
 		return clone $this->url;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getPathInfo()
+	public function getPathInfo(): string
 	{
 		return $this->url->getPathInfo();
 	}
@@ -125,11 +132,9 @@ class Request
 	 * Returns variable provided to the script via URL query ($_GET).
 	 * If no key is passed, returns the entire array.
 	 *
-	 * @param  string $key
-	 *
 	 * @return mixed
 	 */
-	public function getQuery($key = null)
+	public function getQuery(string $key = null)
 	{
 		return $this->url->getQueryParameter($key);
 	}
@@ -138,11 +143,9 @@ class Request
 	 * Returns variable provided to the script via POST method ($_POST).
 	 * If no key is passed, returns the entire array.
 	 *
-	 * @param  string $key
-	 *
 	 * @return mixed
 	 */
-	public function getPost($key = null)
+	public function getPost(string $key = null)
 	{
 		return Helpers::getParam($this->post, '_POST', $key);
 	}
@@ -163,12 +166,9 @@ class Request
 
 	/**
 	 * Returns uploaded file.
-	 *
-	 * @param  string $key
-	 *
-	 * @return FileUpload|NULL
+	 * @return FileUpload|array|NULL
 	 */
-	public function getFile($key = null)
+	public function getFile(string $key = null)
 	{
 		return Helpers::getParam($this->files, '_FILES', $key);
 	}
@@ -176,11 +176,9 @@ class Request
 	/**
 	 * Returns variable provided to the script via HTTP cookies.
 	 *
-	 * @param  string|NULL $key
-	 *
 	 * @return mixed
 	 */
-	public function getCookie($key = null)
+	public function getCookie(string $key = null)
 	{
 		return Helpers::getParam($this->cookies, '_COOKIE', $key);
 	}
@@ -190,10 +188,8 @@ class Request
 
 	/**
 	 * Returns HTTP request method (GET, POST, HEAD, PUT, ...). The method is case-sensitive.
-	 *
-	 * @return string
 	 */
-	public function getMethod()
+	public function getMethod(): string
 	{
 		return $this->method;
 	}
@@ -201,12 +197,8 @@ class Request
 
 	/**
 	 * Checks if the request method is the given one.
-	 *
-	 * @param  string
-	 *
-	 * @return bool
 	 */
-	public function isMethod($method)
+	public function isMethod(string $method): bool
 	{
 		return strcasecmp($this->method, $method) === 0;
 	}
@@ -214,19 +206,14 @@ class Request
 	/**
 	 * Return the value of the HTTP header. Pass the header name as the
 	 * plain, HTTP-specified header name (e.g. 'Accept-Encoding').
-	 *
-	 * @param  string $header
-	 * @param  mixed $default
-	 *
-	 * @return mixed
 	 */
-	public function getHeader($header, $default = null)
+	public function getHeader(string $header): ?string
 	{
 		$header = strtoupper($header);
 		if ($this->allHeaders) {
-			return $this->headers[$header] ?? $default;
+			return $this->headers[$header] ?? null;
 		} else if (array_key_exists($header, $this->headers)) {
-			return $this->headers[$header] ?? $default;
+			return $this->headers[$header] ?? null;
 		}
 
 		$key = 'HTTP_' . str_replace('-', '_', $header);
@@ -241,20 +228,17 @@ class Request
 
 			if (isset($contentHeaders[$header], $_SERVER[$contentHeaders[$header]])) {
 				return $this->headers[$header] = $_SERVER[$contentHeaders[$header]];
-			} else {
-				$this->headers[$header] = null;
-				return $default;
 			}
+
+			return $this->headers[$header] = null;
 		}
 	}
 
 
 	/**
 	 * Returns all HTTP headers.
-	 *
-	 * @return array
 	 */
-	public function getHeaders()
+	public function getHeaders(): array
 	{
 		if ($this->allHeaders) {
 			return $this->headers;
@@ -281,10 +265,8 @@ class Request
 
 	/**
 	 * Returns referrer.
-	 *
-	 * @return Url|NULL
 	 */
-	public function getReferer()
+	public function getReferer(): ?Url
 	{
 		$referre = $this->getHeader('referer');
 
@@ -294,10 +276,8 @@ class Request
 
 	/**
 	 * Is the request is sent via secure channel (https).
-	 *
-	 * @return bool
 	 */
-	public function isSecured()
+	public function isSecured(): bool
 	{
 		return $this->url->getScheme() === 'https';
 	}
@@ -305,30 +285,24 @@ class Request
 
 	/**
 	 * Is AJAX request?
-	 *
-	 * @return bool
 	 */
-	public function isAjax()
+	public function isAjax(): bool
 	{
 		return $this->getHeader('X-Requested-With') === 'XMLHttpRequest';
 	}
 
 	/**
 	 * Determine if the request is the result of an PJAX call.
-	 *
-	 * @return bool
 	 */
-	public function isPjax()
+	public function isPjax(): bool
 	{
 		return $this->getHeader('X-PJAX') === 'true';
 	}
 
 	/**
 	 * Determine if the request is sending JSON.
-	 *
-	 * @return bool
 	 */
-	public function isJson()
+	public function isJson(): bool
 	{
 		return Strings::contains(
 			$this->getHeader('CONTENT-TYPE'), ['/json', '+json']
@@ -337,20 +311,16 @@ class Request
 
 	/**
 	 * Determine if the current request probably expects a JSON response.
-	 *
-	 * @return bool
 	 */
-	public function expectsJson()
+	public function expectsJson(): bool
 	{
 		return ($this->isAjax() && !$this->isPjax()) || $this->wantsJson();
 	}
 
 	/**
 	 * Determine if the current request is asking for JSON in return.
-	 *
-	 * @return bool
 	 */
-	public function wantsJson()
+	public function wantsJson(): bool
 	{
 		$acceptable = $this->getHeader('Accept');
 
@@ -359,10 +329,8 @@ class Request
 
 	/**
 	 * Returns the IP address of the remote client.
-	 *
-	 * @return string|NULL
 	 */
-	public function getRemoteAddress()
+	public function getRemoteAddress(): ?string
 	{
 		return $this->remoteAddress;
 	}
@@ -370,10 +338,8 @@ class Request
 
 	/**
 	 * Returns the host of the remote client.
-	 *
-	 * @return string|NULL
 	 */
-	public function getRemoteHost()
+	public function getRemoteHost(): ?string
 	{
 		if ($this->remoteHost === null && $this->remoteAddress !== null) {
 			$this->remoteHost = gethostbyaddr($this->remoteAddress);
@@ -385,10 +351,8 @@ class Request
 
 	/**
 	 * Returns raw content of HTTP request body.
-	 *
-	 * @return string|NULL
 	 */
-	public function getRawBody()
+	public function getRawBody(): ?string
 	{
 		if ($this->content === null) {
 			$this->content = file_get_contents('php://input');

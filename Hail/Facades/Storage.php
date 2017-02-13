@@ -1,6 +1,7 @@
 <?php
 namespace Hail\Facades;
 
+use Hail\Factory\Storage as StorageFactory;
 use Hail\Filesystem\{
 	MountManager,
 	AdapterInterface,
@@ -15,7 +16,7 @@ use Hail\Filesystem\{
  *
  * @method static AdapterInterface getAdapter($prefix)
  * @method static array getConfig($prefix)
- * @method static bool has($path)
+ * @method static bool has(string $path)
  * @method static bool write($path, $contents, array $config = [])
  * @method static bool writeStream($path, $resource, array $config = [])
  * @method static bool put($path, $contents, $config = [])
@@ -53,8 +54,6 @@ class Storage extends Facade
 {
 	protected static function instance()
 	{
-		return new MountManager(
-			Config::get('filesystem')
-		);
+		return StorageFactory::mount();
 	}
 }

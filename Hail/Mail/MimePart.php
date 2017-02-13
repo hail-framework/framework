@@ -19,7 +19,7 @@ use Hail\Util\Validator;
 /**
  * MIME message part.
  *
- * @property   mixed $body
+ * @property   string $body
  */
 class MimePart
 {
@@ -40,20 +40,15 @@ class MimePart
 	private $parts = [];
 
 	/** @var string */
-	private $body;
+	private $body = '';
 
 
 	/**
 	 * Sets a header.
-	 *
-	 * @param               string
-	 * @param  string|array value or pair email => name
-	 * @param               bool
-	 *
-	 * @return self
-	 * @throws InvalidArgumentException
+	 * @param  string|array $value  value or pair email => name
+	 * @return static
 	 */
-	public function setHeader($name, $value, $append = false)
+	public function setHeader(string $name, $value, bool $append = FALSE)
 	{
 		if (!$name || preg_match('#[^a-z0-9-]#i', $name)) {
 			throw new InvalidArgumentException("Header name must be non-empty alphanumeric string, '$name' given.");
@@ -71,12 +66,16 @@ class MimePart
 			}
 
 			foreach ($value as $email => $recipient) {
-				if ($recipient !== null && !Strings::checkEncoding($recipient) && !preg_match('##u', $recipient)) {
-					throw new InvalidArgumentException('Name is not valid unicode string.');
-				}
-				if (preg_match('#[\r\n]#', $recipient)) {
+				if ($recipient === NULL) {
+					// continue
+				} elseif (!Strings::checkEncoding($recipient)) {
+					if (!preg_match('##u', $recipient)) {
+						throw new InvalidArgumentException('Name is not valid unicode string.');
+					}
+				} elseif (preg_match('#[\r\n]#', $recipient)) {
 					throw new InvalidArgumentException('Name must not contain line separator.');
 				}
+
 				if (!filter_var($email, \FILTER_VALIDATE_EMAIL)) {
 					throw new InvalidArgumentException('Name must match the email structure.');
 				}
@@ -97,25 +96,19 @@ class MimePart
 
 	/**
 	 * Returns a header.
-	 *
-	 * @param  string
-	 *
 	 * @return mixed
 	 */
-	public function getHeader($name)
+	public function getHeader(string $name)
 	{
-		return isset($this->headers[$name]) ? $this->headers[$name] : null;
+		return $this->headers[$name] ?? NULL;
 	}
 
 
 	/**
 	 * Removes a header.
-	 *
-	 * @param  string
-	 *
-	 * @return self
+	 * @return static
 	 */
-	public function clearHeader($name)
+	public function clearHeader(string $name)
 	{
 		unset($this->headers[$name]);
 
@@ -125,34 +118,27 @@ class MimePart
 
 	/**
 	 * Returns an encoded header.
-	 *
-	 * @param  string
-	 * @param  string
-	 *
-	 * @return string
 	 */
-	public function getEncodedHeader($name)
+	public function getEncodedHeader(string $name): ?string
 	{
 		$offset = strlen($name) + 2; // colon + space
 
 		if (!isset($this->headers[$name])) {
-			return null;
+			return NULL;
 
 		} elseif (is_array($this->headers[$name])) {
 			$s = '';
 			foreach ($this->headers[$name] as $email => $name) {
-				if ($name != null) { // intentionally ==
-					$s .= self::encodeHeader($name, $offset, true);
+				if ($name != NULL) { // intentionally ==
+					$s .= self::encodeHeader($name, $offset, TRUE);
 					$email = " <$email>";
 				}
 				$s .= self::append($email . ',', $offset);
 			}
-
 			return ltrim(substr($s, 0, -1)); // last comma
 
 		} elseif (preg_match('#^(\S+; (?:file)?name=)"(.*)"\z#', $this->headers[$name], $m)) { // Content-Disposition
 			$offset += strlen($m[1]);
-
 			return $m[1] . '"' . self::encodeHeader($m[2], $offset) . '"';
 
 		} else {
@@ -163,10 +149,8 @@ class MimePart
 
 	/**
 	 * Returns all headers.
-	 *
-	 * @return array
 	 */
-	public function getHeaders()
+	public function getHeaders(): array
 	{
 		return $this->headers;
 	}
@@ -174,41 +158,30 @@ class MimePart
 
 	/**
 	 * Sets Content-Type header.
-	 *
-	 * @param  string
-	 * @param  string
-	 *
-	 * @return self
+	 * @return static
 	 */
-	public function setContentType($contentType, $charset = null)
+	public function setContentType(string $contentType, string $charset = NULL)
 	{
 		$this->setHeader('Content-Type', $contentType . ($charset ? "; charset=$charset" : ''));
-
 		return $this;
 	}
 
 
 	/**
 	 * Sets Content-Transfer-Encoding header.
-	 *
-	 * @param  string
-	 *
-	 * @return self
+	 * @return static
 	 */
-	public function setEncoding($encoding)
+	public function setEncoding(string $encoding)
 	{
 		$this->setHeader('Content-Transfer-Encoding', $encoding);
-
 		return $this;
 	}
 
 
 	/**
 	 * Returns Content-Transfer-Encoding header.
-	 *
-	 * @return string
 	 */
-	public function getEncoding()
+	public function getEncoding(): string
 	{
 		return $this->getHeader('Content-Transfer-Encoding');
 	}
@@ -216,34 +189,28 @@ class MimePart
 
 	/**
 	 * Adds or creates new multipart.
-	 *
-	 * @return MimePart
 	 */
-	public function addPart(MimePart $part = null)
+	public function addPart(MimePart $part = NULL): self
 	{
-		return $this->parts[] = $part === null ? new self : $part;
+		return $this->parts[] = $part === NULL ? new self : $part;
 	}
 
 
 	/**
 	 * Sets textual body.
-	 *
-	 * @return self
+	 * @return static
 	 */
-	public function setBody($body)
+	public function setBody(string $body)
 	{
-		$this->body = (string) $body;
-
+		$this->body = $body;
 		return $this;
 	}
 
 
 	/**
 	 * Gets textual body.
-	 *
-	 * @return mixed
 	 */
-	public function getBody()
+	public function getBody(): string
 	{
 		return $this->body;
 	}
@@ -254,12 +221,8 @@ class MimePart
 
 	/**
 	 * Returns encoded message.
-	 *
-	 * @return string
-	 * @throws InvalidArgumentException
-	 * @throws RuntimeException
 	 */
-	public function getEncodedMessage()
+	public function getEncodedMessage(): string
 	{
 		$output = '';
 		$boundary = '--------' . Generators::random();
@@ -273,7 +236,7 @@ class MimePart
 		}
 		$output .= self::EOL;
 
-		$body = (string) $this->body;
+		$body = $this->body;
 		if ($body !== '') {
 			switch ($this->getEncoding()) {
 				case self::ENCODING_QUOTED_PRINTABLE:
@@ -286,7 +249,7 @@ class MimePart
 
 				case self::ENCODING_7BIT:
 					$body = preg_replace('#[\x80-\xFF]+#', '', $body);
-				// break intentionally omitted
+					// break intentionally omitted
 
 				case self::ENCODING_8BIT:
 					$output .= str_replace(["\x00", "\r", "\n"], ['', '', self::EOL], $body);
@@ -304,7 +267,7 @@ class MimePart
 			foreach ($this->parts as $part) {
 				$output .= '--' . $boundary . self::EOL . $part->getEncodedMessage() . self::EOL;
 			}
-			$output .= '--' . $boundary . '--';
+			$output .= '--' . $boundary.'--';
 		}
 
 		return $output;
@@ -316,14 +279,8 @@ class MimePart
 
 	/**
 	 * Converts a 8 bit header to a string.
-	 *
-	 * @param  string
-	 * @param  int
-	 * @param  bool
-	 *
-	 * @return string
 	 */
-	private static function encodeHeader($s, & $offset = 0, $quotes = false)
+	private static function encodeHeader(string $s, int &$offset = 0, bool $quotes = FALSE): string
 	{
 		if (strspn($s, "!\"#$%&\'()*+,-./0123456789:;<>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^`abcdefghijklmnopqrstuvwxyz{|}~=? _\r\n\t") === strlen($s)) {
 			if ($quotes && preg_match('#[^ a-zA-Z0-9!\#$%&\'*+/?^_`{|}~-]#', $s)) { // RFC 2822 atext except =
@@ -356,7 +313,7 @@ class MimePart
 	}
 
 
-	private static function append($s, &$offset)
+	private static function append(string $s, int &$offset = 0): string
 	{
 		if ($offset + strlen($s) > self::LINE_LENGTH) {
 			$offset = 1;

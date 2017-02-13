@@ -4,7 +4,7 @@ namespace Hail\Facades;
 use Hail\Factory\Database;
 
 /**
- * Class Database
+ * Class DB
  *
  * @package Hail\Facades
  *

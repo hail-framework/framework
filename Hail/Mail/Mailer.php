@@ -66,10 +66,9 @@ class Mailer
 	/**
 	 * Sends email.
 	 *
-	 * @return void
 	 * @throws SmtpException
 	 */
-	public function send(Message $mail)
+	public function send(Message $mail): void
 	{
 		$mail = clone $mail;
 
@@ -85,10 +84,10 @@ class Mailer
 			}
 
 			foreach (array_merge(
-				(array) $mail->getHeader('To'),
-				(array) $mail->getHeader('Cc'),
-				(array) $mail->getHeader('Bcc')
-			) as $email => $name) {
+				         (array) $mail->getHeader('To'),
+				         (array) $mail->getHeader('Cc'),
+				         (array) $mail->getHeader('Bcc')
+			         ) as $email => $name) {
 				$this->write("RCPT TO:<$email>", [250, 251]);
 			}
 
@@ -115,10 +114,9 @@ class Mailer
 	/**
 	 * Connects and authenticates to SMTP server.
 	 *
-	 * @return void
 	 * @throws SmtpException
 	 */
-	protected function connect()
+	protected function connect(): void
 	{
 		$this->connection = @stream_socket_client( // @ is escalated to exception
 			($this->secure === 'ssl' ? 'ssl://' : '') . $this->host . ':' . $this->port,
@@ -165,10 +163,8 @@ class Mailer
 
 	/**
 	 * Disconnects from SMTP server.
-	 *
-	 * @return void
 	 */
-	protected function disconnect()
+	protected function disconnect(): void
 	{
 		fclose($this->connection);
 		$this->connection = null;
@@ -178,14 +174,11 @@ class Mailer
 	/**
 	 * Writes data to server and checks response against expected code if some provided.
 	 *
-	 * @param  string $line
-	 * @param  int    $expectedCode response code
-	 * @param  string $message      error message
+	 * @param  int|int[] $expectedCode
 	 *
-	 * @return void
 	 * @throws SmtpException
 	 */
-	protected function write($line, $expectedCode = null, $message = null)
+	protected function write(string $line, $expectedCode = null, string $message = null): void
 	{
 		fwrite($this->connection, $line . Message::EOL);
 		if ($expectedCode) {
@@ -199,13 +192,11 @@ class Mailer
 
 	/**
 	 * Reads response from server.
-	 *
-	 * @return string
 	 */
-	protected function read()
+	protected function read(): string
 	{
 		$s = '';
-		while (($line = fgets($this->connection, 1e3)) != null) { // intentionally ==
+		while (($line = fgets($this->connection, 1000)) != null) { // intentionally ==
 			$s .= $line;
 			if ($line[3] === ' ') {
 				break;

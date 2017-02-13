@@ -31,11 +31,10 @@ class FallbackMailer
 
 	/**
 	 * @param Mailer[] $mailers
-	 * @param int $retryCount
-	 * @param int $retryWaitTime in miliseconds
+	 * @param int      $retryWaitTime in miliseconds
 	 * @param callable $onFailure
 	 */
-	public function __construct(array $mailers, $retryCount = 3, $retryWaitTime = 1000, $onFailure = null)
+	public function __construct(array $mailers, int $retryCount = 3, int $retryWaitTime = 1000, $onFailure = null)
 	{
 		$this->mailers = $mailers;
 		$this->retryCount = $retryCount;
@@ -47,18 +46,16 @@ class FallbackMailer
 	/**
 	 * Sends email.
 	 *
-	 * @param Message $mail
-	 *
-	 * @return void
 	 * @throws InvalidArgumentException
 	 * @throws FallbackMailerException
 	 */
-	public function send(Message $mail)
+	public function send(Message $mail): void
 	{
 		if (!$this->mailers) {
 			throw new InvalidArgumentException('At least one mailer must be provided.');
 		}
 
+		$failures = [];
 		for ($i = 0; $i < $this->retryCount; $i++) {
 			if ($i > 0) {
 				usleep($this->retryWaitTime * 1000);
@@ -67,6 +64,7 @@ class FallbackMailer
 			foreach ($this->mailers as $mailer) {
 				try {
 					$mailer->send($mail);
+
 					return;
 
 				} catch (SendException $e) {
@@ -83,13 +81,12 @@ class FallbackMailer
 
 
 	/**
-	 * @param Mailer $mailer
-	 *
-	 * @return self
+	 * @return static
 	 */
 	public function addMailer(Mailer $mailer)
 	{
 		$this->mailers[] = $mailer;
+
 		return $this;
 	}
 }

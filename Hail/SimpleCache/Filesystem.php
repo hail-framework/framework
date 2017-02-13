@@ -1,9 +1,12 @@
 <?php
 namespace Hail\SimpleCache;
 
-use Hail\Facades\Filesystem as FS;
+use Hail\Factory\Storage;
 use Hail\Facades\Serialize;
-use Hail\Filesystem\MountManager;
+use Hail\Filesystem\{
+	FilesystemInterface,
+	MountManager
+};
 
 /**
  * Base file cache driver.
@@ -22,27 +25,36 @@ class Filesystem extends AbstractAdapter
 	protected $directory;
 
 	/**
-	 * @var MountManager
+	 * @var FilesystemInterface
 	 */
-	protected $filesystem;
+	protected $storage;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param array $params [directory => The cache directory].
+	 * @param array $params [prefix => mount prefix, directory => The cache directory].
 	 *
 	 * @throws \InvalidArgumentException
+	 * @throws \LogicException
 	 */
 	public function __construct($params)
 	{
-		if (!preg_match('/^[a-z]:\/\//', $params['directory'])) {
+		$directory = $params['directory'] ?? 'cache';
+		if (!preg_match('/^[a-z]:\/\//', $directory)) {
 			throw new \InvalidArgumentException('Directory does not conform to Filesystem protocol');
 		}
 
-		$this->directory = $directory = $params['directory'] ?? 'local://cache';
-		$this->filesystem = FS::getInstance();
+		$storage = Storage::filesystem($params['storage'] ?? []);
 
-		$this->filesystem->createDir($directory);
+		$prefix = $params['prefix'] ?? '';
+		if ($prefix && $storage instanceof MountManager) {
+			$storage = $storage->getFilesystem($prefix);
+		}
+
+		$storage->createDir($directory);
+
+		$this->directory = $directory;
+		$this->storage = $storage;
 
 		parent::__construct($params);
 	}
@@ -65,7 +77,7 @@ class Filesystem extends AbstractAdapter
 	{
 		$filename = $this->getFilename($key);
 
-		return $this->filesystem->delete($filename);
+		return $this->storage->delete($filename);
 	}
 
 	/**
@@ -73,8 +85,8 @@ class Filesystem extends AbstractAdapter
 	 */
 	protected function doClear()
 	{
-		$this->filesystem->deleteDir($this->directory);
-		$this->filesystem->createDir($this->directory);
+		$this->storage->deleteDir($this->directory);
+		$this->storage->createDir($this->directory);
 
 		return true;
 	}
@@ -87,7 +99,7 @@ class Filesystem extends AbstractAdapter
 		$filename = $this->getFilename($key);
 
 		try {
-			if (($content = $this->filesystem->read($filename)) === false) {
+			if (($content = $this->storage->read($filename)) === false) {
 				return null;
 			}
 
@@ -98,7 +110,7 @@ class Filesystem extends AbstractAdapter
 		}
 
 		if ($data['expire'] > NOW) {
-			$this->filesystem->delete($filename);
+			$this->storage->delete($filename);
 
 			return null;
 		}
@@ -113,7 +125,7 @@ class Filesystem extends AbstractAdapter
 	{
 		$filename = $this->getFilename($key);
 
-		return $this->filesystem->has($filename);
+		return $this->storage->has($filename);
 	}
 
 	/**
@@ -133,6 +145,6 @@ class Filesystem extends AbstractAdapter
 				'expire' => $ttl,
 			]) . '*/';
 
-		return $this->filesystem->put($filename, $content);
+		return $this->storage->put($filename, $content);
 	}
 }

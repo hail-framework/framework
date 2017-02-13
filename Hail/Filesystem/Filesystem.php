@@ -14,7 +14,7 @@ use Hail\Filesystem\Util\ContentListingFormatter;
  * @package Hail\Filesystem
  * @author  Hao Feng <flyinghail@msn.com>
  */
-class Filesystem
+class Filesystem implements FilesystemInterface
 {
 	use PluginTrait;
 

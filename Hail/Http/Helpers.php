@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Nette Framework (http://nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com) Modified by FlyingHail <flyinghail@msn.com>
+ * This file is part of the Nette Framework (https://nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
 namespace Hail\Http;
@@ -32,10 +32,8 @@ class Helpers
 	 *
 	 * @param  string|int|\DateTime $lastModified last modified time
 	 * @param  string               $etag         strong entity tag validator
-	 *
-	 * @return bool
 	 */
-	public static function isModified($lastModified = null, $etag = null)
+	public static function isModified($lastModified = null, string $etag = null): bool
 	{
 		if ($lastModified) {
 			Res::setHeader('Last-Modified', static::formatDate($lastModified));
@@ -80,11 +78,9 @@ class Helpers
 	/**
 	 * Returns HTTP valid date format.
 	 *
-	 * @param  string|int|\DateTime
-	 *
-	 * @return string
+	 * @param  string|int|\DateTimeInterface
 	 */
-	public static function formatDate($time)
+	public static function formatDate($time): string
 	{
 		$time = self::createDateTime($time);
 		$time->setTimezone(new \DateTimeZone('GMT'));
@@ -95,9 +91,9 @@ class Helpers
 	/**
 	 * DateTime object factory.
 	 *
-	 * @param  string|int|\DateTime
+	 * @param  string|int|\DateTimeInterface
 	 *
-	 * @return \DateTime
+	 * @return \DateTimeInterface
 	 */
 	public static function createDateTime($time)
 	{
@@ -119,12 +115,10 @@ class Helpers
 
 	/**
 	 * Is IP address in CIDR block?
-	 *
-	 * @return bool
 	 */
-	public static function ipMatch($ip, $mask)
+	public static function ipMatch($ip, $mask): bool
 	{
-		list($mask, $size) = explode('/', $mask . '/');
+		[$mask, $size] = explode('/', $mask . '/');
 		$tmp = function ($n) {
 			return sprintf('%032b', $n);
 		};
@@ -142,9 +136,9 @@ class Helpers
 	/**
 	 * Removes duplicate cookies from response.
 	 *
-	 * @return void
+	 * @internal
 	 */
-	public static function removeDuplicateCookies()
+	public static function removeDuplicateCookies(): void
 	{
 		if (headers_sent($file, $line) || ini_get('suhosin.cookie.encrypt')) {
 			return;

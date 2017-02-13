@@ -21,7 +21,7 @@ namespace Hail\Http;
  * - scriptPath:  /admin/script.php (or simply /admin/ when script is directory index)
  * - pathInfo:    /pathinfo/ (additional path information)
  *
- * @property   string $scriptPath
+ * @property   string    $scriptPath
  * @property-read string $pathInfo
  */
 class UrlScript extends Url
@@ -70,7 +70,9 @@ class UrlScript extends Url
 		$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
 		if ($lpath !== $script) {
 			$max = min(strlen($lpath), strlen($script));
-			for ($i = 0; $i < $max && $lpath[$i] === $script[$i]; $i++);
+			for ($i = 0; $i < $max && $lpath[$i] === $script[$i]; $i++) {
+				;
+			}
 			$path = $i ? substr($path, 0, strrpos($path, '/', $i - strlen($path) - 1) + 1) : '/';
 		}
 		$this->setScriptPath($path);
@@ -78,21 +80,21 @@ class UrlScript extends Url
 
 	/**
 	 * Sets the script-path part of URI.
-	 * @param  string
-	 * @return self
+	 *
+	 * @return static
 	 */
-	public function setScriptPath($value)
+	public function setScriptPath(string $value)
 	{
-		$this->scriptPath = (string) $value;
+		$this->scriptPath = $value;
+
 		return $this;
 	}
 
 
 	/**
 	 * Returns the script-path part of URI.
-	 * @return string
 	 */
-	public function getScriptPath()
+	public function getScriptPath(): string
 	{
 		return $this->scriptPath ?: $this->path;
 	}
@@ -100,38 +102,33 @@ class UrlScript extends Url
 
 	/**
 	 * Returns the base-path.
-	 * @return string
 	 */
-	public function getBasePath()
+	public function getBasePath(): string
 	{
 		$pos = strrpos($this->getScriptPath(), '/');
-		return $pos === FALSE ? '' : substr($this->getPath(), 0, $pos + 1);
+
+		return $pos === false ? '' : substr($this->getPath(), 0, $pos + 1);
 	}
 
 	/**
 	 * Returns the additional path information.
-	 * @return string
 	 */
-	public function getPathInfo()
+	public function getPathInfo(): string
 	{
 		return (string) substr($this->getPath(), strlen($this->getScriptPath()));
 	}
 
 	/**
 	 * Returns the query part of URI.
-	 * @return string
 	 */
-	public function getQuery()
+	public function getQuery(): string
 	{
 		return http_build_query(
 			$this->getQueryParameters(), '', '&', PHP_QUERY_RFC3986
 		);
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getQueryParameters()
+	public function getQueryParameters(): array
 	{
 		return Helpers::getParam($this->query, '_GET');
 	}
@@ -139,10 +136,10 @@ class UrlScript extends Url
 	/**
 	 * Returns variable provided to the script via URL query ($_GET).
 	 * If no key is passed, returns the entire array.
-	 * @param  string $key key
+	 *
 	 * @return mixed
 	 */
-	public function getQueryParameter($key = NULL)
+	public function getQueryParameter(string $key = null)
 	{
 		return Helpers::getParam($this->query, '_GET', $key);
 	}

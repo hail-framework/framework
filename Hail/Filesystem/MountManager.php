@@ -14,20 +14,20 @@ use LogicException;
  *
  * @method AdapterInterface getAdapter($prefix)
  * @method array getConfig($prefix)
- * @method bool has($path)
+ * @method bool has(string $path)
  * @method bool write($path, $contents, array $config = [])
  * @method bool writeStream($path, $resource, array $config = [])
- * @method bool put($path, $contents, $config = [])
- * @method bool putStream($path, $contents, $config = [])
+ * @method bool put($path, $contents, array $config = [])
+ * @method bool putStream($path, $contents, array $config = [])
  * @method string readAndDelete($path)
- * @method bool update($path, $contents, $config = [])
- * @method bool updateStream($path, $resource, $config = [])
+ * @method bool update($path, $contents, array $config = [])
+ * @method bool updateStream($path, $resource, array $config = [])
  * @method string|false read($path)
  * @method resource|false readStream($path)
  * @method bool rename($path, $newpath)
  * @method bool delete($path)
  * @method bool deleteDir($dirname)
- * @method bool createDir($dirname, $config = [])
+ * @method bool createDir($dirname, array $config = [])
  * @method array getWithMetadata($path, array $metadata)
  * @method string|false getMimetype($path)
  * @method string|false getTimestamp($path)
@@ -39,7 +39,7 @@ use LogicException;
  * @method void assertPresent($path)
  * @method void assertAbsent($path)
  */
-class MountManager
+class MountManager implements FilesystemInterface
 {
 	use PluginTrait;
 
@@ -106,15 +106,15 @@ class MountManager
 	 *
 	 * @param string $prefix
 	 *
-	 * @return Filesystem
+	 * @return FilesystemInterface
 	 * @throws LogicException
 	 */
 	public function getFilesystem(string $prefix)
 	{
 		if (!isset($this->filesystems[$prefix])) {
-			if (isset($this->lazy[$prefix])) {
-				return $this->filesystems[$prefix] = new Filesystem($this->lazy[$prefix]);
-			}
+				if (isset($this->lazy[$prefix])) {
+					return $this->filesystems[$prefix] = new Filesystem($this->lazy[$prefix]);
+				}
 
 			throw new LogicException('No filesystem mounted with prefix ' . $prefix);
 		}
