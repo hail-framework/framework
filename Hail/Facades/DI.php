@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Facades;
 
-use Hail\DI\Container;
+use Hail\Container\Container;
 
 /**
  * Class DI

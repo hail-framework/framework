@@ -17,4 +17,9 @@ class Arrays extends Facade
 	{
 		return \Hail\Util\Arrays::getInstance();
 	}
+
+	public static function alias()
+	{
+		return \Hail\Util\Arrays::class;
+	}
 }

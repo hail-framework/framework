@@ -88,7 +88,7 @@ class Crypto
 	 *
 	 * @return bool|string
 	 */
-	public function password(string $password)
+	public static function password(string $password)
 	{
 		return password_hash($password, PASSWORD_DEFAULT);
 	}
@@ -99,11 +99,11 @@ class Crypto
 	 *
 	 * @return bool|string
 	 */
-	public function verifyPassword(string $password, string $hash)
+	public static function verifyPassword(string $password, string $hash)
 	{
 		if (password_verify($password, $hash)) {
 			if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
-				return $this->password($password);
+				return static::password($password);
 			}
 
 			return true;
@@ -363,7 +363,7 @@ class Crypto
 	{
 		if ($password) {
 			$preHash = hash(self::HASH_TYPE, $key, true);
-			$key = $this->pbkdf2(
+			$key = static::pbkdf2(
 				self::HASH_TYPE,
 				$preHash,
 				$salt,
@@ -373,7 +373,7 @@ class Crypto
 			);
 		}
 
-		$authKey = $this->hkdf(
+		$authKey = static::hkdf(
 			self::HASH_TYPE,
 			$key,
 			self::KEY_BYTE_SIZE,
@@ -381,7 +381,7 @@ class Crypto
 			$salt
 		);
 
-		$encryptKey = $this->hkdf(
+		$encryptKey = static::hkdf(
 			self::HASH_TYPE,
 			$key,
 			self::KEY_BYTE_SIZE,
@@ -459,9 +459,9 @@ class Crypto
 	 *
 	 * @return string
 	 */
-	public function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
+	public static function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
 	{
-		$hashLength = self::$hashList[$hash] ?? mb_strlen(hash_hmac($hash, '', '', true), '8bit');
+		$hashLength = static::$hashList[$hash] ?? mb_strlen(hash_hmac($hash, '', '', true), '8bit');
 		if (empty($length) || !is_int($length) || $length < 0 || $length > 255 * $hashLength) {
 			throw new CryptoException('Bad output length requested of HKDF.');
 		}
@@ -505,7 +505,7 @@ class Crypto
 	 *
 	 * @return string A $key_length-byte key derived from the password and salt.
 	 */
-	public function pbkdf2(string $algorithm, string $password, string $salt, int $count, int $length, bool $raw = false)
+	public static function pbkdf2(string $algorithm, string $password, string $salt, int $count, int $length, bool $raw = false)
 	{
 		$algorithm = strtolower($algorithm);
 		// Whitelist, or we could end up with people using CRC32.

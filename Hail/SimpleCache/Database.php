@@ -80,7 +80,9 @@ class Database extends AbstractAdapter
 				$this->schema['expire'] => $expire
 			];
 		}
-		return $this->db->multiInsert($this->schema['table'], $data, 'REPLACE');
+
+		$return = $this->db->insert($this->schema['table'], $data, 'REPLACE');
+		return $return !== false;
 	}
 
 	/**
@@ -139,7 +141,9 @@ class Database extends AbstractAdapter
 			$this->schema['expire'] => $expire
 		];
 
-		return $this->db->insert($this->schema['table'], $data, 'REPLACE');
+		$return = $this->db->insert($this->schema['table'], $data, 'REPLACE');
+
+		return $return !== false;
 	}
 
 	/**

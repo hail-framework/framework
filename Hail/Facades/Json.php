@@ -14,4 +14,9 @@ class Json extends Facade
 	{
 		return \Hail\Util\Json::getInstance();
 	}
+
+	public static function alias()
+	{
+		return \Hail\Util\Json::class;
+	}
 }

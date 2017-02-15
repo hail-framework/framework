@@ -1222,4 +1222,46 @@ class Validator
 
 		return $clone;
 	}
+
+	/**
+	 * Convenience method to add validation rule(s) by field
+	 *
+	 * @param string $field
+	 * @param array  $rules
+	 */
+	public function mapFieldRules(string $field, array $rules)
+	{
+		foreach ($rules as $rule) {
+			//rule must be an array
+			$rule = (array) $rule;
+
+			//First element is the name of the rule
+			$name = array_shift($rule);
+
+			//find a custom message, if any
+			$message = null;
+			if (isset($rule['message'])) {
+				$message = $rule['message'];
+				unset($rule['message']);
+			}
+
+			//Add the field and additional parameters to the rule
+			call_user_func_array([$this, 'rule'], array_merge([$name, $field], $rule));
+			if (!empty($message)) {
+				$this->message($message);
+			}
+		}
+	}
+
+	/**
+	 * Convenience method to add validation rule(s) for multiple fields
+	 *
+	 * @param array $rules
+	 */
+	public function mapFieldsRules(array $rules)
+	{
+		foreach ($rules as $field => $rule) {
+			$this->mapFieldRules($field, $rule);
+		}
+	}
 }

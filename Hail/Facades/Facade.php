@@ -99,4 +99,9 @@ abstract class Facade
 	{
 		return static::$inDI;
 	}
+
+	public static function alias()
+	{
+		return static::class;
+	}
 }

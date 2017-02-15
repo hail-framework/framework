@@ -2,7 +2,7 @@
 
 namespace Hail;
 
-use Hail\DI\Container;
+use Hail\Container\Container;
 use Hail\Facades\DI;
 
 /**

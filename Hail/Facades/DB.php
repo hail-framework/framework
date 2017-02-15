@@ -16,7 +16,6 @@ use Hail\Factory\Database;
  * @method static array|bool select(string|array $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
  * @method static mixed insert(string $table, array $datas = [], string $INSERT = 'INSERT')
  * @method static string|array lastInsertId()
- * @method static mixed multiInsert(string $table, array $datas = [], string $INSERT = 'INSERT')
  * @method static bool|int update(string $table, array $data = [], array|null $where = null)
  * @method static bool|int delete(string $table, array|null $where = null)
  * @method static bool|int replace(string $table, array $columns, string|array|null $search = null, mixed $replace =null, array $where = null)

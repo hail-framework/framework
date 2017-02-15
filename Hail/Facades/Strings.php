@@ -40,4 +40,9 @@ class Strings extends Facade
 	{
 		return \Hail\Util\Strings::getInstance();
 	}
+
+	public static function alias()
+	{
+		return \Hail\Util\Strings::class;
+	}
 }

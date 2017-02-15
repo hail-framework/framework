@@ -12,6 +12,7 @@
   'cookie' => '\\Hail\\Facades\\Cookie',
   'crypto' => '\\Hail\\Facades\\Crypto',
   'db' => '\\Hail\\Facades\\DB',
+  'debugger' => '\\Hail\\Facades\\Debugger',
   'event' => '\\Hail\\Facades\\Event',
   'generators' => '\\Hail\\Facades\\Generators',
   'i18n' => '\\Hail\\Facades\\I18N',
@@ -28,6 +29,5 @@
   'storage' => '\\Hail\\Facades\\Storage',
   'strings' => '\\Hail\\Facades\\Strings',
   'template' => '\\Hail\\Facades\\Template',
-  'trace' => '\\Hail\\Facades\\Trace',
   'validator' => '\\Hail\\Facades\\Validator',
 );

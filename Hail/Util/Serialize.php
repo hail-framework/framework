@@ -22,7 +22,7 @@ namespace Hail\Util;
  */
 class Serialize
 {
-	const EXT_SWOOL = 'swoole';
+	const EXT_SWOOLE = 'swoole';
 	const EXT_MSGPACK = 'msgpack';
 	const EXT_IGBINARY = 'igbinary';
 	const EXT_HPROSE = 'hprose';

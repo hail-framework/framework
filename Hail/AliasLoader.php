@@ -1,6 +1,6 @@
 <?php
 /**
- * @from https://github.com/laravel/framework/blob/5.3/src/Illuminate/Foundation/AliasLoader.php
+ * @from https://github.com/laravel/framework/blob/5.4/src/Illuminate/Foundation/AliasLoader.php
  * Copyright (c) <Taylor Otwell> Modified by FlyingHail <flyinghail@msn.com>
  */
 
@@ -28,6 +28,13 @@ class AliasLoader
 	protected $registered = false;
 
 	/**
+	 * The namespace for all real-time facades.
+	 *
+	 * @var string
+	 */
+	protected static $facadeNamespace = 'Facades\\';
+
+	/**
 	 * Create a new AliasLoader instance.
 	 *
 	 * @param  array $aliases
@@ -46,9 +53,90 @@ class AliasLoader
 	 */
 	public function load($alias)
 	{
-		if (isset($this->aliases[$alias])) {
+		if (static::$facadeNamespace && strpos($alias, static::$facadeNamespace) === 0) {
+			return $this->loadFacade($alias);
+		} elseif (isset($this->aliases[$alias])) {
 			return class_alias($this->aliases[$alias], $alias);
 		}
+
+		return null;
+	}
+
+	/**
+	 * Load a real-time facade for the given alias.
+	 *
+	 * @param  string $alias
+	 *
+	 * @return bool
+	 */
+	protected function loadFacade($alias)
+	{
+		require $this->ensureFacadeExists($alias);
+
+		return true;
+	}
+
+	/**
+	 * Ensure that the given alias has an existing real-time facade class.
+	 *
+	 * @param  string $alias
+	 *
+	 * @return string
+	 * @throws \RuntimeException
+	 */
+	protected function ensureFacadeExists($alias): string
+	{
+		if (file_exists($path = TEMP_PATH . 'facade/' . str_replace('\\', '/', $alias) . '.php')) {
+			return $path;
+		}
+
+		if (!@mkdir($dir = dirname($path)) && !is_dir($dir)) {
+			throw new \RuntimeException('Temp directory permission denied');
+		}
+
+		file_put_contents($path, $this->formatFacadeCode($alias));
+
+		return $path;
+	}
+
+	/**
+	 * Format the facade stub with the proper namespace and class.
+	 *
+	 * @param  string $alias
+	 *
+	 * @return string
+	 */
+	protected function formatFacadeCode($alias)
+	{
+		$path = str_replace('\\', '/', $alias);
+
+		$namespace = str_replace('/', '\\', dirname($path));
+		$class = basename($path);
+		$target = '\\' . substr($alias, strlen(static::$facadeNamespace));
+
+		$code = <<<STUB
+<?php
+namespace $namespace;
+
+use Hail\Facades\Facade;
+
+/**
+ * @see $target
+ */
+class $class extends Facade
+{
+    protected static function instance()
+    {
+        if (method_exists('$target', 'getInstance')) {
+            return $target::getInstance();
+		}
+
+        return new $target;
+    }
+}
+STUB;
+
+		return $code;
 	}
 
 	/**
@@ -65,6 +153,16 @@ class AliasLoader
 	}
 
 	/**
+	 * Get the registered alias.
+	 *
+	 * @return array
+	 */
+	public function getAlias($class)
+	{
+		return $this->aliases[$class] ?? $class;
+	}
+
+	/**
 	 * Get the registered aliases.
 	 *
 	 * @return array
@@ -77,7 +175,8 @@ class AliasLoader
 	/**
 	 * Set the registered aliases.
 	 *
-	 * @param  array  $aliases
+	 * @param  array $aliases
+	 *
 	 * @return void
 	 */
 	public function setAliases(array $aliases)

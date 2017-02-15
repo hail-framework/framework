@@ -1,9 +1,4 @@
 <?php
-/**
- * This file is part of the Nette Framework (http://nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com)
- */
-
 namespace Hail\Util;
 
 use InvalidArgumentException;
@@ -59,7 +54,7 @@ class Generators
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public function random(int $length = 10, string $charList = '0-9a-zA-Z'): string
+	public static function random(int $length = 10, string $charList = '0-9a-zA-Z'): string
 	{
 		$charList = count_chars(preg_replace_callback('#.-.#', function (array $m) {
 			return implode('', range($m[0][0], $m[0][2]));
@@ -84,10 +79,10 @@ class Generators
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public function unique(): string
+	public static function unique(): string
 	{
 		return uniqid(
-			$this->random(),
+			static::random(),
 			true
 		);
 	}
@@ -95,7 +90,7 @@ class Generators
 	/**
 	 * @return string
 	 */
-	public function guid(): string
+	public static function guid(): string
 	{
 		if (function_exists('com_create_guid')) {
 			return trim(com_create_guid(), '{}');
@@ -114,24 +109,24 @@ class Generators
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public function uuid3(string $namespace, string $name): string
+	public static function uuid3(string $namespace, string $name): string
 	{
-		$bytes = $this->getBytes($namespace);
+		$bytes = static::getBytes($namespace);
 
 		$hash = md5($bytes . $name);
 
-		return self::uuidFromHash($hash, 3);
+		return static::uuidFromHash($hash, 3);
 	}
 
 	/**
 	 * @return string
 	 */
-	public function uuid4(): string
+	public static function uuid4(): string
 	{
 		$bytes = random_bytes(16);
 		$hash = bin2hex($bytes);
 
-		return self::uuidFromHash($hash, 4);
+		return static::uuidFromHash($hash, 4);
 	}
 
 	/**
@@ -141,13 +136,13 @@ class Generators
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	public function uuid5(string $namespace, string $name): string
+	public static function uuid5(string $namespace, string $name): string
 	{
-		$bytes = $this->getBytes($namespace);
+		$bytes = static::getBytes($namespace);
 
 		$hash = sha1($bytes . $name);
 
-		return self::uuidFromHash($hash, 5);
+		return static::uuidFromHash($hash, 5);
 	}
 
 	/**
@@ -155,7 +150,7 @@ class Generators
 	 *
 	 * @return bool
 	 */
-	public function isUUID(string $uuid): bool
+	public static function isUUID(string $uuid): bool
 	{
 		return preg_match('/^(urn:)?(uuid:)?(\{)?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}(?(3)\}|)$/i', $uuid) === 1;
 	}
@@ -166,9 +161,9 @@ class Generators
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	private function getBytes(string $uuid): string
+	private static function getBytes(string $uuid): string
 	{
-		if (!$this->isUUID($uuid)) {
+		if (!static::isUUID($uuid)) {
 			throw new InvalidArgumentException('Invalid UUID string: ' . $uuid);
 		}
 
@@ -208,5 +203,4 @@ class Generators
 			// 48 bits for "node"
 			substr($hash, 20, 12));
 	}
-
 }

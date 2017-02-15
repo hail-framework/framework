@@ -1,12 +1,12 @@
 <?php
-namespace Hail\DI\Exception;
+namespace Hail\Container\Exception;
 
 use Psr\Container\ContainerException as PsrContainerException;
 
 /**
  * Class ContainerException
  *
- * @package Hail\DI\Exception
+ * @package Hail\Container\Exception
  * @author  Hao Feng <flyinghail@msn.com>
  */
 class ContainerException extends \RuntimeException implements PsrContainerException

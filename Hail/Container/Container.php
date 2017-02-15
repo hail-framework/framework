@@ -1,10 +1,9 @@
 <?php
 
-namespace Hail\DI;
+namespace Hail\Container;
 
-use Hail\DI\Exception\{
-	ContainerException,
-	NotFoundException
+use Hail\Container\Exception\{
+	ContainerException, NotFoundException
 };
 use Hail\Facades\{
 	Facade,
@@ -16,7 +15,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Simple Container
  *
- * @package Hail\DI
+ * @package Hail\Container
  */
 class Container implements \ArrayAccess, ContainerInterface
 {
@@ -26,7 +25,7 @@ class Container implements \ArrayAccess, ContainerInterface
 	private $raw = [];
 
 	/**
-	 * @param array $values.
+	 * @param array $values .
 	 */
 	public function __construct(array $values = [])
 	{
@@ -78,7 +77,7 @@ class Container implements \ArrayAccess, ContainerInterface
 		) {
 			/** @var Facade $raw */
 			$val = $raw::getInstance();
-		} elseif (is_callable($raw)) {
+		} elseif ($raw instanceof \Closure) {
 			$val = $raw($this);
 		}
 

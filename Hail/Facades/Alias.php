@@ -24,15 +24,14 @@ class Alias extends Facade
 			$alias = self::getConfig();
 		}
 
+		$alias += array_merge($alias, Config::get('alias'));
+
 		return new AliasLoader($alias);
 	}
 
 	private static function getConfig()
 	{
-		$alias = [
-			'Debugger' => '\\Hail\\Tracy\\Debugger',
-		];
-
+		$alias = [];
 		foreach (scandir(__DIR__) as $file) {
 			if (in_array($file, ['.', '..', 'Facade.php'], true)) {
 				continue;
@@ -40,7 +39,7 @@ class Alias extends Facade
 
 			/** @var Facade $class */
 			$class = '\\Hail\\Facades\\' . pathinfo($file, PATHINFO_FILENAME);
-			$alias[$class::getClass()] = $class;
+			$alias[$class::getClass()] = $class::alias();
 		}
 
 		return $alias;

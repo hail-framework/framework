@@ -1,9 +1,7 @@
 <?php
-
 namespace Hail\Tracy;
 
 use Hail\Util\SingletonTrait;
-
 
 /**
  * ChromeLogger console logger.
@@ -30,21 +28,21 @@ class ChromeLogger implements LoggerInterface
 	const TABLE = 'table';
 
 	/** @var array */
-	protected $_json = [
+	protected static $_json = [
 		'version' => self::VERSION,
 		'columns' => ['log', 'backtrace', 'type'],
 		'rows' => [],
 	];
 
 	/** @var array */
-	protected $_backtraces = [];
+	protected static $_backtraces = [];
 
 	/**
 	 * Prevent recursion when working with objects referring to each other
 	 *
 	 * @var array
 	 */
-	protected $_processed = [];
+	protected static $_processed = [];
 
 	/**
 	 * Sends message to ChromeLogger console.
@@ -83,21 +81,17 @@ class ChromeLogger implements LoggerInterface
 
 		$type = $convert[$priority] ?? $priority;
 
-		$this->_processed = [];
-		$logs = [$this->_convert($message)];
+		static::$_processed = [];
+		$logs = [static::_convert($message)];
 
-		$this->_addRow($logs, $backtrace, $type);
+		static::_addRow($logs, $backtrace, $type);
 
 		return true;
 	}
 
-
-	/**
-	 * {@inheritdoc}
-	 */
 	protected function init()
 	{
-		$this->_json['request_uri'] = $_SERVER['REQUEST_URI'];
+		static::$_json['request_uri'] = $_SERVER['REQUEST_URI'];
 	}
 
 	/**
@@ -107,7 +101,7 @@ class ChromeLogger implements LoggerInterface
 	 *
 	 * @return array
 	 */
-	protected function _convert($object)
+	protected static function _convert($object)
 	{
 		// if this isn't an object then just return it
 		if (!is_object($object)) {
@@ -116,21 +110,21 @@ class ChromeLogger implements LoggerInterface
 
 		//Mark this object as processed so we don't convert it twice and it
 		//Also avoid recursion when objects refer to each other
-		$this->_processed[] = $object;
+		static::$_processed[] = $object;
 		$object_as_array = [];
 		// first add the class name
 		$reflection = new \ReflectionClass($object);
 		$object_as_array['___class_name'] = $reflection->getName();
 		// loop through the properties and add those
 		foreach ($reflection->getProperties() as $property) {
-			$type = $this->_getPropertyKey($property);
+			$type = static::_getPropertyKey($property);
 			$property->setAccessible(true);
 			$value = $property->getValue($object);
 			// same instance as parent object
-			if ($value === $object || in_array($value, $this->_processed, true)) {
+			if ($value === $object || in_array($value, static::$_processed, true)) {
 				$value = 'recursion - parent object [' . get_class($value) . ']';
 			}
-			$object_as_array[$type] = $this->_convert($value);
+			$object_as_array[$type] = static::_convert($value);
 		}
 
 		return $object_as_array;
@@ -143,7 +137,7 @@ class ChromeLogger implements LoggerInterface
 	 *
 	 * @return string
 	 */
-	protected function _getPropertyKey(\ReflectionProperty $property)
+	protected static function _getPropertyKey(\ReflectionProperty $property)
 	{
 		$control = 'public';
 		if ($property->isProtected()) {
@@ -162,37 +156,23 @@ class ChromeLogger implements LoggerInterface
 	 * @var mixed
 	 * @return void
 	 */
-	protected function _addRow(array $logs, $backtrace, $type)
+	protected static function _addRow(array $logs, $backtrace, $type)
 	{
 		// if this is logged on the same line for example in a loop, set it to null to save space
 		// for group, groupEnd, and groupCollapsed take out the backtrace since it is not useful
 		if (
-			in_array($backtrace, $this->_backtraces, true) ||
+			in_array($backtrace, static::$_backtraces, true) ||
 			in_array($type, [self::GROUP, self::GROUP_END, self::GROUP_COLLAPSED], true)
 		) {
 			$backtrace = null;
 		} else if ($backtrace !== null) {
-			$this->_backtraces[] = $backtrace;
+			static::$_backtraces[] = $backtrace;
 		}
-		$this->_json['rows'][] = [$logs, $backtrace, $type];
-		$this->_writeHeader($this->_json);
-	}
 
-	protected function _writeHeader($data)
-	{
-		header('X-ChromeLogger-Data: ' . $this->_encode($data));
-	}
+		static::$_json['rows'][] = [$logs, $backtrace, $type];
 
-	/**
-	 * encodes the data to be sent along with the request
-	 *
-	 * @param array $data
-	 *
-	 * @return string
-	 */
-	protected function _encode($data)
-	{
-		return base64_encode(utf8_encode(json_encode($data)));
+		$data = base64_encode(utf8_encode(json_encode(static::$_json)));
+		header('X-ChromeLogger-Data: ' . $data);
 	}
 }
 

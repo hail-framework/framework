@@ -38,11 +38,11 @@ class Cookie
 	 *
 	 * @throws \RuntimeException  if HTTP headers have been sent
 	 */
-	public function set($name, $value, $time = 0)
+	public function set($name, $value, $time = null)
 	{
 		Response::setCookie(
 			$this->prefix . $name, $value,
-			$time ?: $this->lifetime,
+			$time ?? $this->lifetime,
 			$this->path,
 			$this->domain,
 			$this->secure,

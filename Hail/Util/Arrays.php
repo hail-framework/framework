@@ -18,7 +18,7 @@ class Arrays
 	 *
 	 * @return ArrayDot
 	 */
-	public function dot(array $init = []): ArrayDot
+	public static function dot(array $init = []): ArrayDot
 	{
 		return new ArrayDot($init);
 	}
@@ -32,7 +32,7 @@ class Arrays
 	 *
 	 * @return mixed
 	 */
-	public function get(array $array, string $key = null, $default = null)
+	public static function get(array $array, string $key = null, $default = null)
 	{
 		if ($key === null) {
 			return $array;
@@ -62,7 +62,7 @@ class Arrays
 	 *
 	 * @return bool
 	 */
-	public function isAssoc(array $array): bool
+	public static function isAssoc(array $array): bool
 	{
 		$keys = array_keys($array);
 
@@ -74,7 +74,7 @@ class Arrays
 	 *
 	 * @return array
 	 */
-	public function filter(array $array): array
+	public static function filter(array $array): array
 	{
 		return array_filter($array, [static::class, 'filterCallback']);
 	}

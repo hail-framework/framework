@@ -6,7 +6,7 @@ namespace Hail\Facades;
  *
  * @package Hail\Facades
  *
- * @method static set(string $name, mixed $value, string|int|\DateTime $time = 0)
+ * @method static set(string $name, mixed $value, string|int|\DateTime $time = null)
  * @method static mixed get(string $name)
  * @method static delete(string $name)
  */

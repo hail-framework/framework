@@ -26,4 +26,9 @@ class Inflector extends Facade
 	{
 		return \Hail\Util\Inflector::getInstance();
 	}
+
+	public static function alias()
+	{
+		return \Hail\Util\Inflector::class;
+	}
 }

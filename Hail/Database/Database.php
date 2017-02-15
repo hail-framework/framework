@@ -121,7 +121,7 @@ class Database
 				case 'oracle':
 					$attr['driver'] = $attr['oci'];
 					if ($attr['host']) {
-						$attr['dbname'] = '//' .$attr['host'] . ':' . ($attr['port'] ??  '1521') . '/' . $attr['dbname'];
+						$attr['dbname'] = '//' . $attr['host'] . ':' . ($attr['port'] ??  '1521') . '/' . $attr['dbname'];
 
 					}
 					unset($attr['host'], $attr['port']);
@@ -777,7 +777,14 @@ class Database
 		return $this->release($return);
 	}
 
-	protected function insertContext($table, $datas, $INSERT, $multi = false)
+	/**
+	 * @param string|array $table
+	 * @param array|string $datas
+	 * @param string $INSERT
+	 *
+	 * @return string
+	 */
+	protected function insertContext($table, $datas, $INSERT): string
 	{
 		if (is_array($table)) {
 			$datas = $table['VALUES'] ?? $table['SET'];
@@ -789,28 +796,21 @@ class Database
 		}
 
 		if (strpos($INSERT, ' ') !== false) {
-			$INSERT = explode(' ', trim($INSERT));
-			if (count($INSERT) > 3) {
-				$INSERT = 'INSERT';
-			} else {
-				if ($INSERT[0] !== 'REPLACE') {
-					$INSERT[0] = 'INSERT';
-				}
+			$sub = explode(' ', trim($INSERT));
 
-				if (isset($INSERT[1]) &&
-					!in_array($INSERT[1], ['LOW_PRIORITY', 'DELAYED', 'IGNORE'], true)
-				) {
-					$INSERT[1] = '';
-				}
-
-				if (isset($INSERT[2]) &&
-					($INSERT[1] === $INSERT[2] || $INSERT[2] !== 'IGNORE')
-				) {
-					$INSERT[2] = '';
-				}
-
-				$INSERT = trim(implode(' ', $INSERT));
+			if ($sub[0] !== 'REPLACE') {
+				$sub[0] = 'INSERT';
 			}
+
+			if (isset($sub[1])) {
+				if (!in_array($sub[1], ['LOW_PRIORITY', 'DELAYED', 'IGNORE'], true)) {
+					$sub[1] = '';
+				} elseif (isset($sub[2]) && ($sub[1] === $sub[2] || $sub[2] !== 'IGNORE')) {
+					$sub[2] = '';
+				}
+			}
+
+			$INSERT = trim(implode(' ', $sub));
 		} else if ($INSERT !== 'REPLACE') {
 			$INSERT = 'INSERT';
 		}
@@ -820,38 +820,21 @@ class Database
 			$datas = [$datas];
 		}
 
-		if ($multi) {
-			$columns = array_map(
-				[$this, 'columnQuote'],
-				array_keys($datas[0])
-			);
+		$columns = array_map(
+			[$this, 'columnQuote'],
+			array_keys($datas[0])
+		);
 
-			$values = [];
-			foreach ($datas as $data) {
-				$sub = [];
-				foreach ($data as $key => $value) {
-					$sub[] = $this->quoteValue($key, $value);
-				}
-				$values[] = '(' . implode(', ', $sub) . ')';
+		$values = [];
+		foreach ($datas as $data) {
+			$sub = [];
+			foreach ($data as $key => $value) {
+				$sub[] = $this->quoteValue($key, $value);
 			}
-
-			$sql = $INSERT . ' INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
-		} else {
-			$sql = [];
-			foreach ($datas as $data) {
-				$values = [];
-				$columns = [];
-
-				foreach ($data as $key => $value) {
-					$columns[] = $this->columnQuote($key);
-					$values[] = $this->quoteValue($key, $value);
-				}
-
-				$sql[] = $INSERT . ' INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')';
-			}
+			$values[] = '(' . implode(', ', $sub) . ')';
 		}
 
-		return $sql;
+		return $INSERT . ' INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
 	}
 
 	/**
@@ -864,7 +847,7 @@ class Database
 	public function insert($table, $datas = [], $INSERT = 'INSERT')
 	{
 		$this->event('start', Event::INSERT);
-		$sql = $this->insertContext($table, $datas, $INSERT, true);
+		$sql = $this->insertContext($table, $datas, $INSERT);
 
 		return $this->release(
 			$this->exec($sql)
@@ -883,19 +866,6 @@ class Database
 		}
 
 		return $this->pdo->lastInsertId();
-	}
-
-	/**
-	 * @param        $table
-	 * @param array  $datas
-	 * @param string $INSERT
-	 *
-	 * @return bool|int
-	 * @deprecated
-	 */
-	public function multiInsert($table, $datas = [], $INSERT = 'INSERT')
-	{
-		return $this->insert($table, $datas, $INSERT);
 	}
 
 	/**

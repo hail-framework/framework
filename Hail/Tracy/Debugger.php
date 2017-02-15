@@ -7,6 +7,7 @@
 namespace Hail\Tracy;
 
 use Hail\Facades\Trace;
+use Hail\Util\SingletonTrait;
 
 /**
  * Debugger: displays and logs errors.
@@ -14,6 +15,8 @@ use Hail\Facades\Trace;
  */
 class Debugger
 {
+	use SingletonTrait;
+
 	const VERSION = '2.4.5';
 
 	/** server modes for Debugger::enable() */
@@ -111,6 +114,9 @@ class Debugger
 
 	/** @var LoggerInterface */
 	private static $logger;
+
+	/** @var Bar\TracePanel */
+	private static $trace;
 
 	/**
 	 * Enables displaying or logging errors and exceptions.
@@ -430,7 +436,7 @@ class Debugger
 	/**
 	 * @return BlueScreen
 	 */
-	public static function getBlueScreen()
+	public static function getBlueScreen(): BlueScreen
 	{
 		if (!self::$blueScreen) {
 			self::$blueScreen = new BlueScreen;
@@ -448,7 +454,7 @@ class Debugger
 	/**
 	 * @return Bar
 	 */
-	public static function getBar()
+	public static function getBar(): Bar
 	{
 		if (!self::$bar) {
 			self::$bar = new Bar;
@@ -460,7 +466,7 @@ class Debugger
 			self::$bar->addPanel(new Bar\QueryPanel(), 'Query');
 			self::$bar->addPanel(new Bar\ProfilerPanel(), 'Profile');
 			if (extension_loaded('xdebug') && \ini_get('xdebug.auto_trace') !== 'on') {
-				self::$bar->addPanel(Trace::getInstance(), 'Hail:Trace');
+				self::$bar->addPanel(static::getTrace(), 'Hail:Trace');
 			}
 			self::$bar->addPanel(new Bar\GitPanel(), 'Git');
 			self::$bar->addPanel(new Bar\VendorPanel(), 'Vendor');
@@ -470,9 +476,9 @@ class Debugger
 	}
 
 	/**
-	 * @return void
+	 * @param LoggerInterface $logger
 	 */
-	public static function setLogger(LoggerInterface $logger)
+	public static function setLogger(LoggerInterface $logger): void
 	{
 		self::$logger = $logger;
 	}
@@ -480,7 +486,7 @@ class Debugger
 	/**
 	 * @return LoggerInterface
 	 */
-	public static function getLogger()
+	public static function getLogger(): LoggerInterface
 	{
 		if (!self::$logger) {
 			self::$logger = new Logger(self::$logDirectory, self::$email, self::getBlueScreen());
@@ -591,32 +597,25 @@ class Debugger
 	 * Sends message to ChromeLogger console.
 	 *
 	 * @param  mixed $message message to log
+	 * @param string $priority
 	 *
 	 * @return bool    was successful?
 	 */
 	public static function chromeLog($message, $priority = self::DEBUG)
 	{
 		if (!self::$productionMode) {
-			return ChromeLogger::getInstance()->log($message, $priority);
+			return self::getChromeLogger()->log($message, $priority);
 		}
 
 		return false;
 	}
 
 	/**
-	 * Sends message to FireLogger console.
-	 *
-	 * @param  mixed $message message to log
-	 *
-	 * @return bool    was successful?
+	 * @return ChromeLogger
 	 */
-	public static function fireLog($message)
+	public static function getChromeLogger(): ChromeLogger
 	{
-		if (!self::$productionMode) {
-			return FireLogger::getInstance()->log($message);
-		}
-
-		return false;
+		return ChromeLogger::getInstance();
 	}
 
 	/**
@@ -641,5 +640,15 @@ class Debugger
 		}
 
 		return in_array($addr, $list, true) || in_array("$secret@$addr", $list, true);
+	}
+
+	/**
+	 * @return Bar\TracePanel
+	 */
+	public static function getTrace(): Bar\TracePanel
+	{
+		return static::$trace ?? (static::$trace = new Bar\TracePanel(
+				TEMP_PATH . 'xdebugTrace.xt'
+			));
 	}
 }
