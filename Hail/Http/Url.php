@@ -220,7 +220,7 @@ class Url implements \JsonSerializable
 	 */
 	public function setPath(string $value)
 	{
-		if ($this->host && $value[0] !== '/') {
+		if ($this->host && ($value === '' || $value[0] !== '/')) {
 			$value = '/' . $value;
 		}
 		$this->path = $value;
