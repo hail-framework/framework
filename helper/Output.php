@@ -1,2 +1,2 @@
 <?php
-class Output extends \Hail\Facades\Output {}
+class Output extends Hail\Facades\Output {}

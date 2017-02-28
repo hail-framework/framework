@@ -1,2 +1,2 @@
 <?php
-class Application extends \Hail\Facades\Application {}
+class Application extends Hail\Facades\Application {}

@@ -55,7 +55,7 @@ namespace Hail\I18N
 		private static function parse($locale, $domain)
 		{
 			self::$parsed[$locale][$domain] = true;
-			$mo = "{self::dir}/{$locale}/LC_MESSAGES/{$domain}.mo";
+			$mo = self::$dir . "/{$locale}/LC_MESSAGES/{$domain}.mo";
 
 			$key = "$locale/$domain";
 			$array = self::optimizeGet($key, $mo);

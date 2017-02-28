@@ -1,2 +1,2 @@
 <?php
-class Json extends \Hail\Facades\Json {}
+class Json extends Hail\Util\Json {}

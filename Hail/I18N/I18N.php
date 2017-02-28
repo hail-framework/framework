@@ -1,6 +1,15 @@
 <?php
-namespace Hail\I18N
-{
+/**
+ * 有一些 Linux 下 setlocale 只能设置为系统已有的字符集
+ * 查看系统字符集：
+ * $ locale -a
+ *
+ * Debian 下添加字符集
+ * $ vi /etc/locale.gen
+ * 加入需要的字符之后：
+ * $ locale-gen
+ */
+namespace Hail\I18N {
 	/**
 	 * Class I18N
 	 *
@@ -24,10 +33,17 @@ namespace Hail\I18N
 		 */
 		public function init(string $directory, string $domain, string $locale)
 		{
+			$locale .= '.UTF-8';
 			if ($this->gettext) {
-				setlocale(LC_ALL, $locale . '.utf-8');
+				if (defined('LC_MESSAGES')) {
+					setlocale(LC_MESSAGES, $locale); // Linux
+				} else {
+					putenv("LC_MESSAGES=$locale"); // windows
+				}
+
 				bindtextdomain($domain, $directory);
 				textdomain($domain);
+				bind_textdomain_codeset($domain, 'UTF-8');
 			} else {
 				Gettext::init($directory, $domain, $locale);
 			}

@@ -1,2 +1,2 @@
 <?php
-class Acl extends \Hail\Facades\Acl {}
+class Acl extends Hail\Facades\Acl {}

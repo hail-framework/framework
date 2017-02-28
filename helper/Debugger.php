@@ -1,2 +1,2 @@
 <?php
-class Debugger extends \Hail\Tracy\Debugger {}
+class Debugger extends Hail\Tracy\Debugger {}

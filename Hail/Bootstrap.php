@@ -3,9 +3,7 @@ namespace Hail;
 
 use Hail\Tracy\Debugger;
 use Hail\Facades\{
-	Config,
-	Alias,
-	I18N
+	Config, Alias, Event, I18N, Request
 };
 
 // System Start Time
@@ -69,11 +67,13 @@ class Bootstrap
 			TEMP_PATH . 'log/'
 		);
 
-		I18N::init(
-			SYSTEM_PATH . 'lang/',
-			Config::get('app.i18n.domain'),
-			Config::get('app.i18n.locale')
-		);
+		Event::on('action:start', function () {
+			I18N::init(
+				SYSTEM_PATH . 'lang',
+				Config::get('app.i18n.domain'),
+				Config::get('app.i18n.locale')
+			);
+		});
 
 		self::$inited = true;
 	}

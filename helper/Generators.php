@@ -1,2 +1,2 @@
 <?php
-class Generators extends \Hail\Facades\Generators {}
+class Generators extends Hail\Facades\Generators {}

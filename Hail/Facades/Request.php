@@ -2,11 +2,7 @@
 namespace Hail\Facades;
 
 use Hail\Http\{
-	Url,
-	Input,
-	FileUpload,
-	UrlScript,
-	Helpers
+	Url, Input, FileUpload, Helpers, UrlScript
 };
 
 /**
@@ -14,8 +10,8 @@ use Hail\Http\{
  *
  * @package Hail\Facades
  *
- * @method static Url getUrl()
- * @method static Url cloneUrl()
+ * @method static Url|UrlScript getUrl()
+ * @method static Url|UrlScript cloneUrl()
  * @method static string getPathInfo()
  * @method static mixed input(string $key = null, $default = null)
  * @method static Input getInput()
@@ -45,6 +41,49 @@ class Request extends Facade
 	protected static function instance()
 	{
 		$url = new UrlScript();
+
+		$url->setScheme(!empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http');
+		$url->setUser($_SERVER['PHP_AUTH_USER'] ?? '');
+		$url->setPassword($_SERVER['PHP_AUTH_PW'] ?? '');
+
+		// host & port
+		if ((isset($_SERVER[$tmp = 'HTTP_HOST']) || isset($_SERVER[$tmp = 'SERVER_NAME']))
+			&& preg_match('#^([a-z0-9_.-]+|\[[a-f0-9:]+\])(:\d+)?\z#i', $_SERVER[$tmp], $pair)
+		) {
+			$url->setHost(strtolower($pair[1]));
+			if (isset($pair[2])) {
+				$url->setPort((int) substr($pair[2], 1));
+			} elseif (isset($_SERVER['SERVER_PORT'])) {
+				$url->setPort((int) $_SERVER['SERVER_PORT']);
+			}
+		}
+
+		// path & query
+		$requestUrl = $_SERVER['REQUEST_URI'] ?? '/';
+		$path = preg_replace('#^\w++://[^/]++#', '', $requestUrl);
+		if (strpos($path, '?') !== false) {
+			$path = strstr($path, '?', true);
+		}
+		$path = Url::unescape($path, '%/?#');
+		if (strpos($path, '//') !== false) {
+			$path = preg_replace('#/{2,}#', '/', $path);
+		}
+		$path = htmlspecialchars_decode(
+			htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES
+		);
+		$url->setPath($path);
+
+		// detect script path
+		$lpath = strtolower($path);
+		$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
+		if ($lpath !== $script) {
+			$max = min(strlen($lpath), strlen($script));
+			for ($i = 0; $i < $max && $lpath[$i] === $script[$i]; $i++) {
+				;
+			}
+			$path = $i ? substr($path, 0, strrpos($path, '/', $i - strlen($path) - 1) + 1) : '/';
+		}
+		$url->setScriptPath($path);
 
 		$method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null;
 		if ($method === 'POST' && isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])

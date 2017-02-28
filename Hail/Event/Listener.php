@@ -14,9 +14,9 @@ class Listener
 	/**
 	 * Create a new callback listener instance.
 	 *
-	 * @param callable $callback
+	 * @param \Closure $callback
 	 */
-	public function __construct(callable $callback)
+	public function __construct(\Closure $callback)
 	{
 		$this->callback = $callback;
 	}

@@ -62,12 +62,14 @@ class Dispatcher
 			case 'OPTIONS':
 				$return = false;
 				$outputType = 'blank';
-			break;
+				break;
 
 			case 'GET':
 			case 'POST':
 			default:
+				Event::emit('action:start');
 				$return = $object->$method();
+				Event::emit('action:end');
 				$outputType = $return['_type_'] ?? Config::get("app.output.{$this->application}");
 		}
 
@@ -106,9 +108,6 @@ class Dispatcher
 
 	public function output($type, $return)
 	{
-		$logData = ['post' => Request::input(), 'api' => $this->current, 'return' => $return];
-		Event::emit('oplog', $logData);
-
 		if ($return === null) {
 			return;
 		}
@@ -136,17 +135,17 @@ class Dispatcher
 				}
 
 				Output::json()->send($return);
-			break;
+				break;
 
 			case 'text':
 				Output::text()->send($return);
-			break;
+				break;
 
 			case 'template':
 				$name = $return['_template_'] ??
 					$this->application . '/' . $this->current['controller'] . '/' . $this->current['action'];
 				Output::template()->send($name, $return);
-			break;
+				break;
 		}
 	}
 

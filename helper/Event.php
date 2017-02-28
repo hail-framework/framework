@@ -1,2 +1,2 @@
 <?php
-class Event extends \Hail\Facades\Event {}
+class Event extends Hail\Facades\Event {}

@@ -1,2 +1,2 @@
 <?php
-class Library extends \Hail\Facades\Library {}
+class Library extends Hail\Facades\Library {}

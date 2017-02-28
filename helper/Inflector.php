@@ -1,2 +1,2 @@
 <?php
-class Inflector extends \Hail\Facades\Inflector {}
+class Inflector extends Hail\Util\Inflector {}

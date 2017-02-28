@@ -1,2 +1,2 @@
 <?php
-class Crypto extends \Hail\Facades\Crypto {}
+class Crypto extends Hail\Facades\Crypto {}

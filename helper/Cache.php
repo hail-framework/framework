@@ -1,2 +1,2 @@
 <?php
-class Cache extends \Hail\Facades\Cache {}
+class Cache extends Hail\Facades\Cache {}

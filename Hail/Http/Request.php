@@ -33,7 +33,7 @@ class Request
 	/** @var string */
 	private $method;
 
-	/** @var UrlScript */
+	/** @var UrlScript|Url */
 	private $url;
 
 	/** @var array */
@@ -113,7 +113,11 @@ class Request
 
 	public function getPathInfo(): string
 	{
-		return $this->url->getPathInfo();
+		if ($this->url instanceof UrlScript) {
+			return $this->url->getPathInfo();
+		}
+
+		return $this->url->getPath();
 	}
 
 	/********************* query, post, files & cookies ****************d*g**/
@@ -166,6 +170,7 @@ class Request
 
 	/**
 	 * Returns uploaded file.
+	 *
 	 * @return FileUpload|array|NULL
 	 */
 	public function getFile(string $key = null)
@@ -259,6 +264,7 @@ class Request
 		}
 
 		$this->allHeaders = true;
+
 		return $this->headers = $headers;
 	}
 
@@ -305,7 +311,7 @@ class Request
 	public function isJson(): bool
 	{
 		return Strings::contains(
-			$this->getHeader('CONTENT-TYPE'), ['/json', '+json']
+			$this->getHeader('CONTENT-TYPE') ?? '', ['/json', '+json']
 		);
 	}
 

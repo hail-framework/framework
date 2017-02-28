@@ -29,53 +29,10 @@ class UrlScript extends Url
 	/** @var string */
 	private $scriptPath = '';
 
-	/**
-	 * DETECTS URI, base path and script path of the request.
-	 */
-	public function __construct()
+	public function __construct($url = NULL, string $scriptPath = '')
 	{
-		$this->setScheme(!empty($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https' : 'http');
-		$this->setUser(isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '');
-		$this->setPassword(isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '');
-
-		// host & port
-		if ((isset($_SERVER[$tmp = 'HTTP_HOST']) || isset($_SERVER[$tmp = 'SERVER_NAME']))
-			&& preg_match('#^([a-z0-9_.-]+|\[[a-f0-9:]+\])(:\d+)?\z#i', $_SERVER[$tmp], $pair)
-		) {
-			$this->setHost(strtolower($pair[1]));
-			if (isset($pair[2])) {
-				$this->setPort((int) substr($pair[2], 1));
-			} elseif (isset($_SERVER['SERVER_PORT'])) {
-				$this->setPort((int) $_SERVER['SERVER_PORT']);
-			}
-		}
-
-		// path & query
-		$requestUrl = $_SERVER['REQUEST_URI'] ?? '/';
-		$path = preg_replace('#^\w++://[^/]++#', '', $requestUrl);
-		if (strpos($path, '?') !== false) {
-			$path = strstr($path, '?', true);
-		}
-		$path = static::unescape($path, '%/?#');
-		if (strpos($path, '//') !== false) {
-			$path = preg_replace('#/{2,}#', '/', $path);
-		}
-		$path = htmlspecialchars_decode(
-			htmlspecialchars($path, ENT_NOQUOTES | ENT_IGNORE, 'UTF-8'), ENT_NOQUOTES
-		);
-		$this->setPath($path);
-
-		// detect script path
-		$lpath = strtolower($path);
-		$script = isset($_SERVER['SCRIPT_NAME']) ? strtolower($_SERVER['SCRIPT_NAME']) : '';
-		if ($lpath !== $script) {
-			$max = min(strlen($lpath), strlen($script));
-			for ($i = 0; $i < $max && $lpath[$i] === $script[$i]; $i++) {
-				;
-			}
-			$path = $i ? substr($path, 0, strrpos($path, '/', $i - strlen($path) - 1) + 1) : '/';
-		}
-		$this->setScriptPath($path);
+		parent::__construct($url);
+		$this->setScriptPath($scriptPath);
 	}
 
 	/**

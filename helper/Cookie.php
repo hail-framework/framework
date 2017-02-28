@@ -1,2 +1,2 @@
 <?php
-class Cookie extends \Hail\Facades\Cookie {}
+class Cookie extends Hail\Facades\Cookie {}

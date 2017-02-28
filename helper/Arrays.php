@@ -1,2 +1,2 @@
 <?php
-class Arrays extends \Hail\Facades\Arrays {}
+class Arrays extends Hail\Util\Arrays {}

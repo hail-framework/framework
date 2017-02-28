@@ -1,2 +1,2 @@
 <?php
-class Strings extends \Hail\Facades\Strings {}
+class Strings extends Hail\Util\Strings {}

@@ -3,14 +3,14 @@ namespace Hail\Util;
 
 /**
  * 小数组
- * 尺寸:     msgpack < igbinary < json < hprose < swoole < serialize
- * 序列化速度:   swoole << serialize < msgpack < json << igbinary < hprose
- * 反序列化速度: swoole << igbinary < msgpack < serialize < hprose << json
+ * 尺寸:     msgpack < swoole = swoole(fast) < igbinary < json < hprose < serialize
+ * 序列化速度:   swoole(fast) << serialize < msgpack < json < swoole << igbinary << hprose
+ * 反序列化速度: swoole ~ swoole(fast) << igbinary < msgpack < serialize < hprose << json
  *
  * 大数组
- * 尺寸:     igbinary < hprose < msgpack < json << swoole < serialize
- * 序列化速度:   swoole << msgpack < serialize < igbinary =< json < hprose
- * 反序列化速度: swoole << igbinary < hprose < serialize < msgpack << json
+ * 尺寸:     swoole < igbinary << hprose << msgpack < swoole(fast) < json << serialize
+ * 序列化速度:   swoole(fast) < swoole << msgpack < serialize < igbinary =< json < hprose
+ * 反序列化速度: swoole(fast) < swoole << igbinary < hprose < serialize < msgpack << json
  *
  */
 
@@ -23,6 +23,7 @@ namespace Hail\Util;
 class Serialize
 {
 	const EXT_SWOOLE = 'swoole';
+	const EXT_SWOOLE_FAST = 'swoole_fast';
 	const EXT_MSGPACK = 'msgpack';
 	const EXT_IGBINARY = 'igbinary';
 	const EXT_HPROSE = 'hprose';
@@ -39,8 +40,14 @@ class Serialize
 		'swoole' => [
 			'ext' => 'swoole_serialize',
 			'type' => 'bin',
-			'encoder' => 'swoole_serialize',
-			'decoder' => 'swoole_unserialize',
+			'encoder' => 'swoole_pack',
+			'decoder' => 'swoole_unpack',
+		],
+		'swoole_fast' => [
+			'ext' => 'swoole_serialize',
+			'type' => 'bin',
+			'encoder' => 'swoole_fast_pack',
+			'decoder' => 'swoole_unpack',
 		],
 		'igbinary' => [
 			'ext' => 'igbinary',
