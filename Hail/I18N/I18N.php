@@ -42,8 +42,8 @@ namespace Hail\I18N {
 				}
 
 				bindtextdomain($domain, $directory);
-				textdomain($domain);
 				bind_textdomain_codeset($domain, 'UTF-8');
+				textdomain($domain);
 			} else {
 				Gettext::init($directory, $domain, $locale);
 			}

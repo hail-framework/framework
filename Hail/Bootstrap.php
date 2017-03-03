@@ -3,7 +3,7 @@ namespace Hail;
 
 use Hail\Tracy\Debugger;
 use Hail\Facades\{
-	Config, Alias, Event, I18N, Request
+	Config, Alias, Event, I18N
 };
 
 // System Start Time
@@ -56,7 +56,7 @@ class Bootstrap
 			Config::get('app.timezone')
 		);
 
-		if (PHP_SAPI !== 'cli' && Config::get('env.debug')) {
+		if (Config::get('env.debug')) {
 			$debugMode = Debugger::DETECT;
 		} else {
 			$debugMode = Debugger::PRODUCTION;

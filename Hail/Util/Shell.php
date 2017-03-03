@@ -74,14 +74,17 @@ class Shell
 		$shell = implode(' ', $arguments);
 
 		// Prepend the path
-		$parts = explode(' ', $shell);
-		$parts[0] = exec('which ' . $parts[0]);
-		if ($parts[0] !== '') {
-			$shell = implode(' ', $parts);
+		if (strpos(strtolower(PHP_OS), 'win') === false) {
+			$parts = explode(' ', $shell);
+			$parts[0] = exec('which ' . $parts[0]);
+			if ($parts[0] !== '') {
+				$shell = implode(' ', $parts);
+			}
 		}
+
 		$descriptor_spec = [
-			0 => ['pipe', 'r'], // Stdout
-			1 => ['pipe', 'w'], // Stdin
+			0 => ['pipe', 'r'], // Stdin
+			1 => ['pipe', 'w'], // Stdout
 			2 => ['pipe', 'w'] // Stderr
 		];
 		$process = proc_open($shell, $descriptor_spec, $pipes);
