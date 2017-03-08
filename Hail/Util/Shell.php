@@ -74,7 +74,7 @@ class Shell
 		$shell = implode(' ', $arguments);
 
 		// Prepend the path
-		if (strpos(strtolower(PHP_OS), 'win') === false) {
+		if (stripos(PHP_OS, 'win') !== 0) {
 			$parts = explode(' ', $shell);
 			$parts[0] = exec('which ' . $parts[0]);
 			if ($parts[0] !== '') {

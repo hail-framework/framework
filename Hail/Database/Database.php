@@ -132,7 +132,7 @@ class Database
 					break;
 
 				case 'mssql':
-					$attr['driver'] = strpos(PHP_OS, 'WIN') !== false ? 'sqlsrv' : 'dblib';
+					$attr['driver'] = stripos(PHP_OS, 'WIN') === 0 ? 'sqlsrv' : 'dblib';
 
 					// Keep MSSQL QUOTED_IDENTIFIER is ON for standard quoting
 					$commands[] = 'SET QUOTED_IDENTIFIER ON';
@@ -987,18 +987,7 @@ class Database
 			} else {
 				$fetchArgs = (array) $fetchArgs;
 				array_unshift($fetchArgs, $fetch);
-
-				switch (count($fetchArgs)) {
-					case 1:
-						$query->setFetchMode($fetchArgs[0]);
-						break;
-					case 2:
-						$query->setFetchMode($fetchArgs[0], $fetchArgs[1]);
-						break;
-					case 3:
-						$query->setFetchMode($fetchArgs[0], $fetchArgs[1], $fetchArgs[2]);
-						break;
-				}
+				$query->setFetchMode(...$fetchArgs);
 
 				$return = $query->fetch($fetch);
 			}

@@ -9,7 +9,7 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 use InvalidArgumentException;
 use Hail\Console\Exception\InvalidOptionValueException;
@@ -103,15 +103,15 @@ class Option
 		}
 
 		$name = $regs[1];
-		$attributes = isset($regs[2]) ? $regs[2] : null;
-		$type = isset($regs[3]) ? $regs[3] : null;
+		$attributes = $regs[2] ?? null;
+		$type = $regs[3] ?? null;
 
 		$short = null;
 		$long = null;
 
 		// check long,short option name.
 		if (strpos($name, '|') !== false) {
-			list($short, $long) = explode('|', $name);
+			[$short, $long] = explode('|', $name);
 		} else if (strlen($name) === 1) {
 			$short = $name;
 		} else if (strlen($name) > 1) {
@@ -133,6 +133,7 @@ class Option
 		} else {
 			$this->flag();
 		}
+
 		if ($type) {
 			$this->isa($type);
 		}
@@ -143,7 +144,11 @@ class Option
 	 */
 	public function getId()
 	{
-		return $this->key ?: $this->long ?: $this->short;
+		if ($this->key) {
+			return $this->key;
+		}
+
+		return $this->long ?: $this->short;
 	}
 
 	/**
@@ -225,7 +230,7 @@ class Option
 
 	public function isTypeNumber()
 	{
-		return $this->isa === 'number';
+		return $this->isa === ValueType::NUMBER;
 	}
 
 	public function isType($type)
@@ -235,7 +240,7 @@ class Option
 
 	public function getTypeClass()
 	{
-		return new OptionValueType($this->isa, $this->isaOption);
+		return new ValueType($this->isa, $this->isaOption);
 	}
 
 	public function testValue($value)
@@ -277,7 +282,7 @@ class Option
 
 	protected function callTrigger()
 	{
-		if ($this->trigger && ($ret = call_user_func($this->trigger, $this->value))) {
+		if ($this->trigger && ($ret = ($this->trigger)($this->value))) {
 			$this->value = $ret;
 		}
 	}
@@ -355,11 +360,11 @@ class Option
 			$n = '<' . $this->isa . '>';
 		}
 		if ($this->isRequired()) {
-			return sprintf('=%s', $n);
+			return "=$n";
 		} else if ($this->defaultValue || $this->isOptional()) {
-			return sprintf('[=%s]', $n);
+			return "[=$n]";
 		} else if ($n) {
-			return '=' . $n;
+			return "=$n";
 		}
 
 		return '';
@@ -381,11 +386,11 @@ class Option
 	{
 		$c1 = '';
 		if ($this->short && $this->long) {
-			$c1 = sprintf('-%s, --%s', $this->short, $this->long);
+			$c1 = "-{$this->short}, --{$this->long}";
 		} else if ($this->short) {
-			$c1 = sprintf('-%s', $this->short);
+			$c1 = "-{$this->short}";
 		} else if ($this->long) {
-			$c1 = sprintf('--%s', $this->long);
+			$c1 = "--{$this->long}";
 		}
 		if ($renderHint) {
 			return $c1 . $this->renderValueHint();
@@ -397,15 +402,14 @@ class Option
 	public function __toString()
 	{
 		$c1 = $this->renderReadableSpec();
-		$return = '';
-		$return .= sprintf('* key:%-8s spec:%s  desc:%s', $this->getId(), $c1, $this->desc) . "\n";
+		$return = '* key:' . str_pad($this->getId(), 8) . " spec:$c1  desc:{$this->desc}\n";
 		$val = $this->getValue();
 		if (is_array($val)) {
 			$return .= '  value => ' . implode(',', array_map(function ($v) {
 					return var_export($v, true);
 				}, $val)) . "\n";
 		} else {
-			$return .= sprintf('  value => %s', $val) . "\n";
+			$return .= "  value => $val\n";
 		}
 
 		return $return;
@@ -420,16 +424,82 @@ class Option
 	 *
 	 * @return $this
 	 */
-	public function isa($type, $option = null)
+	protected function isa($type, $option = null)
 	{
-		// "bool" was kept for backward compatibility
-		if ($type === 'bool') {
-			$type = 'boolean';
-		}
 		$this->isa = $type;
 		$this->isaOption = $option;
 
 		return $this;
+	}
+
+	public function isString()
+	{
+		return $this->isa(ValueType::STRING);
+	}
+
+	public function isBoolean()
+	{
+		return $this->isa(ValueType::BOOLEAN);
+	}
+
+	public function isDateTime(string $option = null)
+	{
+		return $this->isa(ValueType::DATETIME, $option);
+	}
+
+	public function isDate()
+	{
+		return $this->isa(ValueType::DATE);
+	}
+
+	public function isDir()
+	{
+		return $this->isa(ValueType::DIR);
+	}
+
+	public function isFile()
+	{
+		return $this->isa(ValueType::FILE);
+	}
+
+	public function isPath()
+	{
+		return $this->isa(ValueType::PATH);
+	}
+
+	public function isEmail()
+	{
+		return $this->isa(ValueType::EMAIL);
+	}
+
+	public function isIp()
+	{
+		return $this->isa(ValueType::IP);
+	}
+
+	public function isIpv4()
+	{
+		return $this->isa(ValueType::IPV4);
+	}
+
+	public function isIpv6()
+	{
+		return $this->isa(ValueType::IPV6);
+	}
+
+	public function isNumber()
+	{
+		return $this->isa(ValueType::NUMBER);
+	}
+
+	public function isUrl()
+	{
+		return $this->isa(ValueType::URL);
+	}
+
+	public function isRegex(string $option)
+	{
+		return $this->isa(ValueType::REGEX, $option);
 	}
 
 	/**
@@ -465,7 +535,7 @@ class Option
 	{
 		if ($this->validValues) {
 			if ($this->validValues instanceof \Closure) {
-				return call_user_func($this->validValues);
+				return ($this->validValues)();
 			}
 
 			return $this->validValues;
@@ -483,7 +553,7 @@ class Option
 	{
 		if ($this->suggestions) {
 			if ($this->suggestions instanceof \Closure) {
-				return call_user_func($this->suggestions);
+				return ($this->suggestions)();
 			}
 
 			return $this->suggestions;

@@ -9,7 +9,7 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 
 use ArrayIterator;
@@ -18,11 +18,11 @@ use Countable;
 use LogicException;
 
 /**
- * Class OptionCollection
+ * Class Collection
  *
  * @package Hail\Console
  */
-class OptionCollection implements IteratorAggregate, Countable
+class Collection implements IteratorAggregate, Countable
 {
 	protected $data = [];
 

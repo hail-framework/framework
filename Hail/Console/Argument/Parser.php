@@ -9,23 +9,23 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 use Hail\Console\Exception\InvalidOptionException;
 use Hail\Console\Exception\RequireValueException;
 
-class OptionParser
+class Parser
 {
 	public $specs;
 	public $longOptions;
 	public $shortOptions;
 
-	public function __construct(OptionCollection $specs)
+	public function __construct(Collection $specs)
 	{
 		$this->specs = $specs;
 	}
 
-	public function setSpecs(OptionCollection $specs)
+	public function setSpecs(Collection $specs)
 	{
 		$this->specs = $specs;
 	}
@@ -113,7 +113,7 @@ class OptionParser
 	/**
 	 * @param array $argv
 	 *
-	 * @return OptionResult|Option[]
+	 * @return Result|Option[]
 	 *
 	 * @throws RequireValueException
 	 * @throws InvalidOptionException
@@ -121,7 +121,7 @@ class OptionParser
 	 */
 	public function parse(array $argv)
 	{
-		$result = new OptionResult();
+		$result = new Result();
 		[$argv] = $this->preprocessingArguments($argv);
 
 		foreach ($this->specs as $opt) {

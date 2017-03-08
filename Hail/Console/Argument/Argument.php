@@ -9,7 +9,7 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 class Argument
 {
@@ -42,11 +42,11 @@ class Argument
 	/**
 	 * Check if an option is one of the option in the collection.
 	 *
-	 * @param OptionCollection $options
+	 * @param Collection $options
 	 *
 	 * @return bool
 	 */
-	public function anyOfOptions(OptionCollection $options)
+	public function anyOfOptions(Collection $options)
 	{
 		$name = $this->getOptionName();
 		$keys = $options->keys();

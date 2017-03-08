@@ -119,20 +119,7 @@ abstract class Handler
         array_unshift($args, $this->path);
 
         try {
-        	switch (count($args)) {
-		        case 0:
-		        	return $this->filesystem->$method();
-		        case 1:
-			        return $this->filesystem->$method($args[0]);
-		        case 2:
-			        return $this->filesystem->$method($args[0], $args[1]);
-		        case 3:
-			        return $this->filesystem->$method($args[0], $args[1], $args[2]);
-		        case 4:
-			        return $this->filesystem->$method($args[0], $args[1], $args[2], $args[3]);
-		        default:
-			        return call_user_func_array([$this->filesystem, $method], $args);
-	        }
+	        return $this->filesystem->$method(...$args);
         } catch (\BadMethodCallException $e) {
             throw new \BadMethodCallException(
                 'Call to undefined method '

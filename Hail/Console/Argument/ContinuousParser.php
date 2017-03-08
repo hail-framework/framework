@@ -9,7 +9,7 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 use LogicException;
 use Hail\Console\Exception\{
@@ -31,7 +31,7 @@ use Hail\Console\Exception\{
  *
  *      [arguments]
  *
- * ContinuousOptionParser is for the process flow:
+ * ContinuousParser is for the process flow:
  *
  * init app options,
  * parse app options
@@ -68,7 +68,7 @@ use Hail\Console\Exception\{
  *      $argv = explode(' ','-v -d -c subcommand1 -a -b -c subcommand2 -c subcommand3 arg1 arg2 arg3');
  *
  *      // parse application options first
- *      $parser = new ContinuousOptionParser( $appspecs );
+ *      $parser = new ContinuousParser( $appspecs );
  *      $app_options = $parser->parse( $argv );
  *      while (! $parser->isEnd()) {
  *          if( $parser->getCurrentArgument() == $subcommands[0] ) {
@@ -81,14 +81,14 @@ use Hail\Console\Exception\{
  *          }
  *      }
  **/
-class ContinuousOptionParser extends OptionParser
+class ContinuousParser extends Parser
 {
 	public $index;
 	public $length;
 	public $argv;
 
 	/* for the constructor , the option specs is application options */
-	public function __construct(OptionCollection $specs)
+	public function __construct(Collection $specs)
 	{
 		parent::__construct($specs);
 		$this->index = 1;
@@ -142,14 +142,14 @@ class ContinuousOptionParser extends OptionParser
 	/**
 	 * @param array $argv
 	 *
-	 * @return OptionResult
+	 * @return Result
 	 * @throws InvalidOptionException
 	 * @throws RequireValueException
 	 */
 	public function parse(array $argv)
 	{
 		// create new Result object.
-		$result = new OptionResult();
+		$result = new Result();
 		[$this->argv] = $this->preprocessingArguments($argv);
 		$this->length = count($this->argv);
 

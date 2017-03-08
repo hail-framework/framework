@@ -8,9 +8,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
-class OptionPrinter
+class Printer
 {
 	public $screenWidth = 78;
 
@@ -25,11 +25,11 @@ class OptionPrinter
 	{
 		$c1 = '';
 		if ($opt->short && $opt->long) {
-			$c1 = sprintf('-%s, --%s', $opt->short, $opt->long);
+			$c1 = "-{$opt->short}, --{$opt->long}";
 		} else if ($opt->short) {
-			$c1 = sprintf('-%s', $opt->short);
+			$c1 = "-{$opt->short}";
 		} else if ($opt->long) {
-			$c1 = sprintf('--%s', $opt->long);
+			$c1 = "--{$opt->long}";
 		}
 		$c1 .= $opt->renderValueHint();
 
@@ -39,11 +39,11 @@ class OptionPrinter
 	/**
 	 * render option descriptions.
 	 *
-	 * @param OptionCollection $options
+	 * @param Collection $options
 	 *
 	 * @return string output
 	 */
-	public function render(OptionCollection $options)
+	public function render(Collection $options)
 	{
 		# echo "* Available options:\n";
 		$lines = [];

@@ -206,8 +206,13 @@ class Validator
 	 *
 	 * @return bool
 	 */
-	protected function validateInteger($field, $value)
+	protected function validateInteger($field, $value, $params)
 	{
+		if (isset($params[0]) && (bool) $params[0]) {
+			//strict mode
+			return preg_match('/^-?(\d)+$/i', $value);
+		}
+
 		return filter_var($value, \FILTER_VALIDATE_INT) !== false;
 	}
 
@@ -941,7 +946,7 @@ class Validator
 
 				$result = true;
 				foreach ($values as $value) {
-					$result = $result && call_user_func($callback, $field, $value, $v['params'], $this->_fields);
+					$result = $result && $callback($field, $value, $v['params'], $this->_fields);
 				}
 
 				if (!$result) {
@@ -1189,6 +1194,7 @@ class Validator
 	 * @param array $rules
 	 *
 	 * @return $this
+	 * @throws \InvalidArgumentException
 	 */
 	public function rules(array $rules)
 	{
@@ -1196,7 +1202,7 @@ class Validator
 			if (is_array($params)) {
 				foreach ($params as $innerParams) {
 					array_unshift($innerParams, $ruleType);
-					call_user_func_array([$this, 'rule'], $innerParams);
+					$this->rule(...$innerParams);
 				}
 			} else {
 				$this->rule($ruleType, $params);
@@ -1228,6 +1234,8 @@ class Validator
 	 *
 	 * @param string $field
 	 * @param array  $rules
+	 *
+	 * @throws \InvalidArgumentException
 	 */
 	public function mapFieldRules(string $field, array $rules)
 	{
@@ -1246,7 +1254,8 @@ class Validator
 			}
 
 			//Add the field and additional parameters to the rule
-			call_user_func_array([$this, 'rule'], array_merge([$name, $field], $rule));
+			$this->rule($name, $field, ...$rule);
+
 			if (!empty($message)) {
 				$this->message($message);
 			}
@@ -1257,6 +1266,8 @@ class Validator
 	 * Convenience method to add validation rule(s) for multiple fields
 	 *
 	 * @param array $rules
+	 *
+	 * @throws \InvalidArgumentException
 	 */
 	public function mapFieldsRules(array $rules)
 	{

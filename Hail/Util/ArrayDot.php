@@ -7,7 +7,7 @@ namespace Hail\Util;
  * @package Hail\Util
  * @author  Hao Feng <flyinghail@msn.com>
  */
-class ArrayDot implements \ArrayAccess, \Countable, \Iterator
+class ArrayDot implements \ArrayAccess, \Countable, \IteratorAggregate
 {
 	use ArrayTrait;
 
@@ -27,41 +27,9 @@ class ArrayDot implements \ArrayAccess, \Countable, \Iterator
 	/**
 	 * @inheritdoc
 	 */
-	public function current()
+	public function getIterator()
 	{
-		return current($this->items);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function next()
-	{
-		next($this->items);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function key()
-	{
-		return key($this->items);
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function valid()
-	{
-		return key($this->items) !== null;
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function rewind()
-	{
-		reset($this->items);
+		return new \ArrayIterator($this->items);
 	}
 
 	/**
@@ -153,12 +121,7 @@ class ArrayDot implements \ArrayAccess, \Countable, \Iterator
 			$array = &$array[$k];
 		}
 
-		if (is_array($value)) {
-			$this->cache = array_merge(
-				$this->cache,
-				self::dot($value, $key . '.')
-			);
-		} elseif ($value !== null) {
+		if ($value !== null && !is_array($value)) {
 			$this->cache[$key] = $value;
 		}
 

@@ -211,36 +211,18 @@ class PhpRedis extends AbstractClient
 			if ($this->persistent && $this->requests === 0) {
 				$this->requests = 1;
 				try {
-					$response = call_user_func_array([$this->redis, $name], $args);
+					$response = $this->redis->$name(...$args);
 				} catch (\RedisException $e) {
 					if ($e->getMessage() === 'read error on connection') {
 						$this->connected = false;
 						$this->connect();
-						$response = call_user_func_array([$this->redis, $name], $args);
+						$response = $this->redis->$name(...$args);
 					} else {
 						throw $e;
 					}
 				}
 			} else {
-				switch (count($args)) {
-					case 0:
-						$response = $this->redis->$name();
-						break;
-					case 1:
-						$response = $this->redis->$name($args[0]);
-						break;
-					case 2:
-						$response = $this->redis->$name($args[0], $args[1]);
-						break;
-					case 3:
-						$response = $this->redis->$name($args[0], $args[1], $args[2]);
-						break;
-					case 4:
-						$response = $this->redis->$name($args[0], $args[1], $args[2], $args[3]);
-						break;
-					default:
-						$response = call_user_func_array([$this->redis, $name], $args);
-				}
+				$response = $this->redis->$name(...$args);
 			}
 
 			// Proxy pipeline mode to the phpredis library

@@ -39,23 +39,7 @@ class Listener
 	 */
 	public function handle($args)
 	{
-		switch (count($args)) {
-			case 1:
-				($this->callback)($args[0]);
-				return;
-			case 2:
-				($this->callback)($args[0], $args[1]);
-				return;
-			case 3:
-				($this->callback)($args[0], $args[1], $args[2]);
-				return;
-			case 4:
-				($this->callback)($args[0], $args[1], $args[2], $args[3]);
-				return;
-			default:
-				call_user_func_array($this->callback, $args);
-				return;
-		}
+		($this->callback)(...$args);
 	}
 
 	/**

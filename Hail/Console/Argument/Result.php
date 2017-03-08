@@ -9,7 +9,7 @@
  *
  */
 
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 use ArrayIterator;
 use ArrayAccess;
@@ -20,11 +20,11 @@ use IteratorAggregate;
  *
  * create option result from array()
  *
- *     OptionResult::create($spec, array(
+ *     Result::create($spec, array(
  *         'key' => 'value'
  *     ), array( ... arguments ... ) );
  */
-class OptionResult implements IteratorAggregate, ArrayAccess
+class Result implements IteratorAggregate, ArrayAccess
 {
 	/**
 	 * @var array option specs, key => Option object
@@ -129,6 +129,10 @@ class OptionResult implements IteratorAggregate, ArrayAccess
 	public static function create($specs, array $values = [], array $arguments = null)
 	{
 		$new = new self();
+
+		/**
+		 * @var Option $spec
+		 */
 		foreach ($specs as $spec) {
 			$id = $spec->getId();
 			if (isset($values[$id])) {

@@ -1,10 +1,10 @@
 <?php
-namespace Hail\Console;
+namespace Hail\Console\Input;
 
 use DateTime;
 use SplFileInfo;
 
-class OptionValueType
+class ValueType
 {
 	const BOOLEAN = 'boolean';
 	const DATETIME = 'dateTime';
@@ -26,7 +26,7 @@ class OptionValueType
 	/**
 	 * Type option.
 	 *
-	 * @var mixed
+	 * @var string
 	 */
 	protected $option;
 	protected $parsed;
@@ -34,18 +34,14 @@ class OptionValueType
 
 	public $matches = [];
 
-	public function __construct($type, $option = null)
+	public function __construct($type, string $option = null)
 	{
-		$type = lcfirst($type);
-
-		if ($type === 'dateTime') {
-			$option['format'] = $option['format'] ?? DateTime::ATOM;
-		} elseif ($type === 'bool') {
-			$type = 'boolean';
+		if ($type === self::DATETIME) {
+			$option = $option ?? DateTime::ATOM;
 		}
 
 		$this->testFun = $type . 'Test';
-		if (method_exists($this, $this->testFun)) {
+		if (!method_exists($this, $this->testFun)) {
 			throw new \InvalidArgumentException("Type '$type' not defined.");
 		}
 
@@ -92,7 +88,7 @@ class OptionValueType
 
 	protected function dateTimeTest($value)
 	{
-		$this->parsed = $value = DateTime::createFromFormat($this->option['format'], $value);
+		$this->parsed = $value = DateTime::createFromFormat($this->option, $value);
 		return $value !== false;
 	}
 

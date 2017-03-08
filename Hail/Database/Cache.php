@@ -12,7 +12,7 @@ use Hail\Facades\{
  * Class Cache
  *
  * @package Hail\Database
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  *
  * @method select(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
  * @method get(array $struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
@@ -30,6 +30,7 @@ class Cache
 	public function expiresAfter($lifetime = 0)
 	{
 		$this->lifetime = $lifetime;
+
 		return $this;
 	}
 
@@ -47,7 +48,7 @@ class Cache
 
 	/**
 	 * @param string $name
-	 * @param array $arguments
+	 * @param array  $arguments
 	 *
 	 * @return array|bool|mixed
 	 * @throws InvalidArgumentException
@@ -58,26 +59,15 @@ class Cache
 
 		$result = SimpleCache::get($key);
 		if (!$result) {
-			if ($name === 'get' || $name === 'select') {
-				switch (count($arguments)) {
-					case 1:
-						$result = DB::$name($arguments[0]);
-						break;
-
-					case 2:
-						$result = DB::$name($arguments[0], $arguments[1]);
-						break;
-
-					case 3:
-						$result = DB::$name($arguments[0], $arguments[1], $arguments[2]);
-						break;
-
-					default:
-						throw new InvalidArgumentException('Aruguments number out of range');
-						break;
-				}
-			} else {
-				throw new InvalidArgumentException('Cache only support select/get method');
+			switch ($name) {
+				case 'get':
+					$result = DB::get(...$arguments);
+					break;
+				case 'select':
+					$result = DB::select(...$arguments);
+					break;
+				default:
+					throw new InvalidArgumentException('Cache only support select/get method');
 			}
 
 			SimpleCache::set($key, $result, $this->lifetime);
@@ -89,7 +79,7 @@ class Cache
 	}
 
 	/**
-	 * @param $name
+	 * @param            $name
 	 * @param array|null $arguments
 	 *
 	 * @return string
@@ -125,7 +115,7 @@ class Cache
 
 	/**
 	 * @param string $name
-	 * @param mixed $arguments
+	 * @param mixed  $arguments
 	 *
 	 * @return bool
 	 */
