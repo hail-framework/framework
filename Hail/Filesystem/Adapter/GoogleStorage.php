@@ -7,20 +7,18 @@ use Google\Cloud\Storage\Acl;
 use Google\Cloud\Storage\Bucket;
 use Google\Cloud\Storage\StorageClient;
 use Google\Cloud\Storage\StorageObject;
-use Hail\Filesystem\Adapter\Polyfill\StreamedReadingTrait;
+use GuzzleHttp\Psr7\StreamWrapper;
 use Hail\Filesystem\AdapterInterface;
 use Hail\Filesystem\Util;
 
 /**
  * Class GoogleStorage
- * $ composer require google/cloud:^0.9.0
+ * $ composer require google/cloud:^0.20.0
  *
  * @package Hail\Filesystem\Adapter
  */
 class GoogleStorage extends AbstractAdapter
 {
-	use StreamedReadingTrait;
-
 	/**
 	 * @var StorageClient
 	 */
@@ -147,6 +145,10 @@ class GoogleStorage extends AbstractAdapter
 			$options['predefinedAcl'] = $this->getPredefinedAclForVisibility(AdapterInterface::VISIBILITY_PRIVATE);
 		}
 
+		if ($metadata = $config->get('metadata')) {
+            $options['metadata'] = $metadata;
+        }
+
 		return $options;
 	}
 
@@ -178,7 +180,7 @@ class GoogleStorage extends AbstractAdapter
 	 */
 	protected function normaliseObject(StorageObject $object)
 	{
-		$name = $object->name();
+		$name = $this->removePathPrefix($object->name());
 		$info = $object->info();
 
 		$isDir = substr($name, -1) === '/';
@@ -191,7 +193,7 @@ class GoogleStorage extends AbstractAdapter
 			'dirname' => Util::dirname($name),
 			'path' => $name,
 			'timestamp' => strtotime($info['updated']),
-			'mimetype' => $info['contentType'],
+			'mimetype' => $info['contentType'] ?? '',
 			'size' => $info['size'],
 		];
 	}
@@ -304,6 +306,19 @@ class GoogleStorage extends AbstractAdapter
 
 		return $data;
 	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+    public function readStream($path)
+    {
+        $object = $this->getObject($path);
+
+        $data = $this->normaliseObject($object);
+        $data['stream'] = StreamWrapper::getResource($object->downloadAsStream());
+
+        return $data;
+    }
 
 	/**
 	 * {@inheritdoc}

@@ -6,7 +6,7 @@ use Hail\Facades\{
 	Config, Serialize
 };
 
-class Database extends AbstractFactory
+class Database extends Factory
 {
 	/**
 	 * @param array $config

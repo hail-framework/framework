@@ -229,7 +229,8 @@ class Ftp extends AbstractFtpAdapter
 			$this->setVisibility($path, $visibility);
 		}
 
-		return compact('path', 'visibility');
+		$type = 'file';
+		return compact('type', 'path', 'visibility');
 	}
 
 	/**
@@ -305,7 +306,7 @@ class Ftp extends AbstractFtpAdapter
 
 		$this->setConnectionRoot();
 
-		return ['path' => $dirname];
+		return ['type' => 'dir', 'path' => $dirname];
 	}
 
 	/**
@@ -389,7 +390,7 @@ class Ftp extends AbstractFtpAdapter
 	{
 		$timestamp = ftp_mdtm($this->getConnection(), $path);
 
-		return ($timestamp !== -1) ? ['timestamp' => $timestamp] : false;
+		return ($timestamp !== -1) ? ['path' => $path, 'timestamp' => $timestamp] : false;
 	}
 
 	/**
@@ -423,7 +424,8 @@ class Ftp extends AbstractFtpAdapter
 			return false;
 		}
 
-		return compact('stream');
+		$type = 'file';
+		return compact('type', 'path', 'stream');
 	}
 
 	/**
@@ -437,7 +439,7 @@ class Ftp extends AbstractFtpAdapter
 			return false;
 		}
 
-		return compact('visibility');
+		return compact('path', 'visibility');
 	}
 
 	/**
@@ -469,16 +471,16 @@ class Ftp extends AbstractFtpAdapter
 		$listing = $this->normalizeListing(ftp_rawlist($this->getConnection(), '-aln' . ' ' . $directory) ?: []);
 		$output = [];
 
-		foreach ($listing as $directory) {
-			$output[] = $directory;
-			if ($directory['type'] !== 'dir') {
+		foreach ($listing as $dir) {
+			$output[] = [$dir];
+			if ($dir['type'] !== 'dir') {
 				continue;
 			}
 
-			$output = array_merge($output, $this->listDirectoryContentsRecursive($directory['path']));
+			$output[] = $this->listDirectoryContentsRecursive($dir['path']);
 		}
 
-		return $output;
+		return array_merge(...$output);
 	}
 
 	/**

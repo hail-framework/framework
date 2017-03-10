@@ -10,7 +10,7 @@ use Hail\Facades\{
 	Config, Serialize
 };
 
-class Storage extends AbstractFactory
+class Storage extends Factory
 {
 	/**
 	 * @param array $config

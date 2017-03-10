@@ -170,7 +170,9 @@ class Local extends AbstractAdapter
 			$this->setVisibility($path, $visibility);
 		}
 
-		return compact('path', 'visibility');
+		$type = 'file';
+
+		return compact('type', 'path', 'visibility');
 	}
 
 	/**
@@ -205,7 +207,9 @@ class Local extends AbstractAdapter
 			return false;
 		}
 
-		return compact('path', 'size', 'contents', 'mimetype');
+		$type = 'file';
+
+        return compact('type', 'path', 'size', 'contents', 'mimetype');
 	}
 
 	/**
@@ -220,7 +224,7 @@ class Local extends AbstractAdapter
 			return false;
 		}
 
-		return compact('contents', 'path');
+		return ['type' => 'file', 'path' => $path, 'contents' => $contents];
 	}
 
 	/**
@@ -313,11 +317,13 @@ class Local extends AbstractAdapter
 		$finfo = new Finfo(FILEINFO_MIME_TYPE);
 		$mimetype = $finfo->file($location);
 
-		if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty'])) {
+		if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty'], true)) {
 			$mimetype = Util\MimeType::detectByFilename($location);
 		}
 
-		return ['mimetype' => $mimetype];
+		$type = 'file';
+
+		return compact('type', 'path', 'mimetype');
 	}
 
 	/**
@@ -338,7 +344,7 @@ class Local extends AbstractAdapter
 		$permissions = octdec(substr(sprintf('%o', fileperms($location)), -4));
 		$visibility = $permissions & 0044 ? AdapterInterface::VISIBILITY_PUBLIC : AdapterInterface::VISIBILITY_PRIVATE;
 
-		return compact('visibility');
+		return compact('path', 'visibility');
 	}
 
 	/**
@@ -354,7 +360,7 @@ class Local extends AbstractAdapter
 			return false;
 		}
 
-		return compact('visibility');
+		return compact('path', 'visibility');
 	}
 
 	/**

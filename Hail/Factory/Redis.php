@@ -13,7 +13,7 @@ use Hail\Facades\{
 	Serialize
 };
 
-class Redis extends AbstractFactory
+class Redis extends Factory
 {
 	protected static $extension;
 	protected static $connectPool;

@@ -14,7 +14,7 @@ use Hail\Facades\{
 };
 
 
-class Cache extends AbstractFactory
+class Cache extends Factory
 {
 	/**
 	 * @param array $config
