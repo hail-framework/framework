@@ -55,7 +55,11 @@ class Database extends AbstractAdapter
 			'WHERE' => [$this->schema['key'] => $key]
 		]);
 
-		if ($data[$this->schema['expire']] > NOW) {
+		if (!isset($data[$this->schema['expire']])) {
+			return null;
+		} elseif ($data[$this->schema['expire']] < NOW) {
+			$this->doDelete($key);
+
 			return null;
 		}
 

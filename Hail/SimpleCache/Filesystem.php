@@ -103,13 +103,13 @@ class Filesystem extends AbstractAdapter
 				return null;
 			}
 
-			$content = substr($content, 8, -2);
+			$content = substr($content, 9, -3);
 			$data = Serialize::decode($content);
 		} catch (\Exception $e) {
 			return null;
 		}
 
-		if ($data['expire'] > NOW) {
+		if ($data['expire'] < NOW) {
 			$this->storage->delete($filename);
 
 			return null;
@@ -140,10 +140,10 @@ class Filesystem extends AbstractAdapter
 		}
 
 		$filename = $this->getFilename($key);
-		$content = '<?php /*' . Serialize::encode([
+		$content = '<?php /* ' . Serialize::encode([
 				'value' => $value,
 				'expire' => $ttl,
-			]) . '*/';
+			]) . ' */';
 
 		return $this->storage->put($filename, $content);
 	}

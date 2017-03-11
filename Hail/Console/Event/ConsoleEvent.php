@@ -14,7 +14,7 @@ namespace Hail\Console\Event;
 use Hail\Console\Command\Command;
 use Hail\Console\Input\InputInterface;
 use Hail\Console\Output\OutputInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Hail\Event\Event;
 
 /**
  * Allows to inspect input and output of a command.

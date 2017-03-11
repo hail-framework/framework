@@ -2,8 +2,9 @@
 namespace Hail\Facades;
 
 use Hail\Event\{
-	Emitter,
-	Listener
+	EventDispatcher,
+	Event as EventArgs,
+	EventSubscriberInterface
 };
 
 /**
@@ -11,20 +12,20 @@ use Hail\Event\{
  *
  * @package Hail\Facades
  *
- * @method static Emitter on(string $event, Listener|callable $listener, $priority = Emitter::P_NORMAL)
- * @method static Emitter once(string $event, callable $listener, $priority = Emitter::P_NORMAL)
- * @method static Emitter removeListener(string $event, callable $listener)
- * @method static Emitter removeAllListeners(string $event)
+ * @method static EventDispatcher addListener(string $eventName, callable $listener, $priority = 0)
+ * @method static EventDispatcher removeListener(string $eventName, callable $listener)
+ * @method static EventDispatcher removeAllListeners(string $eventName)
+ * @method static EventDispatcher addSubscriber(EventSubscriberInterface $subscriber)
+ * @method static EventDispatcher removeSubscriber(EventSubscriberInterface $subscriber)
  * @method static bool hasListeners(string $event)
- * @method static Listener[] getListeners(string $event)
- * @method static Listener[] getSortedListeners(string $event)
- * @method static void emit(string $event, array ...$arguments)
- * @method static void emitBatch(array $events)
+ * @method static int getListenerPriority(string $eventName, callable $listener)
+ * @method static callable[] getListeners(string $eventName = null)
+ * @method static EventArgs dispatch(string $eventName, EventArgs $event = null)
  */
 class Event extends Facade
 {
 	protected static function instance()
 	{
-		return new Emitter();
+		return new EventDispatcher();
 	}
 }

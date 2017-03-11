@@ -27,7 +27,7 @@ final class ConsoleEvents
      *
      * @var string
      */
-    const COMMAND = 'console.command';
+    const COMMAND = 'console:command';
 
     /**
      * The TERMINATE event allows you to attach listeners after a command is
@@ -37,7 +37,7 @@ final class ConsoleEvents
      *
      * @var string
      */
-    const TERMINATE = 'console.terminate';
+    const TERMINATE = 'console:terminate';
 
     /**
      * The EXCEPTION event occurs when an uncaught exception appears.
@@ -49,5 +49,5 @@ final class ConsoleEvents
      *
      * @var string
      */
-    const EXCEPTION = 'console.exception';
+    const EXCEPTION = 'console:exception';
 }
