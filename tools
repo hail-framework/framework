@@ -2,54 +2,7 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 
-use Hail\Console\{
-	OptionCollection,
-	OptionPrinter,
-	OptionParser
-};
+use Hail\Console\Application;
 
-$specs = new OptionCollection;
-$specs->add('f|foo:', 'option requires a value.')
-	->isa('String');
-
-$specs->add('b|bar+', 'option with multiple value.')
-	->isa('Number');
-
-$specs->add('ip+', 'Ip constraint')
-	->isa('Ip');
-
-$specs->add('email+', 'Email address constraint')
-	->isa('Email');
-
-$specs->add('z|zoo?', 'option with optional value.')
-	->isa('Boolean');
-
-$specs->add('file:', 'option value should be a file.')
-	->isa('File');
-
-$specs->add('v|verbose', 'verbose message.');
-$specs->add('d|debug', 'debug message.');
-$specs->add('long', 'long option name only.');
-$specs->add('s', 'short option name only.');
-
-$printer = new OptionPrinter();
-echo $printer->render($specs);
-
-$parser = new OptionParser($specs);
-
-echo "Enabled options: \n";
-try {
-	$result = $parser->parse($argv);
-	foreach ($result->keys as $key => $spec) {
-		print_r($spec);
-	}
-
-	$opt = $result->keys['foo']; // return the option object.
-	$str = $result->keys['foo']->value; // return the option value
-
-	print_r($opt);
-	var_dump($str);
-
-} catch (Exception $e) {
-	echo $e->getMessage();
-}
+$app = new Application('Hail Framework', Config::get('env.version'));
+$app->run();

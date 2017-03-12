@@ -1,5 +1,4 @@
 <?php
-
 /*
  * This file is part of the Symfony package.
  *
@@ -12,29 +11,21 @@
 namespace Hail\Console;
 
 use Hail\Console\Exception\ExceptionInterface;
-use Hail\Console\Helper\DebugFormatterHelper;
-use Hail\Console\Helper\ProcessHelper;
-use Hail\Console\Helper\QuestionHelper;
-use Hail\Console\Input\InputInterface;
-use Hail\Console\Input\StreamableInputInterface;
-use Hail\Console\Input\ArgvInput;
-use Hail\Console\Input\ArrayInput;
-use Hail\Console\Input\InputDefinition;
-use Hail\Console\Input\InputOption;
-use Hail\Console\Input\InputArgument;
-use Hail\Console\Input\InputAwareInterface;
-use Hail\Console\Output\OutputInterface;
-use Hail\Console\Output\ConsoleOutput;
-use Hail\Console\Output\ConsoleOutputInterface;
-use Hail\Console\Command\Command;
-use Hail\Console\Command\HelpCommand;
-use Hail\Console\Command\ListCommand;
-use Hail\Console\Helper\HelperSet;
-use Hail\Console\Helper\Helper;
-use Hail\Console\Helper\FormatterHelper;
-use Hail\Console\Event\ConsoleCommandEvent;
-use Hail\Console\Event\ConsoleExceptionEvent;
-use Hail\Console\Event\ConsoleTerminateEvent;
+use Hail\Console\Input\{
+	InputInterface, StreamableInputInterface, ArgvInput, ArrayInput, InputDefinition, InputOption, InputArgument, InputAwareInterface
+};
+use Hail\Console\Output\{
+	OutputInterface, ConsoleOutput, ConsoleOutputInterface
+};
+use Hail\Console\Command\{
+	Command, HelpCommand, ListCommand
+};
+use Hail\Console\Helper\{
+	DebugFormatterHelper, ProcessHelper, QuestionHelper, HelperSet, Helper, FormatterHelper
+};
+use Hail\Console\Event\{
+	ConsoleCommandEvent, ConsoleExceptionEvent, ConsoleTerminateEvent
+};
 use Hail\Console\Exception\CommandNotFoundException;
 use Hail\Console\Exception\LogicException;
 use Hail\Facades\Event;
@@ -54,6 +45,7 @@ use Hail\Exception\FatalThrowableError;
  *     $app->run();
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class Application
 {
@@ -95,6 +87,7 @@ class Application
 	 * @param OutputInterface $output An Output instance
 	 *
 	 * @return int 0 if everything went fine, or an error code
+	 * @throws \Exception
 	 */
 	public function run(InputInterface $input = null, OutputInterface $output = null)
 	{
