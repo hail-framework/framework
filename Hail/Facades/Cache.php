@@ -10,7 +10,6 @@ use Hail\Factory\Cache as CacheFactory;
  *
  * @method static void setNamespace(string $namespace)
  * @method static string getNamespace()
- * @method static int ttl(null|int|\DateInterval $ttl)
  * @method static mixed get(string $key, $default = null)
  * @method static array getMultiple(array $keys, $default = null)
  * @method static bool has(string $key)

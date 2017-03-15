@@ -67,7 +67,7 @@ class Bootstrap
 			TEMP_PATH . 'log/'
 		);
 
-		Event::addListener('action:start', function () {
+		Event::listen('action:start', function () {
 			I18N::init(
 				SYSTEM_PATH . 'lang',
 				Config::get('app.i18n.domain'),

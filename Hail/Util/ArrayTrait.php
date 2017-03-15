@@ -78,9 +78,9 @@ trait ArrayTrait
 	}
 
 	/**
-	 * @param array $array
+	 * @param iterable $array
 	 */
-	public function setMultiple(array $array)
+	public function setMultiple($array)
 	{
 		foreach ($array as $k => $v) {
 			$this->set($k, $v);

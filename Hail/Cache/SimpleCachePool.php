@@ -27,7 +27,7 @@ class SimpleCachePool extends AbstractCachePool
 	 */
 	protected function fetchObjectFromCache($key)
 	{
-		if (null === $data = $this->cache->get($key)) {
+		if (null === ($data = $this->cache->get($key))) {
 			return [false, null, [], null];
 		}
 

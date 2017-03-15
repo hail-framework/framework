@@ -16,7 +16,7 @@ use Hail\Facades\DI;
  * @property-read I18N\I18N i18n
  * @property-read Http\Request $request
  * @property-read Http\Response $response
- * @property-read Event\Emitter $event
+ * @property-read Event\EventDispatcher $event
  * @property-read Application $app
  * @property-read Output $output
  * @property-read Latte\Engine $template

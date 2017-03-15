@@ -55,12 +55,8 @@ class EventDispatcher
 	 */
 	public function dispatch(string $eventName, Event $event = null)
 	{
-		if (null === $event) {
-			$event = new Event();
-		}
-
 		if ($listeners = $this->getListeners($eventName)) {
-			$this->doDispatch($listeners, $eventName, $event);
+			$this->doDispatch($listeners, $eventName, $event ?? new Event());
 		}
 
 		return $event;
@@ -128,7 +124,12 @@ class EventDispatcher
 	 */
 	public function hasListeners(string $eventName = null)
 	{
-		return isset($this->listeners[$eventName]) && count($this->listeners[$eventName]) > 0;
+		return isset($this->listeners[$eventName]);
+	}
+
+	public function listen(string $eventName, callable $listener, int $priority = 0)
+	{
+		$this->addListener($eventName, $listener, $priority);
 	}
 
 	/**
@@ -164,6 +165,14 @@ class EventDispatcher
 				if (false !== ($key = array_search($listener, $listeners, true))) {
 					unset($this->listeners[$eventName][$priority][$key], $this->sorted[$eventName]);
 				}
+
+				if ($this->listeners[$eventName][$priority] === []) {
+					unset($this->listeners[$eventName][$priority]);
+				}
+			}
+
+			if ($this->listeners[$eventName] === []) {
+				unset($this->listeners[$eventName]);
 			}
 		}
 
@@ -246,9 +255,9 @@ class EventDispatcher
 	 *
 	 * @param callable[] $listeners The event listeners
 	 * @param string     $eventName The name of the event to dispatch
-	 * @param Event|null $event     The event object to pass to the event handlers/listeners
+	 * @param Event      $event     The event object to pass to the event handlers/listeners
 	 */
-	protected function doDispatch($listeners, $eventName, ?Event $event)
+	protected function doDispatch(array $listeners, string $eventName, Event $event)
 	{
 		foreach ($listeners as $listener) {
 			if ($event->isPropagationStopped()) {
@@ -264,7 +273,7 @@ class EventDispatcher
 	 *
 	 * @param string $eventName The name of the event
 	 */
-	private function sortListeners($eventName)
+	private function sortListeners(string $eventName)
 	{
 		krsort($this->listeners[$eventName]);
 		$this->sorted[$eventName] = call_user_func_array('array_merge', $this->listeners[$eventName]);

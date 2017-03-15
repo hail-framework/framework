@@ -62,12 +62,11 @@ abstract class AbstractAdapter implements CacheInterface
 	/**
 	 * @var int
 	 */
-	private $ttl;
+	protected $ttl;
 
 	public function __construct($params)
 	{
-		$this->ttl = (int) ($params['ttl'] ?? 0);
-
+		$this->ttl = $this->convertTtl($params['ttl'] ?? 0);
 		$this->setNamespace($params['namespace'] ?? '');
 	}
 
@@ -95,15 +94,10 @@ abstract class AbstractAdapter implements CacheInterface
 		return $this->namespace;
 	}
 
-	/**
-	 * @param null|int|\DateInterval $ttl
-	 *
-	 * @return int
-	 */
-	public function ttl($ttl)
+	protected function convertTtl($ttl)
 	{
 		if ($ttl === null) {
-			return $this->ttl ?: 0;
+			return null;
 		} elseif ($ttl instanceof \DateInterval) {
 			$ttl = $ttl->s
 				+ $ttl->i * 60
@@ -116,6 +110,29 @@ abstract class AbstractAdapter implements CacheInterface
 		return $ttl > 0 ? $ttl : 0;
 	}
 
+	protected function ttl($ttl)
+	{
+		$expire = $this->convertTtl($ttl);
+		$ttl = $expire ?? $this->ttl;
+
+		if ($expire !== null && $expire > 0) {
+			$expire += NOW;
+		}
+
+		return [$ttl, $expire];
+	}
+
+	protected function expireToTtl($expire)
+	{
+		if ($expire === 0) {
+			return 0;
+		} else if ($expire === null) {
+			return $this->ttl;
+		}
+
+		return $expire - NOW;
+	}
+
 	/**
 	 * Fetches an entry from the cache.
 	 *
@@ -126,9 +143,9 @@ abstract class AbstractAdapter implements CacheInterface
 	 */
 	public function get($key, $default = null)
 	{
-		return $this->doGet(
-				$this->getNamespacedKey($key)
-			) ?? $default;
+		[$found, $value] = $this->doGet($this->getNamespacedKey($key)) ?? [false, null];
+
+		return $found === true ? $value : $default;
 	}
 
 	/**
@@ -150,14 +167,15 @@ abstract class AbstractAdapter implements CacheInterface
 		$namespacedKeys = array_combine($keys, array_map([$this, 'getNamespacedKey'], $keys));
 		$items = $this->doGetMultiple($namespacedKeys);
 
-		$found = [];
+		$return = [];
 		// no internal array function supports this sort of mapping: needs to be iterative
 		// this filters and combines keys in one pass
 		foreach ($namespacedKeys as $k => $v) {
-			$found[$k] = $items[$v] ?? $default;
+			[$found, $value] = $items[$v] ?? [false, null];
+			$return[$k] = $found === true ? $value : $default;
 		}
 
-		return $found;
+		return $return;
 	}
 
 	/**
@@ -185,12 +203,12 @@ abstract class AbstractAdapter implements CacheInterface
 	 */
 	public function setMultiple($values, $ttl = null)
 	{
+		[$ttl, $expireTime] = $this->ttl($ttl);
+
 		$namespacedValues = [];
 		foreach ($values as $key => $value) {
-			$namespacedValues[$this->getNamespacedKey($key)] = $value;
+			$namespacedValues[$this->getNamespacedKey($key)] = [true, $value, $expireTime];
 		}
-
-		$ttl = $this->ttl($ttl);
 
 		return $this->doSetMultiple($namespacedValues, $ttl);
 	}
@@ -210,10 +228,10 @@ abstract class AbstractAdapter implements CacheInterface
 	 */
 	public function set($key, $value, $ttl = null)
 	{
-		$ttl = $this->ttl($ttl);
+		[$ttl, $expireTime] = $this->ttl($ttl);
 
 		return $this->doSet(
-			$this->getNamespacedKey($key), $value, $ttl
+			$this->getNamespacedKey($key), [true, $value, $expireTime], $ttl
 		);
 	}
 
@@ -264,7 +282,7 @@ abstract class AbstractAdapter implements CacheInterface
 		$namespaceCacheKey = $this->getNamespaceCacheKey();
 		$namespaceVersion = $this->getNamespaceVersion() + 1;
 
-		if ($this->doSet($namespaceCacheKey, $namespaceVersion)) {
+		if ($this->doSet($namespaceCacheKey, [true, $namespaceVersion, 0])) {
 			$this->namespaceVersion = $namespaceVersion;
 
 			return true;
@@ -318,15 +336,20 @@ abstract class AbstractAdapter implements CacheInterface
 		}
 
 		$namespaceCacheKey = $this->getNamespaceCacheKey();
+		[$found, $version] = $this->doGet($namespaceCacheKey) ?? [false, null];
 
-		return $this->namespaceVersion = $this->doGet($namespaceCacheKey) ?: 1;
+		if ($found === true) {
+			return $this->namespaceVersion = $version;
+		}
+
+		return $this->namespaceVersion = 1;
 	}
 
 	/**
 	 * Default implementation of doSetMultiple. Each driver that supports multi-put should overwrite it.
 	 *
-	 * @param array $values  Array of keys and values to save in cache
-	 * @param int   $ttl       The lifetime. If != 0, sets a specific lifetime for these
+	 * @param array $values         Array of keys and values to save in cache
+	 * @param int   $ttl            The lifetime. If != 0, sets a specific lifetime for these
 	 *                              cache entries (0 => infinite lifeTime).
 	 *
 	 * @return bool TRUE if the operation was successful, FALSE if it wasn't.

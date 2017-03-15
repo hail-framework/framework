@@ -15,8 +15,9 @@ class Chain extends AbstractAdapter
 	private $drivers = [];
 
 	/**
-	 *
 	 * @param array $params
+	 *
+	 * @throws \InvalidArgumentException
 	 */
 	public function __construct($params)
 	{
@@ -33,11 +34,19 @@ class Chain extends AbstractAdapter
 					$k = ucfirst($k);
 			}
 
+			if ($k === 'Chain') {
+				throw new \InvalidArgumentException('Can not define a chain deriver in chain cache');
+			}
+
 			$class = __NAMESPACE__ . '\\' . $k;
 			$this->drivers[] = new $class($v);
 		}
 
 		parent::__construct($params);
+
+		if (!isset($params['ttl'] )) {
+			$this->ttl = null;
+		}
 	}
 
 	/**
@@ -58,10 +67,12 @@ class Chain extends AbstractAdapter
 	protected function doGet(string $key)
 	{
 		foreach ($this->drivers as $k => $driver) {
-			if (($value = $driver->doGet($key)) !== null) {
+			$value = $driver->doGet($key) ?? [false, null, null];
+			if ($value[0] === true) {
 				// We populate all the previous cache layers (that are assumed to be faster)
-				for ($subKey = $k - 1; $subKey >= 0; $subKey--) {
-					$this->drivers[$subKey]->doSet($key, $value);
+				for ($subKey = $k - 1; $subKey >= 0; --$subKey) {
+					$driver = $this->drivers[$subKey];
+					$driver->doSet($key, $value, $driver->expireToTtl($value[2]));
 				}
 
 				return $value;
@@ -84,8 +95,24 @@ class Chain extends AbstractAdapter
 
 			// We populate all the previous cache layers (that are assumed to be faster)
 			if (count($values) === $count) {
+				$sameExpire = $expireTime = null;
 				for ($subKey = $key - 1; $subKey >= 0; $subKey--) {
-					$this->$driver[$subKey]->doSetMultiple($values);
+					$driver = $this->drivers[$subKey];
+
+					if ($sameExpire === null) {
+						$expireTime = array_unique(array_column($values, 2));
+						if ($sameExpire = (count($expireTime) === 1)) {
+							$expireTime = current($expireTime);
+						}
+					}
+
+					if ($sameExpire) {
+						$driver->doSetMultiple($values, $driver->expireToTtl($expireTime));
+					} else {
+						foreach ($values as $k => $v) {
+							$driver->doSet($k, $v, $driver->expireToTtl($v[2]));
+						}
+					}
 				}
 
 				return $values;
@@ -112,12 +139,12 @@ class Chain extends AbstractAdapter
 	/**
 	 * {@inheritDoc}
 	 */
-	protected function doSet(string $key, $data, int $ttl = 0)
+	protected function doSet(string $key, $data, int $ttl = null)
 	{
 		$stored = true;
 
 		foreach ($this->drivers as $driver) {
-			$ttl = $driver->ttl($ttl);
+			[$ttl] = $driver->ttl($ttl);
 			$stored = $driver->doSet($key, $data, $ttl) && $stored;
 		}
 
@@ -127,11 +154,12 @@ class Chain extends AbstractAdapter
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSetMultiple(array $values, int $ttl = 0)
+	protected function doSetMultiple(array $values, int $ttl = null)
 	{
 		$stored = true;
 
 		foreach ($this->drivers as $driver) {
+			[$ttl] = $driver->ttl($ttl);
 			$stored = $driver->doSetMultiple($values, $ttl) && $stored;
 		}
 

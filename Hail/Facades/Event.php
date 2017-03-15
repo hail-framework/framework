@@ -12,6 +12,7 @@ use Hail\Event\{
  *
  * @package Hail\Facades
  *
+ * @method static EventDispatcher listen(string $eventName, callable $listener, $priority = 0)
  * @method static EventDispatcher addListener(string $eventName, callable $listener, $priority = 0)
  * @method static EventDispatcher removeListener(string $eventName, callable $listener)
  * @method static EventDispatcher removeAllListeners(string $eventName)
