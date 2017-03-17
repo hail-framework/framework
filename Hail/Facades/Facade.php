@@ -27,6 +27,11 @@ abstract class Facade
 	 */
 	protected static $instances;
 
+	/**
+	 * @var string
+	 */
+	protected static $alias;
+
 
 	/**
 	 * Get the root object behind the facade.
@@ -37,7 +42,11 @@ abstract class Facade
 	{
 		$name = static::class;
 
-		return static::$instances[$name] ?? (static::$instances[$name] = static::instance());
+		if (!isset(static::$instances[$name])) {
+			static::$instances[$name] = static::instance();
+		}
+
+		return static::$instances[$name];
 	}
 
 	/**
@@ -47,24 +56,24 @@ abstract class Facade
 	 * @param  array  $args
 	 *
 	 * @return mixed
-	 * @throws \LogicException if instance() method not defined in sub class
 	 */
 	public static function __callStatic($method, $args)
 	{
+		if (null !== ($class = static::$alias)) {
+			return $class::$method(...$args);
+		}
+
 		$instance = static::$instances[static::class] ?? static::getInstance();
+
 		return $instance->$method(...$args);
 	}
 
 	/**
 	 * 由子类定义获取实例的具体实现
 	 *
-	 * @return object
-	 * @throws \LogicException
+	 * @return object|null
 	 */
-	protected static function instance()
-	{
-		throw new \LogicException('Class should define instance() method');
-	}
+	abstract protected static function instance();
 
 	public static function getName()
 	{
@@ -89,6 +98,6 @@ abstract class Facade
 
 	public static function alias()
 	{
-		return static::class;
+		return static::$alias ?? static::class;
 	}
 }

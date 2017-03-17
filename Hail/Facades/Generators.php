@@ -16,8 +16,10 @@ namespace Hail\Facades;
  */
 class Generators extends Facade
 {
+	protected static $alias = \Hail\Util\Generators::class;
+
 	protected static function instance()
 	{
-		return \Hail\Util\Generators::getInstance();
+		return new static::$alias;
 	}
 }

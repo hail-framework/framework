@@ -22,13 +22,10 @@ namespace Hail\Facades;
  */
 class Inflector extends Facade
 {
+	protected static $alias = \Hail\Util\Inflector::class;
+
 	protected static function instance()
 	{
-		return \Hail\Util\Inflector::getInstance();
-	}
-
-	public static function alias()
-	{
-		return \Hail\Util\Inflector::class;
+		return new static::$alias;
 	}
 }

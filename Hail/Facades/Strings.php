@@ -36,13 +36,10 @@ namespace Hail\Facades;
  */
 class Strings extends Facade
 {
+	protected static $alias = \Hail\Util\Strings::class;
+
 	protected static function instance()
 	{
-		return \Hail\Util\Strings::getInstance();
-	}
-
-	public static function alias()
-	{
-		return \Hail\Util\Strings::class;
+		return new static::$alias;
 	}
 }

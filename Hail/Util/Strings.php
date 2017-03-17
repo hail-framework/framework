@@ -12,8 +12,6 @@ use Hail\Exception\RegexpException;
  */
 class Strings
 {
-	use SingletonTrait;
-
 	const TRIM_CHARACTERS = " \t\n\r\0\x0B\xC2\xA0";
 
 	/**

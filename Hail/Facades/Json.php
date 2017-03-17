@@ -10,13 +10,10 @@ namespace Hail\Facades;
  */
 class Json extends Facade
 {
+	protected static $alias = \Hail\Util\Json::class;
+
 	protected static function instance()
 	{
-		return \Hail\Util\Json::getInstance();
-	}
-
-	public static function alias()
-	{
-		return \Hail\Util\Json::class;
+		return new static::$alias;
 	}
 }

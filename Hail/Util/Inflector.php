@@ -10,8 +10,6 @@ namespace Hail\Util;
  */
 class Inflector
 {
-	use SingletonTrait;
-
 	/**
 	 * Plural inflector rules
 	 *

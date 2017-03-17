@@ -36,7 +36,7 @@ class Event
 	/** @var int */
 	protected $count;
 
-	protected $error = false;
+	protected $error;
 
 	public function __construct($storageType, $database, $type = self::ALL)
 	{
@@ -53,9 +53,9 @@ class Event
 		$this->type = $type;
 	}
 
-	public function error()
+	public function error($error)
 	{
-		$this->error = true;
+		$this->error = $error;
 	}
 
 	public function sql($sql, $build = true)
@@ -105,7 +105,7 @@ class Event
 
 	public function isError()
 	{
-		return $this->error;
+		return $this->error !== null;
 	}
 
 	/**
@@ -116,11 +116,12 @@ class Event
 	 */
 	public function getResult()
 	{
-		if (!$this->result) {
+		$result = $this->error ?? $this->result ?? null;
+		if ($result === null) {
 			return null;
 		}
 
-		return Dumper::toHtml($this->result, [
+		return Dumper::toHtml($result, [
 			Dumper::COLLAPSE => true,
 			Dumper::TRUNCATE => 50,
 		]);

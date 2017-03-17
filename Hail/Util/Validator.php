@@ -12,8 +12,6 @@ use InvalidArgumentException;
  */
 class Validator
 {
-	use SingletonTrait;
-
 	/**
 	 * @var string
 	 */
@@ -69,10 +67,7 @@ class Validator
 	 */
 	protected static $validUrlPrefixes = ['http://', 'https://', 'ftp://'];
 
-	/**
-	 * @inheritdoc
-	 */
-	protected function init()
+	public function __construct()
 	{
 		static::$_ruleMessages = [
 			'required' => _('不能为空'),

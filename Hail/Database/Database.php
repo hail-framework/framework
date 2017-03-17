@@ -250,8 +250,7 @@ class Database
 				($error = $this->pdo->errorInfo()) &&
 				isset($error[0])
 			) {
-				$result = $error;
-				$this->event('error');
+				$this->event('error', $error);
 			}
 
 			$this->event('done', $result);
@@ -1221,7 +1220,7 @@ class Database
 
 			case 'error':
 				if ($this->event !== null) {
-					$this->event->error();
+					$this->event->error($arg);
 				}
 				break;
 		}

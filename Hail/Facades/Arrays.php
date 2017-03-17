@@ -1,25 +1,24 @@
 <?php
 namespace Hail\Facades;
 
+use Hail\Util\ArrayDot;
+
 /**
- * Class Serialize
+ * Class Arrays
  *
  * @package Hail\Facades
  *
- * @method static \Hail\Util\ArrayDot dot(array $array = [])
+ * @method static ArrayDot dot(array $array = [])
  * @method static mixed get(array $array, string $key = null)
  * @method static bool isAssoc(array $array)
  * @method static array filter(array $array)
  */
 class Arrays extends Facade
 {
+	protected static $alias = \Hail\Util\Arrays::class;
+
 	protected static function instance()
 	{
-		return \Hail\Util\Arrays::getInstance();
-	}
-
-	public static function alias()
-	{
-		return \Hail\Util\Arrays::class;
+		return new static::$alias;
 	}
 }

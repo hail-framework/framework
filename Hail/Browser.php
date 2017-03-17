@@ -57,7 +57,7 @@ class Browser
 		}
 
 		fwrite($fp, $content . "\n");
-		stream_set_timeout($fp, 3);
+		stream_set_timeout($fp, 5);
 		$return = fgets($fp, 65535);
 		fclose($fp);
 

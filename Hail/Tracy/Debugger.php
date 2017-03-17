@@ -6,8 +6,6 @@
 
 namespace Hail\Tracy;
 
-use Hail\Facades\Trace;
-use Hail\Util\SingletonTrait;
 
 /**
  * Debugger: displays and logs errors.
@@ -15,8 +13,6 @@ use Hail\Util\SingletonTrait;
  */
 class Debugger
 {
-	use SingletonTrait;
-
 	const VERSION = '2.4.5';
 
 	/** server modes for Debugger::enable() */
@@ -173,11 +169,6 @@ class Debugger
 		register_shutdown_function([__CLASS__, 'shutdownHandler']);
 		set_exception_handler([__CLASS__, 'exceptionHandler']);
 		set_error_handler([__CLASS__, 'errorHandler']);
-
-		array_map('class_exists', [
-			'Hail\Tracy\Bar', 'Hail\Tracy\BlueScreen', 'Hail\Tracy\Bar\DefaultPanel', 'Hail\Tracy\Dumper',
-			'Hail\Tracy\FireLogger', 'Hail\Tracy\Helpers', 'Hail\Tracy\Logger',
-		]);
 
 		if (!self::$productionMode) {
 			Profiler::enable();

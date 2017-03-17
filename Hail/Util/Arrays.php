@@ -9,8 +9,6 @@ namespace Hail\Util;
  */
 class Arrays
 {
-	use SingletonTrait;
-
 	/**
 	 * Convert array to ArrayDot
 	 *
