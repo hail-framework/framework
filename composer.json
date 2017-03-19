@@ -29,7 +29,7 @@
   ],
   "require": {
     "ext-mbstring": "*",
-	"ext-openssl": "*",
+    "ext-openssl": "*",
     "php": ">=7.1.0"
   },
   "suggest": {
