@@ -67,9 +67,7 @@ class Dispatcher
 			case 'GET':
 			case 'POST':
 			default:
-				Event::dispatch('action.start');
 				$return = $object->$method();
-				Event::dispatch('action.end');
 				$outputType = $return['_type_'] ?? Config::get("app.output.{$this->application}");
 		}
 

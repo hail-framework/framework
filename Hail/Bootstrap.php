@@ -3,7 +3,7 @@ namespace Hail;
 
 use Hail\Tracy\Debugger;
 use Hail\Facades\{
-	Config, Alias, Event, I18N
+	Config, Alias, Event, I18N, Request
 };
 
 // System Start Time
@@ -51,7 +51,6 @@ class Bootstrap
 
 		Alias::register();
 
-
 		date_default_timezone_set(
 			Config::get('app.timezone')
 		);
@@ -67,14 +66,49 @@ class Bootstrap
 			TEMP_PATH . 'log/'
 		);
 
-		Event::listen('action:start', function () {
-			I18N::init(
-				SYSTEM_PATH . 'lang',
-				Config::get('app.i18n.domain'),
-				Config::get('app.i18n.locale')
-			);
-		});
+		static::i18n();
 
 		self::$inited = true;
+	}
+
+	protected static function i18n()
+	{
+		$locale = Config::get('app.i18n.locale');
+
+		if (is_array($locale)) {
+			$found = null;
+			foreach ($locale as $k => $v) {
+				if ($found) {
+					break;
+				}
+
+				switch ($k) {
+					case 'input':
+						$found = Request::input($v);
+						break;
+					case 'cookie':
+						$found = Request::getCookie($v);
+						break;
+					case 'default':
+						$found = $v;
+						break;
+				}
+			}
+
+			$locale = $found;
+		}
+
+		$locale = str_replace('-', '_', $locale);
+
+		$alias = Config::get('app.i18n.alias');
+		if (!empty($alias)) {
+			$locale = $alias[explode('_', $locale)[0]] ?? $locale;
+		}
+
+		I18N::init(
+			SYSTEM_PATH . 'lang',
+			Config::get('app.i18n.domain'),
+			$locale
+		);
 	}
 }

@@ -27,6 +27,7 @@ class Application
 		try {
 			Event::dispatch('app.start');
 			$this->process();
+			Event::dispatch('app.end');
 		} catch (\Exception $e) {
 			Event::dispatch('app.error');
 			$this->processException($e);
