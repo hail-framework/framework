@@ -12,19 +12,37 @@ namespace Hail\Console;
 
 use Hail\Console\Exception\ExceptionInterface;
 use Hail\Console\Input\{
-	InputInterface, StreamableInputInterface, ArgvInput, ArrayInput, InputDefinition, InputOption, InputArgument, InputAwareInterface
+	InputInterface,
+	StreamableInputInterface,
+	ArgvInput,
+	ArrayInput,
+	InputDefinition,
+	InputOption,
+	InputArgument,
+	InputAwareInterface
 };
 use Hail\Console\Output\{
-	OutputInterface, ConsoleOutput, ConsoleOutputInterface
+	OutputInterface,
+	ConsoleOutput,
+	ConsoleOutputInterface
 };
 use Hail\Console\Command\{
-	Command, HelpCommand, ListCommand
+	Command,
+	HelpCommand,
+	ListCommand
 };
 use Hail\Console\Helper\{
-	DebugFormatterHelper, ProcessHelper, QuestionHelper, HelperSet, Helper, FormatterHelper
+	DebugFormatterHelper,
+	ProcessHelper,
+	QuestionHelper,
+	HelperSet,
+	Helper,
+	FormatterHelper
 };
 use Hail\Console\Event\{
-	ConsoleCommandEvent, ConsoleExceptionEvent, ConsoleTerminateEvent
+	ConsoleCommandEvent,
+	ConsoleExceptionEvent,
+	ConsoleTerminateEvent
 };
 use Hail\Console\Exception\CommandNotFoundException;
 use Hail\Console\Exception\LogicException;

@@ -53,7 +53,7 @@ class AliasLoader
 	 */
 	public function load($alias)
 	{
-		if (static::$facadeNamespace && strpos($alias, static::$facadeNamespace) === 0) {
+		if (strpos($alias, static::$facadeNamespace) === 0) {
 			return $this->loadFacade($alias);
 		} elseif (isset($this->aliases[$alias])) {
 			return class_alias($this->aliases[$alias], $alias);
