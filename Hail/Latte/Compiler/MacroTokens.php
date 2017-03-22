@@ -5,7 +5,9 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
-namespace Hail\Latte;
+declare(strict_types=1);
+
+namespace Hail\Latte\Compiler;
 
 
 /**
@@ -30,41 +32,45 @@ class MacroTokens extends TokenIterator
 	public $depth = 0;
 
 
-	public function __construct($input = NULL)
+	/**
+	 * @param  string|array
+	 */
+	public function __construct($input = [])
 	{
 		parent::__construct(is_array($input) ? $input : $this->parse($input));
-		$this->ignored = array(self::T_COMMENT, self::T_WHITESPACE);
+		$this->ignored = [self::T_COMMENT, self::T_WHITESPACE];
 	}
 
 
 	public function parse($s)
 	{
-		self::$tokenizer = self::$tokenizer ?: new Tokenizer(array(
+		self::$tokenizer = self::$tokenizer ?: new Tokenizer([
 			self::T_WHITESPACE => '\s+',
 			self::T_COMMENT => '(?s)/\*.*?\*/',
 			self::T_STRING => Parser::RE_STRING,
-			self::T_KEYWORD => '(?:true|false|null|and|or|xor|clone|new|instanceof|return|continue|break|[A-Z_][A-Z0-9_]{2,})(?![\w\pL_])', // keyword or const
+			self::T_KEYWORD => '(?:true|false|null|TRUE|FALSE|NULL|INF|NAN|and|or|xor|clone|new|instanceof|return|continue|break)(?![\w\pL_])', // keyword
 			self::T_CAST => '\((?:expand|string|array|int|integer|float|bool|boolean|object)\)', // type casting
 			self::T_VARIABLE => '\$[\w\pL_]+',
 			self::T_NUMBER => '[+-]?[0-9]+(?:\.[0-9]+)?(?:e[0-9]+)?',
 			self::T_SYMBOL => '[\w\pL_]+(?:-[\w\pL_]+)*',
-			self::T_CHAR => '::|=>|->|\+\+|--|<<|>>|<=|>=|===|!==|==|!=|<>|&&|\|\||[^"\']', // =>, any char except quotes
-		), 'u');
+			self::T_CHAR => '::|=>|->|\+\+|--|<<|>>|<=>|<=|>=|===|!==|==|!=|<>|&&|\|\||\?\?|\?>|\*\*|\.\.\.|[^"\']', // =>, any char except quotes
+		], 'u');
 		return self::$tokenizer->tokenize($s);
 	}
 
 
 	/**
 	 * Appends simple token or string (will be parsed).
-	 * @return self
+	 * @return static
 	 */
 	public function append($val, $position = NULL)
 	{
 		if ($val != NULL) { // intentionally @
 			array_splice(
 				$this->tokens,
-				$position === NULL ? count($this->tokens) : $position, 0,
-				is_array($val) ? array($val) : $this->parse($val)
+				$position === NULL ? count($this->tokens) : $position,
+				0,
+				is_array($val) ? [$val] : $this->parse($val)
 			);
 		}
 		return $this;
@@ -73,12 +79,12 @@ class MacroTokens extends TokenIterator
 
 	/**
 	 * Prepends simple token or string (will be parsed).
-	 * @return self
+	 * @return static
 	 */
 	public function prepend($val)
 	{
 		if ($val != NULL) { // intentionally @
-			array_splice($this->tokens, 0, 0, is_array($val) ? array($val) : $this->parse($val));
+			array_splice($this->tokens, 0, 0, is_array($val) ? [$val] : $this->parse($val));
 		}
 		return $this;
 	}
@@ -86,22 +92,19 @@ class MacroTokens extends TokenIterator
 
 	/**
 	 * Reads single token (optionally delimited by comma) from string.
-	 * @param  string
-	 * @return string
+	 * @return string|NULL
 	 */
 	public function fetchWord()
 	{
 		$words = $this->fetchWords();
-		return $words ? implode(':', $words) : FALSE;
+		return $words ? implode(':', $words) : NULL;
 	}
 
 
 	/**
 	 * Reads single tokens delimited by colon from string.
-	 * @param  string
-	 * @return array
 	 */
-	public function fetchWords()
+	public function fetchWords(): array
 	{
 		do {
 			$words[] = $this->joinUntil(self::T_WHITESPACE, ',', ':');
@@ -114,7 +117,7 @@ class MacroTokens extends TokenIterator
 		}
 		$this->nextToken(',');
 		$this->nextAll(self::T_WHITESPACE, self::T_COMMENT);
-		return $words === array('') ? array() : $words;
+		return $words === [''] ? [] : $words;
 	}
 
 

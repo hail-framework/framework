@@ -297,6 +297,11 @@ class Native extends AbstractClient
 					$args[3] = $cArgs;
 				}
 				break;
+			case 'mget':
+				if (isset($args[0]) && is_array($args[0])) {
+					$args = array_values($args[0]);
+				}
+				break;
 		}
 		// Flatten arguments
 		$args = self::flattenArguments($args);

@@ -5,25 +5,31 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
-namespace Hail\Latte;
+declare(strict_types=1);
+
+namespace Hail\Latte\Compiler;
+
+use Hail\Latte\Strict;
 
 
 /**
  * HTML element node.
  */
-class HtmlNode extends Object
+class HtmlNode
 {
+	use Strict;
+
 	/** @var string */
 	public $name;
 
 	/** @var bool */
-	public $isEmpty;
+	public $empty;
 
 	/** @var array */
-	public $attrs = array();
+	public $attrs = [];
 
 	/** @var array */
-	public $macroAttrs = array();
+	public $macroAttrs = [];
 
 	/** @var bool */
 	public $closing = FALSE;
@@ -34,8 +40,14 @@ class HtmlNode extends Object
 	/** @var string */
 	public $attrCode;
 
-	/** @var int */
-	public $offset;
+	/** @var int  position of start tag in source template */
+	public $startLine;
+
+	/** @var int  position of end tag in source template */
+	public $endLine;
+
+	/** @var string @internal */
+	public $innerMarker;
 
 
 	public function __construct($name, self $parentNode = NULL)

@@ -14,7 +14,7 @@ body#tracy-debug { /* in popup window */
 	display: block;
 }
 
-body #tracy-debug {
+#tracy-debug:not(body) {
 	position: absolute;
 	bottom: 0;
 	right: 0;
@@ -209,6 +209,16 @@ body #tracy-debug {
 
 body#tracy-debug .tracy-panel { /* in popup window */
 	display: block;
+}
+
+/* toggle */
+#tracy-debug .tracy-toggle:after {
+	content: "\A0\25BC";
+	opacity: .4;
+}
+
+#tracy-debug .tracy-toggle.tracy-collapsed:after {
+	content: "\A0\25BA";
 }
 
 #tracy-debug h1 {

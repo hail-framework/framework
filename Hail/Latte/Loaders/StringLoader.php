@@ -1,48 +1,73 @@
 <?php
 
 /**
- * This file is part of the Hail\Latte (https://Hail\Latte.nette.org)
+ * This file is part of the Latte (https://latte.nette.org)
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
+declare(strict_types=1);
+
 namespace Hail\Latte\Loaders;
 
-use Hail\Latte\Object;
-use Hail\Latte\ILoader;
+use Hail\Latte;
 
 
 /**
  * Template loader.
  */
-class StringLoader extends Object implements ILoader
+class StringLoader implements Latte\ILoader
 {
+	use Latte\Strict;
 
-	/**
-	 * Returns template source code.
-	 * @return string
-	 */
-	public function getContent($content)
+	/** @var array|NULL [name => content] */
+	private $templates;
+
+
+	public function __construct(array $templates = NULL)
 	{
-		return $content;
+		$this->templates = $templates;
 	}
 
 
 	/**
-	 * @return bool
+	 * Returns template source code.
 	 */
-	public function isExpired($content, $time)
+	public function getContent($name): string
+	{
+		if ($this->templates === NULL) {
+			return $name;
+		} elseif (isset($this->templates[$name])) {
+			return $this->templates[$name];
+		} else {
+			throw new \RuntimeException("Missing template '$name'.");
+		}
+	}
+
+
+	public function isExpired($name, $time): bool
 	{
 		return FALSE;
 	}
 
 
 	/**
-	 * Returns fully qualified template name.
-	 * @return string
+	 * Returns referred template name.
 	 */
-	public function getChildName($content, $parent = NULL)
+	public function getReferredName($name, $referringName): string
 	{
-		return $content;
+		if ($this->templates === NULL) {
+			throw new \LogicException("Missing template '$name'.");
+		}
+		return $name;
+	}
+
+
+	/**
+	 * Returns unique identifier for caching.
+	 */
+	public function getUniqueId($name): string
+	{
+		return $this->getContent($name);
 	}
 
 }

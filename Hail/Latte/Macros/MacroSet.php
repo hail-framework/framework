@@ -1,25 +1,28 @@
 <?php
 
 /**
- * This file is part of the Hail\Latte (https://Hail\Latte.nette.org)
+ * This file is part of the Latte (https://latte.nette.org)
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
+declare(strict_types=1);
+
 namespace Hail\Latte\Macros;
 
-use Hail\Latte\Object;
-use Hail\Latte\IMacro;
-use Hail\Latte\MacroNode;
-use Hail\Latte\Compiler;
-use Hail\Latte\Helpers;
-use Hail\Latte\PhpWriter;
+use Hail\Latte;
+use Hail\Latte\Exception\CompileException;
+use Hail\Latte\Compiler\{
+	Compiler, MacroNode, PhpWriter
+};
 
 
 /**
  * Base IMacro implementation. Allows add multiple macros.
  */
-class MacroSet extends Object implements IMacro
+class MacroSet implements Latte\IMacro
 {
+	use Latte\Strict;
+
 	/** @var Compiler */
 	private $compiler;
 
@@ -33,19 +36,22 @@ class MacroSet extends Object implements IMacro
 	}
 
 
-	public function addMacro($name, $begin, $end = NULL, $attr = NULL)
+	public function addMacro($name, $begin, $end = NULL, $attr = NULL, $flags = NULL)
 	{
 		if (!$begin && !$end && !$attr) {
 			throw new \InvalidArgumentException("At least one argument must be specified for macro '$name'.");
 		}
-		foreach (array($begin, $end, $attr) as $arg) {
+
+		$macro = [$begin, $end, $attr];
+		foreach ([$begin, $end, $attr] as &$arg) {
 			if ($arg && !is_string($arg)) {
-				Helpers::checkCallback($arg);
+				$arg = \Closure::fromCallable($arg);
 			}
 		}
+		unset($arg);
 
-		$this->macros[$name] = array($begin, $end, $attr);
-		$this->compiler->addMacro($name, $this);
+		$this->macros[$name] = $macro;
+		$this->compiler->addMacro($name, $this, $flags);
 		return $this;
 	}
 
@@ -61,7 +67,7 @@ class MacroSet extends Object implements IMacro
 
 	/**
 	 * Finishes template parsing.
-	 * @return array(prolog, epilog)
+	 * @return array|NULL [prolog, epilog]
 	 */
 	public function finalize()
 	{
@@ -70,19 +76,19 @@ class MacroSet extends Object implements IMacro
 
 	/**
 	 * New node is found.
-	 * @return bool
+	 * @return bool|NULL
 	 */
 	public function nodeOpened(MacroNode $node)
 	{
 		list($begin, $end, $attr) = $this->macros[$node->name];
-		$node->isEmpty = !$end;
+		$node->empty = !$end;
 
 		if ($node->modifiers
 			&& (!$begin || (is_string($begin) && strpos($begin, '%modify') === FALSE))
 			&& (!$end || (is_string($end) && strpos($end, '%modify') === FALSE))
 			&& (!$attr || (is_string($attr) && strpos($attr, '%modify') === FALSE))
 		) {
-			trigger_error("Modifiers are not allowed in {{$node->name}}", E_USER_WARNING);
+			throw new CompileException('Modifiers are not allowed in ' . $node->getNotation());
 		}
 
 		if ($node->args
@@ -90,25 +96,25 @@ class MacroSet extends Object implements IMacro
 			&& (!$end || (is_string($end) && strpos($end, '%node') === FALSE))
 			&& (!$attr || (is_string($attr) && strpos($attr, '%node') === FALSE))
 		) {
-			trigger_error("Arguments are not allowed in {{$node->name}}", E_USER_WARNING);
+			throw new CompileException('Arguments are not allowed in ' . $node->getNotation());
 		}
 
 		if ($attr && $node->prefix === $node::PREFIX_NONE) {
-			$node->isEmpty = TRUE;
-			$this->compiler->setContext(Compiler::CONTEXT_DOUBLE_QUOTED_ATTR);
+			$node->empty = TRUE;
+			$node->context[1] = Compiler::CONTEXT_HTML_ATTRIBUTE;
 			$res = $this->compile($node, $attr);
 			if ($res === FALSE) {
 				return FALSE;
 			} elseif (!$node->attrCode) {
 				$node->attrCode = "<?php $res ?>";
 			}
-			$this->compiler->setContext(NULL);
+			$node->context[1] = Compiler::CONTEXT_HTML_TEXT;
 
 		} elseif ($begin) {
 			$res = $this->compile($node, $begin);
-			if ($res === FALSE || ($node->isEmpty && $node->prefix)) {
+			if ($res === FALSE || ($node->empty && $node->prefix)) {
 				return FALSE;
-			} elseif (!$node->openingCode) {
+			} elseif (!$node->openingCode && is_string($res) && $res !== '') {
 				$node->openingCode = "<?php $res ?>";
 			}
 
@@ -126,7 +132,7 @@ class MacroSet extends Object implements IMacro
 	{
 		if (isset($this->macros[$node->name][1])) {
 			$res = $this->compile($node, $this->macros[$node->name][1]);
-			if (!$node->closingCode) {
+			if (!$node->closingCode && is_string($res) && $res !== '') {
 				$node->closingCode = "<?php $res ?>";
 			}
 		}
@@ -135,26 +141,31 @@ class MacroSet extends Object implements IMacro
 
 	/**
 	 * Generates code.
-	 * @return string
+	 * @return string|bool|NULL
 	 */
 	private function compile(MacroNode $node, $def)
 	{
 		$node->tokenizer->reset();
-		$writer = PhpWriter::using($node, $this->compiler);
-		if (is_string($def)) {
-			return $writer->write($def);
-		} else {
-			return call_user_func($def, $node, $writer);
-		}
+		$writer = PhpWriter::using($node);
+		return is_string($def)
+			? $writer->write($def)
+			: $def($node, $writer);
 	}
 
 
-	/**
-	 * @return Compiler
-	 */
-	public function getCompiler()
+	public function getCompiler(): Compiler
 	{
 		return $this->compiler;
+	}
+
+
+	/** @internal */
+	protected function checkExtraArgs(MacroNode $node)
+	{
+		if ($node->tokenizer->isNext()) {
+			$args = Latte\Runtime\Filters::truncate($node->tokenizer->joinAll(), 20);
+			trigger_error("Unexpected arguments '$args' in " . $node->getNotation());
+		}
 	}
 
 }

@@ -5,15 +5,24 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
-namespace Hail\Latte;
+declare(strict_types=1);
+
+namespace Hail\Latte\Compiler;
+
+use Hail\Latte\Exception\{
+	CompileException, RegexpException
+};
+use Hail\Latte\Strict;
 
 
 /**
  * Simple lexical analyser.
  * @internal
  */
-class Tokenizer extends Object
+class Tokenizer
 {
+	use Strict;
+
 	const VALUE = 0,
 		OFFSET = 1,
 		TYPE = 2;
@@ -29,7 +38,7 @@ class Tokenizer extends Object
 	 * @param  array of [(int) symbol type => pattern]
 	 * @param  string  regular expression flag
 	 */
-	public function __construct(array $patterns, $flags = '')
+	public function __construct(array $patterns, string $flags = '')
 	{
 		$this->re = '~(' . implode(')|(', $patterns) . ')~A' . $flags;
 		$this->types = array_keys($patterns);
@@ -38,10 +47,8 @@ class Tokenizer extends Object
 
 	/**
 	 * Tokenizes string.
-	 * @param  string
-	 * @return array
 	 */
-	public function tokenize($input)
+	public function tokenize(string $input): array
 	{
 		preg_match_all($this->re, $input, $tokens, PREG_SET_ORDER);
 		if (preg_last_error()) {
@@ -49,7 +56,7 @@ class Tokenizer extends Object
 		}
 		$len = 0;
 		$count = count($this->types);
-		foreach ($tokens as & $match) {
+		foreach ($tokens as &$match) {
 			$type = NULL;
 			for ($i = 1; $i <= $count; $i++) {
 				if (!isset($match[$i])) {
@@ -59,7 +66,7 @@ class Tokenizer extends Object
 					break;
 				}
 			}
-			$match = array(self::VALUE => $match[0], self::OFFSET => $len, self::TYPE => $type);
+			$match = [self::VALUE => $match[0], self::OFFSET => $len, self::TYPE => $type];
 			$len += strlen($match[self::VALUE]);
 		}
 		if ($len !== strlen($input)) {
@@ -73,14 +80,12 @@ class Tokenizer extends Object
 
 	/**
 	 * Returns position of token in input string.
-	 * @param  string
-	 * @param  int
 	 * @return array of [line, column]
 	 */
-	public static function getCoordinates($text, $offset)
+	public static function getCoordinates(string $text, int $offset): array
 	{
 		$text = substr($text, 0, $offset);
-		return array(substr_count($text, "\n") + 1, $offset - strrpos("\n" . $text, "\n") + 1);
+		return [substr_count($text, "\n") + 1, $offset - strrpos("\n" . $text, "\n") + 1];
 	}
 
 }

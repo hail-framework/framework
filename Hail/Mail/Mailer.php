@@ -198,7 +198,7 @@ class Mailer
 		$s = '';
 		while (($line = fgets($this->connection, 1000)) != null) { // intentionally ==
 			$s .= $line;
-			if ($line[3] === ' ') {
+			if (isset($line[3]) && $line[3] === ' ') {
 				break;
 			}
 		}

@@ -13,25 +13,19 @@ use Hail\Latte;
 
 
 /**
- * HTML literal.
+ * Filter runtime info
  */
-class Html implements IHtmlString
+class FilterInfo
 {
 	use Latte\Strict;
 
-	/** @var string */
-	private $value;
+	/** @var string|NULL */
+	public $contentType;
 
 
-	public function __construct($value)
+	public function __construct($contentType = NULL)
 	{
-		$this->value = (string) $value;
-	}
-
-
-	public function __toString(): string
-	{
-		return $this->value;
+		$this->contentType = $contentType;
 	}
 
 }

@@ -31,6 +31,7 @@ class MimeType
 			return $finfo->buffer($content) ?: null;
 		} catch (ErrorException $e) {
 			// This is caused by an array to string conversion error.
+			return null;
 		}
 	}
 

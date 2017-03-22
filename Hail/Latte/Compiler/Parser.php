@@ -5,34 +5,46 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
-namespace Hail\Latte;
+declare(strict_types=1);
 
+namespace Hail\Latte\Compiler;
+
+use Hail\Latte\{
+	Helpers, Strict, Engine
+};
+use Hail\Latte\Exception\{
+	CompileException, RegexpException
+};
 
 /**
  * Latte parser.
  */
-class Parser extends Object
+class Parser
 {
+	use Strict;
+
 	/** @internal regular expression for single & double quoted PHP string */
 	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*+\'|"(?:\\\\.|[^"\\\\])*+"';
 
 	/** @internal special HTML attribute prefix */
 	const N_PREFIX = 'n:';
 
+	/** Context-aware escaping content types */
+	const
+		CONTENT_HTML = Engine::CONTENT_HTML,
+		CONTENT_XHTML = Engine::CONTENT_XHTML,
+		CONTENT_XML = Engine::CONTENT_XML,
+		CONTENT_TEXT = Engine::CONTENT_TEXT;
+
 	/** @var string default macro tag syntax */
 	public $defaultSyntax = 'latte';
 
-	/** @var bool */
-	public $shortNoEscape = FALSE;
-
 	/** @var array */
-	public $syntaxes = array(
-		'latte' => array('\\{(?![\\s\'"{}])', '\\}'), // {...}
-		'double' => array('\\{\\{(?![\\s\'"{}])', '\\}\\}'), // {{...}}
-		'asp' => array('<%\s*', '\s*%>'), /* <%...%> */
-		'python' => array('\\{[{%]\s*', '\s*[%}]\\}'), // {% ... %} | {{ ... }}
-		'off' => array('[^\x00-\xFF]', ''),
-	);
+	public $syntaxes = [
+		'latte' => ['\{(?![\s\'"{}])', '\}'], // {...}
+		'double' => ['\{\{(?![\s\'"{}])', '\}\}'], // {{...}}
+		'off' => ['\{(?=/syntax\})', '\}'], // {/syntax}
+	];
 
 	/** @var string[] */
 	private $delimiters;
@@ -47,7 +59,7 @@ class Parser extends Object
 	private $offset;
 
 	/** @var array */
-	private $context;
+	private $context = [self::CONTEXT_HTML_TEXT, NULL];
 
 	/** @var string */
 	private $lastHtmlTag;
@@ -62,39 +74,40 @@ class Parser extends Object
 	private $xmlMode;
 
 	/** @internal states */
-	const CONTEXT_HTML_TEXT = 'htmlText',
-		CONTEXT_CDATA = 'cdata',
+	const
+		CONTEXT_NONE = 'none',
+		CONTEXT_MACRO = 'macro',
+		CONTEXT_HTML_TEXT = 'htmlText',
 		CONTEXT_HTML_TAG = 'htmlTag',
 		CONTEXT_HTML_ATTRIBUTE = 'htmlAttribute',
-		CONTEXT_RAW = 'raw',
 		CONTEXT_HTML_COMMENT = 'htmlComment',
-		CONTEXT_MACRO = 'macro';
+		CONTEXT_HTML_CDATA = 'htmlCData';
 
 
 	/**
 	 * Process all {macros} and <tags/>.
-	 * @param  string
 	 * @return Token[]
 	 */
-	public function parse($input)
+	public function parse(string $input): array
 	{
-		$this->offset = 0;
-
-		if (substr($input, 0, 3) === "\xEF\xBB\xBF") { // BOM
+		if (0 === strpos($input, "\u{FEFF}")) { // BOM
 			$input = substr($input, 3);
 		}
+
+		$this->input = $input = str_replace("\r\n", "\n", $input);
+		$this->offset = 0;
+		$this->output = [];
+
 		if (!preg_match('##u', $input)) {
+			preg_match('#(?:[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3})*+#A', $input, $m);
+			$this->offset = strlen($m[0]) + 1;
 			throw new \InvalidArgumentException('Template is not valid UTF-8 stream.');
 		}
-		$input = str_replace("\r\n", "\n", $input);
-		$this->input = $input;
-		$this->output = array();
-		$tokenCount = 0;
 
 		$this->setSyntax($this->defaultSyntax);
-		$this->setContext(self::CONTEXT_HTML_TEXT);
 		$this->lastHtmlTag = $this->syntaxEndTag = NULL;
 
+		$tokenCount = 0;
 		while ($this->offset < strlen($input)) {
 			if ($this->{'context' . $this->context[0]}() === FALSE) {
 				break;
@@ -120,14 +133,15 @@ class Parser extends Object
 	private function contextHtmlText()
 	{
 		$matches = $this->match('~
-			(?:(?<=\n|^)[ \t]*)?<(?P<closing>/?)(?P<tag>[a-z0-9:]+)|  ##  begin of HTML tag <tag </tag - ignores <!DOCTYPE
-			<(?P<htmlcomment>!--(?!>))|     ##  begin of HTML comment <!--, but not <!-->
+			(?:(?<=\n|^)[ \t]*)?<(?P<closing>/?)(?P<tag>[a-z][a-z0-9:]*)|  ##  begin of HTML tag <tag </tag - ignores <!DOCTYPE
+			<(?P<htmlcomment>!(?:--(?!>))?|\?)|     ##  begin of <!, <!--, <!DOCTYPE, <?
 			(?P<macro>' . $this->delimiters[0] . ')
 		~xsi');
 
-		if (!empty($matches['htmlcomment'])) { // <!--
+		if (!empty($matches['htmlcomment'])) { // <! <?
 			$this->addToken(Token::HTML_TAG_BEGIN, $matches[0]);
-			$this->setContext(self::CONTEXT_HTML_COMMENT);
+			$end = $matches['htmlcomment'] === '!--' ? '--' : ($matches['htmlcomment'] === '?' && $this->xmlMode ? '\?' : '');
+			$this->setContext(self::CONTEXT_HTML_COMMENT, $end);
 
 		} elseif (!empty($matches['tag'])) { // <tag or </tag
 			$token = $this->addToken(Token::HTML_TAG_BEGIN, $matches[0]);
@@ -143,9 +157,9 @@ class Parser extends Object
 
 
 	/**
-	 * Handles CONTEXT_CDATA.
+	 * Handles CONTEXT_HTML_CDATA.
 	 */
-	private function contextCData()
+	private function contextHtmlCData()
 	{
 		$matches = $this->match('~
 			</(?P<tag>' . $this->lastHtmlTag . ')(?![a-z0-9:])| ##  end HTML tag </tag
@@ -170,22 +184,22 @@ class Parser extends Object
 	private function contextHtmlTag()
 	{
 		$matches = $this->match('~
-			(?P<end>\ ?/?>)([ \t]*\n)?|  ##  end of HTML tag
+			(?P<end>\s?/?>)([ \t]*\n)?|  ##  end of HTML tag
 			(?P<macro>' . $this->delimiters[0] . ')|
-			\s*(?P<attr>[^\s/>={]+)(?:\s*=\s*(?P<value>["\']|[^\s/>{]+))? ## beginning of HTML attribute
+			\s*(?P<attr>[^\s"\'>/={]+)(?:\s*=\s*(?P<value>["\']|[^\s"\'=<>`{]+))? ## beginning of HTML attribute
 		~xsi');
 
 		if (!empty($matches['end'])) { // end of HTML tag />
 			$this->addToken(Token::HTML_TAG_END, $matches[0]);
-			$this->setContext(!$this->xmlMode && in_array($this->lastHtmlTag, array('script', 'style'), TRUE) ? self::CONTEXT_CDATA : self::CONTEXT_HTML_TEXT);
+			$this->setContext(!$this->xmlMode && in_array($this->lastHtmlTag, ['script', 'style'], TRUE) ? self::CONTEXT_HTML_CDATA : self::CONTEXT_HTML_TEXT);
 
 		} elseif (isset($matches['attr']) && $matches['attr'] !== '') { // HTML attribute
-			$token = $this->addToken(Token::HTML_ATTRIBUTE, $matches[0]);
+			$token = $this->addToken(Token::HTML_ATTRIBUTE_BEGIN, $matches[0]);
 			$token->name = $matches['attr'];
-			$token->value = isset($matches['value']) ? $matches['value'] : '';
+			$token->value = $matches['value'] ?? '';
 
 			if ($token->value === '"' || $token->value === "'") { // attribute = "'
-				if (strncmp($token->name, self::N_PREFIX, strlen(self::N_PREFIX)) === 0) {
+				if (0 === strpos($token->name, self::N_PREFIX)) {
 					$token->value = '';
 					if ($m = $this->match('~(.*?)' . $matches['value'] . '~xsi')) {
 						$token->value = $m[1];
@@ -212,7 +226,7 @@ class Parser extends Object
 		~xsi');
 
 		if (!empty($matches['quote'])) { // (attribute end) '"
-			$this->addToken(Token::TEXT, $matches[0]);
+			$this->addToken(Token::HTML_ATTRIBUTE_END, $matches[0]);
 			$this->setContext(self::CONTEXT_HTML_TAG);
 		} else {
 			return $this->processMacro($matches);
@@ -226,7 +240,7 @@ class Parser extends Object
 	private function contextHtmlComment()
 	{
 		$matches = $this->match('~
-			(?P<htmlcomment>-->)|   ##  end of HTML comment
+			(?P<htmlcomment>' . $this->context[1] . '>)|   ##  end of HTML comment
 			(?P<macro>' . $this->delimiters[0] . ')
 		~xsi');
 
@@ -240,9 +254,9 @@ class Parser extends Object
 
 
 	/**
-	 * Handles CONTEXT_RAW.
+	 * Handles CONTEXT_NONE.
 	 */
-	private function contextRaw()
+	private function contextNone()
 	{
 		$matches = $this->match('~
 			(?P<macro>' . $this->delimiters[0] . ')
@@ -261,15 +275,15 @@ class Parser extends Object
 			(?P<macro>(?>
 				' . self::RE_STRING . '|
 				\{(?>' . self::RE_STRING . '|[^\'"{}])*+\}|
-				[^\'"{}]
-			)+?)
+				[^\'"{}]+
+			)++)
 			' . $this->delimiters[1] . '
 			(?P<rmargin>[ \t]*(?=\n))?
 		~xsiA');
 
 		if (!empty($matches['macro'])) {
 			$token = $this->addToken(Token::MACRO_TAG, $this->context[1][1] . $matches[0]);
-			list($token->name, $token->value, $token->modifiers, $token->empty) = $this->parseMacroTag($matches['macro']);
+			list($token->name, $token->value, $token->modifiers, $token->empty, $token->closing) = $this->parseMacroTag($matches['macro']);
 			$this->context = $this->context[1][0];
 
 		} elseif (!empty($matches['comment'])) {
@@ -285,7 +299,7 @@ class Parser extends Object
 	private function processMacro($matches)
 	{
 		if (!empty($matches['macro'])) { // {macro} or {* *}
-			$this->setContext(self::CONTEXT_MACRO, array($this->context, $matches['macro']));
+			$this->setContext(self::CONTEXT_MACRO, [$this->context, $matches['macro']]);
 		} else {
 			return FALSE;
 		}
@@ -294,16 +308,14 @@ class Parser extends Object
 
 	/**
 	 * Matches next token.
-	 * @param  string
-	 * @return array
 	 */
-	private function match($re)
+	private function match(string $re): array
 	{
 		if (!preg_match($re, $this->input, $matches, PREG_OFFSET_CAPTURE, $this->offset)) {
 			if (preg_last_error()) {
 				throw new RegexpException(NULL, preg_last_error());
 			}
-			return array();
+			return [];
 		}
 
 		$value = substr($this->input, $this->offset, $matches[0][1] - $this->offset);
@@ -319,39 +331,36 @@ class Parser extends Object
 
 
 	/**
-	 * @return self
+	 * @param  string  Parser::CONTENT_HTML, CONTENT_XHTML, CONTENT_XML or CONTENT_TEXT
+	 * @return static
 	 */
-	public function setContentType($type)
+	public function setContentType(string $type)
 	{
-		if (strpos($type, 'html') !== FALSE) {
-			$this->xmlMode = FALSE;
+		if (in_array($type, [self::CONTENT_HTML, self::CONTENT_XHTML, self::CONTENT_XML], TRUE)) {
 			$this->setContext(self::CONTEXT_HTML_TEXT);
-		} elseif (strpos($type, 'xml') !== FALSE) {
-			$this->xmlMode = TRUE;
-			$this->setContext(self::CONTEXT_HTML_TEXT);
+			$this->xmlMode = $type === self::CONTENT_XML;
 		} else {
-			$this->setContext(self::CONTEXT_RAW);
+			$this->setContext(self::CONTEXT_NONE);
 		}
 		return $this;
 	}
 
 
 	/**
-	 * @return self
+	 * @return static
 	 */
 	public function setContext($context, $quote = NULL)
 	{
-		$this->context = array($context, $quote);
+		$this->context = [$context, $quote];
 		return $this;
 	}
 
 
 	/**
 	 * Changes macro tag delimiters.
-	 * @param  string
-	 * @return self
+	 * @return static
 	 */
-	public function setSyntax($type)
+	public function setSyntax(string $type)
 	{
 		$type = $type ?: $this->defaultSyntax;
 		if (isset($this->syntaxes[$type])) {
@@ -367,11 +376,11 @@ class Parser extends Object
 	 * Changes macro tag delimiters.
 	 * @param  string  left regular expression
 	 * @param  string  right regular expression
-	 * @return self
+	 * @return static
 	 */
-	public function setDelimiters($left, $right)
+	public function setDelimiters(string $left, string $right)
 	{
-		$this->delimiters = array($left, $right);
+		$this->delimiters = [$left, $right];
 		return $this;
 	}
 
@@ -379,52 +388,47 @@ class Parser extends Object
 	/**
 	 * Parses macro tag to name, arguments a modifiers parts.
 	 * @param  string {name arguments | modifiers}
-	 * @return array
+	 * @return array|NULL
 	 * @internal
 	 */
-	public function parseMacroTag($tag)
+	public function parseMacroTag(string $tag)
 	{
 		if (!preg_match('~^
+			(?P<closing>/?)
 			(
-				(?P<name>\?|/?[a-z]\w*+(?:[.:]\w+)*+(?!::|\(|\\\\))|   ## ?, name, /name, but not function( or class:: or namespace\
-				(?P<noescape>!?)(?P<shortname>/?[=\~#%^&_]?)      ## !expression, !=expression, ...
+				(?P<name>\?|[a-z]\w*+(?:[.:]\w+)*+(?!::|\(|\\\\))|   ## ?, name, /name, but not function( or class:: or namespace\
+				(?P<shortname>[=\~#%^&_]?)      ## expression, =expression, ...
 			)(?P<args>(?:' . self::RE_STRING . '|[^\'"])*?)
-			(?P<modifiers>\|[a-z](?:' . self::RE_STRING . '|[^\'"/]|/(?=.))*+)?
+			(?P<modifiers>(?<!\|)\|[a-z](?P<modArgs>(?:' . self::RE_STRING . '|(?:\((?P>modArgs)\))|[^\'"/()]|/(?=.))*+))?
 			(?P<empty>/?\z)
 		()\z~isx', $tag, $match)) {
 			if (preg_last_error()) {
 				throw new RegexpException(NULL, preg_last_error());
 			}
-			return FALSE;
+			return NULL;
 		}
 		if ($match['name'] === '') {
-			$match['name'] = $match['shortname'] ?: '=';
-			if ($match['noescape']) {
-				if (!$this->shortNoEscape) {
-					trigger_error("The noescape shortcut {!...} is deprecated, use {...|noescape} modifier on line {$this->getLine()}.", E_USER_DEPRECATED);
-				}
-				$match['modifiers'] .= '|noescape';
-			}
+			$match['name'] = $match['shortname'] ?: ($match['closing'] ? '' : '=');
 		}
-		return array($match['name'], trim($match['args']), $match['modifiers'], (bool) $match['empty']);
+		return [$match['name'], trim($match['args']), $match['modifiers'], (bool) $match['empty'], (bool) $match['closing']];
 	}
 
 
-	private function addToken($type, $text)
+	private function addToken($type, $text): Token
 	{
 		$this->output[] = $token = new Token;
 		$token->type = $type;
 		$token->text = $text;
-		$token->line = $this->getLine();
+		$token->line = $this->getLine() - substr_count(ltrim($text), "\n");
 		return $token;
 	}
 
 
-	public function getLine()
+	public function getLine(): int
 	{
 		return $this->offset
 			? substr_count(substr($this->input, 0, $this->offset - 1), "\n") + 1
-			: 0;
+			: 1;
 	}
 
 
@@ -441,7 +445,7 @@ class Parser extends Object
 			$this->setSyntax($token->value);
 			$token->type = Token::COMMENT;
 
-		} elseif ($token->type === Token::HTML_ATTRIBUTE && $token->name === 'n:syntax') {
+		} elseif ($token->type === Token::HTML_ATTRIBUTE_BEGIN && $token->name === 'n:syntax') {
 			$this->setSyntax($token->value);
 			$this->syntaxEndTag = $this->lastHtmlTag;
 			$this->syntaxEndLevel = 1;
@@ -454,7 +458,13 @@ class Parser extends Object
 			$this->setSyntax($this->defaultSyntax);
 
 		} elseif ($token->type === Token::MACRO_TAG && $token->name === 'contentType') {
-			$this->setContentType($token->value);
+			if (strpos($token->value, 'html') !== FALSE) {
+				$this->setContentType(self::CONTENT_HTML);
+			} elseif (strpos($token->value, 'xml') !== FALSE) {
+				$this->setContentType(self::CONTENT_XML);
+			} else {
+				$this->setContentType(self::CONTENT_TEXT);
+			}
 		}
 	}
 

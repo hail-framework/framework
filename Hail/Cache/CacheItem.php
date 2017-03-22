@@ -141,8 +141,10 @@ class CacheItem implements CacheItemInterface
 	{
 		if ($expiration instanceof \DateTimeInterface) {
 			$this->expirationTimestamp = $expiration->getTimestamp();
-		} else {
+		} elseif (is_int($expiration) || null === $expiration) {
 			$this->expirationTimestamp = $expiration;
+		} else {
+			throw new InvalidArgumentException('Cache item ttl/expiresAt must be of type integer or \DateTimeInterface.');
 		}
 
 		return $this;
@@ -161,6 +163,8 @@ class CacheItem implements CacheItemInterface
 			$this->expirationTimestamp = $date->getTimestamp();
 		} elseif (is_int($time)) {
 			$this->expirationTimestamp = NOW + $time;
+		} else {
+			throw new InvalidArgumentException('Cache item ttl/expiresAfter must be of type integer or \DateInterval.');
 		}
 
 		return $this;

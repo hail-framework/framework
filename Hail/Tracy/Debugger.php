@@ -13,7 +13,7 @@ namespace Hail\Tracy;
  */
 class Debugger
 {
-	const VERSION = '2.4.5';
+	const VERSION = '2.4.6';
 
 	/** server modes for Debugger::enable() */
 	const
@@ -209,6 +209,16 @@ class Debugger
 		}
 	}
 
+	/**
+	 * Renders loading <script>
+	 * @return void
+	 */
+	public static function renderLoader()
+	{
+		if (!self::$productionMode) {
+			self::getBar()->renderLoader();
+		}
+	}
 
 	/**
 	 * @return bool

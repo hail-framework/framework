@@ -5,6 +5,8 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
+declare(strict_types=1);
+
 namespace Hail\Latte;
 
 
@@ -16,20 +18,22 @@ interface ILoader
 
 	/**
 	 * Returns template source code.
-	 * @return string
 	 */
-	function getContent($name);
+	function getContent($name): string;
 
 	/**
 	 * Checks whether template is expired.
-	 * @return bool
 	 */
-	function isExpired($name, $time);
+	function isExpired($name, $time): bool;
 
 	/**
-	 * Returns fully qualified template name.
-	 * @return string
+	 * Returns referred template name.
 	 */
-	function getChildName($name, $parent = NULL);
+	function getReferredName($name, $referringName): string;
+
+	/**
+	 * Returns unique identifier for caching.
+	 */
+	function getUniqueId($name): string;
 
 }

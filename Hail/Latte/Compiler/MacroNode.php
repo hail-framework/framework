@@ -5,14 +5,22 @@
  * Copyright (c) 2008 David Grudl (https://davidgrudl.com)
  */
 
-namespace Hail\Latte;
+declare(strict_types=1);
+
+namespace Hail\Latte\Compiler;
+
+use Hail\Latte\{
+	IMacro, Strict
+};
 
 
 /**
  * Macro element node.
  */
-class MacroNode extends Object
+class MacroNode
 {
+	use Strict;
+
 	const PREFIX_INNER = 'inner',
 		PREFIX_TAG = 'tag',
 		PREFIX_NONE = 'none';
@@ -24,7 +32,7 @@ class MacroNode extends Object
 	public $name;
 
 	/** @var bool */
-	public $isEmpty = FALSE;
+	public $empty = FALSE;
 
 	/** @var string  raw arguments */
 	public $args;
@@ -56,15 +64,28 @@ class MacroNode extends Object
 	/** @var string */
 	public $content;
 
+	/** @var string */
+	public $innerContent;
+
 	/** @var \stdClass  user data */
 	public $data;
 
 	/** @var HtmlNode  closest HTML node */
 	public $htmlNode;
 
+	/** @var array [contentType, context] */
+	public $context;
+
 	/** @var string  indicates n:attribute macro and type of prefix (PREFIX_INNER, PREFIX_TAG, PREFIX_NONE) */
 	public $prefix;
 
+	/** @var int  position of start tag in source template */
+	public $startLine;
+
+	/** @var int  position of end tag in source template */
+	public $endLine;
+
+	/** @internal */
 	public $saved;
 
 
@@ -85,6 +106,14 @@ class MacroNode extends Object
 	{
 		$this->args = (string) $args;
 		$this->tokenizer = new MacroTokens($this->args);
+	}
+
+
+	public function getNotation()
+	{
+		return $this->prefix
+			? Parser::N_PREFIX . ($this->prefix === MacroNode::PREFIX_NONE ? '' : $this->prefix . '-') . $this->name
+			: '{' . $this->name . '}';
 	}
 
 }
