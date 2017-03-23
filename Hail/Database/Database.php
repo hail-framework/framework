@@ -42,6 +42,8 @@ class Database
 	 */
 	protected $pdo;
 
+	protected $quote = '"';
+
 	public function __construct(array $options)
 	{
 		$this->connect($options);
@@ -107,8 +109,7 @@ class Database
 						unset($attr['host'], $attr['port']);
 					}
 
-					// Make MySQL using standard quoted identifier
-					$commands[] = 'SET SQL_MODE=ANSI_QUOTES';
+					$this->quote = '`';
 					break;
 
 				case 'pgsql':
@@ -276,10 +277,10 @@ class Database
 	protected function tableQuote($table)
 	{
 		if (strpos($table, '.') !== false) { // database.table
-			return '"' . str_replace('.', '"."' . $this->prefix, $table) . '"';
+			return $this->quote . str_replace('.', $this->quote . '.' . $this->quote . $this->prefix, $table) . $this->quote;
 		}
 
-		return '"' . $this->prefix . $table . '"';
+		return $this->quote . $this->prefix . $table . $this->quote;
 	}
 
 	protected function columnQuote($string)
@@ -297,10 +298,10 @@ class Database
 				return $this->tableQuote(substr($string, 0, $p)) . '.*';
 			}
 
-			return '"' . $this->prefix . str_replace('.', '"."', $string) . '"';
+			return $this->quote . $this->prefix . str_replace('.', $this->quote . '.' . $this->quote, $string) . $this->quote;
 		}
 
-		return '"' . $string . '"';
+		return $this->quote . $string . $this->quote;
 	}
 
 	protected function columnPush($columns)
@@ -562,10 +563,10 @@ class Database
 				$MATCH = $where['MATCH'];
 
 				if (is_array($MATCH) && isset($MATCH['columns'], $MATCH['keyword'])) {
-					$columns = str_replace('.', '"."', implode('", "', $MATCH['columns']));
+					$columns = str_replace('.', $this->quote . '.' . $this->quote, implode($this->quote . ', ' . $this->quote, $MATCH['columns']));
 					$keywords = $this->quote($MATCH['keyword']);
 
-					$clause .= ($clause !== '' ? ' AND ' : ' WHERE ') . ' MATCH ("' . $columns . '") AGAINST (' . $keywords . ')';
+					$clause .= ($clause !== '' ? ' AND ' : ' WHERE ') . ' MATCH (' . $this->quote . $columns . $this->quote . ') AGAINST (' . $keywords . ')';
 				}
 			}
 
@@ -680,11 +681,11 @@ class Database
 
 				if ($match[2] != '' && $match[3] != '') {
 					if (is_string($relation)) {
-						$relation = 'USING ("' . $relation . '")';
+						$relation = 'USING (' . $this->quote . $relation . $this->quote . ')';
 					} else if (is_array($relation)) {
 						// For ['column1', 'column2']
 						if (isset($relation[0])) {
-							$relation = 'USING ("' . implode('", "', $relation) . '")';
+							$relation = 'USING (' . $this->quote . implode($this->quote . ', ' . $this->quote, $relation) . $this->quote .')';
 						} else {
 							$joins = [];
 
@@ -692,13 +693,13 @@ class Database
 								$joins[] = (
 									strpos($key, '.') > 0 ?
 										// For ['tableB.column' => 'column']
-										'"' . $this->prefix . str_replace('.', '"."', $key) . '"' :
+										$this->quote . $this->prefix . str_replace('.', $this->quote . '.' . $this->quote, $key) . $this->quote :
 
 										// For ['column1' => 'column2']
-										$table . '."' . $key . '"'
+										$table . '.' . $this->quote . $key . $this->quote
 									) .
 									' = ' .
-									$this->tableQuote(isset($match[5]) ? $match[5] : $match[3]) . '."' . $value . '"';
+									$this->tableQuote(isset($match[5]) ? $match[5] : $match[3]) . '.' . $this->quote . $value . $this->quote;
 							}
 
 							$relation = 'ON ' . implode(' AND ', $joins);
