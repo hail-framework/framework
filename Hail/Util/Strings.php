@@ -426,14 +426,14 @@ class Strings
 	 * @param  string $needle
 	 * @param  int    $nth negative value means searching from the end
 	 *
-	 * @return string|FALSE  returns FALSE if the needle was not found
+	 * @return string|null  returns FALSE if the needle was not found
 	 */
-	public static function before(string $haystack, string $needle, int $nth = 1)
+	public static function before(string $haystack, string $needle, int $nth = 1): ?string
 	{
 		$pos = static::pos($haystack, $needle, $nth);
 
-		return $pos === false
-			? false
+		return $pos === null
+			? null
 			: substr($haystack, 0, $pos);
 	}
 
@@ -445,14 +445,14 @@ class Strings
 	 * @param  string $needle
 	 * @param  int    $nth negative value means searching from the end
 	 *
-	 * @return string|FALSE  returns FALSE if the needle was not found
+	 * @return string|null  returns FALSE if the needle was not found
 	 */
-	public static function after(string $haystack, string $needle, int $nth = 1)
+	public static function after(string $haystack, string $needle, int $nth = 1): ?string
 	{
 		$pos = static::pos($haystack, $needle, $nth);
 
-		return $pos === false
-			? false
+		return $pos === null
+			? null
 			: substr($haystack, $pos + strlen($needle));
 	}
 
@@ -464,14 +464,14 @@ class Strings
 	 * @param  string $needle
 	 * @param  int    $nth negative value means searching from the end
 	 *
-	 * @return int|FALSE  offset in characters or FALSE if the needle was not found
+	 * @return int|null  offset in characters or FALSE if the needle was not found
 	 */
-	public static function indexOf(string $haystack, string $needle, int $nth = 1)
+	public static function indexOf(string $haystack, string $needle, int $nth = 1): ?int
 	{
 		$pos = static::pos($haystack, $needle, $nth);
 
-		return $pos === false
-			? false
+		return $pos === null
+			? null
 			: mb_strlen(substr($haystack, 0, $pos));
 	}
 
@@ -482,12 +482,12 @@ class Strings
 	 * @param string $needle
 	 * @param int    $nth
 	 *
-	 * @return bool|int  offset in bytes or FALSE if the needle was not found
+	 * @return int|null  offset in bytes or FALSE if the needle was not found
 	 */
-	private static function pos(string $haystack, string $needle, $nth = 1)
+	private static function pos(string $haystack, string $needle, $nth = 1): ?int
 	{
 		if (!$nth) {
-			return false;
+			return null;
 		} elseif ($nth > 0) {
 			if ($needle === '') {
 				return 0;

@@ -461,7 +461,7 @@ class Crypto
 	 */
 	public static function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
 	{
-		if (version_compare(PHP_VERSION, '7.1.2') >= 0) {
+		if (PHP_VERSION_ID >= 70102) {
 			return hash_hkdf($hash, $ikm, $length, $info, $salt);
 		}
 

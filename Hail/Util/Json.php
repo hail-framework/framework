@@ -8,7 +8,7 @@ class Json
 	/**
 	 * Encodes the given value into a JSON string.
 	 *
-	 * @param $value
+	 * @param     $value
 	 * @param int $options
 	 *
 	 * @return string
@@ -21,17 +21,13 @@ class Json
 			throw new JsonException(json_last_error_msg(), $error);
 		}
 
-		if (PHP_VERSION_ID < 70100) {
-			$json = str_replace(["\xe2\x80\xa8", "\xe2\x80\xa9"], ['\u2028', '\u2029'], $json);
-		}
-
 		return $json;
 	}
 
 	/**
 	 * Decodes the given JSON string into a PHP data structure.
 	 *
-	 * @param string $json the JSON string to be decoded
+	 * @param string  $json    the JSON string to be decoded
 	 * @param boolean $asArray whether to return objects in terms of associative arrays.
 	 *
 	 * @return mixed the PHP data
@@ -43,6 +39,7 @@ class Json
 		if ($error = json_last_error()) {
 			throw new JsonException(json_last_error_msg(), $error);
 		}
+
 		return $decode;
 	}
 }
