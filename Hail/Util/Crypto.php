@@ -461,6 +461,10 @@ class Crypto
 	 */
 	public static function hkdf(string $hash, string $ikm, int $length, $info = '', $salt = null)
 	{
+		if (version_compare(PHP_VERSION, '7.1.2') >= 0) {
+			return hash_hkdf($hash, $ikm, $length, $info, $salt);
+		}
+
 		$hashLength = static::$hashList[$hash] ?? mb_strlen(hash_hmac($hash, '', '', true), '8bit');
 		if (empty($length) || !is_int($length) || $length < 0 || $length > 255 * $hashLength) {
 			throw new CryptoException('Bad output length requested of HKDF.');
