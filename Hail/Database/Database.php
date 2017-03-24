@@ -42,6 +42,7 @@ class Database
 	 */
 	protected $pdo;
 
+	protected $debug = false;
 	protected $quote = '"';
 
 	public function __construct(array $options)
@@ -198,6 +199,11 @@ class Database
 		return $this;
 	}
 
+	public function debug()
+	{
+		$this->debug = true;
+	}
+
 	public function getType()
 	{
 		return $this->type;
@@ -210,6 +216,11 @@ class Database
 	 */
 	public function query($query)
 	{
+		if ($this->debug) {
+			echo $query;
+			return false;
+		}
+
 		if (PRODUCTION_MODE || strpos($query, 'EXPLAIN') === 0) {
 			return $this->pdo->query($query);
 		}
@@ -228,6 +239,11 @@ class Database
 	 */
 	public function exec($query)
 	{
+		if ($this->debug) {
+			echo $query;
+			return false;
+		}
+
 		if (PRODUCTION_MODE) {
 			return $this->pdo->exec($query);
 		}
