@@ -13,7 +13,7 @@ use Hail\Redis\Exception\RedisException;
  * Class PhpRedis
  *
  * @package Hail\Redis\Client
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  * @inheritdoc
  */
 class PhpRedis extends AbstractClient
@@ -167,6 +167,20 @@ class PhpRedis extends AbstractClient
 		// Tweak arguments
 		if (!isset(self::$skipMap[$name])) {
 			switch ($name) {
+				case 'zunionstore':
+					$cArgs = [];
+					$cArgs[] = array_shift($args); // destination
+					$cArgs[] = array_shift($args); // keys
+					if (isset($args[0], $args[0]['weights'])) {
+						$cArgs[] = (array) $args[0]['weights'];
+					} else {
+						$cArgs[] = null;
+					}
+					if (isset($args[0], $args[0]['aggregate'])) {
+						$cArgs[] = strtoupper($args[0]['aggregate']);
+					}
+					$args = $cArgs;
+					break;
 				case 'mget':
 					if (isset($args[0]) && !is_array($args[0])) {
 						$args = [$args];

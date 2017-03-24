@@ -13,7 +13,7 @@ use Hail\Redis\Exception\RedisException;
  * Class Native
  *
  * @package Hail\Redis\Client
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  * @inheritdoc
  */
 class Native extends AbstractClient
@@ -64,6 +64,7 @@ class Native extends AbstractClient
 			$this->connectFailures++;
 			if ($this->connectFailures <= $this->maxConnectRetries) {
 				$this->connect();
+
 				return;
 			}
 			$failures = $this->connectFailures;
@@ -226,6 +227,19 @@ class Native extends AbstractClient
 				$keys = (array) array_shift($args);
 				$eArgs = (array) array_shift($args);
 				$args = [$script, count($keys), $keys, $eArgs];
+				break;
+			case 'zunionstore':
+				$dest = array_shift($args);
+				$keys = (array) array_shift($args);
+				$weights = array_shift($args);
+				$aggregate = array_shift($args);
+				$args = [$dest, count($keys), $keys];
+				if ($weights) {
+					$args[] = (array) $weights;
+				}
+				if ($aggregate) {
+					$args[] = $aggregate;
+				}
 				break;
 			case 'set':
 				// The php redis module has different behaviour with ttl
