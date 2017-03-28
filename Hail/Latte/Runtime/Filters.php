@@ -15,7 +15,6 @@ use Hail\Latte\Engine;
 
 /**
  * Template filters. Uses UTF-8 only.
- * @internal
  */
 class Filters
 {

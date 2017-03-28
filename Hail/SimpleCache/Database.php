@@ -1,7 +1,8 @@
 <?php
+
 namespace Hail\SimpleCache;
 
-use Hail\Database\Database as DB;
+use Hail\Factory\Database as DatabaseFactory;
 use Hail\Facades\Serialize;
 
 /**
@@ -12,35 +13,49 @@ use Hail\Facades\Serialize;
 class Database extends AbstractAdapter
 {
 	/**
-	 * @var DB|null
+	 * @var \Hail\Database\Database
 	 */
 	private $db;
 	private $schema;
 
 	public function __construct($params)
 	{
-		$this->db = new DB($params);
-
 		$this->schema = [
 			'table' => 'cache',
 			'key' => 'id',
 			'value' => 'data',
-			'expire' => 'expire'
+			'expire' => 'expire',
 		];
 
 		if (isset($params['schema']) && is_array($params['schema'])) {
 			$this->schema = array_merge($this->schema, $params['schema']);
 		}
 
+		$config = [
+			'ttl' => $params['ttl'] ?? 0,
+			'namespace' => $params['namespace'] ?? '',
+		];
+
+		unset(
+			$params['schema'],
+			$params['ttl'],
+			$params['namespace']
+		);
+
+		$this->db = DatabaseFactory::pdo($params);
+
 		if ($this->db->getType() === 'sqlite') {
-			$table = $this->schema['table'];
-			$id = $this->schema['id'];
-			$data = $this->schema['data'];
-			$exp = $this->schema['expire'];
-			$this->db->exec("CREATE TABLE IF NOT EXISTS {$table} ($id TEXT PRIMARY KEY NOT NULL, $data BLOB, $exp INTEGER)");
+			[
+				'table' => $table,
+				'key' => $keyField,
+				'value' => $valueField,
+				'expire' => $expireField,
+			] = $this->schema;
+
+			$this->db->exec("CREATE TABLE IF NOT EXISTS {$table} ($keyField TEXT PRIMARY KEY NOT NULL, $valueField BLOB, $expireField INTEGER)");
 		}
 
-		parent::__construct($params);
+		parent::__construct($config);
 	}
 
 
@@ -49,21 +64,28 @@ class Database extends AbstractAdapter
 	 */
 	protected function doGet(string $key)
 	{
+		[
+			'table' => $table,
+			'key' => $keyField,
+			'value' => $valueField,
+			'expire' => $expireField,
+		] = $this->schema;
+
 		$data = $this->db->get([
-			'SELECT' => [$this->schema['value'], $this->schema['expire']],
-			'FROM' => $this->schema['table'],
-			'WHERE' => [$this->schema['key'] => $key]
+			'SELECT' => [$valueField, $expireField],
+			'FROM' => $table,
+			'WHERE' => [$keyField => $key],
 		]);
 
-		if (!isset($data[$this->schema['expire']])) {
-			return null;
-		} elseif ($data[$this->schema['expire']] < NOW) {
-			$this->doDelete($key);
+		if (!isset($data[$expireField]) || $data[$expireField] < NOW) {
+			if (!empty($data)) {
+				$this->doDelete($key);
+			}
 
 			return null;
 		}
 
-		return Serialize::decode($data[$this->schema['value']]);
+		return Serialize::decode($data[$valueField]);
 	}
 
 	/**
@@ -71,18 +93,26 @@ class Database extends AbstractAdapter
 	 */
 	protected function doSetMultiple(array $values, int $ttl = 0)
 	{
+		[
+			'table' => $table,
+			'key' => $keyField,
+			'value' => $valueField,
+			'expire' => $expireField,
+		] = $this->schema;
+
 		$expire = $ttl > 0 ? NOW + $ttl : 0;
 
 		$data = [];
 		foreach ($values as $k => $v) {
 			$data[] = [
-				$this->schema['key'] => $k,
-				$this->schema['value'] => Serialize::encode($v),
-				$this->schema['expire'] => $expire
+				$keyField => $k,
+				$valueField => Serialize::encode($v),
+				$expireField => $expire,
 			];
 		}
 
-		$return = $this->db->insert($this->schema['table'], $data, 'REPLACE');
+		$return = $this->db->insert($table, $data, 'REPLACE');
+
 		return $return !== false;
 	}
 
@@ -91,19 +121,26 @@ class Database extends AbstractAdapter
 	 */
 	protected function doGetMultiple(array $keys)
 	{
+		[
+			'table' => $table,
+			'key' => $keyField,
+			'value' => $valueField,
+			'expire' => $expireField,
+		] = $this->schema;
+
 		$data = $this->db->get([
-			'SELECT' => [$this->schema['key'], $this->schema['value'], $this->schema['expire']],
-			'FROM' => $this->schema['table'],
-			'WHERE' => [$this->schema['key'] => $keys]
+			'SELECT' => [$keyField, $valueField, $expireField],
+			'FROM' => $table,
+			'WHERE' => [$keyField => $keys],
 		]);
 
 		$foundItems = [];
 		foreach ($data as $v) {
-			if ($data[$this->schema['expire']] > 0 && $data[$this->schema['expire']] < NOW) {
+			if ($data[$expireField] > 0 && $data[$expireField] < NOW) {
 				continue;
 			}
 
-			$foundItems[$v[$this->schema['key']]] = Serialize::decode($v[$this->schema['value']]);
+			$foundItems[$v[$keyField]] = Serialize::decode($v[$valueField]);
 		}
 
 		return $foundItems;
@@ -114,18 +151,24 @@ class Database extends AbstractAdapter
 	 */
 	protected function doHas(string $key)
 	{
+		[
+			'table' => $table,
+			'key' => $keyField,
+			'expire' => $expireField,
+		] = $this->schema;
+
 		return $this->db->has([
-			'FROM' => $this->schema['table'],
+			'FROM' => $table,
 			'WHERE' => [
 				'AND' => [
-					$this->schema['key'] => $key,
+					$keyField => $key,
 					'OR' => [
-						[$this->schema['expire'] => 0],
-						[$this->schema['expire'] . '[>]' => NOW],
-					]
-				]
+						[$expireField => 0],
+						[$expireField . '[>]' => NOW],
+					],
+				],
 
-			]
+			],
 		]);
 	}
 
@@ -134,15 +177,22 @@ class Database extends AbstractAdapter
 	 */
 	protected function doSet(string $key, $value, int $ttl = 0)
 	{
+		[
+			'table' => $table,
+			'key' => $keyField,
+			'value' => $valueField,
+			'expire' => $expireField,
+		] = $this->schema;
+
 		$expire = $ttl > 0 ? NOW + $ttl : 0;
 
 		$data = [
-			$this->schema['key'] => $key,
-			$this->schema['value'] => Serialize::encode($value),
-			$this->schema['expire'] => $expire
+			$keyField => $key,
+			$valueField => Serialize::encode($value),
+			$expireField => $expire,
 		];
 
-		$return = $this->db->insert($this->schema['table'], $data, 'REPLACE');
+		$return = $this->db->insert($table, $data, 'REPLACE');
 
 		return $return !== false;
 	}
@@ -152,7 +202,12 @@ class Database extends AbstractAdapter
 	 */
 	protected function doDelete(string $key)
 	{
-		return $this->db->delete($this->schema['table'], [$this->schema['key'] => $key]);
+		[
+			'table' => $table,
+			'key' => $keyField,
+		] = $this->schema;
+
+		return $this->db->delete($table, [$keyField => $key]);
 	}
 
 	/**

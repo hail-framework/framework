@@ -857,8 +857,9 @@ class Application
 		// addition to being useless
 		$command->setInputBound(true);
 
-		$event = new ConsoleCommandEvent($command, $input, $output);
-		Event::dispatch(ConsoleEvents::COMMAND, $event);
+		$eventParams = compact('command', 'input', 'output');
+		$event = new ConsoleCommandEvent(ConsoleEvents::COMMAND, $eventParams);
+		Event::trigger($event);
 
 		$exitCode = ConsoleCommandEvent::RETURN_CODE_DISABLED;
 		if ($event->commandShouldRun()) {
@@ -872,22 +873,28 @@ class Application
 			}
 
 			if (null !== $e) {
-				$event = new ConsoleExceptionEvent($command, $input, $output, $e, $e->getCode());
-				Event::dispatch(ConsoleEvents::EXCEPTION, $event);
+				$eventParams['exception'] = $e;
+				$eventParams['exitCode'] = (int) $e->getCode();
+				$event = new ConsoleExceptionEvent(ConsoleEvents::EXCEPTION, $eventParams);
+				Event::trigger($event);
 
 				if ($e !== $event->getException()) {
 					$x = $e = $event->getException();
+					$eventParams['exitCode'] = (int) $e->getCode();
 				}
 
-				$event = new ConsoleTerminateEvent($command, $input, $output, $e->getCode());
-				Event::dispatch(ConsoleEvents::TERMINATE, $event);
+				unset($eventParams['exception']);
+				Event::trigger(
+					new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams)
+				);
 
 				throw $x;
 			}
 		}
 
-		$event = new ConsoleTerminateEvent($command, $input, $output, $exitCode);
-		Event::dispatch(ConsoleEvents::TERMINATE, $event);
+		$eventParams['exitCode'] = $exitCode;
+		$event = new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams);
+		Event::trigger($event);
 
 		return $event->getExitCode();
 	}

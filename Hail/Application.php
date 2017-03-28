@@ -25,14 +25,14 @@ class Application
 	public function run()
 	{
 		try {
-			Event::dispatch('app.start');
+			Event::trigger('app.start');
 			$this->process();
-			Event::dispatch('app.end');
+			Event::trigger('app.end');
 		} catch (\Exception $e) {
-			Event::dispatch('app.error');
+			Event::trigger('app.error');
 			$this->processException($e);
 		} finally {
-			Event::dispatch('app.shutdown');
+			Event::trigger('app.shutdown');
 		}
 	}
 

@@ -11,41 +11,14 @@
 
 namespace Hail\Console\Event;
 
-use Hail\Console\Command\Command;
-use Hail\Console\Input\InputInterface;
-use Hail\Console\Output\OutputInterface;
-
 /**
  * Allows to manipulate the exit code of a command after its execution.
  *
  * @author Francesco Levorato <git@flevour.net>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class ConsoleTerminateEvent extends ConsoleEvent
 {
-    /**
-     * The exit code of the command.
-     *
-     * @var int
-     */
-    private $exitCode;
-
-    public function __construct(Command $command, InputInterface $input, OutputInterface $output, $exitCode)
-    {
-        parent::__construct($command, $input, $output);
-
-        $this->setExitCode($exitCode);
-    }
-
-    /**
-     * Sets the exit code.
-     *
-     * @param int $exitCode The command exit code
-     */
-    public function setExitCode($exitCode)
-    {
-        $this->exitCode = (int) $exitCode;
-    }
-
     /**
      * Gets the exit code.
      *
@@ -53,6 +26,6 @@ class ConsoleTerminateEvent extends ConsoleEvent
      */
     public function getExitCode()
     {
-        return $this->exitCode;
+        return $this->getParam('exitCode');
     }
 }

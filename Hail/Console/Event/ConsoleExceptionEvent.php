@@ -11,28 +11,15 @@
 
 namespace Hail\Console\Event;
 
-use Hail\Console\Command\Command;
-use Hail\Console\Input\InputInterface;
-use Hail\Console\Output\OutputInterface;
 
 /**
  * Allows to handle exception thrown in a command.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class ConsoleExceptionEvent extends ConsoleEvent
 {
-    private $exception;
-    private $exitCode;
-
-    public function __construct(Command $command, InputInterface $input, OutputInterface $output, \Exception $exception, $exitCode)
-    {
-        parent::__construct($command, $input, $output);
-
-        $this->setException($exception);
-        $this->exitCode = (int) $exitCode;
-    }
-
     /**
      * Returns the thrown exception.
      *
@@ -40,19 +27,7 @@ class ConsoleExceptionEvent extends ConsoleEvent
      */
     public function getException()
     {
-        return $this->exception;
-    }
-
-    /**
-     * Replaces the thrown exception.
-     *
-     * This exception will be thrown if no response is set in the event.
-     *
-     * @param \Exception $exception The thrown exception
-     */
-    public function setException(\Exception $exception)
-    {
-        $this->exception = $exception;
+        return $this->getParam('exception');
     }
 
     /**
@@ -62,6 +37,6 @@ class ConsoleExceptionEvent extends ConsoleEvent
      */
     public function getExitCode()
     {
-        return $this->exitCode;
+        return $this->getParam('exitCode');
     }
 }

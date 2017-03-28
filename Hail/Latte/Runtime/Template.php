@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace Hail\Latte\Runtime;
 
 use Hail\Latte\{
-	Strict, Engine
+	Strict, Engine, Helpers
 };
 
 
@@ -256,7 +256,7 @@ class Template
 	protected function renderBlock(string $name, array $params, $mod = NULL)
 	{
 		if (empty($this->blockQueue[$name])) {
-			$hint = isset($this->blockQueue) && ($t = Latte\Helpers::getSuggestion(array_keys($this->blockQueue), $name)) ? ", did you mean '$t'?" : '.';
+			$hint = isset($this->blockQueue) && ($t = Helpers::getSuggestion(array_keys($this->blockQueue), $name)) ? ", did you mean '$t'?" : '.';
 			throw new \RuntimeException("Cannot include undefined block '$name'$hint");
 		}
 

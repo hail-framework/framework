@@ -19,13 +19,16 @@ class FileLoader implements Latte\ILoader
 {
 	use Latte\Strict;
 
-	/** @var string|NULL */
-	private $baseDir;
+	/** @var string */
+	private $baseDir = '';
 
 
-	public function __construct($baseDir = NULL)
+	public function __construct(string $baseDir = null)
 	{
-		$this->baseDir = $baseDir ? $this->normalizePath("$baseDir/") : NULL;
+		if ($baseDir) {
+			$baseDir = rtrim($baseDir, '/') . '/';
+			$this->baseDir = static::normalizePath($baseDir);
+		}
 	}
 
 
@@ -35,7 +38,7 @@ class FileLoader implements Latte\ILoader
 	public function getContent($file): string
 	{
 		$file = $this->baseDir . $file;
-		if ($this->baseDir && 0 !== strpos($this->normalizePath($file), $this->baseDir)) {
+		if ($this->baseDir && 0 !== strpos(static::normalizePath($file), $this->baseDir)) {
 			throw new \RuntimeException("Template '$file' is not within the allowed path '$this->baseDir'.");
 
 		} elseif (!is_file($file)) {
@@ -62,7 +65,7 @@ class FileLoader implements Latte\ILoader
 	public function getReferredName($file, $referringFile): string
 	{
 		if ($this->baseDir || !preg_match('#/|\\\\|[a-z][a-z0-9+.-]*:#iA', $file)) {
-			$file = $this->normalizePath($referringFile . '/../' . $file);
+			$file = static::normalizePath($referringFile . '/../' . $file);
 		}
 		return $file;
 	}

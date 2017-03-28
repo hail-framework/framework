@@ -55,6 +55,9 @@ class Engine
 	private $contentType = self::CONTENT_HTML;
 
 	/** @var string */
+	private $baseDirectory;
+
+	/** @var string */
 	private $tempDirectory;
 
 	/** @var bool */
@@ -64,8 +67,11 @@ class Engine
 	private $strictTypes = false;
 
 
-	public function __construct()
+	public function __construct(array $config)
 	{
+		$this->baseDirectory = $config['directory'] ?? null;
+		$this->tempDirectory = $config['cache'] ?? null;
+
 		$this->filters = new Runtime\FilterExecutor;
 	}
 
@@ -401,7 +407,7 @@ class Engine
 	public function getLoader(): ILoader
 	{
 		if (!$this->loader) {
-			$this->loader = new Loaders\FileLoader;
+			$this->loader = new Loaders\FileLoader($this->baseDirectory);
 		}
 
 		return $this->loader;

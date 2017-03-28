@@ -15,6 +15,7 @@ namespace Hail\Console\Event;
  * Allows to do things before the command is executed, like skipping the command or changing the input.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class ConsoleCommandEvent extends ConsoleEvent
 {
@@ -24,20 +25,13 @@ class ConsoleCommandEvent extends ConsoleEvent
     const RETURN_CODE_DISABLED = 113;
 
     /**
-     * Indicates if the command should be run or skipped.
-     *
-     * @var bool
-     */
-    private $commandShouldRun = true;
-
-    /**
      * Disables the command, so it won't be run.
      *
      * @return bool
      */
     public function disableCommand()
     {
-        return $this->commandShouldRun = false;
+        return $this->setParam('commandShouldRun', false);
     }
 
     /**
@@ -47,7 +41,7 @@ class ConsoleCommandEvent extends ConsoleEvent
      */
     public function enableCommand()
     {
-        return $this->commandShouldRun = true;
+	    return $this->setParam('commandShouldRun', true);
     }
 
     /**
@@ -57,6 +51,6 @@ class ConsoleCommandEvent extends ConsoleEvent
      */
     public function commandShouldRun()
     {
-        return $this->commandShouldRun;
+        return $this->getParam('commandShouldRun');
     }
 }

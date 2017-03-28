@@ -182,8 +182,8 @@ class Compiler
 		}
 
 		return "<?php\n"
-			. "use Latte\\Runtime as LR;\n\n"
-			. "class $className extends Latte\\Runtime\\Template\n{\n"
+			. "use Hail\\Latte\\Runtime as LR;\n\n"
+			. "class $className extends Hail\\Latte\\Runtime\\Template\n{\n"
 			. implode("\n\n", $members)
 			. "\n\n}\n";
 	}

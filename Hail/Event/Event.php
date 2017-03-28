@@ -1,59 +1,239 @@
 <?php
-/*
- * This file is part of the Symfony package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 
 namespace Hail\Event;
 
+use Psr\EventManager\EventInterface;
 
 /**
- * Event is the base class for classes containing event data.
+ * Event
  *
- * This class contains no event data. It is used by events that do not pass
- * state information to an event handler when an event is raised.
+ * Basic implementation of EventInterface
  *
- * You can call the method stopPropagation() to abort the execution of
- * further listeners in your event listener.
+ * ```php
+ * // create event
+ * $evt = new Event(
+ *     'login.attempt',          // event name
+ *     ['username' => 'phossa'], // event parameters
+ *     $this                     // event target
+ * );
  *
- * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Jonathan Wage <jonwage@gmail.com>
- * @author Roman Borschel <roman@code-factory.org>
- * @author Bernhard Schussek <bschussek@gmail.com>
+ * // stop event
+ * $evt->stopPropagation();
+ * ```
+ *
  */
-class Event
+class Event implements EventInterface, \ArrayAccess, \IteratorAggregate
 {
 	/**
-	 * @var bool Whether no further event listeners should be triggered
+	 * event name
+	 *
+	 * @var    string
+	 * @access protected
 	 */
-	private $propagationStopped = false;
+	protected $name;
 
 	/**
-	 * Returns whether further event listeners should be triggered.
+	 * event target/context
 	 *
-	 * @see Event::stopPropagation()
+	 * an object OR static class name (string)
 	 *
-	 * @return bool Whether propagation was already stopped for this event
+	 * @var    object|string|null
+	 * @access protected
 	 */
-	public function isPropagationStopped()
+	protected $target;
+
+	/**
+	 * event parameters
+	 *
+	 * @var    array
+	 * @access protected
+	 */
+	protected $parameters;
+
+	/**
+	 * stop propagation
+	 *
+	 * @var    bool
+	 * @access protected
+	 */
+	protected $stopped = false;
+
+	/**
+	 * Constructor
+	 *
+	 * @param  string             $eventName  event name
+	 * @param  array              $parameters (optional) event parameters
+	 * @param  string|object|null $target     event context, object or classname
+	 *
+	 * @access public
+	 * @api
+	 */
+	public function __construct(
+		string $eventName,
+		array $parameters = [],
+		$target = null
+	)
 	{
-		return $this->propagationStopped;
+		$this->setName($eventName);
+		$this->setTarget($target);
+		$this->setParams($parameters);
 	}
 
 	/**
-	 * Stops the propagation of the event to further event listeners.
-	 *
-	 * If multiple event listeners are connected to the same event, no
-	 * further event listener will be triggered once any trigger calls
-	 * stopPropagation().
+	 * {@inheritDoc}
 	 */
-	public function stopPropagation()
+	public function getName()
 	{
-		$this->propagationStopped = true;
+		return $this->name;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function getTarget()
+	{
+		return $this->target;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function getParams()
+	{
+		return $this->parameters;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function getParam($name)
+	{
+		$name = (string) $name;
+
+		return $this->parameters[$name] ?? null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function setName($name)
+	{
+		$this->name = (string) $name;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function setTarget($target)
+	{
+		$this->target = $target;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function setParams(array $params)
+	{
+		$this->parameters = $params;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function stopPropagation($flag)
+	{
+		$this->stopped = (bool) $flag;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function isPropagationStopped()
+	{
+		return $this->stopped;
+	}
+
+	/** extend */
+
+	/**
+	 * Add parameter to event.
+	 *
+	 * @param string $key   Parameter name
+	 * @param mixed  $value Value
+	 *
+	 * @return mixed
+	 */
+	public function setParam($key, $value)
+	{
+		return $this->parameters[$key] = $value;
+	}
+
+	/**
+	 * Has parameter.
+	 *
+	 * @param string $key Key of parameters array
+	 *
+	 * @return bool
+	 */
+	public function hasParam($key)
+	{
+		return array_key_exists($key, $this->parameters);
+	}
+
+	/**
+	 * ArrayAccess for argument getter.
+	 *
+	 * @param string $key Array key
+	 *
+	 * @return mixed
+	 */
+	public function offsetGet($key)
+	{
+		return $this->getParam($key);
+	}
+
+	/**
+	 * ArrayAccess for argument setter.
+	 *
+	 * @param string $key   Array key to set
+	 * @param mixed  $value Value
+	 */
+	public function offsetSet($key, $value)
+	{
+		$this->setParam($key, $value);
+	}
+
+	/**
+	 * ArrayAccess for unset argument.
+	 *
+	 * @param string $key Array key
+	 */
+	public function offsetUnset($key)
+	{
+		if ($this->hasParam($key)) {
+			unset($this->parameters[$key]);
+		}
+	}
+
+	/**
+	 * ArrayAccess has argument.
+	 *
+	 * @param string $key Array key
+	 *
+	 * @return bool
+	 */
+	public function offsetExists($key)
+	{
+		return $this->hasParam($key);
+	}
+
+	/**
+	 * IteratorAggregate for iterating over the object like an array.
+	 *
+	 * @return \ArrayIterator
+	 */
+	public function getIterator()
+	{
+		return new \ArrayIterator($this->parameters);
 	}
 }

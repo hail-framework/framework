@@ -2,21 +2,20 @@
 
 namespace Hail;
 
-use Hail\Container\Container;
 use Hail\Facades\DI;
 
 /**
  * Class DITrait
  *
  * @package Hail
- * @property-read Container $di
+ * @property-read Container\Container $di
  * @property-read Config $config
  * @property-read AliasLoader $alias
  * @property-read Router $router
  * @property-read I18N\I18N i18n
  * @property-read Http\Request $request
  * @property-read Http\Response $response
- * @property-read Event\EventDispatcher $event
+ * @property-read Event\EventManager $event
  * @property-read Application $app
  * @property-read Output $output
  * @property-read Latte\Engine $template
@@ -41,29 +40,17 @@ use Hail\Facades\DI;
  */
 Trait DITrait
 {
-	/**
-	 * @var Container
-	 */
-	private static $_di;
-
-	public function __get($name)
+	public function __get(string $name)
 	{
-		return $this->$name = self::$_di->get($name);
+		return $this->$name = DI::get($name);
 	}
 
-	final public static function initDI()
-	{
-		self::$_di = DI::getInstance();
-	}
-
-	final public static function di($name = null)
+	final public static function di(string $name = null)
 	{
 		if ($name === null) {
-			return self::$_di;
+			return DI::getInstance();
 		}
 
-		return self::$_di->get($name);
+		return DI::get($name);
 	}
 }
-
-DITrait::initDI();

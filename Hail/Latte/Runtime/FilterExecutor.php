@@ -15,7 +15,6 @@ use Hail\Latte\Helpers;
 
 /**
  * Filter executor.
- * @internal
  */
 class FilterExecutor
 {

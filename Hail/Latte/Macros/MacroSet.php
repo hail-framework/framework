@@ -9,19 +9,22 @@ declare(strict_types=1);
 
 namespace Hail\Latte\Macros;
 
-use Hail\Latte;
-use Hail\Latte\Exception\CompileException;
+use Hail\Latte\{
+	IMacro, Strict
+};
 use Hail\Latte\Compiler\{
 	Compiler, MacroNode, PhpWriter
 };
+use Hail\Latte\Runtime\Filters;
+use Hail\Latte\Exception\CompileException;
 
 
 /**
  * Base IMacro implementation. Allows add multiple macros.
  */
-class MacroSet implements Latte\IMacro
+class MacroSet implements IMacro
 {
-	use Latte\Strict;
+	use Strict;
 
 	/** @var Compiler */
 	private $compiler;
@@ -163,7 +166,7 @@ class MacroSet implements Latte\IMacro
 	protected function checkExtraArgs(MacroNode $node)
 	{
 		if ($node->tokenizer->isNext()) {
-			$args = Latte\Runtime\Filters::truncate($node->tokenizer->joinAll(), 20);
+			$args = Filters::truncate($node->tokenizer->joinAll(), 20);
 			trigger_error("Unexpected arguments '$args' in " . $node->getNotation());
 		}
 	}
