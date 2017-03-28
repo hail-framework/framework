@@ -1,6 +1,6 @@
 # Hail-Framework
 
-基于 PHP7 的 MVC 框架
+基于 PHP 7.1 的 MVC 框架
 
 ## About 框架设计
 
@@ -27,3 +27,11 @@
 - Zephir 是 PHP 开发者很好的工具，不过只有当框架已经比较完善的基础上，才会尝试使用 Zephir 提高性能
 - 在打开 Opcache 的情况下， PHP 本身已经相当快，一些简单的功能，并不会比使用 C 的扩展慢很多
 - 如果您追求极致的性能，可以先试试： [Phalcon](http://phalconphp.com/) ([github](https://github.com/phalcon/cphalcon)) 或者 [Ice](http://www.iceframework.org/) ([github](https://github.com/ice/framework))
+
+### 遵循 PSR
+- [PSR-2 Coding Style Guide](http://www.php-fig.org/psr/psr-2/)
+- [PSR-4 Autoloading Standard](http://www.php-fig.org/psr/psr-4/)
+- [PSR-6 Caching Interface](http://www.php-fig.org/psr/psr-6/)
+- [PSR-11 Container Interface](https://github.com/container-interop/fig-standards/blob/master/proposed/container.md)
+- [PSR-14 Event Manager](https://github.com/php-fig/fig-standards/blob/master/proposed/event-manager.md)
+- [PSR-16 Simple Cache](http://www.php-fig.org/psr/psr-16/)
