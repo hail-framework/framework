@@ -5,10 +5,10 @@
 
 namespace Hail\Database;
 
-use Hail\Facades\DB;
+use Hail\Facade\DB;
 use Hail\Database\Exception\ModelException;
 
-use Hail\Facades\Json;
+use Hail\Facade\Json;
 use PDO;
 
 /**

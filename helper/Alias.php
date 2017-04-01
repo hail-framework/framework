@@ -1,2 +1,2 @@
 <?php
-class Alias extends Hail\Facades\Alias {}
+class Alias extends Hail\Facade\Alias {}

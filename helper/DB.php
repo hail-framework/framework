@@ -1,2 +1,2 @@
 <?php
-class DB extends Hail\Facades\DB {}
+class DB extends Hail\Facade\DB {}

@@ -1,2 +1,2 @@
 <?php
-class Router extends Hail\Facades\Router {}
+class Router extends Hail\Facade\Router {}

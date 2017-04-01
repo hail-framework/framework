@@ -1,2 +1,2 @@
 <?php
-class Config extends Hail\Facades\Config {}
+class Config extends Hail\Facade\Config {}

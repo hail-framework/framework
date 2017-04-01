@@ -1,7 +1,7 @@
 <?php
 namespace Hail;
 
-use Hail\Facades\Arrays;
+use Hail\Facade\Arrays;
 use Hail\Util\{
 	ArrayDot,
 	ArrayTrait,

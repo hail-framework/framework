@@ -2,7 +2,7 @@
 namespace Hail\Factory;
 
 use Hail\Database\Database as DB;
-use Hail\Facades\{
+use Hail\Facade\{
 	Config, Serialize
 };
 

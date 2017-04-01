@@ -1,9 +1,9 @@
 <?php
 namespace Hail\Database;
 
-use Hail\Facades\DB;
+use Hail\Facade\DB;
 use Hail\Tracy\Dumper;
-use Hail\Facades\Json;
+use Hail\Facade\Json;
 
 class Event
 {

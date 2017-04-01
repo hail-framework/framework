@@ -1,2 +1,2 @@
 <?php
-class Validator extends Hail\Facades\Validator {}
+class Validator extends Hail\Facade\Validator {}

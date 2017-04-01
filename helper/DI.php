@@ -1,2 +1,2 @@
 <?php
-class DI extends Hail\Facades\DI {}
+class DI extends Hail\Facade\DI {}

@@ -2,7 +2,7 @@
 
 namespace Hail;
 
-use Hail\Facades\DI;
+use Hail\Facade\DI;
 
 /**
  * Class DITrait

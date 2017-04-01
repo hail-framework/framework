@@ -9,7 +9,7 @@ use Hail\SimpleCache\{
 	CacheInterface,
 	Chain
 };
-use Hail\Facades\{
+use Hail\Facade\{
 	Config, Serialize
 };
 

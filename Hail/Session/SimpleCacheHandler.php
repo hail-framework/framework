@@ -1,7 +1,6 @@
 <?php
 namespace Hail\Session;
 
-use Hail\Facades\Cache;
 use Psr\SimpleCache\CacheInterface;
 
 /**

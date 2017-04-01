@@ -1,2 +1,2 @@
 <?php
-class Storage extends Hail\Facades\Storage {}
+class Storage extends Hail\Facade\Storage {}

@@ -3,7 +3,7 @@
 namespace Hail\SimpleCache;
 
 use Hail\Factory\Database as DatabaseFactory;
-use Hail\Facades\Serialize;
+use Hail\Facade\Serialize;
 
 /**
  * Database cache provider.

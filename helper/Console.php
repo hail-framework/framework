@@ -1,2 +1,2 @@
 <?php
-class Console extends Hail\Facades\Console {}
+class Console extends Hail\Facade\Console {}

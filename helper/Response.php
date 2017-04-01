@@ -1,2 +1,2 @@
 <?php
-class Response extends Hail\Facades\Response {}
+class Response extends Hail\Facade\Response {}

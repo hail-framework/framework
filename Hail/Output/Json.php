@@ -2,11 +2,11 @@
 namespace Hail\Output;
 
 
-use Hail\Facades\{
+use Hail\Facade\{
 	Request,
 	Response
 };
-use Hail\Facades\Json as Js;
+use Hail\Facade\Json as Js;
 
 /**
  * Class Json

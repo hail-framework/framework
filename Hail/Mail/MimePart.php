@@ -9,11 +9,10 @@ namespace Hail\Mail;
 
 use InvalidArgumentException;
 use RuntimeException;
-use Hail\Facades\{
+use Hail\Facade\{
 	Generators,
 	Strings
 };
-use Hail\Util\Validator;
 
 
 /**

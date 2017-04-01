@@ -6,7 +6,7 @@ use Hail\Filesystem\{
 	Filesystem,
 	FilesystemInterface
 };
-use Hail\Facades\{
+use Hail\Facade\{
 	Config, Serialize
 };
 

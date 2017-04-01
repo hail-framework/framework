@@ -1,2 +1,2 @@
 <?php
-class Template extends Hail\Facades\Template {}
+class Template extends Hail\Facade\Template {}

@@ -1,2 +1,2 @@
 <?php
-class Request extends Hail\Facades\Request {}
+class Request extends Hail\Facade\Request {}

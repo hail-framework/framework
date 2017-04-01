@@ -1,7 +1,7 @@
 <?php
 namespace Hail\SimpleCache;
 
-use Hail\Facades\Serialize;
+use Hail\Facade\Serialize;
 use Hail\Redis\Exception\RedisException;
 use Hail\Factory\Redis as RedisFactory;
 

@@ -2,8 +2,8 @@
 namespace Hail;
 
 use Hail\Tracy\Debugger;
-use Hail\Facades\{
-	Config, Alias, Event, I18N, Request
+use Hail\Facade\{
+	Config, Alias, I18N, Request
 };
 
 // System Start Time
@@ -78,10 +78,6 @@ class Bootstrap
 		if (is_array($locale)) {
 			$found = null;
 			foreach ($locale as $k => $v) {
-				if ($found) {
-					break;
-				}
-
 				switch ($k) {
 					case 'input':
 						$found = Request::input($v);
@@ -92,6 +88,10 @@ class Bootstrap
 					case 'default':
 						$found = $v;
 						break;
+				}
+
+				if ($found) {
+					break;
 				}
 			}
 

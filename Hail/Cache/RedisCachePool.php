@@ -12,7 +12,7 @@
 namespace Hail\Cache;
 
 use Hail\Redis\Client\AbstractClient;
-use Hail\Facades\Serialize;
+use Hail\Facade\Serialize;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>

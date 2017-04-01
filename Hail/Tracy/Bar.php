@@ -6,7 +6,7 @@
 
 namespace Hail\Tracy;
 
-use Hail\Facades\Strings;
+use Hail\Facade\Strings;
 
 /**
  * Debug Bar.

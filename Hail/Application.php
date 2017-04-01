@@ -6,7 +6,7 @@ use Hail\Exception\{
 	BadRequestException
 };
 use Hail\Tracy\Debugger;
-use Hail\Facades\{
+use Hail\Facade\{
 	Event,
 	Router,
 	Request,

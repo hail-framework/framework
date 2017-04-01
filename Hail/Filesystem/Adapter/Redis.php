@@ -5,7 +5,7 @@ use Hail\Filesystem\Adapter\Polyfill\StreamedTrait as StreamPolyfill;
 use Hail\Filesystem\Exception\FileNotFoundException;
 use Hail\Filesystem\Util;
 use Hail\Factory\Redis as RedisFactory;
-use Hail\Facades\Serialize;
+use Hail\Facade\Serialize;
 
 class Redis extends AbstractAdapter
 {

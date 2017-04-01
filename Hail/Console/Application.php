@@ -46,7 +46,7 @@ use Hail\Console\Event\{
 };
 use Hail\Console\Exception\CommandNotFoundException;
 use Hail\Console\Exception\LogicException;
-use Hail\Facades\Event;
+use Hail\Facade\Event;
 use Hail\Exception\FatalThrowableError;
 
 /**

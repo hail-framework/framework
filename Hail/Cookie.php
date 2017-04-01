@@ -2,7 +2,7 @@
 
 namespace Hail;
 
-use Hail\Facades\{
+use Hail\Facade\{
 	Request,
 	Response
 };

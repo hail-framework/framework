@@ -3,7 +3,7 @@
 namespace Hail;
 
 use Hail\Exception\BadRequestException;
-use Hail\Facades\{
+use Hail\Facade\{
 	Config,
 	Application,
 	Request,

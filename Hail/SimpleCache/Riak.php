@@ -19,7 +19,7 @@
 
 namespace Hail\SimpleCache;
 
-use Hail\Facades\Serialize;
+use Hail\Facade\Serialize;
 use Riak\Bucket;
 use Riak\Connection;
 use Riak\Input;

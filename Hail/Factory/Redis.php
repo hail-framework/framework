@@ -8,7 +8,7 @@ use Hail\Redis\Client\{
 	PhpRedis
 };
 use Hail\Redis\Exception\RedisException;
-use Hail\Facades\{
+use Hail\Facade\{
 	Config,
 	Serialize
 };

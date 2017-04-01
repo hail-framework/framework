@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Output;
 
-use Hail\Facades\Template as Latte;
+use Hail\Facade\Template as Latte;
 
 class Template
 {

@@ -1,2 +1,2 @@
 <?php
-class Session extends Hail\Facades\Session {}
+class Session extends Hail\Facade\Session {}

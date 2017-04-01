@@ -1,7 +1,7 @@
 <?php
 namespace Hail\Output;
 
-use Hail\Facades\Response;
+use Hail\Facade\Response;
 use Hail\Exception\BadRequestException;
 
 class File

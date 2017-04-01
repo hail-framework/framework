@@ -32,7 +32,7 @@ class AliasLoader
 	 *
 	 * @var string
 	 */
-	protected static $facadeNamespace = 'Facades\\';
+	protected static $facadeNamespace = 'Facade\\';
 
 	/**
 	 * Create a new AliasLoader instance.
@@ -118,7 +118,7 @@ class AliasLoader
 <?php
 namespace $namespace;
 
-use Hail\Facades\Facade;
+use Hail\Facade\Facade;
 
 /**
  * @see $target
