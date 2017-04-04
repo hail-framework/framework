@@ -154,10 +154,8 @@ class File extends AbstractAdapter
 	 */
 	private function createPathIfNeeded($path)
 	{
-		if (!is_dir($path)) {
-			if (false === @mkdir($path, 0777 & (~$this->umask), true) && !is_dir($path)) {
-				return false;
-			}
+		if (!is_dir($path) && !@mkdir($path, 0777 & (~$this->umask), true) && !is_dir($path)) {
+			return false;
 		}
 
 		return true;

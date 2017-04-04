@@ -65,8 +65,12 @@ class Database
 			$this->prefix = $options['prefix'];
 		}
 
+		$this->option = [
+			PDO::ATTR_CASE => PDO::CASE_NATURAL
+		];
+
 		if (isset($options['option'])) {
-			$this->option = $options['option'];
+			$this->option = array_merge($this->option, $options['option']);
 		}
 
 		if (isset($options['connectPool']) && $options['connectPool']) {

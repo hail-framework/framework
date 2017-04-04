@@ -1,0 +1,3 @@
+local:
+  adapter: local
+  root: !php/const TEMP_PATH

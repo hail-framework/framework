@@ -39,7 +39,7 @@ class FileSystemHelper
 
 		$folderPath = $parentFolderPath . '/' . $folderName;
 
-		if (!@mkdir($folderPath, 0777, true) && !is_dir($folderPath)) {
+		if (!is_dir($folderPath) && !@mkdir($folderPath, 0755, true) && !is_dir($folderPath)) {
 			throw new IOException("Unable to create folder: $folderPath");
 		}
 

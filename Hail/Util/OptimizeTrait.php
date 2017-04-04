@@ -49,9 +49,13 @@ trait OptimizeTrait
 		);
 	}
 
-	protected static function optimizeVerifyMTime($file, $check)
+	protected static function optimizeVerifyMTime($file, array $check)
 	{
-		$file = array_unique((array) $file);
+		if (!is_array($file)) {
+			$file = [$file];
+		} else {
+			$file = array_unique($file);
+		}
 
 		foreach ($file as $v) {
 			if (file_exists($v)) {
@@ -61,9 +65,11 @@ trait OptimizeTrait
 			} elseif (isset($check[$v])) {
 				return true;
 			}
+
+			unset($check[$v]);
 		}
 
-		return false;
+		return [] !== $check;
 	}
 
 	protected static function optimizeFileMTime($file)

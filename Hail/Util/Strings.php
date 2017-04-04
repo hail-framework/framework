@@ -599,7 +599,9 @@ class Strings
 
 			return static::pcre('preg_replace_callback', [$pattern, $replacement, $subject, $limit]);
 
-		} elseif ($replacement === null && is_array($pattern)) {
+		}
+
+		if ($replacement === null && is_array($pattern)) {
 			$replacement = array_values($pattern);
 			$pattern = array_keys($pattern);
 		}
@@ -618,9 +620,9 @@ class Strings
 	protected static function pcre(string $func, array $args)
 	{
 		static $messages = [
-			PREG_INTERNAL_ERROR => 'Internal error',
-			PREG_BACKTRACK_LIMIT_ERROR => 'Backtrack limit was exhausted',
-			PREG_RECURSION_LIMIT_ERROR => 'Recursion limit was exhausted',
+			PREG_INTERNAL_ERROR => 'Internal PCRE error',
+			PREG_BACKTRACK_LIMIT_ERROR => 'pcre.backtrack_limit was exhausted',
+			PREG_RECURSION_LIMIT_ERROR => 'pcre.recursion_limit was exhausted',
 			PREG_BAD_UTF8_ERROR => 'Malformed UTF-8 data',
 			PREG_BAD_UTF8_OFFSET_ERROR => 'Offset didn\'t correspond to the begin of a valid UTF-8 code point',
 			PREG_JIT_STACKLIMIT_ERROR => 'Failed due to limited JIT stack space',

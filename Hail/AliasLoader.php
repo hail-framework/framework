@@ -90,7 +90,7 @@ class AliasLoader
 			return $path;
 		}
 
-		if (!@mkdir($dir = dirname($path)) && !is_dir($dir)) {
+		if (!is_dir($dir = dirname($path)) && !@mkdir($dir) && !is_dir($dir)) {
 			throw new \RuntimeException('Temp directory permission denied');
 		}
 

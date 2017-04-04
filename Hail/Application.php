@@ -20,6 +20,8 @@ use Hail\Facade\{
  */
 class Application
 {
+	const VERSION = 1;
+
 	private $dispatcher = [];
 
 	public function run()
