@@ -75,11 +75,25 @@ class Container implements ContainerInterface, FactoryInterface
 	 */
 	public function get($name)
 	{
-		if (!isset($this->active[$name])) {
-			if (!isset($this->values[$name]) && !array_key_exists($name, $this->values)) {
-				if (isset($this->factory[$name])) {
-					$factory = $this->factory[$name];
+		if (isset($this->active[$name])) {
+			return $this->values[$name];
+		}
 
+		switch (true) {
+			case array_key_exists($name, $this->values):
+				break;
+
+			case isset($this->alias[$name]):
+				$this->active[$name] = true;
+
+				return $this->values[$name] = $this->get($this->alias[$name]);
+
+			case isset($this->factory[$name]):
+				$factory = $this->factory[$name];
+
+				if (is_string($factory)) {
+					$this->values[$name] = $this->create($factory, $this->factory_map[$name]);
+				} else {
 					$reflection = new \ReflectionFunction($factory);
 
 					if (($params = $reflection->getParameters()) !== []) {
@@ -87,18 +101,15 @@ class Container implements ContainerInterface, FactoryInterface
 					}
 
 					$this->values[$name] = $factory(...$params);
-				} elseif (isset($this->alias[$name])) {
-					$this->active[$name] = true;
-
-					return $this->values[$name] = $this->get($this->alias[$name]);
-				} else {
-					throw new NotFoundException($name);
 				}
-			}
+				break;
 
-			$this->active[$name] = true;
-			$this->initialize($name);
+			default:
+				throw new NotFoundException($name);
 		}
+
+		$this->active[$name] = true;
+		$this->initialize($name);
 
 		return $this->values[$name];
 	}
@@ -282,21 +293,23 @@ class Container implements ContainerInterface, FactoryInterface
 	 */
 	private function initialize($name)
 	{
-		if (isset($this->config[$name])) {
-			foreach ($this->config[$name] as $index => $config) {
-				$map = $this->config_map[$name][$index];
+		if (!isset($this->config[$name])) {
+			return;
+		}
 
-				$reflection = Reflection::createFromCallable($config);
+		foreach ($this->config[$name] as $index => $config) {
+			$map = $this->config_map[$name][$index];
 
-				if (($params = $reflection->getParameters()) !== []) {
-					$params = $this->resolve($params, $map);
-				}
+			$reflection = Reflection::createFromCallable($config);
 
-				$value = $config(...$params);
+			if (($params = $reflection->getParameters()) !== []) {
+				$params = $this->resolve($params, $map);
+			}
 
-				if ($value !== null) {
-					$this->values[$name] = $value;
-				}
+			$value = $config(...$params);
+
+			if ($value !== null) {
+				$this->values[$name] = $value;
 			}
 		}
 	}
@@ -355,25 +368,21 @@ class Container implements ContainerInterface, FactoryInterface
 			throw new ContainerException("Attempted override of existing component: {$name}");
 		}
 
-		if (is_callable($func_or_map_or_type)) {
-			// second argument is a creation function
+		if ($func_or_map_or_type instanceof \Closure) {
 			$func = $func_or_map_or_type;
+		} elseif (is_callable($func_or_map_or_type)) {
+			// second argument is a creation function
+			$func = \Closure::fromCallable($func_or_map_or_type);
 		} elseif (is_string($func_or_map_or_type)) {
 			// second argument is a class-name
-			$func = function (Container $container) use ($func_or_map_or_type, $map) {
-				return $container->create($func_or_map_or_type, $map);
-			};
-			$map = [];
+			$func = $func_or_map_or_type;
 		} elseif (is_array($func_or_map_or_type)) {
-			// second argument is a map of constructor arguments
-			$func = function (Container $container) use ($name, $func_or_map_or_type) {
-				return $container->create($name, $func_or_map_or_type);
-			};
+			$func = $name;
+			$map = $func_or_map_or_type;
 		} elseif (null === $func_or_map_or_type) {
 			// first argument is both the component and class-name
-			$func = function (Container $container) use ($name) {
-				return $container->create($name);
-			};
+			$func = $name;
+			$map = [];
 		} else {
 			throw new ContainerException('Unexpected argument type for $func_or_map_or_type: ' . gettype($func_or_map_or_type));
 		}
@@ -403,10 +412,6 @@ class Container implements ContainerInterface, FactoryInterface
 
 		$this->values[$name] = $value;
 
-		while (false !== ($key = array_search($name, $this->alias, true))) {
-			$this->values[$key] = $value;
-		}
-
 		unset(
 			$this->factory[$name],
 			$this->factory_map[$name],
@@ -422,10 +427,14 @@ class Container implements ContainerInterface, FactoryInterface
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function alias($alias, $name)
+	public function alias(string $alias, string $name): void
 	{
 		if (isset($this->values[$alias]) || isset($this->factory[$alias]) || array_key_exists($alias, $this->values)) {
 			throw new InvalidArgumentException("Already defined in container: $alias");
+		}
+
+		if ($alias === $name) {
+			throw new InvalidArgumentException('Alias cannot be the same as the original name');
 		}
 
 		$this->alias[$alias] = $name;
