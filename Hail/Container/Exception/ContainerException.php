@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Container;
+namespace Hail\Container\Exception;
 
 use Exception;
 use Psr\Container\ContainerException as PsrContainerException;

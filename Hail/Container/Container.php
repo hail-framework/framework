@@ -2,31 +2,61 @@
 
 namespace Hail\Container;
 
+use Hail\Util\ArrayTrait;
 use Psr\Container\ContainerInterface;
 use InvalidArgumentException;
-use ReflectionClass;
-use ReflectionFunction;
-use ReflectionParameter;
+use Hail\Container\Exception\{
+	ContainerException,
+	NotFoundException
+};
 
 /**
  * This class implements a simple dependency injection container.
  */
-class Container extends Configuration implements ContainerInterface, FactoryInterface
+class Container implements ContainerInterface, FactoryInterface
 {
+	use ArrayTrait;
+
+	/**
+	 * @var mixed[] map where component name => value
+	 */
+	protected $values = [];
+
+	/**
+	 * @var callable[] map where component name => factory function
+	 */
+	protected $factory = [];
+
+	/**
+	 * @var array map where component name => mixed list/map of parameter names
+	 */
+	protected $factory_map = [];
+
+	/**
+	 * @var callable[][] map where component name => list of configuration functions
+	 */
+	protected $config = [];
+
+	/**
+	 * @var array[][] map where component name => mixed list/map of parameter names
+	 */
+	protected $config_map = [];
+
 	/**
 	 * @var bool[] map where component name => TRUE, if the component has been initialized
 	 */
 	protected $active = [];
 
 	/**
-	 * @param Configuration $config
+	 * @var string[]
 	 */
-	public function __construct(Configuration $config)
-	{
-		$config->copyTo($this);
+	protected $alias = [];
 
-		$this->values += [
-			get_class($this) => $this,
+	public function __construct()
+	{
+		$this->values = [
+			'di' => $this,
+			'container' => $this,
 			__CLASS__ => $this,
 			ContainerInterface::class => $this,
 			FactoryInterface::class => $this,
@@ -46,20 +76,27 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	public function get($name)
 	{
 		if (!isset($this->active[$name])) {
-			if (isset($this->factory[$name])) {
-				$factory = $this->factory[$name];
+			if (!isset($this->values[$name]) && !array_key_exists($name, $this->values)) {
+				if (isset($this->factory[$name])) {
+					$factory = $this->factory[$name];
 
-				$reflection = new ReflectionFunction($factory);
+					$reflection = new \ReflectionFunction($factory);
 
-				$params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
+					if (($params = $reflection->getParameters()) !== []) {
+						$params = $this->resolve($params, $this->factory_map[$name]);
+					}
 
-				$this->values[$name] = call_user_func_array($factory, $params);
-			} elseif (!array_key_exists($name, $this->values)) {
-				throw new NotFoundException($name);
+					$this->values[$name] = $factory(...$params);
+				} elseif (isset($this->alias[$name])) {
+					$this->active[$name] = true;
+
+					return $this->values[$name] = $this->get($this->alias[$name]);
+				} else {
+					throw new NotFoundException($name);
+				}
 			}
 
 			$this->active[$name] = true;
-
 			$this->initialize($name);
 		}
 
@@ -75,20 +112,12 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	 */
 	public function has($name)
 	{
-		return array_key_exists($name, $this->values) || isset($this->factory[$name]);
+		return isset($this->values[$name]) ||
+			isset($this->factory[$name]) ||
+			isset($this->alias[$name]) ||
+			array_key_exists($name, $this->values);
 	}
 
-	/**
-	 * Check if a component has been unboxed and is currently active.
-	 *
-	 * @param string $name component name
-	 *
-	 * @return bool
-	 */
-	public function isActive($name)
-	{
-		return isset($this->active[$name]);
-	}
 
 	/**
 	 * Call any given callable, using dependency injection to satisfy it's arguments, and/or
@@ -114,8 +143,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	public function call($callback, $map = [])
 	{
 		$params = Reflection::createFromCallable($callback)->getParameters();
+		if ($params !== []) {
+			$params = $this->resolve($params, $map);
+		}
 
-		return call_user_func_array($callback, $this->resolve($params, $map));
+		return $callback(...$params);
 	}
 
 	/**
@@ -128,24 +160,28 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	 * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
 	 *
 	 * @return mixed
+	 *
+	 * @throws ContainerException
 	 */
 	public function create($class_name, $map = [])
 	{
 		if (!class_exists($class_name)) {
-			throw new InvalidArgumentException("unable to create component: {$class_name}");
+			throw new ContainerException("unable to create component: {$class_name}");
 		}
 
-		$reflection = new ReflectionClass($class_name);
+		$reflection = new \ReflectionClass($class_name);
 
 		if (!$reflection->isInstantiable()) {
-			throw new InvalidArgumentException("unable to create instance of abstract class: {$class_name}");
+			throw new ContainerException("unable to create instance of abstract class: {$class_name}");
 		}
 
 		$constructor = $reflection->getConstructor();
 
-		$params = $constructor
-			? $this->resolve($constructor->getParameters(), $map, false)
-			: [];
+		if ($constructor && ($params = $constructor->getParameters()) !== []) {
+			$params = $this->resolve($params, $map, false);
+		} else {
+			$params = [];
+		}
 
 		return $reflection->newInstanceArgs($params);
 	}
@@ -155,25 +191,24 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	 *
 	 * This is the heart of the beast.
 	 *
-	 * @param ReflectionParameter[] $params parameter reflections
-	 * @param array                 $map    mixed list/map of parameter values (and/or boxed values)
-	 * @param bool                  $safe   if TRUE, it's considered safe to resolve against parameter names
+	 * @param \ReflectionParameter[] $params parameter reflections
+	 * @param array                  $map    mixed list/map of parameter values (and/or boxed values)
+	 * @param bool                   $safe   if TRUE, it's considered safe to resolve against parameter names
 	 *
 	 * @return array parameters
 	 *
 	 * @throws ContainerException
-	 * @throws NotFoundException
 	 */
 	protected function resolve(array $params, $map, $safe = true)
 	{
 		$args = [];
 
 		foreach ($params as $index => $param) {
-			$param_name = $param->name;
+			$name = $param->name;
 
-			if (array_key_exists($param_name, $map)) {
-				$value = $map[$param_name]; // // resolve as user-provided named argument
-			} elseif (array_key_exists($index, $map)) {
+			if (isset($map[$name]) || array_key_exists($name, $map)) {
+				$value = $map[$name]; // // resolve as user-provided named argument
+			} elseif (isset($map[$index]) || array_key_exists($index, $map)) {
 				$value = $map[$index]; // resolve as user-provided positional argument
 			} else {
 				// as on optimization, obtain the argument type without triggering autoload:
@@ -184,8 +219,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 					$value = $map[$type]; // resolve as user-provided type-hinted argument
 				} elseif ($type && $this->has($type)) {
 					$value = $this->get($type); // resolve as component registered by class/interface name
-				} elseif ($safe && $this->has($param_name)) {
-					$value = $this->get($param_name); // resolve as component with matching parameter name
+				} elseif ($safe && $this->has($name)) {
+					$value = $this->get($name); // resolve as component with matching parameter name
 				} elseif ($param->isOptional()) {
 					$value = $param->getDefaultValue(); // unresolved, optional: resolve using default value
 				} elseif ($type && $param->allowsNull()) {
@@ -196,14 +231,14 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 					$reflection = $param->getDeclaringFunction();
 
 					throw new ContainerException(
-						"unable to resolve parameter: \${$param_name} " . ($type ? "({$type}) " : "") .
-						"in file: " . $reflection->getFileName() . ", line " . $reflection->getStartLine()
+						"Unable to resolve parameter: \${$name} " . ($type ? "({$type}) " : '') .
+						'in file: ' . $reflection->getFileName() . ', line ' . $reflection->getStartLine()
 					);
 				}
 			}
 
-			if ($value instanceof BoxedValueInterface) {
-				$value = $value->unbox($this); // unbox a boxed value
+			if ($value instanceof \Closure) {
+				$value = $value($this); // unbox a boxed value
 			}
 
 			$args[] = $value; // argument resolved!
@@ -229,7 +264,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	public function inject($name, $value)
 	{
 		if ($this->has($name)) {
-			throw new InvalidArgumentException("attempted override of existing component: {$name}");
+			throw new InvalidArgumentException("Attempted override of existing component: {$name}");
 		}
 
 		$this->values[$name] = $value;
@@ -242,6 +277,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 	 * @param string $name component name
 	 *
 	 * @return void
+	 *
+	 * @throws ContainerException
 	 */
 	private function initialize($name)
 	{
@@ -251,14 +288,296 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
 				$reflection = Reflection::createFromCallable($config);
 
-				$params = $this->resolve($reflection->getParameters(), $map);
+				if (($params = $reflection->getParameters()) !== []) {
+					$params = $this->resolve($params, $map);
+				}
 
-				$value = call_user_func_array($config, $params);
+				$value = $config(...$params);
 
 				if ($value !== null) {
 					$this->values[$name] = $value;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Register a component for dependency injection.
+	 *
+	 * There are numerous valid ways to register components.
+	 *
+	 *   * `register(Foo::class)` registers a component by it's class-name, and will try to
+	 *     automatically resolve all of it's constructor arguments.
+	 *
+	 *   * `register(Foo::class, ['bar'])` registers a component by it's class-name, and will
+	 *     use `'bar'` as the first constructor argument, and try to resolve the rest.
+	 *
+	 *   * `register(Foo::class, [$container->ref(Bar::class)])` creates a boxed reference to
+	 *     a registered component `Bar` and provides that as the first argument.
+	 *
+	 *   * `register(Foo::class, ['bat' => 'zap'])` registers a component by it's class-name
+	 *     and will use `'zap'` for the constructor argument named `$bat`, and try to resolve
+	 *     any other arguments.
+	 *
+	 *   * `register(Bar::class, Foo::class)` registers a component `Foo` under another name
+	 *     `Bar`, which might be an interface or an abstract class.
+	 *
+	 *   * `register(Bar::class, Foo::class, ['bar'])` same as above, but uses `'bar'` as the
+	 *     first argument.
+	 *
+	 *   * `register(Bar::class, Foo::class, ['bat' => 'zap'])` same as above, but, well, guess.
+	 *
+	 *   * `register(Bar::class, function (Foo $foo) { return new Bar(...); })` registers a
+	 *     component with a custom creation function.
+	 *
+	 *   * `register(Bar::class, function ($name) { ... }, [$container->ref('db.name')]);`
+	 *     registers a component creation function with a reference to a component "db.name"
+	 *     as the first argument.
+	 *
+	 * In effect, you can think of `$func` as being an optional argument.
+	 *
+	 * The provided parameter values may include any `\Closure`, such as the boxed
+	 * component referenced created by {@see Container::ref()} - these will be unboxed as late
+	 * as possible.
+	 *
+	 * @param string                      $name                component name
+	 * @param callable|mixed|mixed[]|null $func_or_map_or_type creation function or class-name, or, if the first
+	 *                                                         argument is a class-name, a map of constructor arguments
+	 * @param mixed|mixed[]               $map                 mixed list/map of parameter values (and/or boxed values)
+	 *
+	 * @return void
+	 *
+	 * @throws ContainerException
+	 */
+	public function register($name, $func_or_map_or_type = null, $map = [])
+	{
+		if (isset($this->active[$name])) {
+			throw new ContainerException("Attempted override of existing component: {$name}");
+		}
+
+		if (is_callable($func_or_map_or_type)) {
+			// second argument is a creation function
+			$func = $func_or_map_or_type;
+		} elseif (is_string($func_or_map_or_type)) {
+			// second argument is a class-name
+			$func = function (Container $container) use ($func_or_map_or_type, $map) {
+				return $container->create($func_or_map_or_type, $map);
+			};
+			$map = [];
+		} elseif (is_array($func_or_map_or_type)) {
+			// second argument is a map of constructor arguments
+			$func = function (Container $container) use ($name, $func_or_map_or_type) {
+				return $container->create($name, $func_or_map_or_type);
+			};
+		} elseif (null === $func_or_map_or_type) {
+			// first argument is both the component and class-name
+			$func = function (Container $container) use ($name) {
+				return $container->create($name);
+			};
+		} else {
+			throw new ContainerException('Unexpected argument type for $func_or_map_or_type: ' . gettype($func_or_map_or_type));
+		}
+
+		$this->factory[$name] = $func;
+		$this->factory_map[$name] = $map;
+
+		unset($this->values[$name]);
+	}
+
+	/**
+	 * Directly inject a component into the container - use this to register components that
+	 * have already been created for some reason; for example, the Composer ClassLoader.
+	 *
+	 * @param string $name component name
+	 * @param mixed  $value
+	 *
+	 * @return void
+	 *
+	 * @throws ContainerException
+	 */
+	public function set($name, $value)
+	{
+		if (isset($this->active[$name])) {
+			throw new ContainerException("Attempted override of existing component: {$name}");
+		}
+
+		$this->values[$name] = $value;
+
+		while (false !== ($key = array_search($name, $this->alias, true))) {
+			$this->values[$key] = $value;
+		}
+
+		unset(
+			$this->factory[$name],
+			$this->factory_map[$name],
+			$this->alias[$name]
+		);
+	}
+
+	/**
+	 * Register a component as an alias of another registered component.
+	 *
+	 * @param string $alias new component name
+	 * @param string $name  referenced existing component name
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	public function alias($alias, $name)
+	{
+		if (isset($this->values[$alias]) || isset($this->factory[$alias]) || array_key_exists($alias, $this->values)) {
+			throw new InvalidArgumentException("Already defined in container: $alias");
+		}
+
+		$this->alias[$alias] = $name;
+	}
+
+	/**
+	 * Register a configuration function, which will be applied as late as possible, e.g.
+	 * on first use of the component. For example:
+	 *
+	 *     $container->configure('stack', function (MiddlewareStack $stack) {
+	 *         $stack->push(new MoreAwesomeMiddleware());
+	 *     });
+	 *
+	 * The given configuration function should include the configured component as the
+	 * first parameter to the closure, but may include any number of parameters, which
+	 * will be resolved and injected.
+	 *
+	 * The first argument (component name) is optional - that is, the name can be inferred
+	 * from a type-hint on the first parameter of the closure, so the following will work:
+	 *
+	 *     $container->register(PageLayout::class);
+	 *
+	 *     $container->configure(function (PageLayout $layout) {
+	 *         $layout->title = "Welcome";
+	 *     });
+	 *
+	 * In some cases, you may wish to fetch additional dependencies, by using additional
+	 * arguments, and specifying how these should be resolved, e.g. using
+	 * {@see Container::ref()} - for example:
+	 *
+	 *     $container->register("cache", FileCache::class);
+	 *
+	 *     $container->configure(
+	 *         "cache",
+	 *         function (FileCache $cache, $path) {
+	 *             $cache->setPath($path);
+	 *         },
+	 *         ['path' => $container->ref('cache.path')]
+	 *     );
+	 *
+	 * You can also use `configure()` to decorate objects, or manipulate (or replace) values:
+	 *
+	 *     $container->configure('num_kittens', function ($num_kittens) {
+	 *         return $num_kittens + 6; // add another litter
+	 *     });
+	 *
+	 * In other words, if your closure returns something, the component will be replaced.
+	 *
+	 * @param string|callable        $name_or_func component name
+	 *                                             (or callable, if name is left out)
+	 * @param callable|mixed|mixed[] $func_or_map  `function (Type $component, ...) : void`
+	 *                                             (or parameter values, if name is left out)
+	 * @param mixed|mixed[]          $map          mixed list/map of parameter values and/or boxed values
+	 *                                             (or unused, if name is left out)
+	 *
+	 * @return void
+	 *
+	 * @throws ContainerException
+	 */
+	public function configure($name_or_func, $func_or_map = null, $map = [])
+	{
+		if (is_callable($name_or_func)) {
+			$func = $name_or_func;
+			$map = $func_or_map ?: [];
+
+			// no component name supplied, infer it from the closure:
+
+			if ($func instanceof \Closure) {
+				$param = new \ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
+			} else {
+				[$param] = Reflection::createFromCallable($func)->getParameters();
+			}
+
+			$name = Reflection::getParameterType($param); // infer component name from type-hint
+
+			if ($name === null) {
+				throw new ContainerException('No component-name or type-hint specified');
+			}
+		} else {
+			$name = $name_or_func;
+			$func = $func_or_map;
+
+			if ($map === [] || !array_key_exists(0, $map)) {
+				$map[0] = $this->ref($name);
+			}
+		}
+
+		$this->config[$name][] = $func;
+		$this->config_map[$name][] = $map;
+	}
+
+	/**
+	 * Creates a boxed reference to a component with a given name.
+	 *
+	 * You can use this in conjunction with `register()` to provide a component reference
+	 * without expanding that reference until first use - for example:
+	 *
+	 *     $container->register(UserRepo::class, [$container->ref('cache')]);
+	 *
+	 * This will reference the "cache" component and provide it as the first argument to the
+	 * constructor of `UserRepo` - compared with using `$container->get('cache')`, this has
+	 * the advantage of not actually activating the "cache" component until `UserRepo` is
+	 * used for the first time.
+	 *
+	 * Another reason (besides performance) to use references, is to defer the reference:
+	 *
+	 *     $container->register(FileCache::class, ['root_path' => $container->ref('cache.path')]);
+	 *
+	 * In this example, the component "cache.path" will be fetched from the container on
+	 * first use of `FileCache`, giving you a chance to configure "cache.path" later.
+	 *
+	 * @param string $name component name
+	 *
+	 * @return \Closure component reference
+	 */
+	public function ref($name)
+	{
+		if (isset($this->active[$name])) {
+			return $this->values[$name];
+		}
+
+		return function () use ($name) {
+			return $this->get($name);
+		};
+	}
+
+	/**
+	 * Add a packaged configuration (a "provider") to this container.
+	 *
+	 * @see ProviderInterface
+	 *
+	 * @param ProviderInterface $provider
+	 *
+	 * @return void
+	 */
+	public function add(ProviderInterface $provider)
+	{
+		$provider->register($this);
+	}
+
+	public function delete($name)
+	{
+		unset(
+			$this->values[$name],
+			$this->factory[$name],
+			$this->factory_map[$name],
+			$this->alias[$name]
+		);
+	}
+
+	public function __call($name, $arguments)
+	{
+		return $this->get($name);
 	}
 }
