@@ -6,14 +6,27 @@ use Hail\Facade\{
 	Config, Alias, I18N, Request
 };
 
+if (!defined('BASE_PATH')) {
+	throw new \LogicException('Must defined the application base folder');
+}
+
 // System Start Time
 defined('START_TIME') || define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT']);
 
 // Now timestamp
 defined('NOW') || define('NOW', $_SERVER['REQUEST_TIME']);
 
-// Absolute path to the temp folder
+// Absolute path to the hail-framework base folder
+defined('HAIL_PATH') || define('HAIL_PATH', substr(__DIR__, 0, -4));
+
+// Absolute path to the storage folder
 defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage/');
+
+if (__DIR__ !== HAIL_PATH . 'Hail') {
+	throw new \LogicException('HAIL_PATH is set to a wrong directory');
+}
+
+require __DIR__ . '/helpers.php';
 
 /**
  * Class Bootstrap
@@ -40,13 +53,6 @@ class Bootstrap
 
 		if ((ini_get('mbstring.func_overload') & MB_OVERLOAD_STRING) !== 0) {
 			ini_set('mbstring.func_overload', '0');
-		}
-
-		$hailPath = substr(__DIR__, 0, -4);
-		if (!defined('HAIL_PATH')) {
-			define('HAIL_PATH', $hailPath);
-		} elseif (HAIL_PATH !== $hailPath) {
-			exit;
 		}
 
 		Alias::register();
