@@ -5,7 +5,7 @@ use Hail\{
 };
 
 // Absolute path to the system folder
-defined('SYSTEM_PATH') || define('SYSTEM_PATH', __DIR__ . '/');
+defined('BASE_PATH') || define('BASE_PATH', __DIR__ . '/');
 
 if (strpos(__DIR__, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === false) {
 	$forComposer = __DIR__ . '/vendor/autoload.php';

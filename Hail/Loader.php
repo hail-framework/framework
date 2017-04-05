@@ -1,7 +1,7 @@
 <?php
 namespace Hail;
 
-defined('STORAGE_PATH') || define('STORAGE_PATH', SYSTEM_PATH . 'storage/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage/');
 define('HAIL_PATH', substr(__DIR__, 0, -4));
 
 /**
@@ -22,7 +22,7 @@ class Loader
 	 */
 	protected static $prefixes = [
 		'Hail' => HAIL_PATH . 'Hail/', // Hail Framework Classes
-		'App' => SYSTEM_PATH . 'App/', // App Classes
+		'App' => BASE_PATH . 'App/', // App Classes
 		'Psr' => HAIL_PATH . 'Psr/', // Psr Interface
 	];
 

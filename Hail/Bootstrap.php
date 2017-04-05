@@ -13,7 +13,7 @@ defined('START_TIME') || define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT']);
 defined('NOW') || define('NOW', $_SERVER['REQUEST_TIME']);
 
 // Absolute path to the temp folder
-defined('STORAGE_PATH') || define('STORAGE_PATH', SYSTEM_PATH . 'storage/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage/');
 
 /**
  * Class Bootstrap
@@ -106,7 +106,7 @@ class Bootstrap
 		}
 
 		I18N::init(
-			SYSTEM_PATH . 'lang',
+			BASE_PATH . 'lang',
 			Config::get('app.i18n.domain'),
 			$locale
 		);

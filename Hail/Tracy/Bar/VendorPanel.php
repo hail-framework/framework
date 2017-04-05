@@ -22,7 +22,7 @@ class VendorPanel implements PanelInterface
 
 	public function __construct()
 	{
-		$dir = realpath(SYSTEM_PATH);
+		$dir = realpath(BASE_PATH);
 		if (!is_dir($dir)) {
 			$this->error = "Path '$dir' is not a directory.";
 		} elseif (!is_file($dir . DIRECTORY_SEPARATOR . 'composer.lock')) {

@@ -187,7 +187,7 @@ class GitPanel implements PanelInterface
 
 	private function getDirectory()
 	{
-		$dir = realpath(SYSTEM_PATH);
+		$dir = realpath(BASE_PATH);
 		while ($dir !== false && !is_dir($dir . '/.git')) {
 			flush();
 			$currentDir = $dir;

@@ -81,7 +81,7 @@ class Config implements \ArrayAccess
 	/**
 	 * Read config array from cache or file
 	 *
-	 * 优先 {SYSTEM_PATH}/config/{$space}.*，其次 {HAIL_PATH}/config/{$space}.*
+	 * 优先 {BASE_PATH}/config/{$space}.*，其次 {HAIL_PATH}/config/{$space}.*
 	 * $space 为 . 开头，只读取 {HAIL_PATH}/config/{$space}.*
 	 * 扩展名优先 yml > yaml > php
 	 *
@@ -97,8 +97,8 @@ class Config implements \ArrayAccess
 		$check = [];
 
 		$systemConfig = null;
-		if (SYSTEM_PATH !== HAIL_PATH && $space[0] !== '.') {
-			$systemConfig = $this->foundFile(SYSTEM_PATH, $file);
+		if (BASE_PATH !== HAIL_PATH && $space[0] !== '.') {
+			$systemConfig = $this->foundFile(BASE_PATH, $file);
 			if ($systemConfig !== null) {
 				$check[] = $systemConfig;
 			}

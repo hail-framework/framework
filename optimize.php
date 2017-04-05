@@ -41,17 +41,17 @@ echo 'Alias Class Helper Generated', "\n";
 
 foreach (
 	[
-		['App\\Library', SYSTEM_PATH, function ($class) {
+		['App\\Library', BASE_PATH, function ($class) {
 			$ref = new ReflectionClass($class);
 			return $ref->isInstantiable();
 		}],
-		['App\\Model', SYSTEM_PATH, function ($class) {
+		['App\\Model', BASE_PATH, function ($class) {
 			$ref = new ReflectionClass($class);
 			return $ref->isInstantiable();
 		}]
 	] as $v
 ) {
-	list($namespace, $root, $check) = $v;
+	[$namespace, $root, $check] = $v;
 
 	$comment = '/**' . "\n";
 	$dir = $root . str_replace('\\', '/', $namespace);

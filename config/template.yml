@@ -1,2 +1,2 @@
-directory: ${SYSTEM_PATH}App/Views/,
+directory: ${BASE_PATH}App/Views/,
 cache: ${STORAGE_PATH}template/
