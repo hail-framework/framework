@@ -4,7 +4,6 @@
 
 *.iml
 .idea/
-temp/xdebugTrace.xt
 composer.lock
 composer.phar
 /vendor/
