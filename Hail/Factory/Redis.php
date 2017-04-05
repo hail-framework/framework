@@ -42,7 +42,9 @@ class Redis extends Factory
 
 		if ($driver === 'native' || !static::$extension) {
 			return static::$pool[$hash] = new Native($config);
-		} elseif ($driver === 'connectPool' && static::$connectPool) {
+		}
+
+		if ($driver === 'connectPool' && static::$connectPool) {
 			return static::$pool[$hash] = new ConnectPool($config);
 		}
 
