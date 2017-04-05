@@ -70,7 +70,7 @@ class File extends AbstractAdapter
 		}
 		$this->umask = $umask;
 
-		$directory = $params['directory'] ?? TEMP_PATH . 'cache/';
+		$directory = $params['directory'] ?? STORAGE_PATH . 'cache/';
 		if (!$this->createPathIfNeeded($directory)) {
 			throw new \InvalidArgumentException("The directory '$directory' does not exist and could not be created.");
 		}

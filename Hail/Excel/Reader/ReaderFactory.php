@@ -43,7 +43,7 @@ class ReaderFactory
         return $reader;
     }
 
-	public static function open($file, $tempPath = TEMP_PATH . 'excel')
+	public static function open($file, $tempPath = STORAGE_PATH . 'excel')
 	{
 		$type = strtolower(substr($file, strrpos($file, '.') + 1));
 		$reader = self::create($type);

@@ -649,7 +649,7 @@ class Debugger
 	public static function getTrace(): Bar\TracePanel
 	{
 		return static::$trace ?? (static::$trace = new Bar\TracePanel(
-				TEMP_PATH . 'xdebugTrace.xt'
+				STORAGE_PATH . 'xdebugTrace.xt'
 			));
 	}
 }

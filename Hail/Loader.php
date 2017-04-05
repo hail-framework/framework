@@ -1,7 +1,7 @@
 <?php
 namespace Hail;
 
-defined('TEMP_PATH') || define('TEMP_PATH', SYSTEM_PATH . 'temp/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', SYSTEM_PATH . 'storage/');
 define('HAIL_PATH', substr(__DIR__, 0, -4));
 
 /**
@@ -9,7 +9,7 @@ define('HAIL_PATH', substr(__DIR__, 0, -4));
  */
 class Loader
 {
-	protected static $mapFile = TEMP_PATH . 'runtime/map.autoload.php';
+	protected static $mapFile = STORAGE_PATH . 'runtime/map.autoload.php';
 	protected static $classesMap;
 
 	protected static $registered = false;

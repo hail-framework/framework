@@ -13,7 +13,7 @@ defined('START_TIME') || define('START_TIME', $_SERVER['REQUEST_TIME_FLOAT']);
 defined('NOW') || define('NOW', $_SERVER['REQUEST_TIME']);
 
 // Absolute path to the temp folder
-defined('TEMP_PATH') || define('TEMP_PATH', SYSTEM_PATH . 'temp/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', SYSTEM_PATH . 'storage/');
 
 /**
  * Class Bootstrap
@@ -63,7 +63,7 @@ class Bootstrap
 
 		Debugger::enable(
 			$debugMode,
-			TEMP_PATH . 'log/'
+			STORAGE_PATH . 'log/'
 		);
 
 		static::i18n();

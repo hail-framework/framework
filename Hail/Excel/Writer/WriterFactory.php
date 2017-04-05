@@ -54,14 +54,14 @@ class WriterFactory
 	    return $writer;
     }
 
-	public static function browser($file, $tempPath = TEMP_PATH . 'excel')
+	public static function browser($file, $tempPath = STORAGE_PATH . 'excel')
 	{
 		$writer = self::auto($file, $tempPath);
 		$writer->openToBrowser($file);
 		return $writer;
 	}
 
-	public static function file($file, $tempPath = TEMP_PATH . 'excel')
+	public static function file($file, $tempPath = STORAGE_PATH . 'excel')
 	{
 		$writer = self::auto($file, $tempPath);
 		$writer->openToFile($file);

@@ -164,8 +164,10 @@ class Config implements \ArrayAccess
 	 */
 	protected function loadYaml($file)
 	{
-		$dir = TEMP_PATH . 'runtime/yaml/';
-		$cache = $dir . md5($file) . '.php';
+		$finename = basename($file);
+		$dir = STORAGE_PATH . 'runtime/yaml/';
+
+		$cache = $dir . str_replace(strrchr($finename, '.'), '.php', $finename);
 
 		if (@filemtime($cache) < filemtime($file)) {
 			$content = Yaml::parse(file_get_contents($file));

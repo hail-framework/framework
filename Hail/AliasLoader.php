@@ -86,7 +86,7 @@ class AliasLoader
 	 */
 	protected function ensureFacadeExists($alias): string
 	{
-		if (file_exists($path = TEMP_PATH . 'facade/' . str_replace('\\', '/', $alias) . '.php')) {
+		if (file_exists($path = STORAGE_PATH . 'runtime/facade/' . str_replace('\\', '/', $alias) . '.php')) {
 			return $path;
 		}
 
