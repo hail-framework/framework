@@ -13,7 +13,7 @@ use Hail\Container\Exception\{
 /**
  * This class implements a simple dependency injection container.
  */
-class Container implements ContainerInterface, FactoryInterface
+class Container implements ContainerInterface
 {
 	use ArrayTrait;
 
@@ -57,9 +57,8 @@ class Container implements ContainerInterface, FactoryInterface
 		$this->values = [
 			'di' => $this,
 			'container' => $this,
-			__CLASS__ => $this,
-			ContainerInterface::class => $this,
-			FactoryInterface::class => $this,
+			static::class => $this,
+			ContainerInterface::class => $this
 		];
 	}
 
@@ -75,11 +74,10 @@ class Container implements ContainerInterface, FactoryInterface
 	 */
 	public function get($name)
 	{
-		if (isset($this->active[$name])) {
-			return $this->values[$name];
-		}
-
 		switch (true) {
+			case isset($this->active[$name]):
+				return $this->values[$name];
+
 			case array_key_exists($name, $this->values):
 				break;
 
@@ -559,20 +557,6 @@ class Container implements ContainerInterface, FactoryInterface
 		return function () use ($name) {
 			return $this->get($name);
 		};
-	}
-
-	/**
-	 * Add a packaged configuration (a "provider") to this container.
-	 *
-	 * @see ProviderInterface
-	 *
-	 * @param ProviderInterface $provider
-	 *
-	 * @return void
-	 */
-	public function add(ProviderInterface $provider)
-	{
-		$provider->register($this);
 	}
 
 	public function delete($name)

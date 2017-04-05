@@ -46,7 +46,7 @@ abstract class Reflection
 			return new ReflectionFunction($callback);
 		}
 
-		throw new InvalidArgumentException("unexpected value: " . var_export($callback, true) . " - expected callable");
+		throw new InvalidArgumentException('Unexpected value: ' . var_export($callback, true) . ' - expected callable');
 	}
 
 	/**
