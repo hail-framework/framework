@@ -17,7 +17,8 @@ use Hail\Http\Factory;
 /**
  * @author Hao Feng <flyinghail@msn.com>
  */
-class RequestFactory implements RequestFactoryInterface,
+class MessageFactory implements
+	RequestFactoryInterface,
 	ResponseFactoryInterface,
 	ServerRequestFactoryInterface,
 	StreamFactoryInterface,
