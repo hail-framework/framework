@@ -40,14 +40,15 @@ final class ConsoleEvents
     const TERMINATE = 'console.terminate';
 
     /**
-     * The EXCEPTION event occurs when an uncaught exception appears.
+     * The ERROR event occurs when an uncaught exception appears or
+     * a throwable error.
      *
-     * This event allows you to deal with the exception or
+     * This event allows you to deal with the exception/error or
      * to modify the thrown exception.
      *
-     * @Event("Hail\Console\Event\ConsoleExceptionEvent")
+     * @Event("Hail\Console\Event\ConsoleErrorEvent")
      *
      * @var string
      */
-    const EXCEPTION = 'console.exception';
+    const ERROR = 'console.error';
 }

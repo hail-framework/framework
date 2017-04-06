@@ -27,7 +27,7 @@ class ConsoleEvent extends Event
     /**
      * Gets the command that is executed.
      *
-     * @return Command A Command instance
+     * @return Command|null A Command instance
      */
     public function getCommand(): Command
     {

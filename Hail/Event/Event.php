@@ -61,22 +61,22 @@ class Event implements EventInterface, \ArrayAccess, \IteratorAggregate
 	/**
 	 * Constructor
 	 *
-	 * @param  string             $eventName  event name
-	 * @param  array              $parameters (optional) event parameters
-	 * @param  string|object|null $target     event context, object or classname
+	 * @param  string             $eventName event name
+	 * @param  array              $params    (optional) event parameters
+	 * @param  string|object|null $target    event context, object or classname
 	 *
 	 * @access public
 	 * @api
 	 */
 	public function __construct(
 		string $eventName,
-		array $parameters = [],
+		array $params = [],
 		$target = null
 	)
 	{
 		$this->setName($eventName);
 		$this->setTarget($target);
-		$this->setParams($parameters);
+		$this->setParams($params);
 	}
 
 	/**
