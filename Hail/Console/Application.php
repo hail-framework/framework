@@ -122,52 +122,52 @@ class Application
 
 		$this->configureIO($input, $output);
 
-        try {
-            $e = null;
-            $exitCode = $this->doRun($input, $output);
-        } catch (\Exception $e) {
-            $exception = $e;
-        } catch (\Throwable $e) {
-            $exception = new FatalThrowableError($e);
-        }
+		try {
+			$e = null;
+			$exitCode = $this->doRun($input, $output);
+		} catch (\Exception $e) {
+			$exception = $e;
+		} catch (\Throwable $e) {
+			$exception = new FatalThrowableError($e);
+		}
 
-        if (null !== $e) {
-        	$eventParams = [
-		        'command' => $this->runningCommand,
-		        'input' => $input,
-		        'output' => $output,
-		        'exitCode' => $e->getCode()
-	        ];
-            $event = new ConsoleErrorEvent(ConsoleEvents::ERROR, $eventParams + ['error' => $e]);
-            Event::trigger($event);
+		if (null !== $e) {
+			$eventParams = [
+				'command' => $this->runningCommand,
+				'input' => $input,
+				'output' => $output,
+				'exitCode' => $e->getCode(),
+			];
+			$event = new ConsoleErrorEvent(ConsoleEvents::ERROR, $eventParams + ['error' => $e]);
+			Event::trigger($event);
 
-            $e = $event->getError();
+			$e = $event->getError();
 
-            if ($event->isErrorHandled()) {
-                $e = null;
-                $exitCode = 0;
-            } else {
-                if (!$e instanceof \Exception) {
-                    throw $e;
-                }
-                $exitCode = $e->getCode();
-            }
+			if ($event->isErrorHandled()) {
+				$e = null;
+				$exitCode = 0;
+			} else {
+				if (!$e instanceof \Exception) {
+					throw $e;
+				}
+				$exitCode = $e->getCode();
+			}
 
-            $eventParams['exitCode'] = $exitCode;
-	        Event::trigger(
-		        new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams)
-	        );
-        }
+			$eventParams['exitCode'] = $exitCode;
+			Event::trigger(
+				new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams)
+			);
+		}
 
-        if (null !== $e) {
+		if (null !== $e) {
 			if (!$this->catchExceptions) {
 				throw $e;
 			}
 
 			if ($output instanceof ConsoleOutputInterface) {
-                $this->renderException($exception, $output->getErrorOutput());
+				$this->renderException($exception, $output->getErrorOutput());
 			} else {
-                $this->renderException($exception, $output);
+				$this->renderException($exception, $output);
 			}
 
 			$exitCode = $e->getCode();
@@ -705,16 +705,16 @@ class Application
 			}
 
 			$messages = [];
-            $messages[] = $emptyLine = sprintf('<error>%s</error>', str_repeat(' ', $len));
-            $messages[] = sprintf('<error>%s%s</error>', $title, str_repeat(' ', max(0, $len - $this->stringWidth($title))));
+			$messages[] = $emptyLine = sprintf('<error>%s</error>', str_repeat(' ', $len));
+			$messages[] = sprintf('<error>%s%s</error>', $title, str_repeat(' ', max(0, $len - $this->stringWidth($title))));
 
 			foreach ($lines as $line) {
-                $messages[] = sprintf('<error>  %s  %s</error>', OutputFormatter::escape($line[0]), str_repeat(' ', $len - $line[1]));
+				$messages[] = sprintf('<error>  %s  %s</error>', OutputFormatter::escape($line[0]), str_repeat(' ', $len - $line[1]));
 			}
 			$messages[] = $emptyLine;
 			$messages[] = '';
 
-            $output->writeln($messages, OutputInterface::VERBOSITY_QUIET);
+			$output->writeln($messages, OutputInterface::VERBOSITY_QUIET);
 
 			if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
 				$output->writeln('<comment>Exception trace:</comment>', OutputInterface::VERBOSITY_QUIET);
@@ -889,12 +889,9 @@ class Application
 			// ignore invalid options/arguments for now, to allow the event listeners to customize the InputDefinition
 		}
 
-
-
-		$eventParams = compact('command', 'input', 'output');
+		$eventParams = ['command' => $command, 'input' => $input, 'output' => $output];
 		$event = new ConsoleCommandEvent(ConsoleEvents::COMMAND, $eventParams);
 		Event::trigger($event);
-
 
 		if ($event->commandShouldRun()) {
 			$exitCode = $command->run($input, $output);
@@ -902,8 +899,7 @@ class Application
 			$exitCode = ConsoleCommandEvent::RETURN_CODE_DISABLED;
 		}
 
-		$eventParams['exitCode'] = $exitCode;
-		$event = new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams);
+		$event = new ConsoleTerminateEvent(ConsoleEvents::TERMINATE, $eventParams + ['exitCode' => $exitCode]);
 		Event::trigger($event);
 
 		return $event->getExitCode();
@@ -1044,7 +1040,7 @@ class Application
 		$alternatives = array_filter($alternatives, function ($lev) use ($threshold) {
 			return $lev < 2 * $threshold;
 		});
-        ksort($alternatives, SORT_NATURAL | SORT_FLAG_CASE);
+		ksort($alternatives, SORT_NATURAL | SORT_FLAG_CASE);
 
 		return array_keys($alternatives);
 	}
