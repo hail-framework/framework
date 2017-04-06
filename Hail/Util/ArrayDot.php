@@ -51,9 +51,13 @@ class ArrayDot implements \ArrayAccess, \Countable, \IteratorAggregate
 	{
 		if ($key === null) {
 			return $this->items;
-		} elseif (isset($this->items[$key])) {
+		}
+
+		if (isset($this->items[$key])) {
 			return $this->items[$key];
-		} elseif (isset($this->cache[$key])) {
+		}
+
+		if (isset($this->cache[$key])) {
 			return $this->cache[$key];
 		}
 
@@ -163,7 +167,7 @@ class ArrayDot implements \ArrayAccess, \Countable, \IteratorAggregate
 			}
 		}
 
-		return call_user_func_array('array_merge', $results);
+		return array_merge(...$results);
 	}
 
 	/**

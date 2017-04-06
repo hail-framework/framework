@@ -30,7 +30,7 @@ class Container implements ContainerInterface
 	/**
 	 * @var array map where component name => mixed list/map of parameter names
 	 */
-	protected $factory_map = [];
+	protected $factoryMap = [];
 
 	/**
 	 * @var callable[][] map where component name => list of configuration functions
@@ -40,7 +40,7 @@ class Container implements ContainerInterface
 	/**
 	 * @var array[][] map where component name => mixed list/map of parameter names
 	 */
-	protected $config_map = [];
+	protected $configMap = [];
 
 	/**
 	 * @var bool[] map where component name => TRUE, if the component has been initialized
@@ -54,12 +54,17 @@ class Container implements ContainerInterface
 
 	public function __construct()
 	{
-		$this->values = [
+		$this->values += [
 			'di' => $this,
 			'container' => $this,
+			__CLASS__ => $this,
 			static::class => $this,
 			ContainerInterface::class => $this
 		];
+
+		foreach ($this->values as $k => $v) {
+			$this->active[$k] = true;
+		}
 	}
 
 	/**
@@ -78,6 +83,9 @@ class Container implements ContainerInterface
 			case isset($this->active[$name]):
 				return $this->values[$name];
 
+			case isset($this->values[$name]):
+				break;
+
 			case array_key_exists($name, $this->values):
 				break;
 
@@ -90,12 +98,12 @@ class Container implements ContainerInterface
 				$factory = $this->factory[$name];
 
 				if (is_string($factory)) {
-					$this->values[$name] = $this->create($factory, $this->factory_map[$name]);
+					$this->values[$name] = $this->create($factory, $this->factoryMap[$name]);
 				} else {
 					$reflection = new \ReflectionFunction($factory);
 
 					if (($params = $reflection->getParameters()) !== []) {
-						$params = $this->resolve($params, $this->factory_map[$name]);
+						$params = $this->resolve($params, $this->factoryMap[$name]);
 					}
 
 					$this->values[$name] = $factory(...$params);
@@ -107,7 +115,24 @@ class Container implements ContainerInterface
 		}
 
 		$this->active[$name] = true;
-		$this->initialize($name);
+
+		if (isset($this->config[$name])) {
+			foreach ($this->config[$name] as $index => $config) {
+				$map = $this->configMap[$name][$index];
+
+				$reflection = Reflection::createFromCallable($config);
+
+				if (($params = $reflection->getParameters()) !== []) {
+					$params = $this->resolve($params, $map);
+				}
+
+				$value = $config(...$params);
+
+				if ($value !== null) {
+					$this->values[$name] = $value;
+				}
+			}
+		}
 
 		return $this->values[$name];
 	}
@@ -149,7 +174,7 @@ class Container implements ContainerInterface
 	 *
 	 * @return mixed return value from the given callable
 	 */
-	public function call($callback, $map = [])
+	public function call(callable $callback, array $map = [])
 	{
 		$params = Reflection::createFromCallable($callback)->getParameters();
 		if ($params !== []) {
@@ -165,20 +190,24 @@ class Container implements ContainerInterface
 	 * The container will internally resolve and inject any constructor arguments
 	 * not explicitly provided in the (optional) second parameter.
 	 *
-	 * @param string        $class_name fully-qualified class-name
+	 * @param string        $class fully-qualified class-name
 	 * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
 	 *
 	 * @return mixed
 	 *
 	 * @throws ContainerException
 	 */
-	public function create($class_name, $map = [])
+	public function create($class, $map = [])
 	{
-		if (!class_exists($class_name)) {
-			throw new ContainerException("unable to create component: {$class_name}");
+		if (!class_exists($class)) {
+			throw new ContainerException("unable to create component: {$class}");
 		}
 
-		$reflection = new \ReflectionClass($class_name);
+		if (method_exists($class, 'getInstance')) {
+			return $class::getInstance();
+		}
+
+		$reflection = new \ReflectionClass($class);
 
 		if (!$reflection->isInstantiable()) {
 			throw new ContainerException("unable to create instance of abstract class: {$class_name}");
@@ -281,38 +310,6 @@ class Container implements ContainerInterface
 	}
 
 	/**
-	 * Internally initialize an active component.
-	 *
-	 * @param string $name component name
-	 *
-	 * @return void
-	 *
-	 * @throws ContainerException
-	 */
-	private function initialize($name)
-	{
-		if (!isset($this->config[$name])) {
-			return;
-		}
-
-		foreach ($this->config[$name] as $index => $config) {
-			$map = $this->config_map[$name][$index];
-
-			$reflection = Reflection::createFromCallable($config);
-
-			if (($params = $reflection->getParameters()) !== []) {
-				$params = $this->resolve($params, $map);
-			}
-
-			$value = $config(...$params);
-
-			if ($value !== null) {
-				$this->values[$name] = $value;
-			}
-		}
-	}
-
-	/**
 	 * Register a component for dependency injection.
 	 *
 	 * There are numerous valid ways to register components.
@@ -386,7 +383,7 @@ class Container implements ContainerInterface
 		}
 
 		$this->factory[$name] = $func;
-		$this->factory_map[$name] = $map;
+		$this->factoryMap[$name] = $map;
 
 		unset($this->values[$name]);
 	}
@@ -412,7 +409,7 @@ class Container implements ContainerInterface
 
 		unset(
 			$this->factory[$name],
-			$this->factory_map[$name],
+			$this->factoryMap[$name],
 			$this->alias[$name]
 		);
 	}
@@ -503,7 +500,7 @@ class Container implements ContainerInterface
 			if ($func instanceof \Closure) {
 				$param = new \ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
 			} else {
-				[$param] = Reflection::createFromCallable($func)->getParameters();
+				$param = Reflection::createFromCallable($func)->getParameters()[0];
 			}
 
 			$name = Reflection::getParameterType($param); // infer component name from type-hint
@@ -520,8 +517,12 @@ class Container implements ContainerInterface
 			}
 		}
 
+		if (isset($this->active[$name])) {
+			throw new ContainerException('Component already initialized');
+		}
+
 		$this->config[$name][] = $func;
-		$this->config_map[$name][] = $map;
+		$this->configMap[$name][] = $map;
 	}
 
 	/**
@@ -564,7 +565,7 @@ class Container implements ContainerInterface
 		unset(
 			$this->values[$name],
 			$this->factory[$name],
-			$this->factory_map[$name],
+			$this->factoryMap[$name],
 			$this->alias[$name]
 		);
 	}

@@ -34,7 +34,9 @@ class ObjectFactory implements \ArrayAccess
 			$class = $this->namespace . ucfirst($key);
 			if (method_exists($class, 'getInstance')) {
 				return $this->set($key, $class::getInstance());
-			} elseif (!class_exists($class)) {
+			}
+
+			if (!class_exists($class)) {
 				throw new \LogicException("Class $class Not Defined");
 			}
 

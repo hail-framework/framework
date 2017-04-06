@@ -20,7 +20,8 @@ defined('NOW') || define('NOW', $_SERVER['REQUEST_TIME']);
 defined('HAIL_PATH') || define('HAIL_PATH', substr(__DIR__, 0, -4));
 
 // Absolute path to the storage folder
-defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage' . DIRECTORY_SEPARATOR);
+defined('RUNTIME_PATH') || define('RUNTIME_PATH', STORAGE_PATH . 'runtime' . DIRECTORY_SEPARATOR);
 
 if (__DIR__ !== HAIL_PATH . 'Hail') {
 	throw new \LogicException('HAIL_PATH is set to a wrong directory');

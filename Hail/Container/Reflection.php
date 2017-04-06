@@ -24,29 +24,25 @@ abstract class Reflection
 	/**
 	 * Create a Reflection of the function references by any type of callable (or object implementing `__invoke()`)
 	 *
-	 * @param callable|object $callback
+	 * @param callable $callback
 	 *
 	 * @return ReflectionFunctionAbstract
 	 */
-	public static function createFromCallable($callback)
+	public static function createFromCallable(callable $callback)
 	{
-		if ($callback instanceof Closure) {
-			return new ReflectionFunction($callback);
-		}
+		switch (true) {
+			case $callback instanceof Closure:
+				return new ReflectionFunction($callback);
 
-		if (is_object($callback) && method_exists($callback, '__invoke')) {
-			return new ReflectionMethod($callback, '__invoke');
-		}
+			case is_object($callback):
+				return new ReflectionMethod($callback, '__invoke');
 
-		if (is_callable($callback)) {
-			if (is_array($callback)) {
+			case is_array($callback):
 				return new ReflectionMethod($callback[0], $callback[1]);
-			}
 
-			return new ReflectionFunction($callback);
+			default:
+				return new ReflectionFunction($callback);
 		}
-
-		throw new InvalidArgumentException('Unexpected value: ' . var_export($callback, true) . ' - expected callable');
 	}
 
 	/**

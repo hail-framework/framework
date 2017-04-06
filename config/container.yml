@@ -1,0 +1,26 @@
+parameters:
+  # ...
+
+services:
+  config:
+    class: Hail\Config
+
+  acl:
+    class: Hail\Acl
+
+  alias:
+    class: Hail\AliasLoader
+    arguments:
+      - CONFIG.alias
+
+  app:
+    class: Hail\Application
+
+  arrays:
+    class: Hail\Util\Arrays
+
+  browser:
+    class: Hail\Browser
+
+
+

@@ -55,7 +55,9 @@ class AliasLoader
 	{
 		if (strpos($alias, static::$facadeNamespace) === 0) {
 			return $this->loadFacade($alias);
-		} elseif (isset($this->aliases[$alias])) {
+		}
+
+		if (isset($this->aliases[$alias])) {
 			return class_alias($this->aliases[$alias], $alias);
 		}
 
@@ -86,7 +88,7 @@ class AliasLoader
 	 */
 	protected function ensureFacadeExists($alias): string
 	{
-		if (file_exists($path = STORAGE_PATH . 'runtime/facade/' . str_replace('\\', '/', $alias) . '.php')) {
+		if (file_exists($path = RUNTIME_PATH . 'facade/' . str_replace('\\', '/', $alias) . '.php')) {
 			return $path;
 		}
 

@@ -96,11 +96,11 @@ class Config implements \ArrayAccess
 		$hailConfig = $this->foundFile(HAIL_PATH, $file);
 		$check = [];
 
-		$systemConfig = null;
+		$baseConfig = null;
 		if (BASE_PATH !== HAIL_PATH && $space[0] !== '.') {
-			$systemConfig = $this->foundFile(BASE_PATH, $file);
-			if ($systemConfig !== null) {
-				$check[] = $systemConfig;
+			$baseConfig = $this->foundFile(BASE_PATH, $file);
+			if ($baseConfig !== null) {
+				$check[] = $baseConfig;
 			}
 		}
 
@@ -116,7 +116,7 @@ class Config implements \ArrayAccess
 			return $config;
 		}
 
-		$config = $this->loadFromFile($systemConfig) +
+		$config = $this->loadFromFile($baseConfig) +
 			$this->loadFromFile($hailConfig);
 
 		static::optimizeSet($space, $config, $check);
@@ -165,7 +165,7 @@ class Config implements \ArrayAccess
 	protected function loadYaml($file)
 	{
 		$finename = basename($file);
-		$dir = STORAGE_PATH . 'runtime/yaml/';
+		$dir = RUNTIME_PATH . 'yaml/';
 
 		$cache = $dir . str_replace(strrchr($finename, '.'), '.php', $finename);
 

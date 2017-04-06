@@ -8,11 +8,8 @@ if (strpos(__DIR__, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === fa
 	echo 'Please use "composer dump-autoload --optimize" to optimize autoload performance.', "\n";
 }
 
-DI::buildMap();
-echo 'DI Map Generated', "\n";
-
-Alias::buildMap();
-echo 'Alias Map Generated', "\n";
+(new Hail\Container\Compiler())->compile();
+echo 'Container Generated', "\n";
 
 $helperDir = __DIR__ . '/helper/';
 if (!is_dir($helperDir)) {

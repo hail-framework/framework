@@ -1,7 +1,8 @@
 <?php
 namespace Hail;
 
-defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage/');
+defined('STORAGE_PATH') || define('STORAGE_PATH', BASE_PATH . 'storage' . DIRECTORY_SEPARATOR);
+defined('RUNTIME_PATH') || define('RUNTIME_PATH', STORAGE_PATH . 'runtime' . DIRECTORY_SEPARATOR);
 define('HAIL_PATH', substr(__DIR__, 0, -4));
 
 /**
@@ -9,7 +10,7 @@ define('HAIL_PATH', substr(__DIR__, 0, -4));
  */
 class Loader
 {
-	protected static $mapFile = STORAGE_PATH . 'runtime/map.autoload.php';
+	protected static $mapFile = RUNTIME_PATH . 'map.autoload.php';
 	protected static $classesMap;
 
 	protected static $registered = false;
