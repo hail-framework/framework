@@ -22,5 +22,93 @@ services:
   browser:
     class: Hail\Browser
 
+  cache:
+    factory: Hail\Factory\Cache::simple
 
+  cachePool:
+    factory: Hail\Factory\Cache::pool
 
+  cdb:
+    class: Hail\Database\Cache
+
+  cookie:
+    class: Hail\Cookie
+    arguments:
+      - CONFIG.cookie
+
+  crypto:
+    class: Hail\Util\Crypto
+    arguments:
+      - CONFIG.crypto.format
+
+  db:
+    factory: Hail\Factory\Database::pdo
+
+  debugger:
+    class: Hail\Tracy\Debugger
+
+  event:
+    class: Hail\Event\EventManager
+
+  generators:
+    class: Hail\Util\Generators
+
+  i18n:
+    class: Hail\I18N\I18N
+
+  inflector:
+    class: Hail\Util\Inflector
+
+  json:
+    class: Hail\Util\Json
+
+  lib:
+    class: Hail\Util\ObjectFactory
+    arguments:
+      - App\Library
+    classRef: false
+
+  model:
+    class: Hail\Util\ObjectFactory
+    arguments:
+      - App\Model
+    classRef: false
+
+  output:
+    class: Hail\Output
+
+  request:
+    factory: Hail\Factory\Request::fromGlobal
+
+  response:
+    class: Hail\Http\Response
+
+  router:
+    class: Hail\Router
+    arguments:
+      - CONFIG.route
+
+  serialize:
+    class: Hail\Util\Serialize
+    arguments:
+      - CONFIG.env.serialize
+
+  session:
+    class: Hail\Session
+    arguments:
+      - CONFIG.session
+      - CONFIG.cookie
+
+  storage:
+    factory: Hail\Factory\Storage::mount
+
+  strings:
+    class: Hail\Util\Strings
+
+  template:
+    class: Hail\Latte\Engine
+    arguments:
+      - CONFIG.template
+
+  validator:
+    class: Hail\Util\Validator

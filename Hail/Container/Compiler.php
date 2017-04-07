@@ -72,9 +72,17 @@ class Compiler
 			if (is_string($v) && $v[0] === '@') {
 				$this->points[$k] = $this->methodName($k);
 				$this->toMethod($k, $this->parseStr($v));
+
+				continue;
 			}
 
 			if (!is_array($v)) {
+				continue;
+			}
+
+			if (isset($v['alias'])) {
+				$this->points[$k] = $this->methodName($k);
+				$this->toMethod($k, $this->parseRef($v['alias']));
 				continue;
 			}
 
@@ -90,9 +98,13 @@ class Compiler
 
 			$class = $v['class'] ?? $k;
 
-			if ($k !== $class) {
-				$this->points[$k] = $this->methodName($k);
-				$this->toMethod($k, $this->parseRef($class));
+			$classRef = $v['classRef'] ?? true;
+
+			if ($classRef) {
+				if ($k !== $class) {
+					$this->points[$k] = $this->methodName($k);
+					$this->toMethod($k, $this->parseRef($class));
+				}
 			}
 
 			$this->points[$class] = $this->methodName($class);

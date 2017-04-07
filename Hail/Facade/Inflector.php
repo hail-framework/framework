@@ -23,9 +23,4 @@ namespace Hail\Facade;
 class Inflector extends Facade
 {
 	protected static $alias = \Hail\Util\Inflector::class;
-
-	protected static function instance()
-	{
-		return new static::$alias;
-	}
 }

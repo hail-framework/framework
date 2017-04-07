@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Util\ObjectFactory;
-
 /**
  * Class Library
  *
@@ -17,9 +15,4 @@ use Hail\Util\ObjectFactory;
 class Library extends Facade
 {
 	protected static $name = 'lib';
-
-	protected static function instance()
-	{
-		return new ObjectFactory('App\\Library');
-	}
 }

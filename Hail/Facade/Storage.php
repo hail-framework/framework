@@ -1,7 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Factory\Storage as StorageFactory;
 use Hail\Filesystem\{
 	MountManager,
 	AdapterInterface,
@@ -52,8 +51,4 @@ use Hail\Filesystem\{
  */
 class Storage extends Facade
 {
-	protected static function instance()
-	{
-		return StorageFactory::mount();
-	}
 }

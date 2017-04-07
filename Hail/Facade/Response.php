@@ -24,8 +24,4 @@ use Hail\Http;
  */
 class Response extends Facade
 {
-	protected static function instance()
-	{
-		return new Http\Response();
-	}
 }

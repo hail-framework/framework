@@ -1,7 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-
 /**
  * Class Acl
  *
@@ -9,8 +8,5 @@ namespace Hail\Facade;
  */
 class Acl extends Facade
 {
-	protected static function instance()
-	{
-		return new \Hail\Acl();
-	}
+
 }

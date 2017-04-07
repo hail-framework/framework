@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\AliasLoader;
-
 /**
  * Class Alias
  *
@@ -15,10 +13,4 @@ use Hail\AliasLoader;
  */
 class Alias extends Facade
 {
-	protected static function instance()
-	{
-		return new AliasLoader(
-			Config::get('alias')
-		);
-	}
 }

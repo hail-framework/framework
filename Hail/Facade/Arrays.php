@@ -16,9 +16,4 @@ use Hail\Util\ArrayDot;
 class Arrays extends Facade
 {
 	protected static $alias = \Hail\Util\Arrays::class;
-
-	protected static function instance()
-	{
-		return new static::$alias;
-	}
 }

@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Factory\Database;
-
 /**
  * Class DB
  *
@@ -33,8 +31,4 @@ use Hail\Factory\Database;
  */
 class DB extends Facade
 {
-	protected static function instance()
-	{
-		return Database::pdo();
-	}
 }

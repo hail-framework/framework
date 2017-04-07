@@ -2,6 +2,7 @@
 namespace Hail\Facade;
 
 use Hail;
+
 /**
  * Class Output
  *
@@ -17,8 +18,4 @@ use Hail;
  */
 class Output extends Facade
 {
-	protected static function instance()
-	{
-		return new Hail\Output();
-	}
 }

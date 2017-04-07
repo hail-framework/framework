@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Container\Container;
-
 /**
  * Class DI
  *
@@ -17,42 +15,4 @@ use Hail\Container\Container;
  */
 class DI extends Facade
 {
-	protected static function instance()
-	{
-		$file = Config::get('.hail.map.di');
-		if (file_exists($file)) {
-			$set = include $file;
-		} else {
-			$set = self::getConfig();
-		}
-
-		return new Container($set);
-	}
-
-	private static function getConfig()
-	{
-		$set = [];
-		foreach (scandir(__DIR__) as $file) {
-			if (in_array($file, ['.', '..', 'Facade.php', 'DI.php'], true)) {
-				continue;
-			}
-
-			/** @var Facade $class */
-			$class = '\\Hail\\Facade\\' . pathinfo($file, PATHINFO_FILENAME);
-			if ($class::inDI()) {
-				$set[$class::getName()] = $class;
-			}
-		}
-
-		return $set;
-	}
-
-	public static function buildMap()
-	{
-		$set = self::getConfig();
-		file_put_contents(
-			Config::get('.hail.map.di'),
-			'<?php return ' . var_export($set, true) . ';'
-		);
-	}
 }

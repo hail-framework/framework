@@ -18,10 +18,4 @@ namespace Hail\Facade;
  */
 class Serialize extends Facade
 {
-	protected static function instance()
-	{
-		return new \Hail\Util\Serialize(
-			Config::get('env.serialize')
-		);
-	}
 }

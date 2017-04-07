@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Factory\Cache as CacheFactory;
-
 /**
  * Class Cache
  *
@@ -22,8 +20,4 @@ use Hail\Factory\Cache as CacheFactory;
  */
 class Cache extends Facade
 {
-	protected static function instance()
-	{
-		return CacheFactory::simple();
-	}
 }

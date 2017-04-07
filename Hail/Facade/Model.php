@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail\Util\ObjectFactory;
-
 /**
  * Class Model
  *
@@ -16,8 +14,4 @@ use Hail\Util\ObjectFactory;
  */
 class Model extends Facade
 {
-	protected static function instance()
-	{
-		return new ObjectFactory('App\\Model');
-	}
 }

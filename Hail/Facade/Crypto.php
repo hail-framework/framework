@@ -31,10 +31,4 @@ namespace Hail\Facade;
  */
 class Crypto extends Facade
 {
-	protected static function instance()
-	{
-		return new \Hail\Util\Crypto(
-			Config::get('crypto.format')
-		);
-	}
 }

@@ -1,19 +1,30 @@
 <?php
+
 namespace Hail\Facade;
+
+use Psr\Container\ContainerInterface;
 
 /**
  * Class Facade
+ *
  * @package Hail\Facade
  * @author  Hao Feng <flyinghail@msn.com>
  */
 abstract class Facade
 {
 	/**
-	 * Class alias name
+	 * Class alias name in container
 	 *
 	 * @var string
 	 */
-	protected static $name = '';
+	protected static $name;
+
+	/**
+	 * Call static method
+	 *
+	 * @var string
+	 */
+	protected static $alias;
 
 	/**
 	 * The resolved object instances.
@@ -23,13 +34,11 @@ abstract class Facade
 	protected static $instances;
 
 	/**
-	 * @var string
+	 * @var ContainerInterface
 	 */
-	protected static $alias;
-
 	protected static $container;
 
-	public static function setContainer($container)
+	public static function setContainer(ContainerInterface $container)
 	{
 		static::$container = $container;
 	}
@@ -41,13 +50,12 @@ abstract class Facade
 	 */
 	public static function getInstance()
 	{
-		$name = static::class;
-
-		if (!isset(static::$instances[$name])) {
-			static::$instances[$name] = static::$container->get($name);
+		if (!isset(static::$instances[static::class])) {
+			static::$instances[static::class] =
+				static::$container->get(static::getName());
 		}
 
-		return static::$instances[$name];
+		return static::$instances[static::class];
 	}
 
 	/**
@@ -69,36 +77,8 @@ abstract class Facade
 		return $instance->$method(...$args);
 	}
 
-	/**
-	 * 由子类定义获取实例的具体实现
-	 *
-	 * @return object|null
-	 */
-	abstract protected static function instance();
-
 	public static function getName()
 	{
-		if (static::$name !== '') {
-			return static::$name;
-		}
-
-		return strtolower(self::getClass());
-	}
-
-	public static function getClass()
-	{
-		$name = static::class;
-
-		return substr($name, strrpos($name, '\\') + 1);
-	}
-
-	public static function inDI()
-	{
-		return static::$inDI;
-	}
-
-	public static function alias()
-	{
-		return static::$alias ?? static::class;
+		return static::$name ?? strtolower(substr(static::class, strrpos(static::class, '\\') + 1));
 	}
 }

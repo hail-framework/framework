@@ -18,9 +18,4 @@ use Hail\Database;
 class CachedDB extends Facade
 {
 	protected static $name = 'cdb';
-
-	protected static function instance()
-	{
-		return new Database\Cache();
-	}
 }

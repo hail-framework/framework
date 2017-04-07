@@ -1,8 +1,6 @@
 <?php
 namespace Hail\Facade;
 
-use Hail;
-
 /**
  * Class I18N
  *
@@ -16,8 +14,4 @@ use Hail;
  */
 class I18N extends Facade
 {
-	protected static function instance()
-	{
-		return new Hail\I18N\I18N();
-	}
 }

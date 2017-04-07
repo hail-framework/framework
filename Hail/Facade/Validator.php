@@ -25,8 +25,4 @@ namespace Hail\Facade;
  */
 class Validator extends Facade
 {
-	protected static function instance()
-	{
-		return \Hail\Util\Validator::getInstance();
-	}
 }

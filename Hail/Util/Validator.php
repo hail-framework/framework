@@ -109,7 +109,9 @@ class Validator
 	{
 		if (null === $value) {
 			return false;
-		} elseif (is_string($value) && trim($value) === '') {
+		}
+
+		if (is_string($value) && trim($value) === '') {
 			return false;
 		}
 

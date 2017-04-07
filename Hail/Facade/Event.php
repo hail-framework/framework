@@ -24,8 +24,4 @@ use Hail\Event\{
  */
 class Event extends Facade
 {
-	protected static function instance()
-	{
-		return new EventManager();
-	}
 }

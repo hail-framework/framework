@@ -12,10 +12,4 @@ namespace Hail\Facade;
  */
 class Cookie extends Facade
 {
-	protected static function instance()
-	{
-		return new \Hail\Cookie(
-			Config::get('cookie')
-		);
-	}
 }
