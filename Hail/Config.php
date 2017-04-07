@@ -60,9 +60,7 @@ class Config implements \ArrayAccess
 			return null;
 		}
 
-		$space = $key[0] === '.' ?
-			'.' . explode('.', $key)[1] :
-			explode('.', $key)[0];
+		$space = static::getSpace($key);
 
 		if (isset($this->items[$space])) {
 			return null;
@@ -91,49 +89,24 @@ class Config implements \ArrayAccess
 	 */
 	protected function load($space): ?array
 	{
-		$file = 'config/' . $space . '.';
+		$files = static::getFiles($space);
 
-		$hailConfig = $this->foundFile(HAIL_PATH, $file);
-		$check = [];
-
-		$baseConfig = null;
-		if (BASE_PATH !== HAIL_PATH && $space[0] !== '.') {
-			$baseConfig = $this->foundFile(BASE_PATH, $file);
-			if ($baseConfig !== null) {
-				$check[] = $baseConfig;
-			}
-		}
-
-		if ($hailConfig !== null) {
-			$check[] = $hailConfig;
-		}
-
-		if ($check === []) {
+		if ($files === []) {
 			return null;
 		}
 
-		if (($config = static::optimizeGet($space, $check)) !== false) {
+		if (($config = static::optimizeGet($space, $files)) !== false) {
 			return $config;
 		}
 
-		$config = $this->loadFromFile($baseConfig) +
-			$this->loadFromFile($hailConfig);
-
-		static::optimizeSet($space, $config, $check);
-
-		return $config;
-	}
-
-	protected function foundFile(string $path, string $file): ?string
-	{
-		foreach (['php', 'yml', 'yaml'] as $ext) {
-			$real = $path . $file . $ext;
-			if (file_exists($real)) {
-				return $real;
-			}
+		$config = [];
+		foreach ($files as $v) {
+			$config += $this->loadFromFile($v);
 		}
 
-		return null;
+		static::optimizeSet($space, $config, $files);
+
+		return $config;
 	}
 
 	/**
@@ -164,15 +137,15 @@ class Config implements \ArrayAccess
 	 */
 	protected function loadYaml($file)
 	{
-		$finename = basename($file);
+		$filename = basename($file);
 		$dir = RUNTIME_PATH . 'yaml/';
 
-		$cache = $dir . str_replace(strrchr($finename, '.'), '.php', $finename);
+		$cache = $dir . str_replace(strrchr($filename, '.'), '.php', $filename);
 
 		if (@filemtime($cache) < filemtime($file)) {
 			$content = Yaml::parse(file_get_contents($file));
 			if (is_array($content)) {
-				array_walk_recursive($content, [$this, 'parseValues']);
+				array_walk_recursive($content, [$this, 'yamlParseValues']);
 			}
 
 			if (!is_dir($dir) && !@mkdir($dir, 0755) && !is_dir($dir)) {
@@ -180,6 +153,10 @@ class Config implements \ArrayAccess
 			}
 
 			file_put_contents($cache, '<?php return ' . var_export($content, true) . ';');
+
+			if (function_exists('opcache_invalidate')) {
+				opcache_invalidate($cache, true);
+			}
 		} else {
 			$content = require $cache;
 		}
@@ -194,13 +171,13 @@ class Config implements \ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	protected function parseValues(&$value)
+	protected function yamlParseValues(&$value)
 	{
 		if (!is_string($value)) {
 			return true;
 		}
 
-		preg_match_all('/${([a-zA-Z_:]+)}/', $value, $matches);
+		preg_match_all('/\${([a-zA-Z_:]+)}/', $value, $matches);
 
 		if (!empty($matches[0])) {
 			$replace = [];
@@ -227,4 +204,63 @@ class Config implements \ArrayAccess
 
 		return true;
 	}
+
+	protected static function getSpace(string $key): string
+	{
+		return $key[0] === '.' ?
+			'.' . explode('.', $key)[1] :
+			explode('.', $key)[0];
+	}
+
+	protected static function getFiles(string $space): array
+	{
+		$file = 'config/' . $space . '.';
+
+		$baseFile = static::foundFile(HAIL_PATH, $file);
+		$files = [];
+
+		if (BASE_PATH !== HAIL_PATH && $space[0] !== '.') {
+			$customFile = static::foundFile(BASE_PATH, $file);
+			if ($customFile !== null) {
+				$files[] = $customFile;
+			}
+		}
+
+		if ($baseFile !== null) {
+			$files[] = $baseFile;
+		}
+
+		return $files;
+	}
+
+	protected static function foundFile(string $path, string $file): ?string
+	{
+		foreach (['php', 'yml', 'yaml'] as $ext) {
+			$real = $path . $file . $ext;
+			if (file_exists($real)) {
+				return $real;
+			}
+		}
+
+		return null;
+	}
+
+	public static function filemtime(string $key): ?int
+	{
+		$files = static::getFiles(
+			static::getSpace($key)
+		);
+
+		if ($files === []) {
+			return null;
+		}
+
+		$time = [];
+		foreach ($files as $v) {
+			$time[] = filemtime($v);
+		}
+
+		return max($time);
+	}
+
 }

@@ -9,7 +9,7 @@ use Hail\Config;
  */
 class Compiler
 {
-	protected static $file = RUNTIME_PATH . 'Container.php';
+	public static $file = RUNTIME_PATH . 'Container.php';
 
 	protected $config;
 
@@ -26,8 +26,8 @@ class Compiler
 
 	public function compile()
 	{
-		$this->buildParameters();
-		$this->buildServices();
+		$this->parseParameters();
+		$this->parseServices();
 
 		$code = "<?php\n";
 		$code .= "class Container extends Hail\\Container\\Container\n";
@@ -54,24 +54,24 @@ class Compiler
 		file_put_contents(static::$file, $code);
 	}
 
-	protected function buildParameters()
+	protected function parseParameters()
 	{
 		$parameters = $this->config['parameters'] ?? [];
 
 		foreach ($parameters as $k => $v) {
-			$this->points[$k] = $this->getName($k);
-			$this->toCode($k, $this->getStr($v));
+			$this->points[$k] = $this->methodName($k);
+			$this->toMethod($k, $this->parseStr($v));
 		}
 	}
 
-	protected function buildServices()
+	protected function parseServices()
 	{
 		$services = $this->config['services'] ?? [];
 
 		foreach ($services as $k => $v) {
 			if (is_string($v) && $v[0] === '@') {
-				$this->points[$k] = $this->getName($k);
-				$this->toCode($k, $this->getStr($v));
+				$this->points[$k] = $this->methodName($k);
+				$this->toMethod($k, $this->parseStr($v));
 			}
 
 			if (!is_array($v)) {
@@ -80,46 +80,55 @@ class Compiler
 
 			$arguments = '';
 			if (isset($v['arguments'])) {
-				$arguments = $this->getArguments($v['arguments']);
+				$arguments = $this->parseArguments($v['arguments']);
 			}
 
 			$suffix = array_merge(
-				$this->getProperty($v['property'] ?? []),
-				$this->getCalls($v['calls'] ?? [])
+				$this->parseProperty($v['property'] ?? []),
+				$this->parseCalls($v['calls'] ?? [])
 			);
 
 			$class = $v['class'] ?? $k;
 
 			if ($k !== $class) {
-				$this->points[$k] = $this->getName($k);
-				$this->toCode($k, $this->getRef($class));
+				$this->points[$k] = $this->methodName($k);
+				$this->toMethod($k, $this->parseRef($class));
 			}
-			$this->points[$class] = $this->getName($class);
+
+			$this->points[$class] = $this->methodName($class);
 
 			if (isset($v['factory'])) {
+				$factory = $v['factory'];
 				if (is_array($v['factory'])) {
 					[$class, $method] = $v['factory'];
-					$this->toCode($class, "{$class}::{$method}($arguments)", $suffix);
-				} elseif (is_string($v['factory'])) {
-					if (strpos($v['factory'], '::') !== false) {
-						$this->toCode($class, "{$v['factory']}($arguments)", $suffix);
-					} elseif (strpos($v['factory'], ':') !== false) {
-						[$ref, $method] = explode(':', $v['factory']);
-						$this->toCode($class, $this->getRef($ref) . "->{$method}($arguments)", $suffix);
-					}
+					$factory = "{$class}::{$method}";
+				}
+
+				if (!is_string($factory)) {
+					continue;
+				}
+
+				if (
+					strpos($factory, ':') !== false &&
+					strpos($factory, '::') === false
+				) {
+					[$ref, $method] = explode(':', $factory);
+					$factory = $this->parseRef($ref) . "->{$method}";
 				}
 			} else {
-				$this->toCode($class, "new {$class}($arguments)", $suffix);
+				$factory = "new {$class}";
 			}
+
+			$this->toMethod($class, "{$factory}($arguments)", $suffix);
 		}
 	}
 
-	protected function getArguments(array $args): string
+	protected function parseArguments(array $args): string
 	{
-		return implode(', ', array_map([$this, 'getStr'], $args));
+		return implode(', ', array_map([$this, 'parseStr'], $args));
 	}
 
-	protected function getProperty(array $props): array
+	protected function parseProperty(array $props): array
 	{
 		if ($props === []) {
 			return [];
@@ -127,13 +136,13 @@ class Compiler
 
 		$return = [];
 		foreach ($props as $k => $v) {
-			$return[] = $k . ' = ' . $this->getStr($v);
+			$return[] = $k . ' = ' . $this->parseStr($v);
 		}
 
 		return $return;
 	}
 
-	protected function getCalls(array $calls): array
+	protected function parseCalls(array $calls): array
 	{
 		if ($calls === []) {
 			return [];
@@ -142,31 +151,20 @@ class Compiler
 		$return = [];
 		foreach ($calls as $v) {
 			[$method, $args] = $v;
-			$args = $this->getArguments($args);
+			$args = $this->parseArguments($args);
 			$return[] = $method . '(' . $args . ')';
 		}
 
 		return $return;
 	}
 
-	protected function getName($string)
-	{
-		if ($string[0] === '\\') {
-			$string = ltrim($string, '\\');
-		} elseif (strpos($string, '\\') === false && strtoupper($string[0]) !== $string[0]) {
-			return '\'HAILPARAM__' . str_replace('.', '__', $string) . '\'';
-		}
-
-		return '\'HAIL__' . str_replace(['\\', '.'], '__', $string) . '\'';
-	}
-
-	protected function getStr($str)
+	protected function parseStr($str)
 	{
 		if (is_string($str)) {
 			if (strpos($str, 'CONFIG.') === 0) {
 				$str = var_export(substr($str, 7), true);
 
-				return $this->getRef('config') . '->get(' . $str . ')';
+				return $this->parseRef('config') . '->get(' . $str . ')';
 			}
 
 			if (isset($str[0]) && $str[0] === '@') {
@@ -174,7 +172,7 @@ class Compiler
 				if ($str === '') {
 					$str = '@';
 				} elseif ($str[0] !== '@') {
-					return $this->getRef($str);
+					return $this->parseRef($str);
 				}
 			}
 		}
@@ -182,18 +180,54 @@ class Compiler
 		return var_export($str, true);
 	}
 
-	protected function getRef($name)
+	protected function parseRef($name)
 	{
 		return '$this->get(' . $this->classname($name) . ')';
 	}
 
-	protected function toCode($name, $return, array $suffix = [])
+	protected function isClassname($name)
 	{
-		$function = substr($this->getName($name), 1, -1);
+		return class_exists($name) && strtoupper($name[0]) === $name[0];
+	}
+
+	protected function classname($name)
+	{
+		if ($name[0] === '\\') {
+			$name = ltrim($name, '\\');
+		}
+
+		if ($this->isClassname($name)) {
+			return "$name::class";
+		}
+
+		return var_export($name, true);
+	}
+
+	protected function methodName($string, $quote = true)
+	{
+		if ($string[0] === '\\') {
+			$string = ltrim($string, '\\');
+		}
+
+		$name = 'HAIL_';
+		if ($this->isClassname($string)) {
+			$name .= 'CLASS__';
+		} else {
+			$name .= 'PARAM__';
+		}
+
+		$name .= str_replace(['\\', '.'], '__', $string);
+
+		return $quote ? "'$name'" : $name;
+	}
+
+	protected function toMethod($name, $return, array $suffix = [])
+	{
+		$method = $this->methodName($name, false);
 
 		$name = $this->classname($name);
 
-		$code = "\tprotected function {$function}() {\n";
+		$code = "\tprotected function {$method}() {\n";
 		if ($suffix !== []) {
 			$code .= "\t\t\$object = $return;\n";
 			$code .= implode(";\n\t\t\$objcet->", $suffix) . ";\n";
@@ -205,18 +239,5 @@ class Compiler
 		$code .= "\t}";
 
 		$this->methods[] = $code;
-	}
-
-	protected function classname($name)
-	{
-		if ($name[0] === '\\') {
-			$name = ltrim($name, '\\');
-		}
-
-		if (strtoupper($name[0]) === $name[0]) {
-			return "$name::class";
-		}
-
-		return var_export($name, true);
 	}
 }

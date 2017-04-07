@@ -16,11 +16,6 @@ abstract class Facade
 	protected static $name = '';
 
 	/**
-	 * @var bool
-	 */
-	protected static $inDI = true;
-
-	/**
 	 * The resolved object instances.
 	 *
 	 * @var array
@@ -32,6 +27,12 @@ abstract class Facade
 	 */
 	protected static $alias;
 
+	protected static $container;
+
+	public static function setContainer($container)
+	{
+		static::$container = $container;
+	}
 
 	/**
 	 * Get the root object behind the facade.
@@ -43,7 +44,7 @@ abstract class Facade
 		$name = static::class;
 
 		if (!isset(static::$instances[$name])) {
-			static::$instances[$name] = static::instance();
+			static::$instances[$name] = static::$container->get($name);
 		}
 
 		return static::$instances[$name];

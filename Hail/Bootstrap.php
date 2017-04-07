@@ -1,10 +1,11 @@
 <?php
+
 namespace Hail;
 
-use Hail\Tracy\Debugger;
-use Hail\Facade\{
-	Config, Alias, I18N, Request
+use Hail\{
+	Facade\Facade, Container\Compiler, Tracy\Debugger
 };
+use Psr\Container\ContainerInterface;
 
 if (!defined('BASE_PATH')) {
 	throw new \LogicException('Must defined the application base folder');
@@ -48,49 +49,72 @@ class Bootstrap
 			throw new \RuntimeException('Must be enabled mbstring extension');
 		}
 
-		if (mb_internal_encoding() !== 'UTF-8') {
-			mb_internal_encoding('UTF-8');
-		}
-
 		if ((ini_get('mbstring.func_overload') & MB_OVERLOAD_STRING) !== 0) {
 			ini_set('mbstring.func_overload', '0');
 		}
 
-		Alias::register();
+		if (mb_internal_encoding() !== 'UTF-8') {
+			mb_internal_encoding('UTF-8');
+		}
 
+		$container = static::container();
+
+		Facade::setContainer($container);
+
+		$container->get('alias')->register();
+
+		$config = $container->get('config');
 		date_default_timezone_set(
-			Config::get('app.timezone')
+			$config->get('app.timezone')
 		);
 
-		if (Config::get('env.debug')) {
+		if ($config->get('env.debug')) {
 			$debugMode = Debugger::DETECT;
 		} else {
 			$debugMode = Debugger::PRODUCTION;
 		}
 
-		Debugger::enable(
+		$container->get('debugger')->enable(
 			$debugMode,
 			STORAGE_PATH . 'log/'
 		);
 
-		static::i18n();
+		static::i18n($container);
 
 		self::$inited = true;
 	}
 
-	protected static function i18n()
+	protected static function container(): ContainerInterface
 	{
-		$locale = Config::get('app.i18n.locale');
+		$file = Compiler::$file;
+		if (@filemtime($file) < Config::filemtime('container')) {
+			(new Compiler())->compile();
+
+			if (function_exists('opcache_invalidate')) {
+				opcache_invalidate($file, true);
+			}
+		}
+
+		require $file;
+
+		return new \Container();
+	}
+
+	protected static function i18n(ContainerInterface $container)
+	{
+		$config = $container->get('config');
+
+		$locale = $config->get('app.i18n.locale');
 
 		if (is_array($locale)) {
 			$found = null;
 			foreach ($locale as $k => $v) {
 				switch ($k) {
 					case 'input':
-						$found = Request::input($v);
+						$found = $container->get('request')->input($v);
 						break;
 					case 'cookie':
-						$found = Request::getCookie($v);
+						$found = $container->get('request')->getCookie($v);
 						break;
 					case 'default':
 						$found = $v;
@@ -107,14 +131,14 @@ class Bootstrap
 
 		$locale = str_replace('-', '_', $locale);
 
-		$alias = Config::get('app.i18n.alias');
+		$alias = $config->get('app.i18n.alias');
 		if (!empty($alias)) {
 			$locale = $alias[explode('_', $locale)[0]] ?? $locale;
 		}
 
-		I18N::init(
+		$container->get('i18n')->init(
 			BASE_PATH . 'lang',
-			Config::get('app.i18n.domain'),
+			$config->get('app.i18n.domain'),
 			$locale
 		);
 	}
