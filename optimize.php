@@ -24,18 +24,6 @@ foreach (scandir($helperDir) as $file) {
 	unlink($helperDir . $file);
 }
 
-$alias = include Config::get('.hail.map.alias');
-$template = <<<EOD
-<?php
-class %s extends %s {}
-EOD;
-
-foreach ($alias as $k => $v) {
-	file_put_contents($helperDir . $k . '.php', sprintf($template, $k, $v));
-}
-echo 'Alias Class Helper Generated', "\n";
-
-
 foreach (
 	[
 		['App\\Library', BASE_PATH, function ($class) {
