@@ -6,7 +6,6 @@ namespace Hail\Http;
 
 use RuntimeException;
 use InvalidArgumentException;
-use Hail\Http\Factory\StreamFactory;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 

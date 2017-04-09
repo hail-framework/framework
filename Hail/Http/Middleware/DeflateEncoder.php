@@ -4,10 +4,10 @@ namespace Hail\Http\Middleware;
 
 class DeflateEncoder extends GzipEncoder
 {
-	public function __construct()
-	{
-		$this->encoding = 'deflate';
-	}
+	/**
+	 * @var string
+	 */
+	protected $encoding = 'deflate';
 
 	/**
 	 * {@inheritdoc}

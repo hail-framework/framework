@@ -3,8 +3,7 @@
 namespace Hail\Http;
 
 use Psr\Http\Message\{
-	StreamInterface,
-	UriInterface
+	RequestInterface, ResponseInterface, ServerRequestInterface, StreamInterface, UploadedFileInterface, UriInterface
 };
 
 final class Factory
@@ -14,7 +13,7 @@ final class Factory
 	 *
 	 * @return UriInterface
 	 */
-	public static function uri($uri)
+	public static function uri($uri): UriInterface
 	{
 		if ($uri instanceof UriInterface) {
 			return $uri;
@@ -29,7 +28,7 @@ final class Factory
 		array $headers = [],
 		$body = null,
 		string $protocolVersion = '1.1'
-	)
+	): RequestInterface
 	{
 		return new Request($method, $uri, $headers, $body, $protocolVersion);
 	}
@@ -40,12 +39,12 @@ final class Factory
 		array $headers = [],
 		$body = null,
 		string $protocolVersion = '1.1'
-	)
+	): ResponseInterface
 	{
 		return new Response($statusCode, $headers, $body, $protocolVersion, $reasonPhrase);
 	}
 
-	public static function serverRequest($method, $uri = null)
+	public static function serverRequest($method, $uri = null): ServerRequestInterface
 	{
 		if (is_array($method)) {
 			$server = $method;
@@ -73,7 +72,7 @@ final class Factory
 	 *
 	 * @return StreamInterface
 	 */
-	public static function stream($body = null)
+	public static function stream($body = null): StreamInterface
 	{
 		if ($body instanceof StreamInterface) {
 			return $body;
@@ -92,7 +91,7 @@ final class Factory
 		return $stream;
 	}
 
-	public static function streamFromFile($file, $mode = 'r')
+	public static function streamFromFile($file, $mode = 'r'): StreamInterface
 	{
 		$resource = fopen($file, $mode);
 
@@ -105,7 +104,7 @@ final class Factory
 		int $error = \UPLOAD_ERR_OK,
 		string $clientFilename = null,
 		string $clientMediaType = null
-	)
+	): UploadedFileInterface
 	{
 		if ($size === null) {
 			if (is_string($file)) {
