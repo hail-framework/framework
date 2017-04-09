@@ -3,6 +3,7 @@
 namespace Hail\Container;
 
 use Hail\Config;
+use LogicException;
 
 /**
  * This class implements a simple dependency injection container.
@@ -48,7 +49,7 @@ class Compiler
 		$code .= "\t\t}\n\n";
 		$code .= "\t\treturn parent::get(\$name);\n";
 		$code .= "\t}\n\n";
-		$code .= implode("\n\n", $this->methods);
+		$code .= implode("\n\n", $this->methods) . "\n";
 		$code .= '}';
 
 		file_put_contents(static::$file, $code);
@@ -59,7 +60,6 @@ class Compiler
 		$parameters = $this->config['parameters'] ?? [];
 
 		foreach ($parameters as $k => $v) {
-			$this->points[$k] = $this->methodName($k);
 			$this->toMethod($k, $this->parseStr($v));
 		}
 	}
@@ -70,7 +70,6 @@ class Compiler
 
 		foreach ($services as $k => $v) {
 			if (is_string($v) && $v[0] === '@') {
-				$this->points[$k] = $this->methodName($k);
 				$this->toMethod($k, $this->parseStr($v));
 
 				continue;
@@ -81,7 +80,6 @@ class Compiler
 			}
 
 			if (isset($v['alias'])) {
-				$this->points[$k] = $this->methodName($k);
 				$this->toMethod($k, $this->parseRef($v['alias']));
 				continue;
 			}
@@ -96,24 +94,17 @@ class Compiler
 				$this->parseCalls($v['calls'] ?? [])
 			);
 
-			$class = $v['class'] ?? $k;
-
 			$classRef = $v['classRef'] ?? true;
 
-			if ($classRef) {
-				if ($k !== $class) {
-					$this->points[$k] = $this->methodName($k);
-					$this->toMethod($k, $this->parseRef($class));
-				}
+			if ($classRef && isset($v['class']) && $v['class'] !== $k) {
+				$this->toMethod($v['class'], $this->parseRef($k));
 			}
-
-			$this->points[$class] = $this->methodName($class);
 
 			if (isset($v['factory'])) {
 				$factory = $v['factory'];
 				if (is_array($v['factory'])) {
-					[$class, $method] = $v['factory'];
-					$factory = "{$class}::{$method}";
+					[$c, $m] = $v['factory'];
+					$factory = "{$c}::{$m}";
 				}
 
 				if (!is_string($factory)) {
@@ -127,11 +118,13 @@ class Compiler
 					[$ref, $method] = explode(':', $factory);
 					$factory = $this->parseRef($ref) . "->{$method}";
 				}
+			} elseif (isset($v['class'])) {
+				$factory = "new {$v['class']}";
 			} else {
-				$factory = "new {$class}";
+				throw new LogicException('Not defined any configures: ' . $k);
 			}
 
-			$this->toMethod($class, "{$factory}($arguments)", $suffix);
+			$this->toMethod($k, "{$factory}($arguments)", $suffix);
 		}
 	}
 
@@ -199,7 +192,7 @@ class Compiler
 
 	protected function isClassname($name)
 	{
-		return class_exists($name) && strtoupper($name[0]) === $name[0];
+		return (class_exists($name) || interface_exists($name)) && strtoupper($name[0]) === $name[0];
 	}
 
 	protected function classname($name)
@@ -215,7 +208,7 @@ class Compiler
 		return var_export($name, true);
 	}
 
-	protected function methodName($string, $quote = true)
+	protected function methodName($string)
 	{
 		if ($string[0] === '\\') {
 			$string = ltrim($string, '\\');
@@ -230,12 +223,13 @@ class Compiler
 
 		$name .= str_replace(['\\', '.'], '__', $string);
 
-		return $quote ? "'$name'" : $name;
+		return $name;
 	}
 
 	protected function toMethod($name, $return, array $suffix = [])
 	{
-		$method = $this->methodName($name, false);
+		$method = $this->methodName($name);
+		$this->points[$name] = "'$method'";
 
 		$name = $this->classname($name);
 
