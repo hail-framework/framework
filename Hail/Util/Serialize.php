@@ -66,10 +66,10 @@ class Serialize
 			'encoder' => 'Hail\Util\Json::encode',
 			'decoder' => 'Hail\Util\Json::decode',
 		],
-		'serialise' => [
+		'serialize' => [
 			'type' => 'text',
-			'encoder' => 'serialise',
-			'decoder' => 'unserialise',
+			'encoder' => 'serialize',
+			'decoder' => 'unserialize',
 		],
 	];
 
