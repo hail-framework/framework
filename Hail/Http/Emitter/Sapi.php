@@ -7,14 +7,14 @@
  * @license   https://github.com/zendframework/zend-diactoros/blob/master/LICENSE.md New BSD License
  */
 
-namespace Hail\Http\Response;
+namespace Hail\Http\Emitter;
 
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
-class SapiEmitter implements EmitterInterface
+class Sapi implements EmitterInterface
 {
-    use SapiEmitterTrait;
+    use SapiTrait;
 
     /**
      * Emits a response for a PHP SAPI environment.

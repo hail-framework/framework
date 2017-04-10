@@ -3,7 +3,7 @@ namespace Hail;
 
 use Hail\Facade\Config;
 use Hail\Http\{
-	Dispatcher, Response\SapiEmitter, ServerRequest
+	Dispatcher, Emitter\Sapi, ServerRequest
 };
 
 class Application
@@ -20,7 +20,7 @@ class Application
 
 		$response = $dispatcher->dispatch(ServerRequest::fromGlobals());
 
-		(new SapiEmitter())->emit($response);
+		(new Sapi())->emit($response);
 	}
 
 //	private function process()

@@ -7,7 +7,7 @@
  * @license   https://github.com/zendframework/zend-diactoros/blob/master/LICENSE.md New BSD License
  */
 
-namespace Hail\Http\Response;
+namespace Hail\Http\Emitter;
 
 use Psr\Http\Message\ResponseInterface;
 
