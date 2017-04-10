@@ -171,7 +171,7 @@ class Helpers
 	/**
 	 * Get method from server variables.
 	 *
-	 * @param array $server  Typically $_SERVER or similar structure.
+	 * @param array $server Typically $_SERVER or similar structure.
 	 *
 	 * @return string
 	 */
@@ -193,7 +193,7 @@ class Helpers
 	/**
 	 * Get protocol from server variables.
 	 *
-	 * @param array $server  Typically $_SERVER or similar structure.
+	 * @param array $server Typically $_SERVER or similar structure.
 	 *
 	 * @return string
 	 */
@@ -262,5 +262,26 @@ class Helpers
 		}
 
 		return $response->withoutHeader('Content-Length');
+	}
+
+	/**
+	 * Inject the provided Content-Type, if none is already present.
+	 *
+	 * @param string $contentType
+	 * @param array  $headers
+	 *
+	 * @return array Headers with injected Content-Type
+	 */
+	public static function injectContentType(string $contentType, array $headers)
+	{
+		foreach ($headers as $k => $v) {
+			if (strtolower($k) === 'content-type') {
+				return $headers;
+			}
+		}
+
+		$headers['Content-Type'] = [$contentType];
+
+		return $headers;
 	}
 }

@@ -42,7 +42,7 @@ class Bootstrap
 	public static function init()
 	{
 		if (self::$inited === true) {
-			return;
+			throw new \LogicException('Framework can not init twice');
 		}
 
 		if (!extension_loaded('mbstring')) {
@@ -82,6 +82,8 @@ class Bootstrap
 		static::i18n($container);
 
 		self::$inited = true;
+
+		return $container;
 	}
 
 	protected static function container(): ContainerInterface

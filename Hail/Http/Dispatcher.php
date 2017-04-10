@@ -38,7 +38,7 @@ class Dispatcher implements MiddlewareInterface
 	 *
 	 * @throws \InvalidArgumentException if an empty middleware stack was given
 	 */
-	public function __construct($middleware, ContainerInterface $container = null)
+	public function __construct(array $middleware, ContainerInterface $container = null)
 	{
 		if (empty($middleware)) {
 			throw new \InvalidArgumentException('Empty middleware queue');
