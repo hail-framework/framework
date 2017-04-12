@@ -357,21 +357,25 @@ class Uri implements UriInterface
 			$uri->scheme = $server['HTTPS'] === 'on' ? 'https' : 'http';
 		}
 
-		if (isset($server[$tmp = 'HTTP_HOST']) || isset($server[$tmp = 'SERVER_NAME'])) {
-			$uri->host = strtolower($server[$tmp]);
+		[$host, $port] = Helpers::getHostAndPortFromArray($server);
+
+		$uri->host = $host;
+		$uri->port = $uri->filterPort($port);
+
+		$path = Helpers::getRequestUri($server);
+
+		$fragment = '';
+		if (strpos($path, '#') !== false) {
+			[$path, $fragment] = explode('#', $path, 2);
 		}
 
-		if (isset($server['SERVER_PORT'])) {
-			$uri->port = $uri->filterPort($server['SERVER_PORT']);
-		}
-
-		if (isset($server['REQUEST_URI'])) {
-			$uri->path = $uri->filterPath(explode('?', $server['REQUEST_URI'])[0]);
-		}
+		$uri->path = $uri->filterPath(explode('?', $path)[0]);
+		$uri->fragment = $uri->filterQueryAndFragment($fragment);
 
 		if (isset($server['QUERY_STRING'])) {
-			$uri->query = $uri->filterQueryAndFragment($server['QUERY_STRING']);
+			$uri->query = $uri->filterQueryAndFragment(ltrim($server['QUERY_STRING'], '?'));
 		}
+
 
 		return $uri;
 	}

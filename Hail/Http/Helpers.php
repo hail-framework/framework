@@ -84,6 +84,37 @@ class Helpers
 	}
 
 	/**
+	 * Parse a cookie header according to RFC 6265.
+	 *
+	 * PHP will replace special characters in cookie names, which results in other cookies not being available due to
+	 * overwriting. Thus, the server request should take the cookies from the request header instead.
+	 *
+	 * @param string $cookieHeader
+	 *
+	 * @return array
+	 */
+	public static function parseCookieHeader(string $cookieHeader)
+	{
+		preg_match_all('(
+            (?:^\\n?[ \t]*|;[ ])
+            (?P<name>[!#$%&\'*+-.0-9A-Z^_`a-z|~]+)
+            =
+            (?P<DQUOTE>"?)
+                (?P<value>[\x21\x23-\x2b\x2d-\x3a\x3c-\x5b\x5d-\x7e]*)
+            (?P=DQUOTE)
+            (?=\\n?[ \t]*$|;[ ])
+        )x', $cookieHeader, $matches, PREG_SET_ORDER);
+
+		$cookies = [];
+
+		foreach ($matches as $match) {
+			$cookies[$match['name']] = urldecode($match['value']);
+		}
+
+		return $cookies;
+	}
+
+	/**
 	 * Trims whitespace from the header values.
 	 *
 	 * Spaces and tabs ought to be excluded by parsers when extracting the field value from a header field.
@@ -199,12 +230,15 @@ class Helpers
 	 */
 	public static function getProtocol(array $server): string
 	{
-		if ($server === null) {
-			$server = $_SERVER;
+		if (!isset($server['SERVER_PROTOCOL'])) {
+			return '1.1';
 		}
 
-		return isset($server['SERVER_PROTOCOL']) ?
-			str_replace('HTTP/', '', $server['SERVER_PROTOCOL']) : '1.1';
+		if (!preg_match('#^(HTTP/)?(?P<version>[1-9]\d*(?:\.\d)?)$#', $server['SERVER_PROTOCOL'], $matches)) {
+			throw new \UnexpectedValueException("Unrecognized protocol version ({$server['SERVER_PROTOCOL']})");
+		}
+
+		return $matches['version'];
 	}
 
 	/**
@@ -283,5 +317,152 @@ class Helpers
 		$headers['Content-Type'] = [$contentType];
 
 		return $headers;
+	}
+
+	/**
+	 * Marshal the host and port from HTTP headers and/or the PHP environment
+	 *
+	 * @param array $server
+	 *
+	 * @return array
+	 */
+	public static function getHostAndPortFromArray(array $server): array
+	{
+		if (isset($server['HTTP_HOST'])) {
+			return self::getHostAndPortFromHost($server['HTTP_HOST']);
+		}
+
+		if (!isset($server['SERVER_NAME'])) {
+			return ['', null];
+		}
+
+		$host = $server['SERVER_NAME'];
+		$port = null;
+		if (isset($server['SERVER_PORT'])) {
+			$port = (int) $server['SERVER_PORT'];
+		}
+
+		// Misinterpreted IPv6-Address
+		// Reported for Safari on Windows
+		if (isset($server['SERVER_ADDR']) && preg_match('/^\[[0-9a-fA-F\:]+\]$/', $host)) {
+			$host = '[' . $server['SERVER_ADDR'] . ']';
+			$port = $port ?: 80;
+			if ($port . ']' === substr($host, strrpos($host, ':') + 1)) {
+				// The last digit of the IPv6-Address has been taken as port
+				// Unset the port so the default port can be used
+				$port = null;
+			}
+		}
+
+		return [$host, $port];
+	}
+
+	/**
+	 * Marshal the host and port from the request header
+	 *
+	 * @param string|array $host
+	 *
+	 * @return array
+	 */
+	private static function getHostAndPortFromHost($host): array
+	{
+		if (is_array($host)) {
+			$host = implode(', ', $host);
+		}
+
+		$port = null;
+
+		// works for regname, IPv4 & IPv6
+		if (preg_match('|\:(\d+)$|', $host, $matches)) {
+			$host = substr($host, 0, -1 * (strlen($matches[1]) + 1));
+			$port = (int) $matches[1];
+		}
+
+		return [$host, $port];
+	}
+
+	/**
+	 * Detect the base URI for the request
+	 *
+	 * Looks at a variety of criteria in order to attempt to autodetect a base
+	 * URI, including rewrite URIs, proxy URIs, etc.
+	 *
+	 * From ZF2's Zend\Http\PhpEnvironment\Request class
+	 *
+	 * @copyright Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+	 * @license   http://framework.zend.com/license/new-bsd New BSD License
+	 *
+	 * @param array $server
+	 *
+	 * @return string
+	 */
+	public static function getRequestUri(array $server)
+	{
+		// IIS7 with URL Rewrite: make sure we get the unencoded url
+		// (double slash problem).
+		$iisUrlRewritten = $server['IIS_WasUrlRewritten'] ?? null;
+		$unencodedUrl = $server['UNENCODED_URL'] ?? null;
+		if ('1' === $iisUrlRewritten && !empty($unencodedUrl)) {
+			return $unencodedUrl;
+		}
+
+		$requestUri = $server['REQUEST_URI'] ?? null;
+
+		// Check this first so IIS will catch.
+		$httpXRewriteUrl = $server['HTTP_X_REWRITE_URL'] ?? null;
+		if ($httpXRewriteUrl !== null) {
+			$requestUri = $httpXRewriteUrl;
+		}
+
+		// Check for IIS 7.0 or later with ISAPI_Rewrite
+		$httpXOriginalUrl = $server['HTTP_X_ORIGINAL_URL'] ?? null;
+		if ($httpXOriginalUrl !== null) {
+			$requestUri = $httpXOriginalUrl;
+		}
+
+		if ($requestUri !== null) {
+			return preg_replace('#^[^/:]+://[^/]+#', '', $requestUri);
+		}
+
+		$origPathInfo = $server['ORIG_PATH_INFO'] ?? null;
+		if (empty($origPathInfo)) {
+			return '/';
+		}
+
+		return $origPathInfo;
+	}
+
+	/**
+	 * @param array $server
+	 * @param array $cookies
+	 *
+	 * @return ServerRequest
+	 */
+	public static function serverRequestFromArray(array $server, array $cookies = []): ServerRequest
+	{
+		$method = self::getMethod($server);
+		$headers = self::getHeaders($server);
+
+		if (!isset($server['HTTPS'])) {
+			$server['HTTPS'] = 'off';
+		}
+
+		if (
+			$server['HTTPS'] === 'off' &&
+			isset($headers['X-Forwarded-Proto']) &&
+			$headers['X-Forwarded-Proto'] === 'https'
+		) {
+			$server['HTTPS'] = 'on';
+		}
+
+		$uri = Uri::fromArray($server);
+
+		$protocol = self::getProtocol($server);
+
+		if ($cookies === [] && isset($headers['Cookie'])) {
+			$cookies = self::parseCookieHeader($headers['Cookie']);
+		}
+
+		return new ServerRequest($method, $uri, $headers, null, $protocol, $server, $cookies);
 	}
 }

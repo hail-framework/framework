@@ -2,52 +2,70 @@ parameters:
   # ...
 
 services:
-  config:
-    class: Hail\Config
-  acl:
-    class: Hail\Acl
+  # Feature
+  config: Hail\Config
   alias:
-    class: Hail\AliasLoader
-    arguments:
-      - CONFIG.alias
-  app:
-    class: Hail\Application
-  arrays:
-    class: Hail\Util\Arrays
-  browser:
-    class: Hail\Browser
-  cache:
-    factory: Hail\Factory\Cache::simple
+      class: Hail\AliasLoader
+      arguments:
+        - CONFIG.alias
+  i18n: Hail\I18N\I18N
+  event: Hail\Event\EventManager
+  acl: Hail\Acl
+  browser: Hail\Browser
+  cache: Hail\Factory\Cache::simple
   Hail\SimpleCache\CacheInterface: "@cache"
   Psr\SimpleCache\CacheInterface: "@cache"
-  cachePool:
-    factory: Hail\Factory\Cache::pool
+  cachePool: Hail\Factory\Cache::pool
   Hail\Cache\CacheItemPoolInterface: "@cachePool"
   Psr\Cache\CacheItemPoolInterface: "@cachePool"
-  cdb:
-    class: Hail\Database\Cache
   cookie:
     class: Hail\Cookie
     arguments:
       - CONFIG.cookie
+  db: Hail\Factory\Database::pdo
+  cdb: Hail\Database\Cache
+  output: Hail\Output
+  request: Hail\Factory\Request::fromGlobal
+  response: Hail\Http\Response
+  router:
+    class: Hail\Router
+    arguments:
+      - CONFIG.route
+  session:
+    class: Hail\Session
+    arguments:
+      - CONFIG.session
+      - CONFIG.cookie
+  storage: Hail\Factory\Storage::mount
+  template:
+    class: Hail\Latte\Engine
+    arguments:
+      - CONFIG.template
+
+  # Tools
+  arrays: Hail\Util\Arrays
   crypto:
     class: Hail\Util\Crypto
     arguments:
       - CONFIG.crypto.format
-  db:
-    factory: Hail\Factory\Database::pdo
-  debugger:
-    class: Hail\Tracy\Debugger
-  event:
-    class: Hail\Event\EventManager
-  generators:
-    class: Hail\Util\Generators
-  i18n:
-    class: Hail\I18N\I18N
-  inflector:
-    class: Hail\Util\Inflector
-  json:
-    class: Hail\Util\Json
+  debugger: Hail\Tracy\Debugger
+  generators: Hail\Util\Generators
+  inflector: Hail\Util\Inflector
+  json: Hail\Util\Json
+  serialize:
+    class: Hail\Util\Serialize
+    arguments:
+      - CONFIG.env.serialize
+  strings: Hail\Util\Strings
+  validator: Hail\Util\Validator
+
+  # Application
+  app: Hail\Application
+  dispatcher:
+    class: Hail\Http\Dispatcher
+    aruguments:
+      - CONFIG.middleware
+      - "@container"
   lib:
     class: Hail\Util\ObjectFactory
     arguments:
@@ -58,32 +76,5 @@ services:
     arguments:
       - App\Model
     classRef: false
-  output:
-    class: Hail\Output
-  request:
-    factory: Hail\Factory\Request::fromGlobal
-  response:
-    class: Hail\Http\Response
-  router:
-    class: Hail\Router
-    arguments:
-      - CONFIG.route
-  serialize:
-    class: Hail\Util\Serialize
-    arguments:
-      - CONFIG.env.serialize
-  session:
-    class: Hail\Session
-    arguments:
-      - CONFIG.session
-      - CONFIG.cookie
-  storage:
-    factory: Hail\Factory\Storage::mount
-  strings:
-    class: Hail\Util\Strings
-  template:
-    class: Hail\Latte\Engine
-    arguments:
-      - CONFIG.template
-  validator:
-    class: Hail\Util\Validator
+
+  # Middleware

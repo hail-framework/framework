@@ -547,9 +547,9 @@ class Container implements ContainerInterface
 	 *
 	 * @param string $name component name
 	 *
-	 * @return \Closure component reference
+	 * @return mixed|\Closure component reference
 	 */
-	public function ref($name)
+	public function ref(string $name)
 	{
 		if (isset($this->active[$name])) {
 			return $this->values[$name];
@@ -560,7 +560,10 @@ class Container implements ContainerInterface
 		};
 	}
 
-	public function delete($name)
+	/**
+	 * @param string $name
+	 */
+	public function delete(string $name)
 	{
 		unset(
 			$this->values[$name],

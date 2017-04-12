@@ -10,6 +10,7 @@ Config: Hail\Facade\Config
 Cookie: Hail\Facade\Cookie
 Crypto: Hail\Facade\Crypto
 DB: Hail\Facade\DB
+Container: Hail\Facade\Container
 DI: Hail\Facade\DI
 Debugger: Hail\Tracy\Debugger
 Event: Hail\Facade\Event

@@ -49,12 +49,13 @@ class ServerRequest extends Request implements ServerRequestInterface
 	private $uploadedFiles = [];
 
 	/**
-	 * @param string                               $method       HTTP method
-	 * @param string|UriInterface                  $uri          URI
-	 * @param array                                $headers      Request headers
-	 * @param string|null|resource|StreamInterface $body         Request body
-	 * @param string                               $version      Protocol version
-	 * @param array                                $serverParams Typically the $_SERVER superglobal
+	 * @param string                               $method        HTTP method
+	 * @param string|UriInterface                  $uri           URI
+	 * @param array                                $headers       Request headers
+	 * @param string|null|resource|StreamInterface $body          Request body
+	 * @param string                               $version       Protocol version
+	 * @param array                                $serverParams  Typically the $_SERVER superglobal
+	 * @param array                                $cookies       Cookies for the message, if any.
 	 */
 	public function __construct(
 		string $method,
@@ -62,10 +63,12 @@ class ServerRequest extends Request implements ServerRequestInterface
 		array $headers = [],
 		$body = null,
 		string $version = '1.1',
-		array $serverParams = []
+		array $serverParams = [],
+		array $cookies = []
 	)
 	{
 		$this->serverParams = $serverParams;
+		$this->cookieParams = $cookies;
 
 		if ($body === null) {
 			$body = new PhpInputStream();
@@ -172,9 +175,8 @@ class ServerRequest extends Request implements ServerRequestInterface
 	 */
 	public static function fromGlobals()
 	{
-		$serverRequest = Factory::serverRequest($_SERVER);
+		$serverRequest = Helpers::serverRequestFromArray($_SERVER, $_COOKIE);
 
-		$serverRequest->cookieParams = $_COOKIE;
 		$serverRequest->queryParams = $_GET;
 		$serverRequest->parsedBody = $_POST;
 		$serverRequest->uploadedFiles = self::normalizeFiles($_FILES);

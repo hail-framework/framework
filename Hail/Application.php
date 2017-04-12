@@ -13,12 +13,7 @@ class Application
 	{
 		$container = Bootstrap::init();
 
-		$dispatcher = new Dispatcher(
-			Config::get('middleware'),
-			$container
-		);
-
-		$response = $dispatcher->dispatch(ServerRequest::fromGlobals());
+		$response = $container->get('dispatcher')->dispatch(ServerRequest::fromGlobals());
 
 		(new Sapi())->emit($response);
 	}

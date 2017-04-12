@@ -69,8 +69,16 @@ class Compiler
 		$services = $this->config['services'] ?? [];
 
 		foreach ($services as $k => $v) {
-			if (is_string($v) && $v[0] === '@') {
-				$this->toMethod($k, $this->parseStr($v));
+			if (is_string($v)) {
+				if ($v[0] === '@') {
+					$this->toMethod($k, $this->parseStr($v));
+				} else {
+					$factory = $this->parseStrToClass($v);
+					if ($this->isClassname($v)) {
+						$this->toMethod($v, $this->parseRef($k));
+					}
+					$this->toMethod($k, "{$factory}()");
+				}
 
 				continue;
 			}
@@ -110,20 +118,13 @@ class Compiler
 				if (!is_string($factory)) {
 					continue;
 				}
-
-				if (
-					strpos($factory, ':') !== false &&
-					strpos($factory, '::') === false
-				) {
-					[$ref, $method] = explode(':', $factory);
-					$factory = $this->parseRef($ref) . "->{$method}";
-				}
 			} elseif (isset($v['class'])) {
-				$factory = "new {$v['class']}";
+				$factory = $v['class'];
 			} else {
 				throw new LogicException('Not defined any configures: ' . $k);
 			}
 
+			$factory = $this->parseStrToClass($factory);
 			$this->toMethod($k, "{$factory}($arguments)", $suffix);
 		}
 	}
@@ -161,6 +162,21 @@ class Compiler
 		}
 
 		return $return;
+	}
+
+	protected function parseStrToClass($str)
+	{
+		if (strpos($str, '::') !== false) {
+			[$class, $method] = explode('::', $str);
+			return "{$class}::{$method}";
+		}
+
+		if (strpos($str, ':') !== false) {
+			[$ref, $method] = explode(':', $str);
+			return $this->parseRef($ref) . "->{$method}";
+		}
+
+		return "new $str";
 	}
 
 	protected function parseStr($str)

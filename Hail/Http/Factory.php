@@ -47,19 +47,7 @@ final class Factory
 	public static function serverRequest($method, $uri = null): ServerRequestInterface
 	{
 		if (is_array($method)) {
-			$server = $method;
-
-			$method = Helpers::getMethod($server);
-
-			if (!isset($server['HTTPS'])) {
-				$server['HTTPS'] = 'off';
-			}
-			$uri = Uri::fromArray($server);
-
-			$headers = Helpers::getHeaders($server);
-			$protocol = Helpers::getProtocol($server);
-
-			return new ServerRequest($method, $uri, $headers, null, $protocol, $server);
+			return Helpers::serverRequestFromArray($method);
 		}
 
 		$uri = self::uri($uri);
