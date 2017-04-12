@@ -25,7 +25,7 @@ class EmptyResponse extends Response
     public function __construct($status = 204, array $headers = [])
     {
         $body = fopen('php://temp', 'r');
-        parent::__construct($status, $headers, $body);
+        parent::__construct($body, $status, $headers);
     }
 
     /**

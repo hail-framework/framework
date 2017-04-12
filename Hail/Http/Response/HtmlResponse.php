@@ -36,12 +36,12 @@ class HtmlResponse extends Response
 	 *
 	 * @throws InvalidArgumentException if $html is neither a string or stream.
 	 */
-	public function __construct($status = 200, array $headers = [], $html)
+	public function __construct($html, $status = 200, array $headers = [])
 	{
 		parent::__construct(
+			$this->createBody($html),
 			$status,
-			Helpers::injectContentType('text/html; charset=utf-8', $headers),
-			$this->createBody($html)
+			Helpers::injectContentType('text/html; charset=utf-8', $headers)
 		);
 	}
 

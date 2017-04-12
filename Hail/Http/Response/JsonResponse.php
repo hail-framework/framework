@@ -46,17 +46,17 @@ class JsonResponse extends Response
 	 * - JSON_HEX_QUOT
 	 * - JSON_UNESCAPED_SLASHES
 	 *
+	 * @param mixed $data            Data to convert to JSON.
 	 * @param int   $status          Integer status code for the response; 200 by default.
 	 * @param array $headers         Array of headers to use at initialization.
-	 * @param mixed $data            Data to convert to JSON.
 	 * @param int   $encodingOptions JSON encoding options to use.
 	 *
 	 * @throws InvalidArgumentException if unable to encode the $data to JSON.
 	 */
 	public function __construct(
+		$data,
 		$status = 200,
 		array $headers = [],
-		$data,
 		$encodingOptions = self::DEFAULT_JSON_FLAGS
 	)
 	{
@@ -66,7 +66,7 @@ class JsonResponse extends Response
 
 		$headers = Helpers::injectContentType('application/json', $headers);
 
-		parent::__construct($status, $headers, $body);
+		parent::__construct($body, $status, $headers);
 	}
 
 	/**

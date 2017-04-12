@@ -35,13 +35,13 @@ final class Factory
 
 	public static function response(
 		int $statusCode = 200,
+		$body = null,
 		string $reasonPhrase = null,
 		array $headers = [],
-		$body = null,
 		string $protocolVersion = '1.1'
 	): ResponseInterface
 	{
-		return new Response($statusCode, $headers, $body, $protocolVersion, $reasonPhrase);
+		return new Response($body, $statusCode, $headers, $protocolVersion, $reasonPhrase);
 	}
 
 	public static function serverRequest($method, $uri = null): ServerRequestInterface
