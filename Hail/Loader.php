@@ -79,6 +79,9 @@ class Loader
 
 	public static function buildMap()
 	{
+		self::$classesMap = [];
+		@unlink(self::$mapFile);
+
 		$map = [];
 		foreach (self::$prefixes as $prefix => $path) {
 			$path = rtrim($path, '/');
@@ -96,7 +99,9 @@ class Loader
 					$prefix . str_replace($path, '', substr($file, 0, -4))
 				);
 
-				$map[$class] = realpath($file);
+				if (class_exists($class) || interface_exists($class) || trait_exists($class)) {
+					$map[$class] = realpath($file);
+				}
 			}
 		}
 
