@@ -12,6 +12,7 @@ use Psr\Http\Message\UploadedFileInterface;
 /**
  * @author Michael Dowling and contributors to guzzlehttp/psr7
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ * @author Hao Feng <flyinghail@msn.com>
  */
 class UploadedFile implements UploadedFileInterface
 {
@@ -236,9 +237,7 @@ class UploadedFile implements UploadedFileInterface
 			return $this->stream;
 		}
 
-		$resource = fopen($this->file, 'r');
-
-		return Stream::createFromResource($resource);
+		return Factory::streamFromFile($this->file, 'r');
 	}
 
 	/**
@@ -273,7 +272,7 @@ class UploadedFile implements UploadedFileInterface
 			}
 			Helpers::copyToStream(
 				$stream,
-				Stream::createFromResource(fopen($targetPath, 'w'))
+				Factory::streamFromFile($targetPath, 'w')
 			);
 
 			$this->moved = true;
