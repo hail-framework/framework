@@ -26,6 +26,11 @@ class BasePath implements MiddlewareInterface
 	 */
 	public function __construct(string $basePath)
 	{
+		$this->setBasePath($basePath);
+	}
+
+	public function setBasePath(string $basePath)
+	{
 		$this->basePath = '/' . trim($basePath, '/');
 	}
 

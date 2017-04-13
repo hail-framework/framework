@@ -67,7 +67,7 @@ class Stream implements StreamInterface
 	 * @param resource $resource
 	 *
 	 */
-	public function __construct(resource $resource)
+	public function __construct($resource)
 	{
 		$this->stream = $resource;
 		$meta = $this->getMetadata();

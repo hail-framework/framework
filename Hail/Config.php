@@ -262,5 +262,4 @@ class Config implements \ArrayAccess
 
 		return max($time);
 	}
-
 }

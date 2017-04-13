@@ -82,8 +82,6 @@ class Bootstrap
 		static::i18n($container);
 
 		self::$inited = true;
-
-		return $container;
 	}
 
 	protected static function container(): ContainerInterface

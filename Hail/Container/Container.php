@@ -305,15 +305,6 @@ class Container implements ContainerInterface
 			throw new InvalidArgumentException("Attempted override of existing component: {$name}");
 		}
 
-		$this->replace($name, $value);
-	}
-
-	/**
-	 * @param string $name component name
-	 * @param mixed  $value
-	 */
-	public function replace(string $name, $value)
-	{
 		$this->values[$name] = $value;
 		$this->active[$name] = true;
 	}

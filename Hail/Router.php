@@ -8,12 +8,13 @@ namespace Hail;
 
 use Hail\Util\OptimizeTrait;
 use Hail\Facade\Serialize;
+use function PHPSTORM_META\type;
 
 /**
  * Class Router
  *
  * @package Hail
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  */
 class Router
 {
@@ -31,8 +32,8 @@ class Router
 
 	private function match($url)
 	{
-		$parts = explode('?', $url, 2);
-		$parts = explode('/', trim($parts[0], static::SEPARATOR_TRIM));
+		$parts = explode('?', $url, 2)[0];
+		$parts = explode('/', trim($parts, static::SEPARATOR_TRIM));
 		if (!isset($parts[1]) && $parts[0] === '') {
 			$parts = [];
 		}
@@ -77,7 +78,7 @@ class Router
 	 */
 	protected function addRoutes($config)
 	{
-		$sign = hash('sha256', Serialize::encode($config));
+		$sign = sha1(Serialize::encode($config));
 		$check = static::optimizeGet('routesSign');
 		if ($check === $sign) {
 			$this->routes = static::optimizeGet('routes');
@@ -116,12 +117,20 @@ class Router
 	}
 
 	/**
-	 * @param array $methods
-	 * @param string $route
-	 * @param array $handler
+	 * @param array          $methods
+	 * @param string         $route
+	 * @param array|callable $handler
+	 *
+	 * @throws \InvalidArgumentException
 	 */
-	public function addRoute(array $methods, string $route, array $handler)
+	public function addRoute(array $methods, string $route, $handler)
 	{
+		if (is_callable($handler)) {
+			$handler = \Closure::fromCallable($handler);
+		} elseif (!is_array($handler)) {
+			throw new \InvalidArgumentException('Handler is not a valid type: ' . var_export($handler, true));
+		}
+
 		$parts = explode('/', trim($route, static::SEPARATOR_TRIM));
 
 		if (!isset($parts[1]) && $parts[0] === '') {
@@ -204,20 +213,28 @@ class Router
 				'method' => $method,
 				'url' => $url,
 			];
-		} else if (isset($route['methods'][$method])) {
+		}
+
+		if (isset($route['methods'][$method])) {
 			$params = $route['params'];
 			$handler = $route['methods'][$method];
+
+			if (!$handler instanceof \Closure) {
+				$handler = [
+					'app' => $handler['app'] ?? $params['app'] ?? '',
+					'controller' => $handler['controller'] ?? $params['controller'] ?? '',
+					'action' => $handler['action'] ?? $params['action'] ?? '',
+				];
+
+				unset($params['app'], $params['controller'], $params['action']);
+			}
 
 			return $this->result = [
 				'method' => $method,
 				'url' => $url,
 				'route' => $route['route'],
 				'params' => $params,
-				'handler' => [
-					'app' => $handler['app'],
-					'controller' => $handler['controller'] ?? $params['controller'] ?? '',
-					'action' => $handler['action'] ?? $params['action'] ?? '',
-				],
+				'handler' => $handler,
 			];
 		}
 

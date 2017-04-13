@@ -1,9 +1,8 @@
 <?php
 namespace Hail;
 
-use Hail\Facade\Config;
 use Hail\Http\{
-	Dispatcher, Emitter\Sapi, ServerRequest
+	Emitter\Sapi, ServerRequest
 };
 
 class Application
@@ -12,7 +11,9 @@ class Application
 
 	public function run()
 	{
-		$response = $this->dispatcher->dispatch(ServerRequest::fromGlobals());
+		$response = $this->dispatcher->dispatch(
+			ServerRequest::fromGlobals()
+		);
 
 		(new Sapi())->emit($response);
 	}

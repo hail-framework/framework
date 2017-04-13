@@ -70,7 +70,10 @@ class Compiler
 
 		foreach ($services as $k => $v) {
 			if (is_string($v)) {
-				if ($v[0] === '@') {
+				if ($v === '@self') {
+					$factory = $this->parseStrToClass($k);
+					$this->toMethod($k, "{$factory}()");
+				} elseif ($v[0] === '@') {
 					$this->toMethod($k, $this->parseStr($v));
 				} else {
 					$factory = $this->parseStrToClass($v);
@@ -120,6 +123,8 @@ class Compiler
 				}
 			} elseif (isset($v['class'])) {
 				$factory = $v['class'];
+			} elseif ($this->isClassname($k)) {
+				$factory = $k;
 			} else {
 				throw new LogicException('Not defined any configures: ' . $k);
 			}
@@ -208,7 +213,7 @@ class Compiler
 
 	protected function isClassname($name)
 	{
-		return (class_exists($name) || interface_exists($name)) && strtoupper($name[0]) === $name[0];
+		return (class_exists($name) || interface_exists($name) || trait_exists($name)) && strtoupper($name[0]) === $name[0];
 	}
 
 	protected function classname($name)
