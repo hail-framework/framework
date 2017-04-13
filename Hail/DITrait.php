@@ -13,7 +13,7 @@ use Hail\Facade\DI;
  * @property-read AliasLoader $alias
  * @property-read Router $router
  * @property-read I18N\I18N i18n
- * @property-read Http\Request $request
+ * @property-read Http\ServerRequest $request
  * @property-read Http\Response $response
  * @property-read Event\EventManager $event
  * @property-read Application $app
@@ -37,6 +37,7 @@ use Hail\Facade\DI;
  * @property-read \LibraryFactory $lib
  * @property-read \ModelFactory $model
  * @property-read Tracy\Debugger $debugger
+ * @property-read Http\Dispatcher $dispatcher
  */
 Trait DITrait
 {

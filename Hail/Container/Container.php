@@ -299,12 +299,21 @@ class Container implements ContainerInterface
 	 * @param string $name component name
 	 * @param mixed  $value
 	 */
-	public function inject($name, $value)
+	public function inject(string $name, $value)
 	{
 		if ($this->has($name)) {
 			throw new InvalidArgumentException("Attempted override of existing component: {$name}");
 		}
 
+		$this->replace($name, $value);
+	}
+
+	/**
+	 * @param string $name component name
+	 * @param mixed  $value
+	 */
+	public function replace(string $name, $value)
+	{
 		$this->values[$name] = $value;
 		$this->active[$name] = true;
 	}

@@ -8,12 +8,11 @@ use Hail\Http\{
 
 class Application
 {
+	use DITrait;
 
 	public function run()
 	{
-		$container = Bootstrap::init();
-
-		$response = $container->get('dispatcher')->dispatch(ServerRequest::fromGlobals());
+		$response = $this->dispatcher->dispatch(ServerRequest::fromGlobals());
 
 		(new Sapi())->emit($response);
 	}

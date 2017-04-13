@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Hail\Http;
 
 use InvalidArgumentException;
-use Hail\Http\Factory\StreamFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;

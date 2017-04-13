@@ -1,5 +1,8 @@
 <?php
-use Hail\Loader;
+use Hail\{
+	Loader,
+	Bootstrap
+};
 
 // Absolute path to the application base folder
 defined('BASE_PATH') || define('BASE_PATH', __DIR__ . DIRECTORY_SEPARATOR);
@@ -13,3 +16,5 @@ if (strpos(__DIR__, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === fa
 	require __DIR__ . '/Hail/Loader.php';
 	Loader::register();
 }
+
+Bootstrap::init();
