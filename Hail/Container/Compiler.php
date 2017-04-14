@@ -161,9 +161,14 @@ class Compiler
 
 		$return = [];
 		foreach ($calls as $v) {
-			[$method, $args] = $v;
-			$args = $this->parseArguments($args);
-			$return[] = $method . '(' . $args . ')';
+			if (is_string($v)) {
+				$return[] = $v . '()';
+			} elseif (is_array($v)) {
+				[$method, $args] = $v;
+				$args = $this->parseArguments($args);
+
+				$return[] = $method . '(' . $args . ')';
+			}
 		}
 
 		return $return;
@@ -257,7 +262,7 @@ class Compiler
 		$code = "\tprotected function {$method}() {\n";
 		if ($suffix !== []) {
 			$code .= "\t\t\$object = $return;\n";
-			$code .= implode(";\n\t\t\$objcet->", $suffix) . ";\n";
+			$code .= "\t\t\$object->" . implode(";\n\t\t\$object->", $suffix) . ";\n";
 			$return = '$object';
 		}
 

@@ -17,7 +17,7 @@ class Response implements ResponseInterface
 	use MessageTrait;
 
 	/** @var array Map of standard HTTP status code/reason phrases */
-	private static $phrases = [
+	public static $phrases = [
 		// INFORMATIONAL CODES
 		100 => 'Continue',
 		101 => 'Switching Protocols',

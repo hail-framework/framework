@@ -31,14 +31,14 @@ abstract class Reflection
 	public static function createFromCallable(callable $callback)
 	{
 		switch (true) {
+			case is_array($callback):
+				return new ReflectionMethod($callback[0], $callback[1]);
+
 			case $callback instanceof Closure:
 				return new ReflectionFunction($callback);
 
 			case is_object($callback):
 				return new ReflectionMethod($callback, '__invoke');
-
-			case is_array($callback):
-				return new ReflectionMethod($callback[0], $callback[1]);
 
 			default:
 				return new ReflectionFunction($callback);

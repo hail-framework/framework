@@ -23,7 +23,8 @@ class Route implements MiddlewareInterface
 	private $router;
 
 	/**
-	 * @param Router $router
+	 * @param Router    $router
+	 * @param Container $container
 	 */
 	public function __construct(Router $router, Container $container)
 	{
@@ -50,13 +51,17 @@ class Route implements MiddlewareInterface
 			return Factory::response($result['error']);
 		}
 
-		$request = $request->withAttribute('route_params', $result['params']);
-		$response = $delegate->process($request);
-
 		if ($result['handler'] instanceof \Closure) {
-			return $this->container->call($result['handler'], [$request, $response]);
+			return $this->container->call($result['handler'], [
+				$request->withAttribute('params', $result['params']),
+				$this->container
+			]);
 		}
 
-		return $response;
+		$result['handler']['params'] = $result['params'];
+
+		return $delegate->process(
+			$request->withAttribute('handler', $result['handler'])
+		);
 	}
 }

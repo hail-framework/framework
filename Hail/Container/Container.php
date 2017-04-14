@@ -59,7 +59,7 @@ class Container implements ContainerInterface
 			'container' => $this,
 			__CLASS__ => $this,
 			static::class => $this,
-			ContainerInterface::class => $this
+			ContainerInterface::class => $this,
 		];
 
 		foreach ($this->values as $k => $v) {
@@ -179,9 +179,11 @@ class Container implements ContainerInterface
 		$params = Reflection::createFromCallable($callback)->getParameters();
 		if ($params !== []) {
 			$params = $this->resolve($params, $map);
+
+			return $callback(...$params);
 		}
 
-		return $callback(...$params);
+		return $callback();
 	}
 
 	/**
@@ -191,7 +193,7 @@ class Container implements ContainerInterface
 	 * not explicitly provided in the (optional) second parameter.
 	 *
 	 * @param string        $class fully-qualified class-name
-	 * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
+	 * @param mixed|mixed[] $map   mixed list/map of parameter values (and/or boxed values)
 	 *
 	 * @return mixed
 	 *
@@ -210,7 +212,7 @@ class Container implements ContainerInterface
 		$reflection = new \ReflectionClass($class);
 
 		if (!$reflection->isInstantiable()) {
-			throw new ContainerException("unable to create instance of abstract class: {$class_name}");
+			throw new ContainerException("unable to create instance of abstract class: {$class}");
 		}
 
 		$constructor = $reflection->getConstructor();
@@ -307,6 +309,21 @@ class Container implements ContainerInterface
 
 		$this->values[$name] = $value;
 		$this->active[$name] = true;
+	}
+
+	/**
+	 * @param string $name
+	 * @param mixed  $value
+	 *
+	 * @throws InvalidArgumentException if the specified component not initialized
+	 */
+	public function replace(string $name, $value)
+	{
+		if (!isset($this->active[$name])) {
+			throw new InvalidArgumentException("The component not initialized: {$name}");
+		}
+
+		$this->values[$name] = $value;
 	}
 
 	/**

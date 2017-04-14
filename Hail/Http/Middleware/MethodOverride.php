@@ -11,14 +11,17 @@ use Psr\Http\ServerMiddleware\DelegateInterface;
 class MethodOverride implements MiddlewareInterface
 {
 	const HEADER = 'X-Http-Method-Override';
+
 	/**
 	 * @var array Allowed methods overrided in GET
 	 */
 	private $get = ['HEAD', 'CONNECT', 'TRACE', 'OPTIONS'];
+
 	/**
 	 * @var array Allowed methods overrided in POST
 	 */
 	private $post = ['PATCH', 'PUT', 'DELETE', 'COPY', 'LOCK', 'UNLOCK'];
+
 	/**
 	 * @var null|string The POST parameter name
 	 */

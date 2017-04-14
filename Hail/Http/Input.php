@@ -6,8 +6,9 @@ use Hail\Util\ArrayDot;
 use Hail\Util\ArrayTrait;
 
 /**
- * HttpRequest provides access scheme for request sent via HTTP.
+ * Class Input
  *
+ * @package Hail\Http
  */
 class Input implements \ArrayAccess
 {
@@ -25,7 +26,7 @@ class Input implements \ArrayAccess
 	protected $del = [];
 
 
-	public function __construct(Request $request)
+	public function __construct(ServerRequest $request)
 	{
 		$this->request = $request;
 		$this->items = Arrays::dot();
@@ -61,38 +62,40 @@ class Input implements \ArrayAccess
 	/**
 	 * @param string|null $key
 	 *
-	 * @return array|FileUpload|mixed|null|string
+	 * @return array|UploadedFile|mixed|null|string
 	 */
 	public function get(string $key = null)
 	{
 		if ($key === null) {
 			return $this->getAll();
-		} elseif ($this->all) {
+		}
+
+		if ($this->all) {
 			return $this->items[$key];
 		}
 
 		if (isset($this->del[$key])) {
 			return null;
-		} elseif ($this->items[$key] !== null) {
+		}
+
+		if ($this->items[$key] !== null) {
 			return $this->items[$key];
 		}
 
-		if ($this->request->isJson()) {
-			$return = $this->request->getJson($key);
-		} elseif (!$this->request->isMethod('GET')) {
+		if ($this->request->getMethod() !== 'GET') {
 			if (
 				strpos(
-					$this->request->getHeader('CONTENT-TYPE'),
+					$this->request->getHeaderLine('Content-Type'),
 					'multipart/form-data'
-				) === 0
+				) !== false
 			) {
-				$return = $this->request->getFile($key);
+				$return = $this->request->getUploadedFiles()[$key];
 			}
 
-			$return = $return ?? $this->request->getPost($key);
+			$return = $return ?? $this->request->getParsedBody()[$key] ?? null;
 		}
 
-		$return = $return ?? $this->request->getQuery($key);
+		$return = $return ?? $this->request->getQueryParams()[$key] ?? null;
 
 		if ($return !== null) {
 			$this->items[$key] = $return;
@@ -103,27 +106,27 @@ class Input implements \ArrayAccess
 
 	public function getAll()
 	{
-		$return = $this->items->get();
 		if ($this->all) {
-			return $return;
+			return $this->items->get();
 		}
 
-		if ($this->request->isJson()) {
-			$return += $this->request->getJson() ?? [];
-		} elseif (!$this->request->isMethod('GET')) {
+		$return = [];
+
+		if (!$this->request->getMethod() === 'GET') {
 			if (
 				strpos(
-					$this->request->getHeader('CONTENT-TYPE'),
+					$this->request->getHeaderLine('Content-Type'),
 					'multipart/form-data'
-				) === 0
+				) !== false
 			) {
-				$return += $this->request->getFile() ?? [];
+				$return += $this->request->getUploadedFiles() ?? [];
 			}
 
-			$return += $this->request->getPost() ?? [];
+			$return += $this->request->getParsedBody() ?? [];
 		}
 
-		$return += $this->request->getQuery();
+		$return += $this->request->getQueryParams();
+
 		if ($this->del !== []) {
 			$this->clear(
 				$return,

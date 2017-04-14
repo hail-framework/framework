@@ -6,8 +6,7 @@ services:
   config: Hail\Config
   alias:
       class: Hail\AliasLoader
-      arguments:
-        - CONFIG.alias
+      arguments: [CONFIG.alias]
   i18n: Hail\I18N\I18N
   event: Hail\Event\EventManager
   acl: Hail\Acl
@@ -20,50 +19,44 @@ services:
   Psr\Cache\CacheItemPoolInterface: "@cachePool"
   cookie:
     class: Hail\Cookie
-    arguments:
-      - CONFIG.cookie
+    arguments: [CONFIG.cookie]
   db: Hail\Factory\Database::pdo
   cdb: Hail\Database\Cache
   output: Hail\Output
   router:
     class: Hail\Router
-    arguments:
-      - CONFIG.route
+    arguments: [CONFIG.route]
   session:
     class: Hail\Session
-    arguments:
-      - CONFIG.session
-      - CONFIG.cookie
+    arguments: [CONFIG.session, CONFIG.cookie]
   storage: Hail\Factory\Storage::mount
   template:
     class: Hail\Latte\Engine
-    arguments:
-      - CONFIG.template
+    arguments: [CONFIG.template]
+  request: Hail\Http\ServerRequest::fromGlobals
 
   # Tools
   arrays: Hail\Util\Arrays
   crypto:
     class: Hail\Util\Crypto
-    arguments:
-      - CONFIG.crypto.format
+    arguments: [CONFIG.crypto.format]
   debugger: Hail\Tracy\Debugger
   generators: Hail\Util\Generators
   inflector: Hail\Util\Inflector
   json: Hail\Util\Json
   serialize:
     class: Hail\Util\Serialize
-    arguments:
-      - CONFIG.env.serialize
+    arguments: [CONFIG.env.serialize]
   strings: Hail\Util\Strings
   validator: Hail\Util\Validator
 
   # Application
-  app: Hail\Application
+  app:
+    class: Hail\Application
+    arguments: ["@container"]
   dispatcher:
     class: Hail\Http\Dispatcher
-    arguments:
-      - CONFIG.middleware
-      - "@container"
+    arguments: [CONFIG.middleware, "@container"]
   lib:
     class: Hail\Util\ObjectFactory
     arguments:
@@ -76,8 +69,16 @@ services:
     classRef: false
 
   # Middleware
+  Hail\Http\Middleware\BasePath:
+    arguments: [CONFIG.app.basePath]
+  Hail\Http\Middleware\ClientIp:
+    calls:
+      - [proxy, [CONFIG.env.proxies]]
+  Hail\Http\Middleware\MethodOverride: "@self"
   Hail\Http\Middleware\ScriptPath: "@self"
+  Hail\Http\Middleware\ErrorHandler: "@self"
   Hail\Http\Middleware\Route:
-    arguments:
-      - "@router"
-      - "@container"
+    arguments: ["@router", "@container"]
+  Hail\Http\Middleware\TrailingSlash: "@self"
+  Hail\Http\Middleware\Controller:
+    arguments: ["@container"]

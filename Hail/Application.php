@@ -1,97 +1,52 @@
 <?php
 namespace Hail;
 
-use Hail\Http\{
-	Emitter\Sapi, ServerRequest
-};
+use Hail\Container\Container;
+use Hail\Http\Emitter\Sapi;
 
 class Application
 {
-	use DITrait;
+	/**
+	 * @var Container
+	 */
+	private $container;
+
+	/**
+	 * Application constructor.
+	 *
+	 * @param Container $container
+	 */
+	public function __construct(Container $container)
+	{
+		$this->container = $container;
+	}
+
+	/**
+	 * @param string $name
+	 *
+	 * @return mixed
+	 */
+	public function __get(string $name)
+	{
+		return $this->$name = $this->container->get($name);
+	}
 
 	public function run()
 	{
 		$response = $this->dispatcher->dispatch(
-			ServerRequest::fromGlobals()
+			$this->request
 		);
 
 		(new Sapi())->emit($response);
 	}
 
-//	private function process()
-//	{
-//		$method = Request::getMethod();
-//		$result = Router::dispatch(
-//			$method,
-//			Request::getPathInfo()
-//		);
-//
-//		if (isset($result['error'])) {
-//			throw new BadRequestException('Router Error', $result['error']);
-//		}
-//
-//		$app = $result['handler']['app'] ?? '';
-//		$controller = $result['handler']['controller'] ?? '';
-//		$action = $result['handler']['action'] ?? '';
-//
-//		$dispatcher = $this->getDispatcher($app);
-//		$dispatcher->run($method, $controller, $action, $result['params']);
-//	}
-
-//	/**
-//	 * @param string $app
-//	 *
-//	 * @return Dispatcher
-//	 * @throws BadRequestException
-//	 */
-//	public function getDispatcher($app)
-//	{
-//		if (!isset($this->dispatcher[$app])) {
-//			return $this->dispatcher[$app] = new Dispatcher($app);
-//		}
-//
-//		return $this->dispatcher[$app];
-//	}
-//
-//	protected function processException(\Exception $e)
-//	{
-//		if (!$e instanceof ApplicationException) {
-//			throw $e;
-//		}
-//
-//		$code = 500;
-//		$isBadRequest = $e instanceof BadRequestException;
-//		if ($isBadRequest) {
-//			$code = $e->getCode() ?: 404;
-//		} else {
-//			Response::disableWarnOnBuffer();
-//		}
-//
-//		if (!Response::isSent()) {
-//			Response::setCode($code);
-//		}
-//
-//		$msg = [
-//			403 => 'Access Denied',
-//			404 => 'Not Found',
-//			405 => 'Method Not Allowed',
-//			410 => 'Gone',
-//			500 => 'Server Error',
-//		];
-//
-//		$msg = $msg[$code] ?? $e->getMessage();
-//
-//		Output::json()->send([
-//			'ret' => $code,
-//			'msg' => $msg,
-//		]);
-//
-//		if (!$isBadRequest) {
-//			Debugger::log($e, Debugger::EXCEPTION);
-//		}
-//	}
-//
-	public static function path(string $root, string $path = null)
+	/**
+	 * @param string      $root
+	 * @param string|null $path
+	 *
+	 * @return string
+	 */
+	public static function path(string $root, string $path = null): string
 	{
 		if ($path === null || $path === '') {
 			return $root;

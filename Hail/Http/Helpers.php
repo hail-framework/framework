@@ -2,9 +2,9 @@
 
 namespace Hail\Http;
 
+use Hail\Util\Strings;
 use Psr\Http\Message\{
-	MessageInterface,
-	StreamInterface
+	MessageInterface, StreamInterface
 };
 
 /**
@@ -438,7 +438,7 @@ class Helpers
 	 *
 	 * @return ServerRequest
 	 */
-	public static function serverRequestFromArray(array $server, array $cookies = []): ServerRequest
+	public static function serverRequestFromArray(array $server, array $cookies = null): ServerRequest
 	{
 		$method = self::getMethod($server);
 		$headers = self::getHeaders($server);
@@ -459,10 +459,74 @@ class Helpers
 
 		$protocol = self::getProtocol($server);
 
-		if ($cookies === [] && isset($headers['Cookie'])) {
+		if ($cookies === null && isset($headers['Cookie'])) {
 			$cookies = self::parseCookieHeader($headers['Cookie']);
 		}
 
-		return new ServerRequest($method, $uri, $headers, null, $protocol, $server, $cookies);
+		return new ServerRequest($method, $uri, $headers, null, $protocol, $server, $cookies ?? []);
+	}
+
+	/**
+	 * Is AJAX request?
+	 *
+	 * @param MessageInterface $request
+	 *
+	 * @return bool
+	 */
+	public static function isAjax(MessageInterface $request): bool
+	{
+		return $request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+	}
+
+	/**
+	 * Determine if the request is the result of an PJAX call.
+	 *
+	 * @param MessageInterface $request
+	 *
+	 * @return bool
+	 */
+	public static function isPjax(MessageInterface $request): bool
+	{
+		return $request->getHeaderLine('X-PJAX') === 'true';
+	}
+
+	/**
+	 * Determine if the request is sending JSON.
+	 *
+	 * @param MessageInterface $request
+	 *
+	 * @return bool
+	 */
+	public static function isJson(MessageInterface $request): bool
+	{
+		return Strings::contains(
+			$request->getHeaderLine('Content-Type') ?? '', ['/json', '+json']
+		);
+	}
+
+	/**
+	 * Determine if the current request probably expects a JSON response.
+	 *
+	 * @param MessageInterface $request
+	 *
+	 * @return bool
+	 */
+	public static function expectsJson(MessageInterface $request): bool
+	{
+		return (static::isAjax($request) && !static::isPjax($request)) || static::wantsJson($request);
+	}
+
+	/**
+	 * Determine if the current request is asking for JSON in return.
+	 *
+	 * @param MessageInterface $request
+	 *
+	 * @return bool
+	 */
+	public static function wantsJson(MessageInterface $request): bool
+	{
+		$acceptable = $request->getHeaderLine('Accept');
+
+		return $acceptable !== null && Strings::contains($acceptable, ['/json', '+json']);
 	}
 }

@@ -2,6 +2,8 @@
 
 namespace Hail;
 
+use Psr\Http\Message\ServerRequestInterface;
+
 /**
  * Class Controller
  *
@@ -12,12 +14,12 @@ abstract class Controller
 	use DITrait;
 
 	/**
-	 * @var Dispatcher
+	 * @var ServerRequestInterface
 	 */
-	protected $dispatcher;
+	protected $request;
 
-	public function __construct($dispatcher)
+	public function __construct(ServerRequestInterface $request)
 	{
-		$this->dispatcher = $dispatcher;
+		$this->request = $request;
 	}
 }

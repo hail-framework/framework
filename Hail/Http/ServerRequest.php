@@ -184,12 +184,12 @@ class ServerRequest extends Request implements ServerRequestInterface
 		return $serverRequest;
 	}
 
-	public function getServerParams()
+	public function getServerParams(): array
 	{
 		return $this->serverParams;
 	}
 
-	public function getUploadedFiles()
+	public function getUploadedFiles(): array
 	{
 		return $this->uploadedFiles;
 	}
@@ -202,7 +202,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 		return $new;
 	}
 
-	public function getCookieParams()
+	public function getCookieParams(): array
 	{
 		return $this->cookieParams;
 	}
@@ -215,7 +215,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 		return $new;
 	}
 
-	public function getQueryParams()
+	public function getQueryParams(): array
 	{
 		return $this->queryParams;
 	}
@@ -241,18 +241,18 @@ class ServerRequest extends Request implements ServerRequestInterface
 		return $new;
 	}
 
-	public function getAttributes()
+	public function getAttributes(): array
 	{
 		return $this->attributes;
 	}
 
 	public function getAttribute($attribute, $default = null)
 	{
-		if (!array_key_exists($attribute, $this->attributes)) {
-			return $default;
+		if (isset($this->attributes[$attribute]) || array_key_exists($attribute, $this->attributes)) {
+			return $this->attributes[$attribute];
 		}
 
-		return $this->attributes[$attribute];
+		return $default;
 	}
 
 	public function withAttribute($attribute, $value)
