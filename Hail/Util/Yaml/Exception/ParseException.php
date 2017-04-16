@@ -16,7 +16,7 @@ namespace Hail\Util\Yaml\Exception;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ParseException extends RuntimeException
+class ParseException extends YamlException
 {
     private $parsedFile;
     private $parsedLine;

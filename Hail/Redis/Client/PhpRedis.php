@@ -79,8 +79,8 @@ class PhpRedis extends AbstractClient
 		}
 
 		$result = $this->persistent
-			? $this->redis->pconnect($this->host, $this->port, $this->timeout)
-			: $this->redis->connect($this->host, $this->port, $this->timeout);
+			? $this->redis->pconnect($this->host, $this->port, $this->timeout ?: 0.0, $this->persistent)
+			: $this->redis->connect($this->host, $this->port, $this->timeout ?: 0.0);
 
 		// Use recursion for connection retries
 		if (!$result) {
@@ -244,11 +244,15 @@ class PhpRedis extends AbstractClient
 				$this->redisMulti = $response;
 
 				return $this;
-			} elseif ($name === 'exec' || $name === 'discard') {
+			}
+
+			if ($name === 'exec' || $name === 'discard') {
 				$this->redisMulti = null;
 
 				return $response;
-			} elseif ($this->redisMulti !== null) { // Multi and pipeline return self for chaining
+			}
+
+			if ($this->redisMulti !== null) { // Multi and pipeline return self for chaining
 				return $this;
 			}
 		} catch (\RedisException $e) {

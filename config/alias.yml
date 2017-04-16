@@ -1,7 +1,6 @@
 Acl: Hail\Facade\Acl
 Alias: Hail\Facade\Alias
 Application: Hail\Facade\Application
-Arrays: Hail\Util\Arrays
 Browser: Hail\Facade\Browser
 Cache: Hail\Facade\Cache
 CachePool: Hail\Facade\CachePool
@@ -12,12 +11,8 @@ Crypto: Hail\Facade\Crypto
 DB: Hail\Facade\DB
 Container: Hail\Facade\Container
 DI: Hail\Facade\DI
-Debugger: Hail\Tracy\Debugger
 Event: Hail\Facade\Event
-Generators: Hail\Facade\Generators
 I18N: Hail\Facade\I18N
-Inflector: Hail\Util\Inflector
-Json: Hail\Util\Json
 Library: Hail\Facade\Library
 Model: Hail\Facade\Model
 Output: Hail\Facade\Output
@@ -27,6 +22,11 @@ Router: Hail\Facade\Router
 Serialize: Hail\Facade\Serialize
 Session: Hail\Facade\Session
 Storage: Hail\Facade\Storage
-Strings: Hail\Util\Strings
 Template: Hail\Facade\Template
 Validator: Hail\Facade\Validator
+Arrays: Hail\Util\Arrays
+Debugger: Hail\Tracy\Debugger
+Json: Hail\Util\Json
+Strings: Hail\Util\Strings
+Inflector: Hail\Util\Inflector
+Generators: Hail\Util\Generators

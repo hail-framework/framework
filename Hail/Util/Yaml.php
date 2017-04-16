@@ -38,6 +38,29 @@ class Yaml
 		return (new Yaml\Parser())->parse($input);
 	}
 
+	public static function parseFile(string $file)
+    {
+        if (YAML_EXTENSION_LOADED) {
+            if (ini_get('yaml.decode_php')) {
+                ini_set('yaml.decode_php', 0);
+            }
+
+            return yaml_parse_file($file, 0, $i, [
+                '!php/const' => [Yaml\Parser::class, 'constant']
+            ]);
+        }
+
+        $content = file_get_contents($file);
+
+        // Remove BOM if present
+        $bom = chr(239) . chr(187) . chr(191);
+        if (strpos($content, $bom) === 0) {
+            $content = substr($content, 3);
+        }
+
+        return (new Yaml\Parser())->parse($content);
+    }
+
 	/**
 	 * Dumps a PHP value to a YAML string.
 	 *

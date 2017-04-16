@@ -12,10 +12,10 @@
 namespace Hail\Util\Yaml\Exception;
 
 /**
- * Exception interface for all exceptions thrown by the component.
+ * Exception class thrown when an error occurs during parsing.
  *
- * @author Fabien Potencier <fabien@symfony.com>
+ * @author Romain Neutron <imprec@gmail.com>
  */
-interface ExceptionInterface
+class YamlException extends \RuntimeException
 {
 }

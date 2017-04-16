@@ -3,7 +3,7 @@
 namespace Hail\Container;
 
 use Hail\Config;
-use LogicException;
+use RuntimeException;
 
 /**
  * This class implements a simple dependency injection container.
@@ -27,7 +27,6 @@ class Compiler
 
 	public function compile()
 	{
-		$this->parseParameters();
 		$this->parseServices();
 
 		$code = "<?php\n";
@@ -45,7 +44,8 @@ class Compiler
 		$code .= "\t\t\treturn \$this->values[\$name];\n";
 		$code .= "\t\t}\n\n";
 		$code .= "\t\tif (isset(static::\$entryPoints[\$name])) {\n";
-		$code .= "\t\t\treturn \$this->{static::\$entryPoints[\$name]}();\n";
+        $code .= "\t\t\t\$this->active[\$name] = true;\n";
+		$code .= "\t\t\treturn \$this->values[\$name] = \$this->{static::\$entryPoints[\$name]}();\n";
 		$code .= "\t\t}\n\n";
 		$code .= "\t\treturn parent::get(\$name);\n";
 		$code .= "\t}\n\n";
@@ -55,30 +55,22 @@ class Compiler
 		file_put_contents(static::$file, $code);
 	}
 
-	protected function parseParameters()
-	{
-		$parameters = $this->config['parameters'] ?? [];
-
-		foreach ($parameters as $k => $v) {
-			$this->toMethod($k, $this->parseStr($v));
-		}
-	}
-
 	protected function parseServices()
 	{
-		$services = $this->config['services'] ?? [];
+		$services = $this->config ?? [];
+		$alias = [];
 
 		foreach ($services as $k => $v) {
 			if (is_string($v)) {
-				if ($v === '@self') {
-					$factory = $this->parseStrToClass($k);
-					$this->toMethod($k, "{$factory}()");
-				} elseif ($v[0] === '@') {
-					$this->toMethod($k, $this->parseStr($v));
+				if ($v[0] === '@') {
+				    $v = substr($v, 1);
+				    if ($v !== '') {
+                        $alias[$k] = $v;
+                    }
 				} else {
 					$factory = $this->parseStrToClass($v);
 					if ($this->isClassname($v)) {
-						$this->toMethod($v, $this->parseRef($k));
+                        $alias[$v] = $k;
 					}
 					$this->toMethod($k, "{$factory}()");
 				}
@@ -86,14 +78,30 @@ class Compiler
 				continue;
 			}
 
+            if ($v === []) {
+                if ($this->isClassname($k)) {
+                    $this->toMethod($k, "new {$k}()");
+                }
+                continue;
+            }
+
 			if (!is_array($v)) {
 				continue;
 			}
 
 			if (isset($v['alias'])) {
-				$this->toMethod($k, $this->parseRef($v['alias']));
+			    $alias[$k] = $v['alias'];
 				continue;
 			}
+
+			$refs = (array) ($v['to'] ?? []);
+            if (isset($v['class|to']) && $v['class|to'] !== $k) {
+                $refs[] = $v['class|to'];
+            }
+
+            foreach ($refs as $to) {
+                $alias[$to] = $k;
+            }
 
 			$arguments = '';
 			if (isset($v['arguments'])) {
@@ -105,12 +113,6 @@ class Compiler
 				$this->parseCalls($v['calls'] ?? [])
 			);
 
-			$classRef = $v['classRef'] ?? true;
-
-			if ($classRef && isset($v['class']) && $v['class'] !== $k) {
-				$this->toMethod($v['class'], $this->parseRef($k));
-			}
-
 			if (isset($v['factory'])) {
 				$factory = $v['factory'];
 				if (is_array($v['factory'])) {
@@ -121,17 +123,25 @@ class Compiler
 				if (!is_string($factory)) {
 					continue;
 				}
-			} elseif (isset($v['class'])) {
+			} elseif (isset($v['class|to'])) {
+                $factory = $v['class|to'];
+            } elseif (isset($v['class'])) {
 				$factory = $v['class'];
 			} elseif ($this->isClassname($k)) {
 				$factory = $k;
 			} else {
-				throw new LogicException('Not defined any configures: ' . $k);
+				throw new RuntimeException('Component not defined any build arguments: ' . $k);
 			}
 
 			$factory = $this->parseStrToClass($factory);
 			$this->toMethod($k, "{$factory}($arguments)", $suffix);
 		}
+
+		foreach ($alias as $k => $v) {
+		    if (isset($this->points[$v])) {
+                $this->toMethod($k, $this->parseRef($v));
+            }
+        }
 	}
 
 	protected function parseArguments(array $args): string
@@ -160,15 +170,13 @@ class Compiler
 		}
 
 		$return = [];
-		foreach ($calls as $v) {
-			if (is_string($v)) {
-				$return[] = $v . '()';
-			} elseif (is_array($v)) {
-				[$method, $args] = $v;
-				$args = $this->parseArguments($args);
-
-				$return[] = $method . '(' . $args . ')';
+		foreach ($calls as $method => $v) {
+		    $args = '';
+			if (is_array($v)) {
+				$args = $this->parseArguments($v);
 			}
+
+            $return[] = $method . '(' . $args . ')';
 		}
 
 		return $return;
@@ -186,7 +194,11 @@ class Compiler
 			return $this->parseRef($ref) . "->{$method}";
 		}
 
-		return "new $str";
+		if ($this->isClassname($str)) {
+            return "new $str";
+        }
+
+        throw new RuntimeException("Given value can not convert to build function : $str");
 	}
 
 	protected function parseStr($str)
@@ -257,8 +269,6 @@ class Compiler
 		$method = $this->methodName($name);
 		$this->points[$name] = "'$method'";
 
-		$name = $this->classname($name);
-
 		$code = "\tprotected function {$method}() {\n";
 		if ($suffix !== []) {
 			$code .= "\t\t\$object = $return;\n";
@@ -266,8 +276,7 @@ class Compiler
 			$return = '$object';
 		}
 
-		$code .= "\t\t\$this->active[$name] = true;\n";
-		$code .= "\t\treturn \$this->values[$name] = $return;\n";
+		$code .= "\t\treturn $return;\n";
 		$code .= "\t}";
 
 		$this->methods[] = $code;

@@ -2,9 +2,8 @@
 
 namespace Hail;
 
-use Hail\Facade\Arrays;
 use Hail\Util\{
-	ArrayDot, ArrayTrait, OptimizeTrait, Yaml
+    Arrays, ArrayDot, ArrayTrait, OptimizeTrait, Yaml
 };
 
 /**
@@ -81,7 +80,7 @@ class Config implements \ArrayAccess
 	 *
 	 * 优先 {BASE_PATH}/config/{$space}.*，其次 {HAIL_PATH}/config/{$space}.*
 	 * $space 为 . 开头，只读取 {HAIL_PATH}/config/{$space}.*
-	 * 扩展名优先 yml > yaml > php
+	 * 扩展名优先 php > yml > yaml
 	 *
 	 * @param string $space
 	 *
@@ -120,39 +119,36 @@ class Config implements \ArrayAccess
 			return [];
 		}
 
-		$ext = substr($file, -4);
-		if ($ext === '.yml' || $ext === 'yaml') {
-			return $this->loadYaml($file);
+		$ext = strrchr($file, '.');
+		if ($ext === '.yml' || $ext === '.yaml') {
+			return $this->loadYaml($file, $ext);
 		}
 
 		return require $file;
 	}
 
 	/**
-	 * Parse a yaml file or load it from the cache
+	 * Parse a YAML file or load it from the cache
 	 *
 	 * @param $file
 	 *
 	 * @return array|mixed
 	 */
-	protected function loadYaml($file)
+	protected function loadYaml($file, $ext)
 	{
 		$filename = basename($file);
 		$dir = RUNTIME_PATH . 'yaml/';
 
-		$cache = $dir . str_replace(strrchr($filename, '.'), '.php', $filename);
+		$cache = $dir . str_replace($ext, '.php', $filename);
 
 		if (@filemtime($cache) < filemtime($file)) {
-			$content = Yaml::parse(file_get_contents($file));
-			if (is_array($content)) {
-				array_walk_recursive($content, [$this, 'yamlParseValues']);
-			}
+			$content = Yaml::parseFile($file);
 
 			if (!is_dir($dir) && !@mkdir($dir, 0755) && !is_dir($dir)) {
 				throw new \RuntimeException('Temp directory permission denied');
 			}
 
-			file_put_contents($cache, '<?php return ' . var_export($content, true) . ';');
+			file_put_contents($cache, '<?php return ' . $this->parseYamlToCode($content) . ';');
 
 			if (function_exists('opcache_invalidate')) {
 				opcache_invalidate($cache, true);
@@ -164,48 +160,94 @@ class Config implements \ArrayAccess
 		return $content;
 	}
 
-	/**
+	protected function parseYamlToCode(array $array, $level = 0): string
+    {
+        $pad = '';
+        if ($level > 0) {
+            $pad = str_repeat("\t", $level);
+        }
+
+        $isAssoc = Arrays::isAssoc($array);
+
+        $ret = '[' . "\n";
+        foreach ($array as $k => $v) {
+            $ret .= $pad . "\t";
+            if ($isAssoc) {
+                $ret .= var_export($k, true) . ' => ';
+            }
+
+            if (is_array($v)) {
+                $ret .= $this->parseYamlToCode($v, $level + 1);
+            } else {
+                $ret .= $this->yamlParseValues($v);
+            }
+
+            $ret .= ',' . "\n";
+        }
+
+        return $ret . $pad . ']';
+    }
+
+    /**
 	 * Parse
 	 *
 	 * @param $value
 	 *
 	 * @return mixed
 	 */
-	protected function yamlParseValues(&$value)
+	protected function yamlParseValues($value)
 	{
+	    if ($value instanceof \DateTime) {
+	        return var_export($value->format('c'), true);
+        }
+
 		if (!is_string($value)) {
-			return true;
+			return var_export($value, true);
 		}
 
-		preg_match_all('/\${([a-zA-Z_:]+)}/', $value, $matches);
+        if (preg_match('/^%([a-zA-Z_]+)(?::(.*))?%$/', $value, $matches)) {
+	        $function = $matches[1];
 
-		if (!empty($matches[0])) {
-			$replace = [];
-			foreach ($matches[0] as $k => $v) {
-				if (defined($matches[1][$k])) {
-					$replace[$v] = constant($matches[1][$k]);
-				}
-			}
+	        if (!function_exists($function)) {
+	            return $value;
+            }
 
-			if ($replace !== []) {
-				$value = strtr($value, $replace);
-			}
-		}
+            if (!isset($matches[2])) {
+	            return $function . '()';
+            }
 
-		preg_match_all('/%([a-zA-Z_]+)(?::(.*))?%/', $value, $matches);
-		if (!empty($matches[0])) {
-			$function = $matches[1][0];
-			if (!function_exists($function)) {
-				return true;
-			}
-			$args = explode(',', $matches[2][0]);
-			$value = $function(...$args);
-		}
+            $args = explode(',', $matches[2]);
+	        foreach ($args as &$a) {
+	            $a = $this->yamlParseConstant(trim($a));
+            }
 
-		return true;
+	        return $function . '(' . implode(', ', $args) . ')';
+        }
+
+        return $this->yamlParseConstant($value);
 	}
 
-	protected static function getSpace(string $key): string
+	protected function yamlParseConstant(string $value)
+    {
+        $value = var_export($value, true);
+
+        preg_match_all('/\${([a-zA-Z_:\\\]+)}/', $value, $matches);
+
+        if (!empty($matches[0])) {
+            $replace = [];
+            foreach ($matches[0] as $k => $v) {
+                $replace[$v] = '\' . \\' . str_replace('\\\\', '\\', $matches[1][$k]) . ' . \'';
+            }
+
+            if ($replace !== []) {
+                $value = strtr($value, $replace);
+            }
+        }
+
+        return $value;
+    }
+
+    protected static function getSpace(string $key): string
 	{
 		return $key[0] === '.' ?
 			'.' . explode('.', $key)[1] :

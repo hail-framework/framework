@@ -62,6 +62,10 @@ class Arrays
 	 */
 	public static function isAssoc(array $array): bool
 	{
+	    if (!isset($array[0])) {
+	        return true;
+        }
+
 		$keys = array_keys($array);
 
 		return array_keys($keys) !== $keys;
