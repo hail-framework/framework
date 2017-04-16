@@ -9,7 +9,7 @@ namespace Hail\Mail;
 
 use InvalidArgumentException;
 use RuntimeException;
-use Hail\Facade\{
+use Hail\Util\{
 	Generators,
 	Strings
 };

@@ -2,7 +2,6 @@
 
 namespace Hail\Session;
 
-use Hail\Facade\CachePool;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**

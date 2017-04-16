@@ -3,7 +3,7 @@
 namespace Hail\Tracy\Bar;
 
 use Hail\Exception\JsonException;
-use Hail\Facade\Json;
+use Hail\Util\Json;
 
 /**
  * Bar panel for Tracy (https://tracy.nette.org/) shows versions of libraries parsed from composer.lock.

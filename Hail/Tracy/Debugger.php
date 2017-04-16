@@ -188,14 +188,16 @@ class Debugger
 	{
 		if (self::$productionMode) {
 			return;
+		}
 
-		} elseif (headers_sent($file, $line) || ob_get_length()) {
+		if (headers_sent($file, $line) || ob_get_length()) {
 			throw new \LogicException(
 				__METHOD__ . '() called after some output has been sent. '
 				. ($file ? "Output started at $file:$line." : 'Try Hail\Tracy\OutputDebugger to find where output started.')
 			);
+		}
 
-		} elseif (self::$enabled && session_status() !== PHP_SESSION_ACTIVE) {
+		if (self::$enabled && session_status() !== PHP_SESSION_ACTIVE) {
 			ini_set('session.use_cookies', '1');
 			ini_set('session.use_only_cookies', '1');
 			ini_set('session.use_trans_sid', '0');

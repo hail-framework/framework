@@ -42,7 +42,6 @@ use Hail\Console\Helper\{
 use Hail\Console\Event\{
 	ConsoleCommandEvent,
 	ConsoleErrorEvent,
-	ConsoleExceptionEvent,
 	ConsoleTerminateEvent
 };
 use Hail\Console\Exception\CommandNotFoundException;

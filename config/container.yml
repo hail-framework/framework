@@ -49,7 +49,16 @@ template:
   class|to: Hail\Latte\Engine
   arguments: [CONFIG.template]
 
-request: Hail\Http\ServerRequest::fromGlobals
+http.request:
+  factory: Hail\Http\ServerRequest::fromGlobals
+  to:
+    - Hail\Http\ServerRequest
+    - Psr\Http\Message\ServerRequestInterface
+    - request
+
+http.dispatcher:
+  class|to: Hail\Http\Dispatcher
+  arguments: [CONFIG.middleware, "@container"]
 
 # Tools
 arrays: Hail\Util\Arrays
@@ -80,8 +89,8 @@ app:
   arguments: ["@container"]
 
 dispatcher:
-  class|to: Hail\Http\Dispatcher
-  arguments: [CONFIG.middleware, "@container"]
+  class|to: Hail\Dispatcher
+  arguments: ["@http.dispatcher"]
 
 lib:
   class: Hail\Util\ObjectFactory
@@ -108,7 +117,7 @@ Hail\Http\Middleware\ScriptPath: []
 Hail\Http\Middleware\ErrorHandler: []
 
 Hail\Http\Middleware\Route:
-  arguments: ["@router", "@container"]
+  arguments: ["@container"]
 
 Hail\Http\Middleware\TrailingSlash: []
 

@@ -94,13 +94,13 @@ class Compiler
 				continue;
 			}
 
-			$refs = (array) ($v['to'] ?? []);
+			$to = (array) ($v['to'] ?? []);
             if (isset($v['class|to']) && $v['class|to'] !== $k) {
-                $refs[] = $v['class|to'];
+                $to[] = $v['class|to'];
             }
 
-            foreach ($refs as $to) {
-                $alias[$to] = $k;
+            foreach ($to as $ref) {
+                $alias[$ref] = $k;
             }
 
 			$arguments = '';
@@ -137,9 +137,13 @@ class Compiler
 			$this->toMethod($k, "{$factory}($arguments)", $suffix);
 		}
 
+		$refs = [];
 		foreach ($alias as $k => $v) {
-		    if (isset($this->points[$v])) {
+            if (isset($refs[$v])) {
+                $this->toPoint($k, $refs[$v]);
+            } elseif (isset($this->points[$v])) {
                 $this->toMethod($k, $this->parseRef($v));
+                $refs[$v] = $k;
             }
         }
 	}
@@ -263,6 +267,12 @@ class Compiler
 
 		return $name;
 	}
+
+	protected function toPoint($name, $point)
+    {
+        $method = $this->methodName($point);
+        $this->points[$name] = "'$method'";
+    }
 
 	protected function toMethod($name, $return, array $suffix = [])
 	{

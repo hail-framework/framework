@@ -6,7 +6,7 @@ use Hail\Browser\{
 	Request,
 	RequestBody as Body
 };
-use Hail\Facade\Json;
+use Hail\Util\Json;
 
 class Browser
 {

@@ -4,10 +4,10 @@ namespace Hail\Http;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\{
-	ServerMiddleware\DelegateInterface,
-	ServerMiddleware\MiddlewareInterface,
-	Message\ResponseInterface,
-	Message\ServerRequestInterface
+    ServerMiddleware\DelegateInterface,
+    ServerMiddleware\MiddlewareInterface,
+    Message\ResponseInterface,
+    Message\ServerRequestInterface
 };
 
 /**
@@ -15,135 +15,168 @@ use Psr\Http\{
  */
 class Dispatcher implements MiddlewareInterface
 {
-	/**
-	 * @var ContainerInterface
-	 */
-	private $container;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
 
-	/**
-	 * @var MiddlewareInterface[]
-	 */
-	private $middleware;
+    /**
+     * @var array
+     */
+    private $middleware;
 
-	/**
-	 * @var int
-	 */
-	private $index;
-
-
-	/**
-	 * @param (callable|MiddlewareInterface|mixed)[] $middleware middleware stack (with at least one middleware component)
-	 * @param ContainerInterface|null $container optional middleware resolver:
-	 *                                           function (string $name): MiddlewareInterface
-	 *
-	 * @throws \InvalidArgumentException if an empty middleware stack was given
-	 */
-	public function __construct(array $middleware, ContainerInterface $container = null)
-	{
-		if (empty($middleware)) {
-			throw new \InvalidArgumentException('Empty middleware queue');
-		}
-
-		$this->middleware = $middleware;
-		$this->container = $container;
-	}
-
-	/**
-	 * Return the next available middleware frame in the queue.
-	 *
-	 * @param ServerRequestInterface $request for matcher
-	 *
-	 * @return MiddlewareInterface|false
-	 */
-	public function next(ServerRequestInterface $request): ?MiddlewareInterface
-	{
-		++$this->index;
-
-		return $this->get($request);
-	}
-
-	/**
-	 * Dispatch the request, return a response.
-	 *
-	 * @param ServerRequestInterface $request
-	 *
-	 * @return ResponseInterface
-	 * @throws \LogicException
-	 */
-	public function dispatch(ServerRequestInterface $request): ResponseInterface
-	{
-		$this->index = 0;
-
-		return $this->get($request)->process($request, new Delegate($this, null));
-	}
+    /**
+     * @var int
+     */
+    private $index;
 
 
-	/**
-	 * @inheritdoc
-	 * @throws \LogicException
-	 */
-	public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
-	{
-		$this->index = 0;
+    /**
+     * @param (callable|MiddlewareInterface|mixed)[] $middleware middleware stack (with at least one middleware component)
+     * @param ContainerInterface|null $container optional middleware resolver:
+     *                                           function (string $name): MiddlewareInterface
+     *
+     * @throws \InvalidArgumentException if an empty middleware stack was given
+     */
+    public function __construct(array $middleware, ContainerInterface $container = null)
+    {
+        if (empty($middleware)) {
+            throw new \InvalidArgumentException('Empty middleware queue');
+        }
 
-		return $this->get($request)->process($request, new Delegate($this, $delegate));
-	}
+        $this->middleware = $middleware;
+        $this->container = $container;
+    }
 
-	/**
-	 * Return the next available middleware frame in the middleware.
-	 *
-	 * @param ServerRequestInterface $request for matcher
-	 *
-	 * @return MiddlewareInterface
-	 * @throws \LogicException
-	 */
-	public function get(ServerRequestInterface $request): ?MiddlewareInterface
-	{
-		if (!isset($this->middleware[$this->index])) {
-			return null;
-		}
+    /**
+     * Return the next available middleware frame in the queue.
+     *
+     * @param ServerRequestInterface $request for matcher
+     *
+     * @return MiddlewareInterface|false
+     */
+    public function next(ServerRequestInterface $request): ?MiddlewareInterface
+    {
+        ++$this->index;
 
-		$middleware = $this->middleware[$this->index];
+        return $this->get($request);
+    }
 
-		if (is_array($middleware)) {
-			$conditions = $middleware;
-			$middleware = array_pop($conditions);
+    /**
+     * Dispatch the request, return a response.
+     *
+     * @param ServerRequestInterface $request
+     *
+     * @return ResponseInterface
+     * @throws \LogicException
+     */
+    public function dispatch(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->index = 0;
 
-			foreach ($conditions as $condition) {
-				if ($condition === true) {
-					continue;
-				}
+        return $this->get($request)->process($request, new Delegate($this, null));
+    }
 
-				if ($condition === false) {
-					return $this->next($request);
-				}
 
-				if (is_string($condition)) {
-					$condition = new Matcher\Path($condition);
-				} elseif (!($condition instanceof Matcher\MatcherInterface)) {
-					throw new \LogicException('Invalid matcher. Must be a boolean, string or an instance of Hail\\Http\\Matcher\\MatcherInterface');
-				}
+    /**
+     * @inheritdoc
+     * @throws \LogicException
+     */
+    public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
+    {
+        $this->index = 0;
 
-				if (!$condition->match($request)) {
-					return $this->next($request);
-				}
-			}
-		}
+        return $this->get($request)->process($request, new Delegate($this, $delegate));
+    }
 
-		if (is_string($middleware)) {
-			if ($this->container === null) {
-				throw new \LogicException("No valid middleware provided: $middleware");
-			}
+    /**
+     * Return the next available middleware frame in the middleware.
+     *
+     * @param ServerRequestInterface $request for matcher
+     *
+     * @return MiddlewareInterface
+     * @throws \LogicException
+     */
+    public function get(ServerRequestInterface $request): ?MiddlewareInterface
+    {
+        if (!isset($this->middleware[$this->index])) {
+            return null;
+        }
 
-			$middleware = $this->container->get($middleware);
-		}
+        $middleware = $this->middleware[$this->index];
 
-		if (is_callable($middleware)) {
-			$middleware = new Middleware\CallableWrapper($middleware);
-		} elseif (!$middleware instanceof MiddlewareInterface) {
-			throw new \LogicException('The middleware must be an instance of MiddlewareInterface');
-		}
+        if (is_array($middleware)) {
+            $conditions = $middleware;
+            $middleware = array_pop($conditions);
 
-		return $middleware;
-	}
+            foreach ($conditions as $condition) {
+                if ($condition === true) {
+                    continue;
+                }
+
+                if ($condition === false) {
+                    return $this->next($request);
+                }
+
+                if (is_string($condition)) {
+                    $condition = new Matcher\Path($condition);
+                } elseif (!($condition instanceof Matcher\MatcherInterface)) {
+                    throw new \LogicException('Invalid matcher. Must be a boolean, string or an instance of Hail\\Http\\Matcher\\MatcherInterface');
+                }
+
+                if (!$condition->match($request)) {
+                    return $this->next($request);
+                }
+            }
+        }
+
+        if (is_string($middleware)) {
+            if ($this->container === null) {
+                throw new \LogicException("No valid middleware provided: $middleware");
+            }
+
+            $middleware = $this->container->get($middleware);
+        }
+
+        if (is_callable($middleware)) {
+            $middleware = new Middleware\CallableWrapper($middleware);
+        } elseif (!$middleware instanceof MiddlewareInterface) {
+            throw new \LogicException('The middleware must be an instance of MiddlewareInterface');
+        }
+
+        return $middleware;
+    }
+
+    /**
+     * Add last middleware to next repeat process
+     */
+    public function repeat()
+    {
+        if (!isset($this->middleware[$this->index])) {
+            return;
+        }
+
+        $middleware = $this->middleware[$this->index];
+        $this->after($middleware);
+    }
+
+    /**
+     * add middleware to next process
+     *
+     * @param $middleware
+     */
+    public function after($middleware)
+    {
+        array_splice($this->middleware, $this->index + 1, 0, $middleware);
+    }
+
+    /**
+     * add middleware to the queue end
+     *
+     * @param $middleware
+     */
+    public function append($middleware)
+    {
+        $this->middleware[] = $middleware;
+    }
 }

@@ -120,21 +120,14 @@ class AliasLoader
 <?php
 namespace $namespace;
 
-use Hail\Facade\Facade;
+use Hail\Facade\DynamicFacade;
 
 /**
  * @see $target
  */
-class $class extends Facade
+class $class extends DynamicFacade
 {
-    protected static function instance()
-    {
-        if (method_exists('$target', 'getInstance')) {
-            return $target::getInstance();
-		}
-
-        return new $target;
-    }
+    protected static \$name = '$target';
 }
 STUB;
 

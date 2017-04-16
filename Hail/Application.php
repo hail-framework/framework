@@ -26,15 +26,15 @@ class Application
 	 *
 	 * @return mixed
 	 */
-	public function __get(string $name)
+	public function get(string $name)
 	{
-		return $this->$name = $this->container->get($name);
+		return $this->container->get($name);
 	}
 
 	public function run()
 	{
-		$response = $this->dispatcher->dispatch(
-			$this->request
+		$response = $this->get('http.dispatcher')->dispatch(
+			$this->get('http.request')
 		);
 
 		(new Sapi())->emit($response);

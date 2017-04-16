@@ -148,7 +148,7 @@ class Config implements \ArrayAccess
 				throw new \RuntimeException('Temp directory permission denied');
 			}
 
-			file_put_contents($cache, '<?php return ' . $this->parseYamlToCode($content) . ';');
+			file_put_contents($cache, '<?php return ' . $this->parseArrayToCode($content) . ';');
 
 			if (function_exists('opcache_invalidate')) {
 				opcache_invalidate($cache, true);
@@ -160,7 +160,7 @@ class Config implements \ArrayAccess
 		return $content;
 	}
 
-	protected function parseYamlToCode(array $array, $level = 0): string
+	protected function parseArrayToCode(array $array, $level = 0): string
     {
         $pad = '';
         if ($level > 0) {
@@ -177,9 +177,9 @@ class Config implements \ArrayAccess
             }
 
             if (is_array($v)) {
-                $ret .= $this->parseYamlToCode($v, $level + 1);
+                $ret .= $this->parseArrayToCode($v, $level + 1);
             } else {
-                $ret .= $this->yamlParseValues($v);
+                $ret .= $this->parseValue($v);
             }
 
             $ret .= ',' . "\n";
@@ -195,10 +195,10 @@ class Config implements \ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	protected function yamlParseValues($value)
+	protected function parseValue($value)
 	{
 	    if ($value instanceof \DateTime) {
-	        return var_export($value->format('c'), true);
+	        return 'new \\DateTime(' . var_export($value->format('c'), true) . ')';
         }
 
 		if (!is_string($value)) {
@@ -218,16 +218,16 @@ class Config implements \ArrayAccess
 
             $args = explode(',', $matches[2]);
 	        foreach ($args as &$a) {
-	            $a = $this->yamlParseConstant(trim($a));
+	            $a = $this->parseConstant(trim($a));
             }
 
 	        return $function . '(' . implode(', ', $args) . ')';
         }
 
-        return $this->yamlParseConstant($value);
+        return $this->parseConstant($value);
 	}
 
-	protected function yamlParseConstant(string $value)
+	protected function parseConstant(string $value)
     {
         $value = var_export($value, true);
 

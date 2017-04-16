@@ -3,9 +3,9 @@
 namespace Hail\Http\Middleware;
 
 use Hail\Container\Container;
+use Hail\Dispatcher;
 use Hail\Http\Exception\HttpErrorException;
 use Hail\Http\Factory;
-use Hail\Http\Request;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\ServerMiddleware\MiddlewareInterface;
@@ -36,13 +36,16 @@ class Controller implements MiddlewareInterface
 	 */
 	public function process(ServerRequestInterface $request, DelegateInterface $delegate)
 	{
-		$handler = $request->getAttribute('handler');
+        /**
+         * @var Dispatcher $dispatcher
+         */
+        $dispatcher = $this->container->get('dispatcher');
 
-		if ($handler === null) {
+		if (!$dispatcher->initialized()) {
 			return $delegate->process($request);
 		}
 
-		[$class, $method] = $this->convert($handler);
+		[$class, $method] = $this->convert($dispatcher);
 
 		if ($this->container->has($class)) {
 			$controller = $this->container->get($class);
@@ -60,59 +63,57 @@ class Controller implements MiddlewareInterface
 		return Factory::response(200);
 	}
 
-	private function getNamespace(array $handler)
+	private function getNamespace(Dispatcher $dispatcher)
 	{
 		$namespace = 'App\\Controller';
 
-		if (isset($handler['app'])) {
-			$namespace .= '\\' . $handler['app'];
+		if ($app = $dispatcher->getApplication()) {
+			$namespace .= '\\' . $app;
 		}
 
 		return $namespace;
 	}
 
 	/**
-	 * @param array $handler
+	 * @param Dispatcher $dispatcher
 	 *
 	 * @return array
+     *
+     * @throws HttpErrorException
 	 */
-	private function convert(array $handler)
+	private function convert(Dispatcher $dispatcher)
 	{
-		$controllerClass = $this->class($handler);
+		$class = $this->class($dispatcher);
 
-		$action = $handler['action'] ?? 'index';
-		$actionClass = $controllerClass . '\\' . ucfirst($action);
+		$action = $dispatcher->getAction();
+		$actionClass = $class . '\\' . ucfirst($action);
 
 		if (class_exists($actionClass)) {
-			return [$actionClass, 'indexAction'];
+            $class = $actionClass;
+            $method = '__invoke';
+		} elseif (class_exists($class)) {
+            $method = $action . 'Action';
 		}
 
-		if (!class_exists($controllerClass)) {
+		if (!isset($method) || !method_exists($class, $method)) {
 			throw HttpErrorException::create(404, [
-				'controller' => $controllerClass
+				'controller' => $class,
+				'action' => $method ?? $action
 			]);
 		}
 
-		$method = lcfirst($action) . 'Action';
-		if (!method_exists($controllerClass, $method)) {
-			throw HttpErrorException::create(404, [
-				'controller' => $controllerClass,
-				'action' => $method
-			]);
-		}
-
-		return [$controllerClass, $method];
+		return [$class, $method];
 	}
 
 	/**
-	 * @param array $handler
+	 * @param Dispatcher $dispatcher
 	 *
 	 * @return string
 	 */
-	private function class(array $handler): string
+	private function class(Dispatcher $dispatcher): string
 	{
-		$namespace = $this->getNamespace($handler);
-		$class = $handler['controller'] ?? 'Index';
+		$namespace = $this->getNamespace($dispatcher);
+		$class = $dispatcher->getController();
 
 		return strpos($class, $namespace) === 0 ? $class : $namespace . '\\' . ucfirst($class);
 	}

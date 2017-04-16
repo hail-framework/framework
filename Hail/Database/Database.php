@@ -11,7 +11,7 @@
 namespace Hail\Database;
 
 use PDO;
-use Hail\Facade\Json;
+use Hail\Util\Json;
 
 
 /**

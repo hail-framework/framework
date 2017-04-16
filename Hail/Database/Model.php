@@ -7,8 +7,7 @@ namespace Hail\Database;
 
 use Hail\Facade\DB;
 use Hail\Database\Exception\ModelException;
-
-use Hail\Facade\Json;
+use Hail\Util\Json;
 use PDO;
 
 /**

@@ -8,7 +8,7 @@
 namespace Hail\Mail;
 
 use Hail\Exception\FileNotFoundException;
-use Hail\Facade\{
+use Hail\Util\{
 	Strings,
 	Generators
 };

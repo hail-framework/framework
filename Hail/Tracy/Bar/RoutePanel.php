@@ -1,8 +1,9 @@
 <?php
 namespace Hail\Tracy\Bar;
 
-use Hail\Facade\Facade;
-use Hail\Facade\Router;
+use Hail\Facade\{
+    DI, Router
+};
 use Hail\Tracy\Dumper;
 
 /**
@@ -38,7 +39,7 @@ class RoutePanel implements PanelInterface
 	{
 		ob_start(function () {});
 		$router = $this->router;
-		$url = (string) \Request::getUri();
+		$url = (string) DI::get('http.request')->getUri();
 		$sorted = array(
 			'matched', 'url', 'error', 'allowed', 'route', 'params', 'handler'
 		);

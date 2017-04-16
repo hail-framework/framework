@@ -2,7 +2,7 @@
 
 namespace Hail\Facade;
 
-use Psr\Container\ContainerInterface;
+use Hail\Container\Container;
 
 /**
  * Class Facade
@@ -34,11 +34,11 @@ abstract class Facade
 	protected static $instances;
 
 	/**
-	 * @var ContainerInterface
+	 * @var Container
 	 */
 	protected static $container;
 
-	public static function setContainer(ContainerInterface $container)
+	public static function setContainer(Container $container)
 	{
 		static::$container = $container;
 	}

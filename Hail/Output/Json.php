@@ -6,7 +6,7 @@ use Hail\Facade\{
 	Request,
 	Response
 };
-use Hail\Facade\Json as Js;
+use Hail\Util\Json as Js;
 
 /**
  * Class Json

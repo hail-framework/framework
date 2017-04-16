@@ -3,7 +3,7 @@ namespace Hail\Database;
 
 use Hail\Facade\DB;
 use Hail\Tracy\Dumper;
-use Hail\Facade\Json;
+use Hail\Util\Json;
 
 class Event
 {
