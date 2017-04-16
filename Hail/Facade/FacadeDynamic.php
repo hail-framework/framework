@@ -8,7 +8,7 @@ namespace Hail\Facade;
  * @package Hail\Facade
  * @author  Hao Feng <flyinghail@msn.com>
  */
-abstract class DynamicFacade extends Facade
+abstract class FacadeDynamic extends Facade
 {
 	/**
 	 * Get the root object behind the facade.
