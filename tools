@@ -2,7 +2,7 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 
-Hail\Bootstrap::init();
+Hail\Framework::init();
 
 use Hail\Console\Application;
 

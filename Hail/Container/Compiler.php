@@ -10,7 +10,7 @@ use RuntimeException;
  */
 class Compiler
 {
-	public static $file = RUNTIME_PATH . 'Container.php';
+	const FILE = RUNTIME_PATH . 'Container.php';
 
 	protected $config;
 
@@ -52,7 +52,7 @@ class Compiler
 		$code .= implode("\n\n", $this->methods) . "\n";
 		$code .= '}';
 
-		file_put_contents(static::$file, $code);
+		file_put_contents(static::FILE, $code);
 	}
 
 	protected function parseServices()

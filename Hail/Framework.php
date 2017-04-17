@@ -3,9 +3,11 @@
 namespace Hail;
 
 use Hail\{
-	Facade\Facade, Container\Compiler, Tracy\Debugger
+	Facade\Facade,
+	Container\Compiler,
+	Container\Container,
+	Tracy\Debugger
 };
-use Psr\Container\ContainerInterface;
 
 if (!defined('BASE_PATH')) {
 	throw new \LogicException('Must defined the application base folder');
@@ -34,10 +36,37 @@ require __DIR__ . '/helpers.php';
  * Class Bootstrap
  *
  * @package Hail
+ *
+ * @method static Application app()
+ * @method static Container di()
+ * @method static Config config()
+ * @method static AliasLoader alias()
+ * @method static Router router()
+ * @method static I18N\I18N i18n()
+ * @method static Http\ServerRequest request()
+ * @method static Event\EventManager event()
+ * @method static Output output()
+ * @method static Latte\Engine template()
+ * @method static Database\Database db()
+ * @method static Acl acl()
+ * @method static Session session()
+ * @method static Cookie cookie()
+ * @method static SimpleCache\CacheInterface cache()
+ * @method static Cache\CacheItemPoolInterface cachePool()
+ * @method static Database\Cache cdb()
+ * @method static Browser browser()
+ * @method static Filesystem\MountManager filesystem()
+ * @method static Tracy\Debugger debugger()
+ * @method static Http\Dispatcher dispatcher()
  */
-class Bootstrap
+class Framework
 {
 	protected static $inited = false;
+
+	/**
+	 * @var Container
+	 */
+	protected static $container;
 
 	public static function init()
 	{
@@ -57,7 +86,7 @@ class Bootstrap
 			mb_internal_encoding('UTF-8');
 		}
 
-		$container = static::container();
+		$container = static::getContainer();
 
 		Facade::setContainer($container);
 
@@ -79,28 +108,41 @@ class Bootstrap
 			STORAGE_PATH . 'log/'
 		);
 
-		static::i18n($container);
+		static::i18nInit($container);
 
 		self::$inited = true;
 	}
 
-	protected static function container(): ContainerInterface
+	public static function getContainer(): Container
 	{
-		$file = Compiler::$file;
-		if (@filemtime($file) < Config::filemtime('container')) {
-			(new Compiler())->compile();
+		if (static::$container === null) {
+			$file = Compiler::FILE;
+			if (@filemtime($file) < Config::filemtime('container')) {
+				(new Compiler())->compile();
 
-			if (function_exists('opcache_invalidate')) {
-				opcache_invalidate($file, true);
+				if (function_exists('opcache_invalidate')) {
+					opcache_invalidate($file, true);
+				}
 			}
+
+			require $file;
+
+			static::$container = new \Container();
 		}
 
-		require $file;
-
-		return new \Container();
+		return static::$container;
 	}
 
-	protected static function i18n(ContainerInterface $container)
+	public static function __callStatic($name, $arguments)
+	{
+		if (!static::$inited) {
+			self::init();
+		}
+
+		static::$container->get(strtolower($name));
+	}
+
+	protected static function i18nInit(Container $container)
 	{
 		$config = $container->get('config');
 
