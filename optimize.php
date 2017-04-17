@@ -1,6 +1,8 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 
+Hail\Bootstrap::init();
+
 if (strpos(__DIR__, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === false) {
 	Hail\Loader::buildMap();
 	echo 'Autoload Map Generated', "\n";

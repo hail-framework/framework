@@ -130,9 +130,11 @@ class Helpers
 	 */
 	public static function trimHeaderValues(array $values): array
 	{
-		return array_map('trim', $values,
-			array_fill(0, count($values), " \t")
-		);
+		foreach ($values as &$v) {
+			$v = trim($v, " \t");
+		}
+
+		return $values;
 	}
 
 	/**

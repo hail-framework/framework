@@ -155,6 +155,7 @@ trait MessageTrait
 	private function setHeaders(array $headers)
 	{
 		$this->headerNames = $this->headers = [];
+
 		foreach ($headers as $header => $value) {
 			if (!is_array($value)) {
 				$value = [$value];

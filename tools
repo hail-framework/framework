@@ -2,6 +2,8 @@
 <?php
 require __DIR__ . '/bootstrap.php';
 
+Hail\Bootstrap::init();
+
 use Hail\Console\Application;
 
 $app = new Application('Hail Framework', Config::get('env.version'));
