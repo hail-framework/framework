@@ -1,4 +1,5 @@
 - Hail\Http\Middleware\ErrorHandler
 - Hail\Http\Middleware\ScriptPath
+- Hail\Http\Middleware\I18n
 - Hail\Http\Middleware\Route
 - Hail\Http\Middleware\Controller

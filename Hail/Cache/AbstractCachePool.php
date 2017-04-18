@@ -36,11 +36,10 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 
 	/**
 	 * @param HailCacheItem $item
-	 * @param int|null      $ttl seconds from now
 	 *
 	 * @return bool true if saved
 	 */
-	abstract protected function storeItemInCache(HailCacheItem $item, $ttl);
+	abstract protected function storeItemInCache(HailCacheItem $item);
 
 	/**
 	 * Fetch an object from the cache implementation.
@@ -103,7 +102,7 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 	 */
 	abstract protected function removeListItem($name, $key);
 
-	/**
+    /**
 	 * Make sure to commit before we destruct.
 	 */
 	public function __destruct()
@@ -224,9 +223,10 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 
 		$this->removeTagEntries($item);
 		$this->saveTags($item);
-		$timeToLive = null;
-		if (null !== $timestamp = $item->getExpirationTimestamp()) {
-			$timeToLive = $timestamp - time();
+
+        $timestamp = $item->getExpirationTimestamp();
+		if (null !== $timestamp) {
+			$timeToLive = $timestamp - NOW;
 
 			if ($timeToLive < 0) {
 				return $this->deleteItem($item->getKey());
@@ -234,7 +234,7 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 		}
 
 		try {
-			return $this->storeItemInCache($item, $timeToLive);
+			return $this->storeItemInCache($item);
 		} catch (\Exception $e) {
 			$this->handleException($e, __FUNCTION__);
 		}
@@ -315,8 +315,9 @@ abstract class AbstractCachePool implements CacheItemPoolInterface
 	{
 		$itemIds = [];
 		foreach ($tags as $tag) {
-			$itemIds = array_merge($itemIds, $this->getList($this->getTagKey($tag)));
+			$itemIds[] = $this->getList($this->getTagKey($tag));
 		}
+        $itemIds = array_merge(...$itemIds);
 
 		// Remove all items with the tag
 		$success = $this->deleteItems($itemIds);

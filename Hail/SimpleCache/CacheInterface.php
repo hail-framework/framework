@@ -2,35 +2,63 @@
 
 namespace Hail\SimpleCache;
 
+use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
+use Hail\Cache\CacheItemPoolInterface;
+
 /**
  * Interface CacheInterface
  *
  * @package Hail\SimpleCache
- * @author Hao Feng <flyinghail@msn.com>
+ * @author  Hao Feng <flyinghail@msn.com>
  */
-interface CacheInterface extends \Psr\SimpleCache\CacheInterface, \ArrayAccess
+interface CacheInterface extends PsrCacheInterface, \ArrayAccess
 {
-	/**
-	 * Deletes all cache entries in the current cache namespace.
-	 *
-	 * @return bool TRUE if the cache entries were successfully deleted, FALSE otherwise.
-	 */
-	public function deleteAll();
+    /**
+     * Deletes all cache entries in the current cache namespace.
+     *
+     * @return bool TRUE if the cache entries were successfully deleted, FALSE otherwise.
+     */
+    public function deleteAll();
 
-	/**
-	 * Sets the namespace to prefix all cache ids with.
-	 *
-	 * @param string $namespace
-	 *
-	 * @return void
-	 */
-	public function setNamespace(string $namespace);
+    /**
+     * Sets the namespace to prefix all cache ids with.
+     *
+     * @param string $namespace
+     *
+     * @return void
+     */
+    public function setNamespace(string $namespace);
 
-	/**
-	 * Retrieves the namespace that prefixes all cache ids.
-	 *
-	 * @return string
-	 */
-	public function getNamespace();
+    /**
+     * Retrieves the namespace that prefixes all cache ids.
+     *
+     * @return string
+     */
+    public function getNamespace();
 
+    /**
+     * Convert PSR-6 cache to PSR-16 simple cache
+     *
+     * @return CacheItemPoolInterface
+     */
+    public function getPool();
+
+    /**
+     * Set value for struct
+     *
+     * @param string $key
+     * @param mixed  $value
+     * @param array  $tags
+     * @param int    $expire
+     *
+     * @return bool
+     */
+    public function setDirectValue(string $key, $value, array $tags, int $expire);
+
+    /**
+     * @param string $key
+     *
+     * @return array
+     */
+    public function getDirectValue(string $key);
 }

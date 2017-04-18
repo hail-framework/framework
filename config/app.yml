@@ -3,7 +3,7 @@ timezone: Asia/Shanghai
 i18n:
   domain: default
   locale:
-#   input: lng
+#   query: lng
 #   cookie: hail_lng
     default: zh_CN
   alias:

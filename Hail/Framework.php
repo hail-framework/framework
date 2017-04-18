@@ -70,7 +70,7 @@ class Framework
 
 	public static function init()
 	{
-		if (self::$inited === true) {
+		if (self::$inited) {
 			throw new \LogicException('Framework can not init twice');
 		}
 
@@ -93,9 +93,10 @@ class Framework
 		$container->get('alias')->register();
 
 		$config = $container->get('config');
-		date_default_timezone_set(
-			$config->get('app.timezone')
-		);
+
+		if ($timezone = $config->get('app.timezone')) {
+            date_default_timezone_set($timezone);
+        }
 
 		if ($config->get('env.debug')) {
 			$debugMode = Debugger::DETECT;
@@ -103,12 +104,10 @@ class Framework
 			$debugMode = Debugger::PRODUCTION;
 		}
 
-		$container->get('debugger')->enable(
+		Debugger::enable(
 			$debugMode,
 			STORAGE_PATH . 'log/'
 		);
-
-		static::i18nInit($container);
 
 		self::$inited = true;
 	}
@@ -116,16 +115,21 @@ class Framework
 	public static function getContainer(): Container
 	{
 		if (static::$container === null) {
-			$file = Compiler::FILE;
-			if (@filemtime($file) < Config::filemtime('container')) {
-				(new Compiler())->compile();
+            $file = RUNTIME_PATH . 'Container.php';
 
-				if (function_exists('opcache_invalidate')) {
-					opcache_invalidate($file, true);
-				}
-			}
+            if (@filemtime($file) < Config::filemtime('container')) {
+                $compiler = new Compiler(
+                    Config::load('container')
+                );
 
-			require $file;
+                file_put_contents($file, $compiler->compile());
+
+                if (function_exists('opcache_invalidate')) {
+                    opcache_invalidate($file, true);
+                }
+            }
+
+            require $file;
 
 			static::$container = new \Container();
 		}
@@ -140,48 +144,5 @@ class Framework
 		}
 
 		static::$container->get(strtolower($name));
-	}
-
-	protected static function i18nInit(Container $container)
-	{
-		$config = $container->get('config');
-
-		$locale = $config->get('app.i18n.locale');
-
-		if (is_array($locale)) {
-			$found = null;
-			foreach ($locale as $k => $v) {
-				switch ($k) {
-					case 'input':
-						$found = $container->get('request')->input($v);
-						break;
-					case 'cookie':
-						$found = $container->get('request')->getCookie($v);
-						break;
-					case 'default':
-						$found = $v;
-						break;
-				}
-
-				if ($found) {
-					break;
-				}
-			}
-
-			$locale = $found;
-		}
-
-		$locale = str_replace('-', '_', $locale);
-
-		$alias = $config->get('app.i18n.alias');
-		if (!empty($alias)) {
-			$locale = $alias[explode('_', $locale)[0]] ?? $locale;
-		}
-
-		$container->get('i18n')->init(
-			BASE_PATH . 'lang',
-			$config->get('app.i18n.domain'),
-			$locale
-		);
 	}
 }

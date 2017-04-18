@@ -1,7 +1,8 @@
 <?php
+
 namespace Hail\Cache;
 
-use Psr\SimpleCache\CacheInterface;
+use Hail\SimpleCache\CacheInterface;
 
 /**
  * This is a bridge between PSR-6 and PSR-16 cache.
@@ -10,102 +11,101 @@ use Psr\SimpleCache\CacheInterface;
  */
 class SimpleCachePool extends AbstractCachePool
 {
-	/**
-	 * @var CacheInterface
-	 */
-	private $cache;
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
 
 
-	public function __construct(CacheInterface $cache)
-	{
-		$this->cache = $cache;
-	}
+    public function __construct(CacheInterface $cache)
+    {
+        $this->cache = $cache;
+    }
 
+    public function getSimple()
+    {
+        return $this->cache;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function fetchObjectFromCache($key)
-	{
-		if (null === ($data = $this->cache->get($key))) {
-			return [false, null, [], null];
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function fetchObjectFromCache($key)
+    {
+        return $this->cache->getDirectValue($key);
+    }
 
-		return $data;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function clearAllObjectsFromCache()
+    {
+        return $this->cache->clear();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function clearAllObjectsFromCache()
-	{
-		return $this->cache->clear();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function clearOneObjectFromCache($key)
+    {
+        return $this->cache->delete($key);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function clearOneObjectFromCache($key)
-	{
-		return $this->cache->delete($key);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function storeItemInCache(CacheItemInterface $item)
+    {
+        return $this->cache->setDirectValue(
+            $item->getKey(),
+            $item->get(),
+            $item->getTags(),
+            $item->getExpirationTimestamp()
+        );
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function storeItemInCache(CacheItemInterface $item, $ttl)
-	{
-		if ($ttl === null) {
-			$ttl = 0;
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function getList($name)
+    {
+        if (null === ($list = $this->cache->get($name)) || !is_array($list)) {
+            return [];
+        }
 
-		$data = [true, $item->get(), $item->getTags(), $item->getExpirationTimestamp()];
+        return $list;
+    }
 
-		return $this->cache->set($item->getKey(), $data, $ttl);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function removeList($name)
+    {
+        return $this->cache->set($name, [], 0);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function getList($name)
-	{
-		if (false === $list = $this->cache->get($name)) {
-			return [];
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function appendListItem($name, $key)
+    {
+        $list = $this->getList($name);
+        $list[] = $key;
+        $this->cache->set($name, $list, 0);
+    }
 
-		return $list;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function removeList($name)
-	{
-		return $this->cache->delete($name);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function appendListItem($name, $key)
-	{
-		$list = $this->getList($name);
-		$list[] = $key;
-		$this->cache->set($name, $list);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function removeListItem($name, $key)
-	{
-		$list = $this->getList($name);
-		foreach ($list as $i => $item) {
-			if ($item === $key) {
-				unset($list[$i]);
-			}
-		}
-		$this->cache->set($name, $list);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function removeListItem($name, $key)
+    {
+        $list = $this->getList($name);
+        foreach ($list as $i => $item) {
+            if ($item === $key) {
+                unset($list[$i]);
+            }
+        }
+        $this->cache->set($name, $list, 0);
+    }
 }
 

@@ -2,7 +2,7 @@
 namespace Hail\Facade;
 
 /**
- * Class I18N
+ * Class I18n
  *
  * @package Hail\Facade
  *
@@ -12,6 +12,6 @@ namespace Hail\Facade;
  * @method static string ngettext(string $msg, string $msg_plural, int $count)
  * @method static string dngettext(string $domain, string $msg, string $msg_plural, int $count)
  */
-class I18N extends Facade
+class I18n extends Facade
 {
 }

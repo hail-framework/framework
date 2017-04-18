@@ -2,6 +2,7 @@
 namespace Hail\SimpleCache;
 
 use Hail\Facade\Serialize;
+use Hail\Redis\Client\AbstractClient;
 use Hail\Redis\Exception\RedisException;
 use Hail\Factory\Redis as RedisFactory;
 
@@ -13,7 +14,7 @@ use Hail\Factory\Redis as RedisFactory;
 class Redis extends AbstractAdapter
 {
 	/**
-	 * @var \Hail\Redis\Client\AbstractClient|null
+	 * @var AbstractClient|null
 	 */
 	private $redis;
 
@@ -26,7 +27,12 @@ class Redis extends AbstractAdapter
 	 */
 	public function __construct(array $params)
 	{
-		$this->redis = RedisFactory::client($params);
+	    if (isset($params['client']) && $params['client'] instanceof AbstractClient) {
+	        $this->redis = $params['client'];
+	        unset($params['client']);
+        } else {
+            $this->redis = RedisFactory::client($params);
+        }
 
 		parent::__construct($params);
 	}

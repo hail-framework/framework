@@ -65,7 +65,7 @@ class Config implements \ArrayAccess
 			return null;
 		}
 
-		$this->items[$space] = $this->load($space);
+		$this->items[$space] = static::load($space);
 
 		return $this->items[$key] ?? null;
 	}
@@ -84,9 +84,9 @@ class Config implements \ArrayAccess
 	 *
 	 * @param string $space
 	 *
-	 * @return array|mixed|null
+	 * @return array|null
 	 */
-	protected function load($space): ?array
+	public static function load($space): ?array
 	{
 		$files = static::getFiles($space);
 
@@ -95,12 +95,12 @@ class Config implements \ArrayAccess
 		}
 
 		if (($config = static::optimizeGet($space, $files)) !== false) {
-			return $config;
+			return (array) $config;
 		}
 
 		$config = [];
 		foreach ($files as $v) {
-			$config += $this->loadFromFile($v);
+			$config += static::loadFromFile($v);
 		}
 
 		static::optimizeSet($space, $config, $files);
@@ -113,7 +113,7 @@ class Config implements \ArrayAccess
 	 *
 	 * @return array|mixed
 	 */
-	protected function loadFromFile(?string $file)
+	protected static function loadFromFile(?string $file)
 	{
 		if ($file === null) {
 			return [];
@@ -121,7 +121,7 @@ class Config implements \ArrayAccess
 
 		$ext = strrchr($file, '.');
 		if ($ext === '.yml' || $ext === '.yaml') {
-			return $this->loadYaml($file, $ext);
+			return static::loadYaml($file, $ext);
 		}
 
 		return require $file;
@@ -134,7 +134,7 @@ class Config implements \ArrayAccess
 	 *
 	 * @return array|mixed
 	 */
-	protected function loadYaml($file, $ext)
+	protected static function loadYaml($file, $ext)
 	{
 		$filename = basename($file);
 		$dir = RUNTIME_PATH . 'yaml/';
@@ -148,7 +148,7 @@ class Config implements \ArrayAccess
 				throw new \RuntimeException('Temp directory permission denied');
 			}
 
-			file_put_contents($cache, '<?php return ' . $this->parseArrayToCode($content) . ';');
+			file_put_contents($cache, '<?php return ' . static::parseArrayToCode($content) . ';');
 
 			if (function_exists('opcache_invalidate')) {
 				opcache_invalidate($cache, true);
@@ -160,7 +160,7 @@ class Config implements \ArrayAccess
 		return $content;
 	}
 
-	protected function parseArrayToCode(array $array, $level = 0): string
+	protected static function parseArrayToCode(array $array, $level = 0): string
     {
         $pad = '';
         if ($level > 0) {
@@ -177,9 +177,9 @@ class Config implements \ArrayAccess
             }
 
             if (is_array($v)) {
-                $ret .= $this->parseArrayToCode($v, $level + 1);
+                $ret .= static::parseArrayToCode($v, $level + 1);
             } else {
-                $ret .= $this->parseValue($v);
+                $ret .= static::parseValue($v);
             }
 
             $ret .= ',' . "\n";
@@ -195,7 +195,7 @@ class Config implements \ArrayAccess
 	 *
 	 * @return mixed
 	 */
-	protected function parseValue($value)
+	protected static function parseValue($value)
 	{
 	    if ($value instanceof \DateTime) {
 	        return 'new \\DateTime(' . var_export($value->format('c'), true) . ')';
@@ -218,16 +218,16 @@ class Config implements \ArrayAccess
 
             $args = explode(',', $matches[2]);
 	        foreach ($args as &$a) {
-	            $a = $this->parseConstant(trim($a));
+	            $a = static::parseConstant(trim($a));
             }
 
 	        return $function . '(' . implode(', ', $args) . ')';
         }
 
-        return $this->parseConstant($value);
+        return static::parseConstant($value);
 	}
 
-	protected function parseConstant(string $value)
+	protected static function parseConstant(string $value)
     {
         $value = var_export($value, true);
 

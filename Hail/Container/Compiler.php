@@ -2,7 +2,6 @@
 
 namespace Hail\Container;
 
-use Hail\Config;
 use RuntimeException;
 
 /**
@@ -10,22 +9,17 @@ use RuntimeException;
  */
 class Compiler
 {
-	const FILE = RUNTIME_PATH . 'Container.php';
-
 	protected $config;
 
 	protected $points = [];
 	protected $methods = [];
 
-	public function __construct()
+	public function __construct(array $config)
 	{
-		$config = new Config();
-
-		$this->config = $config->get('container');
+		$this->config = $config;
 	}
 
-
-	public function compile()
+	public function compile(): string
 	{
 		$this->parseServices();
 
@@ -52,7 +46,7 @@ class Compiler
 		$code .= implode("\n\n", $this->methods) . "\n";
 		$code .= '}';
 
-		file_put_contents(static::FILE, $code);
+		return $code;
 	}
 
 	protected function parseServices()

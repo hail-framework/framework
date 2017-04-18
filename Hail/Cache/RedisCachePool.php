@@ -12,6 +12,7 @@
 namespace Hail\Cache;
 
 use Hail\Redis\Client\AbstractClient;
+use Hail\SimpleCache\Redis;
 use Hail\Facade\Serialize;
 
 /**
@@ -29,7 +30,9 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
 	/**
 	 * @type string
 	 */
-	private $namespace;
+	protected $namespace;
+
+	private $simple;
 
     public function __construct(AbstractClient $redis, $namespace = '')
     {
@@ -37,7 +40,15 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
         $this->namespace = $namespace;
     }
 
-	/**
+    public function getSimple()
+    {
+        return $this->simple ?? $this->simple = new Redis([
+            'client' => $this->cache,
+            'namespace' => $this->namespace
+        ]);
+    }
+
+    /**
 	 * Add namespace prefix on the key.
 	 *
 	 * @param string $key
@@ -155,15 +166,17 @@ class RedisCachePool extends AbstractCachePool implements HierarchicalPoolInterf
     /**
      * {@inheritdoc}
      */
-    protected function storeItemInCache(CacheItemInterface $item, $ttl)
+    protected function storeItemInCache(CacheItemInterface $item)
     {
+        $expire = $item->getExpirationTimestamp();
+
         $key  = $this->getHierarchyKey($item->getKey());
-        $data = Serialize::encode([true, $item->get(), $item->getTags(), $item->getExpirationTimestamp()]);
-        if ($ttl === null || $ttl === 0) {
+        $data = Serialize::encode([true, $item->get(), $item->getTags(), $expire]);
+        if ($expire === null || $expire === NOW) {
             return $this->cache->set($key, $data);
         }
 
-        return $this->cache->setEx($key, $ttl, $data);
+        return $this->cache->setEx($key, $expire - NOW, $data);
     }
 
     /**

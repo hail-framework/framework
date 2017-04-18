@@ -13,13 +13,15 @@ acl: Hail\Acl
 
 browser: Hail\Browser
 
-cache:
+cache: "@cache.simple"
+
+cache.simple:
   factory: Hail\Factory\Cache::simple
   to:
     - Hail\SimpleCache\CacheInterface
-    - Hail\SimpleCache\CacheInterface
+    - Psr\SimpleCache\CacheInterface
 
-cachePool:
+cache.pool:
   factory: Hail\Factory\Cache::pool
   to:
     - Hail\Cache\CacheItemPoolInterface
@@ -105,24 +107,22 @@ model:
 # Middleware
 Hail\Http\Middleware\ErrorHandler: []
 Hail\Http\Middleware\MethodOverride: []
-
 Hail\Http\Middleware\BasePath:
   arguments: [CONFIG.app.basePath]
-
 Hail\Http\Middleware\ClientIp:
   calls:
     proxy: [CONFIG.env.proxies]
-
 Hail\Http\Middleware\Cors:
   arguments: ["CONFIG.cors"]
-
 Hail\Http\Middleware\Payload: []
 Hail\Http\Middleware\ScriptPath: []
 Hail\Http\Middleware\TrailingSlash: []
 
+# Hail Framework middleware
+Hail\Http\Middleware\I18n:
+  arguments: ["@container"]
 Hail\Http\Middleware\Route:
   arguments: ["@container"]
-
 Hail\Http\Middleware\Controller:
   arguments: ["@container"]
 
