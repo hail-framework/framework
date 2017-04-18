@@ -14,11 +14,6 @@ use Psr\Http\Message\{
  */
 class Helpers
 {
-	private static $schemes = [
-		'http' => 80,
-		'https' => 443,
-	];
-
 	private static $methods = [
 		'HEAD' => 'HEAD',
 		'GET' => 'GET',
@@ -186,19 +181,6 @@ class Helpers
 		}
 
 		return $uri;
-	}
-
-	/**
-	 * Is a given port non-standard for the current scheme?
-	 *
-	 * @param string $scheme
-	 * @param int    $port
-	 *
-	 * @return bool
-	 */
-	public static function isNonStandardPort(string $scheme, int $port): bool
-	{
-		return !isset(self::$schemes[$scheme]) || $port !== self::$schemes[$scheme];
 	}
 
 	/**

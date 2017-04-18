@@ -16,6 +16,11 @@ use Psr\Http\Message\UriInterface;
  */
 class Uri implements UriInterface
 {
+	private static $schemes = [
+		'http' => 80,
+		'https' => 443,
+	];
+
 	private static $charUnreserved = 'a-zA-Z0-9_\-\.~';
 	private static $charSubDelims = '!\$&\'\(\)\*\+,;=';
 
@@ -42,12 +47,10 @@ class Uri implements UriInterface
 
 	/**
 	 * @param string $uri
-	 *
-	 * @throws \InvalidArgumentException
 	 */
 	public function __construct(string $uri = '')
 	{
-		if ($uri !== '') {
+		if ($uri) {
 			$parts = parse_url($uri);
 			if ($parts === false) {
 				throw new \InvalidArgumentException("Unable to parse URI: $uri");
@@ -104,7 +107,7 @@ class Uri implements UriInterface
 		return $this->host;
 	}
 
-	public function getPort()
+	public function getPort(): ?int
 	{
 		return $this->port;
 	}
@@ -126,7 +129,7 @@ class Uri implements UriInterface
 
 	public function withScheme($scheme): self
 	{
-		$scheme = $this->filterScheme($scheme);
+		$scheme = $this->filterString($scheme);
 
 		if ($this->scheme === $scheme) {
 			return $this;
@@ -158,7 +161,7 @@ class Uri implements UriInterface
 
 	public function withHost($host): self
 	{
-		$host = $this->filterHost($host);
+		$host = $this->filterString($host);
 
 		if ($this->host === $host) {
 			return $this;
@@ -235,9 +238,9 @@ class Uri implements UriInterface
 	 */
 	private function applyParts(array $parts)
 	{
-		$this->scheme = isset($parts['scheme']) ? $this->filterScheme($parts['scheme']) : '';
+		$this->scheme = isset($parts['scheme']) ? $this->filterString($parts['scheme']) : '';
 		$this->userInfo = $parts['user'] ?? '';
-		$this->host = isset($parts['host']) ? $this->filterHost($parts['host']) : '';
+		$this->host = isset($parts['host']) ? $this->filterString($parts['host']) : '';
 		$this->port = isset($parts['port']) ? $this->filterPort($parts['port']) : null;
 		$this->path = isset($parts['path']) ? $this->filterPath($parts['path']) : '';
 		$this->query = isset($parts['query']) ? $this->filterQueryAndFragment($parts['query']) : '';
@@ -248,35 +251,15 @@ class Uri implements UriInterface
 	}
 
 	/**
+	 * Filters scheme or host of a URI, convert to lower
+	 *
 	 * @param string $scheme
 	 *
-	 * @throws \InvalidArgumentException If the scheme is invalid
-	 *
 	 * @return string
 	 */
-	private function filterScheme(string $scheme): string
+	private function filterString(string $scheme): string
 	{
-		if (!is_string($scheme)) {
-			throw new \InvalidArgumentException('Scheme must be a string');
-		}
-
 		return strtolower($scheme);
-	}
-
-	/**
-	 * @param string $host
-	 *
-	 * @throws \InvalidArgumentException If the host is invalid
-	 *
-	 * @return string
-	 */
-	private function filterHost(string $host): string
-	{
-		if (!is_string($host)) {
-			throw new \InvalidArgumentException('Host must be a string');
-		}
-
-		return strtolower($host);
 	}
 
 	/**
@@ -286,7 +269,7 @@ class Uri implements UriInterface
 	 *
 	 * @return int|null
 	 */
-	private function filterPort($port)
+	private function filterPort(?int $port): ?int
 	{
 		if ($port === null) {
 			return null;
@@ -297,7 +280,10 @@ class Uri implements UriInterface
 			throw new \InvalidArgumentException(sprintf('Invalid port: %d. Must be between 1 and 65535', $port));
 		}
 
-		return Helpers::isNonStandardPort($this->scheme, $port) ? $port : null;
+		return
+			!isset(self::$schemes[$this->scheme]) ||
+			$port !== self::$schemes[$this->scheme]
+				? $port : null;
 	}
 
 	/**
@@ -359,7 +345,7 @@ class Uri implements UriInterface
 
 		[$host, $port] = Helpers::getHostAndPortFromArray($server);
 
-		$uri->host = $host;
+		$uri->host = $uri->filterString($host);
 		$uri->port = $uri->filterPort($port);
 
 		$path = Helpers::getRequestUri($server);

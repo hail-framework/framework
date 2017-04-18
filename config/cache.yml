@@ -1,7 +1,14 @@
-namespace: hail_data
+simple:
+  namespace: hail_data
 
-drivers:
-  yac:
-    ttl: 86400
-  redis:
-    ttl: 604800
+  drivers:
+    yac:
+      ttl: 86400
+    redis:
+      ttl: 604800
+
+pool:
+  driver: simple # redis
+
+  config:
+    namespace: HAIL_CACHE

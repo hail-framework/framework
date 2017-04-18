@@ -23,7 +23,7 @@ class Cache extends Factory
 	 */
 	public static function simple(array $config = []): CacheInterface
 	{
-		$config += Config::get('cache');
+		$config += Config::get('cache.simple');
 		$hash = sha1(Serialize::encode($config));
 
 		if (isset(static::$pool[$hash])) {
@@ -64,7 +64,7 @@ class Cache extends Factory
 
 	public static function pool(array $config = [])
 	{
-		$config += Config::get('cachePool');
+		$config += Config::get('cache.pool');
 		$hash = sha1(Serialize::encode($config));
 
 		if (isset(static::$pool[$hash])) {

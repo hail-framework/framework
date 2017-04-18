@@ -123,3 +123,6 @@ Hail\Http\Middleware\TrailingSlash: []
 
 Hail\Http\Middleware\Controller:
   arguments: ["@container"]
+
+Hail\Http\Middleware\Cors:
+  arguments: ["CONFIG.cors"]
