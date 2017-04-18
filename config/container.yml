@@ -103,6 +103,9 @@ model:
     - App\Model
 
 # Middleware
+Hail\Http\Middleware\ErrorHandler: []
+Hail\Http\Middleware\MethodOverride: []
+
 Hail\Http\Middleware\BasePath:
   arguments: [CONFIG.app.basePath]
 
@@ -110,19 +113,17 @@ Hail\Http\Middleware\ClientIp:
   calls:
     proxy: [CONFIG.env.proxies]
 
-Hail\Http\Middleware\MethodOverride: []
+Hail\Http\Middleware\Cors:
+  arguments: ["CONFIG.cors"]
 
+Hail\Http\Middleware\Payload: []
 Hail\Http\Middleware\ScriptPath: []
-
-Hail\Http\Middleware\ErrorHandler: []
+Hail\Http\Middleware\TrailingSlash: []
 
 Hail\Http\Middleware\Route:
   arguments: ["@container"]
 
-Hail\Http\Middleware\TrailingSlash: []
-
 Hail\Http\Middleware\Controller:
   arguments: ["@container"]
 
-Hail\Http\Middleware\Cors:
-  arguments: ["CONFIG.cors"]
+
