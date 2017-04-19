@@ -53,7 +53,7 @@ interface CacheInterface extends PsrCacheInterface, \ArrayAccess
      *
      * @return bool
      */
-    public function setDirectValue(string $key, $value, array $tags, int $expire);
+    public function setDirectValue(string $key, $value, array $tags = [], int $expire = null);
 
     /**
      * @param string $key

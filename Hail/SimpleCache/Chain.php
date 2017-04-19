@@ -72,7 +72,7 @@ class Chain extends AbstractAdapter
 				// We populate all the previous cache layers (that are assumed to be faster)
 				for ($subKey = $k - 1; $subKey >= 0; --$subKey) {
 					$driver = $this->drivers[$subKey];
-					$driver->doSet($key, $value, $driver->expireToTtl($value[2]));
+					$driver->doSet($key, $value, $driver->expireToTtl($value[3]));
 				}
 
 				return $value;
@@ -110,7 +110,7 @@ class Chain extends AbstractAdapter
 						$driver->doSetMultiple($values, $driver->expireToTtl($expireTime));
 					} else {
 						foreach ($values as $k => $v) {
-							$driver->doSet($k, $v, $driver->expireToTtl($v[2]));
+							$driver->doSet($k, $v, $driver->expireToTtl($v[3]));
 						}
 					}
 				}
