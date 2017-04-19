@@ -64,7 +64,7 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function getItem($key)
     {
-        $this->prefixValue($key);
+        $this->namespace && $this->prefixValue($key);
 
         return parent::getItem($key);
     }
@@ -74,7 +74,7 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function getItems(array $keys = [])
     {
-        $this->prefixValues($keys);
+        $this->namespace && $this->prefixValues($keys);
 
         return parent::getItems($keys);
     }
@@ -84,7 +84,7 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function hasItem($key)
     {
-        $this->prefixValue($key);
+        $this->namespace && $this->prefixValue($key);
 
         return parent::hasItem($key);
     }
@@ -94,7 +94,9 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function clear()
     {
-        return parent::deleteItem(self::HIERARCHY_SEPARATOR . $this->namespace);
+        return $this->namespace ?
+            parent::deleteItem(self::HIERARCHY_SEPARATOR . $this->namespace) :
+            parent::clear();
     }
 
     /**
@@ -102,7 +104,7 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function deleteItem($key)
     {
-        $this->prefixValue($key);
+        $this->namespace && $this->prefixValue($key);
 
         return parent::deleteItem($key);
     }
@@ -112,7 +114,7 @@ class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPool
      */
     public function deleteItems(array $keys)
     {
-        $this->prefixValues($keys);
+        $this->namespace && $this->prefixValues($keys);
 
         return parent::deleteItems($keys);
     }

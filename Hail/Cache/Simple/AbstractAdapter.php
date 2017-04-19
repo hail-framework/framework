@@ -19,8 +19,9 @@
 
 namespace Hail\Cache\Simple;
 
-use Hail\Util\ArrayTrait;
 use Hail\Cache\SimpleCachePool;
+use Hail\Util\ArrayTrait;
+
 use Hail\Cache\Simple\Exception\InvalidArgumentException;
 
 /**
@@ -304,6 +305,10 @@ abstract class AbstractAdapter implements CacheInterface
 	 */
 	public function deleteAll()
 	{
+	    if (!$this->namespace) {
+	        return $this->clear();
+        }
+
 		$namespaceCacheKey = $this->getNamespaceCacheKey();
 		$namespaceVersion = $this->getNamespaceVersion() + 1;
 
@@ -329,6 +334,10 @@ abstract class AbstractAdapter implements CacheInterface
 		if (preg_match(self::PSR16_RESERVED, $key, $match) === 1) {
 			throw new InvalidArgumentException("invalid character in key: {$match[0]}");
 		}
+
+		if (!$this->namespace) {
+		    return $key;
+        }
 
 		if (null === ($version = $this->namespaceVersion)) {
 			$version = $this->getNamespaceVersion();

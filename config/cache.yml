@@ -8,7 +8,7 @@ simple:
       ttl: 604800
 
 pool:
-  driver: simple # hierarchical, namespaced
+  driver: simple # hierarchical, namespaced support to use redis
 
   config: [] # for init simple cache
   namespace: "" # for NamespacedCachePool
