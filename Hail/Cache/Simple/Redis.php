@@ -1,5 +1,6 @@
 <?php
-namespace Hail\SimpleCache;
+
+namespace Hail\Cache\Simple;
 
 use Hail\Facade\Serialize;
 use Hail\Redis\Client\AbstractClient;
@@ -13,121 +14,117 @@ use Hail\Factory\Redis as RedisFactory;
  */
 class Redis extends AbstractAdapter
 {
-	/**
-	 * @var AbstractClient|null
-	 */
-	private $redis;
+    /**
+     * @var AbstractClient|null
+     */
+    private $redis;
 
-	/**
-	 * Redis constructor.
-	 *
-	 * @param array $params
-	 *
-	 * @throws RedisException
-	 */
-	public function __construct(array $params)
-	{
-	    if (isset($params['client']) && $params['client'] instanceof AbstractClient) {
-	        $this->redis = $params['client'];
-	        unset($params['client']);
-        } else {
-            $this->redis = RedisFactory::client($params);
+    /**
+     * Redis constructor.
+     *
+     * @param array               $params
+     * @param AbstractClient|null $redis
+     *
+     * @throws RedisException
+     */
+    public function __construct(array $params, AbstractClient $redis = null)
+    {
+        $this->redis = $redis ?? RedisFactory::client($params);
+
+        parent::__construct($params);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doGet(string $key)
+    {
+        $value = $this->redis->get($key);
+        if ($value === false) {
+            return null;
         }
 
-		parent::__construct($params);
-	}
+        return Serialize::decode($value);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGet(string $key)
-	{
-		$value = $this->redis->get($key);
-		if ($value === false) {
-			return null;
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doSetMultiple(array $values, int $ttl = 0)
+    {
+        $success = true;
 
-		return Serialize::decode($value);
-	}
+        if ($ttl > 0) {
+            // Keys have lifetime, use SETEX for each of them
+            foreach ($values as $key => $value) {
+                if (!$this->redis->setEx($key, $ttl, Serialize::encode($value))) {
+                    $success = false;
+                }
+            }
+        } else {
+            // No lifetime, use MSET
+            $success = $this->redis->mSet(
+                Serialize::encodeArray($values)
+            );
+        }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doSetMultiple(array $values, int $ttl = 0)
-	{
-		$success = true;
+        return $success;
+    }
 
-		if ($ttl > 0) {
-			// Keys have lifetime, use SETEX for each of them
-			foreach ($values as $key => $value) {
-				if (!$this->redis->setEx($key, $ttl, Serialize::encode($value))) {
-					$success = false;
-				}
-			}
-		} else {
-			// No lifetime, use MSET
-			$success = $this->redis->mSet(
-				Serialize::encodeArray($values)
-			);
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doGetMultiple(array $keys)
+    {
+        $fetchedItems = array_combine($keys, $this->redis->mGet($keys));
 
-		return $success;
-	}
+        // Redis mget returns false for keys that do not exist. So we need to filter those out unless it's the real data.
+        $foundItems = [];
+        foreach ($fetchedItems as $key => $value) {
+            if (false !== $value || $this->redis->exists($key)) {
+                $foundItems[$key] = Serialize::decode($value);
+            }
+        }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doGetMultiple(array $keys)
-	{
-		$fetchedItems = array_combine($keys, $this->redis->mGet($keys));
+        return $foundItems;
+    }
 
-		// Redis mget returns false for keys that do not exist. So we need to filter those out unless it's the real data.
-		$foundItems = [];
-		foreach ($fetchedItems as $key => $value) {
-			if (false !== $value || $this->redis->exists($key)) {
-				$foundItems[$key] = Serialize::decode($value);
-			}
-		}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doHas(string $key)
+    {
+        return $this->redis->exists($key);
+    }
 
-		return $foundItems;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doSet(string $key, $value, int $ttl = 0)
+    {
+        $data = Serialize::encode($value);
+        if ($ttl > 0) {
+            return $this->redis->setEx($key, $ttl, $data);
+        } else {
+            return $this->redis->set($key, $data);
+        }
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doHas(string $key)
-	{
-		return $this->redis->exists($key);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doDelete(string $key)
+    {
+        $return = $this->redis->del($key);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doSet(string $key, $value, int $ttl = 0)
-	{
-		$data = Serialize::encode($value);
-		if ($ttl > 0) {
-			return $this->redis->setEx($key, $ttl, $data);
-		} else {
-			return $this->redis->set($key, $data);
-		}
-	}
+        return $return >= 0;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doDelete(string $key)
-	{
-		$return = $this->redis->del($key);
-
-		return $return >= 0;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function doClear()
-	{
-		return $this->redis->flushDb();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doClear()
+    {
+        return $this->redis->flushDb();
+    }
 }

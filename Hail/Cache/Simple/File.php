@@ -17,8 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
-
+namespace Hail\Cache\Simple;
 
 /**
  * Base file cache driver.

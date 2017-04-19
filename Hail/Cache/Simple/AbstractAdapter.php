@@ -17,11 +17,11 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
-use Hail\Cache\SimpleCachePool;
 use Hail\Util\ArrayTrait;
-use Hail\SimpleCache\Exception\InvalidArgumentException;
+use Hail\Cache\SimpleCachePool;
+use Hail\Cache\Simple\Exception\InvalidArgumentException;
 
 /**
  * Base class for cache provider implementations.

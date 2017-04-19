@@ -8,7 +8,7 @@ simple:
       ttl: 604800
 
 pool:
-  driver: simple # redis
+  driver: simple # hierarchical, namespaced
 
-  config:
-    namespace: HAIL_CACHE
+  config: [] # for init simple cache
+  namespace: "" # for NamespacedCachePool

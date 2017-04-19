@@ -18,7 +18,7 @@ cache: "@cache.simple"
 cache.simple:
   factory: Hail\Factory\Cache::simple
   to:
-    - Hail\SimpleCache\CacheInterface
+    - Hail\Cache\Simple\CacheInterface
     - Psr\SimpleCache\CacheInterface
 
 cache.pool:

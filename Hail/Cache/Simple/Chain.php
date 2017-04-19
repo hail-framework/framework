@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 /**
  * Class Cache

@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 use Hail\Factory\Database as DatabaseFactory;
 use Hail\Facade\Serialize;

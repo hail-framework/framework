@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 /**
  * Void cache driver. The cache could be of use in tests where you don`t need to cache anything.
@@ -34,7 +34,7 @@ class Void extends AbstractAdapter
 	 */
 	protected function doGet(string $key)
 	{
-		return false;
+		return null;
 	}
 	/**
 	 * {@inheritDoc}

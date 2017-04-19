@@ -4,7 +4,7 @@ namespace Hail\Cache;
 
 use Psr\Cache\CacheItemPoolInterface as PsrCacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
-use Hail\SimpleCache\CacheInterface;
+use Hail\Cache\Simple\CacheInterface;
 
 /**
  * Interface CacheItemPoolInterface

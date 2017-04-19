@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 /**
  * Xcache cache driver.
@@ -72,7 +72,7 @@ class Xcache extends AbstractAdapter
     {
 	    if (ini_get('xcache.admin.enable_auth')) {
 		    throw new \BadMethodCallException(
-			    'To use all features of \Hail\SimpleCache\Xcache, '
+			    'To use all features of \Hail\Cache\Simple\Xcache, '
 			    . 'you must set "xcache.admin.enable_auth" to "Off" in your php.ini.'
 		    );
 	    }

@@ -23,7 +23,7 @@ use Hail\Facade\DI;
  * @property-read Acl                          $acl
  * @property-read Session                      $session
  * @property-read Cookie                       $cookie
- * @property-read SimpleCache\CacheInterface   $cache
+ * @property-read Cache\Simple\CacheInterface  $cache
  * @property-read Cache\CacheItemPoolInterface $cachePool
  * @property-read Database\Cache               $cdb
  * @property-read Browser                      $browser
@@ -41,17 +41,17 @@ use Hail\Facade\DI;
  */
 Trait DITrait
 {
-	public function __get(string $name)
-	{
-		return $this->$name = DI::get($name);
-	}
+    public function __get(string $name)
+    {
+        return $this->$name = DI::get($name);
+    }
 
-	final public static function di(string $name = null)
-	{
-		if ($name === null) {
-			return DI::getInstance();
-		}
+    final public static function di(string $name = null)
+    {
+        if ($name === null) {
+            return DI::getInstance();
+        }
 
-		return DI::get($name);
-	}
+        return DI::get($name);
+    }
 }

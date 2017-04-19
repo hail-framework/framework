@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 use Hail\Facade\Serialize;
 use MongoBinData;

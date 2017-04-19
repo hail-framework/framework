@@ -51,7 +51,7 @@ require __DIR__ . '/helpers.php';
  * @method static Acl acl()
  * @method static Session session()
  * @method static Cookie cookie()
- * @method static SimpleCache\CacheInterface cache()
+ * @method static Cache\Simple\CacheInterface cache()
  * @method static Cache\CacheItemPoolInterface cachePool()
  * @method static Database\Cache cdb()
  * @method static Browser browser()

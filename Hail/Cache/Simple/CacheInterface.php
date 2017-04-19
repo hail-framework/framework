@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
 use Hail\Cache\CacheItemPoolInterface;
@@ -8,7 +8,7 @@ use Hail\Cache\CacheItemPoolInterface;
 /**
  * Interface CacheInterface
  *
- * @package Hail\SimpleCache
+ * @package Hail\Cache\Simple
  * @author  Hao Feng <flyinghail@msn.com>
  */
 interface CacheInterface extends PsrCacheInterface, \ArrayAccess

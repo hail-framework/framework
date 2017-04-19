@@ -1,5 +1,5 @@
 <?php
-namespace Hail\SimpleCache;
+namespace Hail\Cache\Simple;
 
 /**
  * YAC cache provider.

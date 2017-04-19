@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\SimpleCache\Exception;
+namespace Hail\Cache\Simple\Exception;
 
 use Psr\SimpleCache\CacheException as CacheExceptionInterface;
 
