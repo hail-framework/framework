@@ -41,5 +41,5 @@
     "ext-zip": "To handle XSLX/ODS files"
   },
   "type": "library",
-  "version": "0.5.2"
+  "version": "0.10.1"
 }
