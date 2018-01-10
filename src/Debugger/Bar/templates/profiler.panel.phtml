@@ -1,0 +1,58 @@
+<?php
+namespace Hail\Debugger;
+?>
+<style>
+    .tracy-addons-profiler-hidden {
+        display: none
+    }
+
+    .tracy-addons-profiler-bar {
+        display: inline-block;
+        margin: 0;
+        height: 0.8em;
+    }
+</style>
+<h1>Profiler Info</h1>
+<div class="tracy-inner">
+    <table>
+        <tr>
+            <th>Start</th>
+            <th>Finish</th>
+            <th>Time (absolute)</th>
+            <th>Memory change (absolute)</th>
+        </tr>
+        <?php foreach (Profiler::getProfiles() as $profile) { ?>
+            <tr>
+                <?php if ($profile['meta'][Profiler::START_LABEL] === $profile['meta'][Profiler::FINISH_LABEL]) { ?>
+                    <td colspan="2"><?=$profile['meta'][Profiler::START_LABEL]?></td>
+                <?php } else { ?>
+                    <td><?=$profile['meta'][Profiler::START_LABEL]?></td>
+                    <td><?=$profile['meta'][Profiler::FINISH_LABEL]?></td>
+                <?php } ?>
+                <td><?=$profile[Profiler::DURATION] * 1000?>&nbsp;ms
+                    (<?=$profile[Profiler::ABSOLUTE_DURATION] * 1000?>
+                    &nbsp;ms)
+                </td>
+                <td><?=$profile[Profiler::MEMORY_USAGE_CHANGE] / 1024?>&nbsp;kB
+                    (<?=$profile[Profiler::ABSOLUTE_MEMORY_USAGE_CHANGE] / 1024?>
+                    &nbsp;kB)
+                </td>
+            </tr>
+            <tr class="tracy-addons-profiler-hidden">
+                <td colspan="4"></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+				<span class="tracy-addons-profiler-bar"
+                      style="width:<?=$profile['meta'][Profiler::TIME_LINE_BEFORE]?>%;background-color:#cccccc;"></span>
+                    <span class="tracy-addons-profiler-bar"
+                          style="width:<?=$profile['meta'][Profiler::TIME_LINE_ACTIVE]?>%;background-color:#3987d4;"></span>
+                    <span class="tracy-addons-profiler-bar"
+                          style="width:<?=$profile['meta'][Profiler::TIME_LINE_INACTIVE]?>%;background-color:#6ba9e6;"></span>
+                    <span class="tracy-addons-profiler-bar"
+                          style="width:<?=$profile['meta'][Profiler::TIME_LINE_AFTER]?>%;background-color:#cccccc;"></span>
+                </td>
+            </tr>
+        <?php } ?>
+    </table>
+</div>

@@ -1,0 +1,133 @@
+<?php
+namespace Hail\Filesystem;
+
+abstract class Handler
+{
+    /**
+     * @var string
+     */
+    protected $path;
+
+    /**
+     * @var Filesystem
+     */
+    protected $filesystem;
+
+    /**
+     * Constructor.
+     *
+     * @param Filesystem $filesystem
+     * @param string              $path
+     */
+    public function __construct(Filesystem $filesystem = null, $path = null)
+    {
+        $this->path = $path;
+        $this->filesystem = $filesystem;
+    }
+
+    /**
+     * Check whether the entree is a directory.
+     *
+     * @return bool
+     * @throws Exception\FileNotFoundException
+     */
+    public function isDir()
+    {
+        return $this->getType() === 'dir';
+    }
+
+    /**
+     * Check whether the entree is a file.
+     *
+     * @return bool
+     * @throws Exception\FileNotFoundException
+     */
+    public function isFile()
+    {
+        return $this->getType() === 'file';
+    }
+
+    /**
+     * Retrieve the entree type (file|dir).
+     *
+     * @return string file or dir
+     *
+     * @throws Exception\FileNotFoundException
+     */
+    public function getType()
+    {
+        $metadata = $this->filesystem->getMetadata($this->path);
+
+        return $metadata['type'];
+    }
+
+    /**
+     * Set the Filesystem object.
+     *
+     * @param Filesystem $filesystem
+     *
+     * @return $this
+     */
+    public function setFilesystem(Filesystem $filesystem)
+    {
+        $this->filesystem = $filesystem;
+
+        return $this;
+    }
+    
+    /**
+     * Retrieve the Filesystem object.
+     *
+     * @return Filesystem
+     */
+    public function getFilesystem()
+    {
+        return $this->filesystem;
+    }
+
+    /**
+     * Set the entree path.
+     *
+     * @param string $path
+     *
+     * @return $this
+     */
+    public function setPath($path)
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve the entree path.
+     *
+     * @return string path
+     */
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    /**
+     * Plugins pass-through.
+     *
+     * @param string $method
+     * @param array  $args
+     *
+     * @return mixed
+     * @throws \BadMethodCallException
+     */
+    public function __call($method, array $args)
+    {
+        try {
+	        return $this->filesystem->$method($this->path, ...$args);
+        } catch (\BadMethodCallException $e) {
+            throw new \BadMethodCallException(
+                'Call to undefined method '
+                . static::class
+                . '::' . $method
+            );
+        }
+    }
+}

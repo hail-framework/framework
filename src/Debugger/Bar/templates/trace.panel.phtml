@@ -1,0 +1,110 @@
+<?php
+namespace Hail\Debugger;
+?>
+<style>
+    #nette-debug .xdbgpanel b {
+        font-weight: bold;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner {
+        max-width: 100%;
+        max-height: 700px;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner td.right {
+        text-align: right;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner td {
+        white-space: nowrap;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner .timeFast {
+        color: green;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner .timeMedian {
+        color: orange;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner .timeSlow {
+        color: red;
+    }
+
+    #nette-debug .xdbgpanel .nette-inner {
+        overflow: scroll !important;
+    }
+</style>
+
+<div class="xdbgpanel">
+    <h1>XDebugTrace</h1>
+
+    <?php foreach( as $traceNo => $trace): ?>
+    <div class="nette-inner">
+        <table style="width:100%">
+            <?php $indent = $indents[$traceNo]?>
+            <thead>
+            <?php if (isset($titles[$traceNo])): ?>
+            <tr>
+                <th colspan="6"><h2><?=$titles[$traceNo]?> trace</h2></th>
+            </tr>
+            <?php endif ?>
+            <tr>
+                <th>ID</th>
+                <th>Level</th>
+                <th>Function</th>
+                <th>&Delta;&nbsp;Time</th>
+                <th>&Delta;&nbsp;Memory</th>
+                <th>File&nbsp;(Line)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach($trace as $record): ?>
+            <tr>
+                <td class="right"><?=$record->id?></td>
+                <td class="right"><?=$record->level?></td>
+                <td style="padding-left:<?=($indent[$record->level] * 8) + 5?>px"><?=$record->function?></td>
+                <td class="right <?=$this->timeClass($record->deltaTime)?>"><?=$this->time($record->deltaTime)?></td>
+                <td class="right"><?=$this->bytes($record->deltaMemory)?></td>
+                <td><a href="editor://open/?file=<?=$record->filename?>&amp;line=<?=$record->line?>" title="<?=$record->filename?>"><?=\basename($record->filename)?>&nbsp;(<b><?=$record->line?></b>)</a> <?=$record->evalInfo?></td>
+            </tr>
+            <?php endforeach ?>
+            </tbody>
+        </table>
+        <?php if (isset($statistics[$traceNo]) && (\count($statistics[$traceNo]) > 1 || \count($trace) > 1)):?>
+        <table style="width:100%">
+            <thead>
+            <?php if (isset($titles[$traceNo])): ?>
+            <tr>
+                <th colspan="6"><h2><?=$titles[$traceNo]?> statistics</h2></th>
+            </tr>
+            <?php endif ?>
+            <tr>
+                <th>Count</th>
+                <th>&Delta;&nbsp;Time</th>
+                <th>&#8960;&nbsp;Time</th>
+                <th>Function</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($statistics[$traceNo] as $function => $statistic): ?>
+            <tr>
+                <td class="right"><?=$statistic->count?></td>
+                <td class="right"><?=$this->time($statistic->deltaTime)?></td>
+                <td class="right <?=$this->timeClass($statistic)?>"><?=$this->time($statistic->averageTime)?></td>
+                <td width="100%"><?=$function?></td>
+            </tr>
+            <?php endforeach ?>
+            </tbody>
+        </table>
+        <?php endif ?>
+    </div>
+    <?php if ($traces->hasNext()): ?>
+    <br>
+    <?php endif ?>
+    <?php endforeach ?>
+    <p>
+        Trace file size <b><?=$this->bytes($traceFileSize, 2)?></b> parsed in <b><?=$this->time($parsingTime, 3)?></b>
+    </p>
+</div>
+

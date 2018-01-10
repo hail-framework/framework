@@ -1,0 +1,10 @@
+<?php
+namespace Hail\Debugger;
+
+use Hail\Util\Json;
+
+echo Json::encode([
+    'ret' => $code,
+    'msg' => $message,
+    'HTTP_ERROR' => true,
+]);

@@ -1,0 +1,59 @@
+{
+  "name": "hail/framework",
+  "description": "PHP 7.1 Framework",
+  "type": "library",
+  "keywords": ["hail", "framework", "mvc"],
+  "homepage": "http://framework.flyinghail.com/",
+  "support": {
+    "issues": "https://github.com/hail-team/framework/issues",
+    "source": "https://github.com/hail-team/framework"
+  },
+  "authors": [
+    {
+      "name": "FlyingHail",
+      "email": "flyinghail@msn.com"
+    }
+  ],
+  "autoload": {
+    "files": [
+      "src/helpers.php"
+    ],
+    "psr-4": {
+      "Hail\\": "src/"
+    }
+  },
+  "license": "MIT",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/flyinghail/Hail-Framework.git"
+    }
+  ],
+  "bin": ["bin/hail"],
+  "require": {
+    "php": ">=7.1.0",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
+    "psr/log": "^1.0",
+    "psr/http-message": "^1.0",
+    "psr/container": "^1.0",
+    "psr/cache": "^1.0",
+    "psr/simple-cache": "^1.0",
+    "http-interop/http-factory": "^0.3.0",
+    "http-interop/http-server-handler": "^1.0",
+    "http-interop/http-server-middleware": "^1.0"
+  },
+  "suggest": {
+    "ext-intl": "to use Utf8String::compare, Utf8String::transliterate, Strings::toAscii, Strings::normalize, Strings::compare, NumberFormatCell, DateFormatCell, ",
+    "ext-iconv": "to use Strings::reverse, Strings::chr,, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
+    "ext-seaslog": "improve the performance for logger",
+    "ext-php-cp": "improve the performance for PDO/Redis",
+    "ext-xmlreader": "to handle XSLX/ODS files",
+    "ext-zip": "to handle XSLX/ODS files",
+    "ext-fileinfo": "to use for image processing.",
+    "ext-gd": "to use GD library based image processing.",
+    "ext-imagick": "to use Imagick based image processing.",
+    "ext-ftp": "to handle filesystem with ftp support.",
+    "ext-curl": "to handle http client with curl support."
+  }
+}
