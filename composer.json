@@ -48,8 +48,6 @@
     "ext-iconv": "to use Strings::reverse, Strings::chr,, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
     "ext-seaslog": "improve the performance for logger",
     "ext-php-cp": "improve the performance for PDO/Redis",
-    "ext-xmlreader": "to handle XSLX/ODS files",
-    "ext-zip": "to handle XSLX/ODS files",
     "ext-fileinfo": "to use for image processing.",
     "ext-gd": "to use GD library based image processing.",
     "ext-imagick": "to use Imagick based image processing.",
