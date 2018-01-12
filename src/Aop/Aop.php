@@ -3,7 +3,7 @@
 namespace Hail\Aop;
 
 
-class Factory
+class Aop
 {
     public const BEFORE = 'before';
     public const AFTER = 'after';

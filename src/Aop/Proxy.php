@@ -44,8 +44,8 @@ class Proxy
 
         $param->setMethod($name)
             ->setArguments($args)
-            ->setJointPoint(Factory::BEFORE);
-        Factory::run($param);
+            ->setJointPoint(Aop::BEFORE);
+        Aop::run($param);
 
         if ($param->isFinished()) {
             return $param->getResult();
@@ -59,14 +59,14 @@ class Proxy
 
             $result = $this->object->$name(...$args);
         } catch (\Throwable $e) {
-            $param->setJointPoint(Factory::EXCEPTION)
+            $param->setJointPoint(Aop::EXCEPTION)
                 ->setException($e);
-            Factory::run($param);
+            Aop::run($param);
         } finally {
-            $param->setJointPoint(Factory::AFTER)
+            $param->setJointPoint(Aop::AFTER)
                 ->setResult($result)
                 ->finished();
-            Factory::run($param);
+            Aop::run($param);
         }
 
         return $param->getResult();
