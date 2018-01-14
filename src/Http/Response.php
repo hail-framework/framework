@@ -90,13 +90,7 @@ class Response
         );
         $this->header = new Header();
 
-        $this->init();
-    }
-
-    protected function init()
-    {
         $this->setStatus(200);
-        $this->setDate(\DateTime::createFromFormat('U', (string) \time()));
     }
 
     public function reset()
@@ -104,10 +98,9 @@ class Response
         $this->cookie->reset();
         $this->header->replace();
 
-        $this->output = $this->status =
-        $this->reason = $this->version = null;
+        $this->output = $this->reason = $this->version = null;
 
-        $this->init();
+        $this->setStatus(200);
     }
 
     /**
@@ -279,7 +272,7 @@ class Response
         if ($name === null) {
             $handler = $this->app->handler();
             if ($handler instanceof \Closure) {
-                throw new \LogicException('Con not build the template from handler!');
+                throw new \LogicException('Con not build the template from closure handler!');
             }
 
             $name = \ltrim($handler['app'] . '/' . $handler['controller'] . '/' . $handler['action'], '/');
@@ -427,6 +420,11 @@ class Response
      */
     public function response($body = null): ResponseInterface
     {
+        /* RFC2616 - 14.18 says all Responses need to have a Date */
+        if (!$this->header->has('Date')) {
+            $this->setDate(\DateTime::createFromFormat('U', (string) \time()));
+        }
+
         if (($this->status >= 100 && $this->status < 200) || $this->status === 204 || $this->status === 304) {
             $body = null;
             $this->header->remove('Content-Type');
@@ -826,7 +824,7 @@ class Response
         }
 
         if (null !== $this->getExpires()) {
-            return $this->getExpires()->format('U') - $this->getDate()->format('U');
+            return ((int) $this->getExpires()->format('U')) - ((int) $this->getDate()->format('U'));
         }
 
         return null;
