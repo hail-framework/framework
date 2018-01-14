@@ -1,4 +1,8 @@
 <?php
+/**
+ * Some code from https://github.com/mindplay-dk/unbox
+ * @copyright Rasmus Schultz <http://blog.mindplay.dk/>
+ */
 
 namespace Hail\Container;
 
@@ -248,7 +252,6 @@ class Container implements ContainerInterface
      * @return array parameters
      *
      * @throws InvalidArgumentException
-     * @throws NotFoundException
      */
     protected function resolve(array $params, array $map, bool $safe = true): array
     {

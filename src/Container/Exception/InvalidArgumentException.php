@@ -2,11 +2,11 @@
 
 namespace Hail\Container\Exception;
 
-use Psr\Container\ContainerException as PsrContainerException;
+use Psr\Container\ContainerExceptionInterface;
 
 /**
  * @inheritdoc
  */
-class InvalidArgumentException extends \InvalidArgumentException implements PsrContainerException
+class InvalidArgumentException extends \InvalidArgumentException implements ContainerExceptionInterface
 {
 }

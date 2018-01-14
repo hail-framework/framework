@@ -2,12 +2,12 @@
 
 namespace Hail\Container\Exception;
 
-use Psr\Container\NotFoundException as PsrNotFoundException;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * @inheritdoc
  */
-class NotFoundException extends \RuntimeException implements PsrNotFoundException
+class NotFoundException extends \RuntimeException implements NotFoundExceptionInterface
 {
     /**
      * @param string $name component name
