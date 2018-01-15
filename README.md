@@ -6,7 +6,6 @@
 [![Monthly Downloads](https://poser.pugx.org/hail/framework/d/monthly)](https://packagist.org/packages/hail/framework)
 [![License](https://poser.pugx.org/hail/framework/license)](https://packagist.org/packages/hail/framework)
 
-
 基于 PHP 7.1 的 MVC 框架
 
 ## Installation
