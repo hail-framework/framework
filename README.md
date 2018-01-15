@@ -1,5 +1,12 @@
 # Hail-Framework
 
+[![Latest Stable Version](https://poser.pugx.org/hail/framework/version)](https://packagist.org/packages/hail/framework)
+[![Latest Unstable Version](https://poser.pugx.org/hail/framework/v/unstable)](//packagist.org/packages/hail/framework)
+[![Total Downloads](https://poser.pugx.org/hail/framework/downloads)](https://packagist.org/packages/hail/framework)
+[![Monthly Downloads](https://poser.pugx.org/hail/framework/d/monthly)](https://packagist.org/packages/hail/framework)
+[![License](https://poser.pugx.org/hail/framework/license)](https://packagist.org/packages/hail/framework)
+
+
 基于 PHP 7.1 的 MVC 框架
 
 ## Installation
