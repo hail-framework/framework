@@ -6,27 +6,6 @@ use Hail\Auth\Exception\EntryException;
 
 interface RoleInterface
 {
-    public function getId();
-
-    public function getType(): string;
-
-    public function is($type, $id): bool;
-
-    /**
-     * @param RoleInterface $target
-     *
-     * @return bool
-     */
-    public function equals($target): bool;
-
-    public function getAttributes(): array;
-
-    public function getAttribute(string $name);
-
-    public function setAttribute(string $name, $value);
-
-    public function delAttribute(string $name);
-
     /**
      * @param RoleInterface $parent
      *
@@ -67,4 +46,8 @@ interface RoleInterface
     public function getScene(): ?SceneInterface;
 
     public function setScene(SceneInterface $scene = null);
+
+    public function getEntryTime(): \DateTime;
+
+    public function isExpire(): bool;
 }

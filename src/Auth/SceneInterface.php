@@ -2,8 +2,6 @@
 
 namespace Hail\Auth;
 
-use Hail\Auth\Exception\EntryException;
-
 interface SceneInterface
 {
     public function getId();
@@ -51,4 +49,7 @@ interface SceneInterface
 
     public function validate(RoleInterface $role, string $name): ?bool;
 
+    public function setTimeout(int $seconds);
+
+    public function getTimeout(): int;
 }

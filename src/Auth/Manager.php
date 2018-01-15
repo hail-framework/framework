@@ -219,10 +219,6 @@ class Manager
 
     protected function setConfig(string $type, string $name, array $config)
     {
-        if (!empty($this->object[$type])) {
-            throw new \LogicException('Config is readable only now.');
-        }
-
         if (isset($config['class'])) {
             $class = $config['class'];
         } elseif ($this->namespace === null) {
@@ -283,5 +279,19 @@ class Manager
         ];
 
         return $this;
+    }
+
+    public function clearExpired()
+    {
+        foreach ($this->object[self::ROLE] as $name => &$array) {
+            foreach ($array as $id => $role) {
+                /** @var RoleInterface $role */
+                if ($role->isExpire()) {
+                    $role->getScene()->out($role);
+
+                    unset($array[$id]);
+                }
+            }
+        }
     }
 }

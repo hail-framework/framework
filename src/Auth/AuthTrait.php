@@ -5,7 +5,7 @@ namespace Hail\Auth;
 use Hail\DITrait;
 use Hail\Util\Arrays;
 
-trait GenericTrait
+trait AuthTrait
 {
     use DITrait;
 

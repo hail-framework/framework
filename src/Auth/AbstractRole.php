@@ -5,7 +5,7 @@ namespace Hail\Auth;
 
 abstract class AbstractRole implements RoleInterface
 {
-    use GenericTrait;
+    use AuthTrait;
 
     /**
      * @var static[][]
@@ -16,6 +16,11 @@ abstract class AbstractRole implements RoleInterface
      * @var SceneInterface
      */
     protected $scene;
+
+    /**
+     * @var \DateTime
+     */
+    protected $entryTime;
 
     /**
      * @param RoleInterface $role
@@ -83,6 +88,8 @@ abstract class AbstractRole implements RoleInterface
 
         $to->in($this);
 
+        $this->entryTime = new \DateTime();
+
         return $this;
     }
 
@@ -97,4 +104,26 @@ abstract class AbstractRole implements RoleInterface
 
         return $this;
     }
+
+    public function getEntryTime(): \DateTime
+    {
+        return $this->entryTime;
+    }
+
+    public function isExpire(): bool
+    {
+        if (($scene = $this->getScene()) === null) {
+            return false;
+        }
+
+        $timeout = $scene->getTimeout();
+        if ($timeout === 0) {
+            return false;
+        }
+
+        $entry = (int) $this->entryTime->format('U');
+
+        return time() < $entry + $timeout;
+    }
+
 }

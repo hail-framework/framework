@@ -5,9 +5,34 @@ namespace Hail\Auth;
 
 abstract class AbstractScene implements SceneInterface
 {
-    use GenericTrait;
+    use AuthTrait;
 
     protected $rules = [];
+
+    /**
+     * @var int
+     */
+    protected $timeout = 0;
+
+    /**
+     * @param int $seconds
+     *
+     * @return $this
+     */
+    public function setTimeout(int $seconds)
+    {
+        $this->timeout = $seconds;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTimeout(): int
+    {
+        return $this->timeout;
+    }
 
     public function in(RoleInterface $role): void
     {
