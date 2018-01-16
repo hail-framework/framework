@@ -17,7 +17,7 @@ use Hail\Event\Psr\EventManagerInterface;
  * Class EventManager
  *
  * @package Hail\Event
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class EventManager implements EventManagerInterface
 {

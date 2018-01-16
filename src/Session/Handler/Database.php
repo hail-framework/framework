@@ -7,7 +7,7 @@ use Hail\Database\Database as DB;
  * Class DBHandler
  *
  * @package Hail\Session
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Database extends BaseHandler
 {

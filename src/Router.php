@@ -13,7 +13,7 @@ use Hail\Util\Serialize;
  * Class Router
  *
  * @package Hail
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  *
  * @method head(string $route, array | callable $handler)
  * @method get(string $route, array | callable $handler)

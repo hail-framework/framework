@@ -25,7 +25,7 @@ use Psr\Cache\CacheException;
  *
  * @author Aaron Scherer <aequasi@gmail.com>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class SimpleCachePool implements CacheItemPoolInterface
 {

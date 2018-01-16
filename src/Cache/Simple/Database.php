@@ -8,7 +8,7 @@ use Hail\Util\Serialize;
 /**
  * Database cache provider.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Database extends AbstractAdapter
 {

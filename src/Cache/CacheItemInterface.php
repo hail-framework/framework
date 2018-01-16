@@ -9,7 +9,7 @@ use Psr\Cache\InvalidArgumentException;
  * Interface CacheItemInterface
  *
  * @package Hail\Cache
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 interface CacheItemInterface extends PsrCacheItemInterface
 {

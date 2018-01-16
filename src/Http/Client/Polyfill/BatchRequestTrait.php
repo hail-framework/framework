@@ -13,7 +13,7 @@ use Hail\Http\Client\Psr\ClientException;
  * BatchRequest allow to sends multiple request and retrieve a Batch Result.
  *
  * @author Joel Wurtz <jwurtz@jolicode.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  *
  * @method ResponseInterface sendRequest(RequestInterface $request)
  * @method PromiseInterface sendAsyncRequest(RequestInterface $request)

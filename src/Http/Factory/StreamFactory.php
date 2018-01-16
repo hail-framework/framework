@@ -8,7 +8,7 @@ use Hail\Http\Factory;
 use Interop\Http\Factory\StreamFactoryInterface;
 
 /**
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class StreamFactory implements StreamFactoryInterface
 {

@@ -8,7 +8,7 @@ use Interop\Http\Factory\RequestFactoryInterface;
 use Hail\Http\Factory;
 
 /**
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class RequestFactory implements RequestFactoryInterface
 {

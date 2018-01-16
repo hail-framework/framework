@@ -7,7 +7,7 @@ use Hail\Redis\Exception\RedisException;
  * Class ConnectPool
  *
  * @package Hail\Redis\Client
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  * @inheritdoc
  */
 class ConnectPool extends PhpRedis

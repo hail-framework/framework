@@ -6,7 +6,7 @@ namespace Hail;
  * Class Action
  *
  * @package Hail
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 abstract class Action
 {

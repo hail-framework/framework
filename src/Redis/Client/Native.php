@@ -15,7 +15,7 @@ use Hail\Redis\Helpers;
  * Class Native
  *
  * @package Hail\Redis\Client
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  * @inheritdoc
  */
 class Native extends AbstractClient

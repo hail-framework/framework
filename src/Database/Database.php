@@ -14,7 +14,7 @@ namespace Hail\Database;
  * Part of the code from Medoo
  *
  * @package Hail\Database
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Database
 {

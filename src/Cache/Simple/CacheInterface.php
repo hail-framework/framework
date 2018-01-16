@@ -9,7 +9,7 @@ use Hail\Cache\CacheItemPoolInterface;
  * Interface CacheInterface
  *
  * @package Hail\Cache\Simple
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 interface CacheInterface extends PsrCacheInterface, \ArrayAccess
 {

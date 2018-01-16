@@ -25,7 +25,7 @@ namespace Hail\Cache\Simple;
  * @link   www.doctrine-project.org
  * @since  1.6
  * @author Kévin Dunglas <dunglas@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Apcu extends AbstractAdapter
 {

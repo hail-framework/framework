@@ -21,7 +21,7 @@ use Hail\Util\Closure\Serializer;
  * Class Serialize
  *
  * @package Hail\Util
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Serialize
 {

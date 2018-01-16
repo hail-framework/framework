@@ -16,7 +16,7 @@ use Psr\Http\Message\{
  *
  * @package Hail\Http
  *
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Request
 {

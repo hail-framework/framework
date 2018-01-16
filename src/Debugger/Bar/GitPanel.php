@@ -8,7 +8,7 @@ namespace Hail\Debugger\Bar;
  * @package Nofutur3\Extensions
  *
  * @author  Jakub Vyvážil
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class GitPanel implements PanelInterface
 {

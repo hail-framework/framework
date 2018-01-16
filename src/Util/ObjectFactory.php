@@ -7,7 +7,7 @@ use Hail\Container\Container;
  * Class Model
  *
  * @package Hail
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class ObjectFactory implements \ArrayAccess
 {

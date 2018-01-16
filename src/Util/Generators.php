@@ -8,7 +8,7 @@ use InvalidArgumentException;
  * This class provides the static methods `uuid3()`, `uuid4()`, and
  * `uuid5()` for generating version 3, 4, and 5 UUIDs as specified in RFC 4122.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Generators
 {

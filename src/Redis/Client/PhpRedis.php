@@ -14,7 +14,7 @@ use Hail\Redis\Traits\PhpRedisTrait;
  * Class PhpRedis
  *
  * @package Hail\Redis\Client
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  * @inheritdoc
  */
 class PhpRedis extends AbstractClient

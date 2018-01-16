@@ -12,7 +12,7 @@ use Hail\Filesystem\{
 /**
  * Base file cache driver.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Filesystem extends AbstractAdapter
 {

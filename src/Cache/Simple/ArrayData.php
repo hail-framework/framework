@@ -4,7 +4,7 @@ namespace Hail\Cache\Simple;
 /**
  * Array cache driver.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class ArrayData extends AbstractAdapter
 {

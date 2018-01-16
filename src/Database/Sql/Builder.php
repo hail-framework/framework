@@ -17,7 +17,7 @@ use PDO;
  * SQL builder from Medoo
  *
  * @package Hail\Database
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Builder
 {

@@ -15,7 +15,7 @@ use Interop\Http\Factory\{
 use Hail\Http\Factory;
 
 /**
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class MessageFactory implements
 	RequestFactoryInterface,

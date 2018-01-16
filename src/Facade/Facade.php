@@ -8,7 +8,7 @@ use Hail\Container\Container;
  * Class Facade
  *
  * @package Hail\Facade
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 abstract class Facade
 {

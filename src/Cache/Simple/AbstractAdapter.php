@@ -32,7 +32,7 @@ use Hail\Cache\Simple\Exception\InvalidArgumentException;
  * @author Jonathan Wage <jonwage@gmail.com>
  * @author Roman Borschel <roman@code-factory.org>
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 abstract class AbstractAdapter implements CacheInterface
 {

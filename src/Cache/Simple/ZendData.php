@@ -27,7 +27,7 @@ namespace Hail\Cache\Simple;
  * @since  2.0
  * @author Ralph Schindler <ralph.schindler@zend.com>
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class ZendData extends AbstractAdapter
 {

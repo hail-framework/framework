@@ -14,7 +14,7 @@ use Psr\Http\Message\UploadedFileInterface;
 /**
  * @author Michael Dowling and contributors to guzzlehttp/psr7
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class UploadedFile implements UploadedFileInterface
 {

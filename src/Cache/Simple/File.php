@@ -25,7 +25,7 @@ namespace Hail\Cache\Simple;
  * @since  2.3
  * @author Fabio B. Silva <fabio.bat.silva@gmail.com>
  * @author Tobias Schultze <http://tobion.de>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class File extends AbstractAdapter
 {

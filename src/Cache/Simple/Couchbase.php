@@ -7,7 +7,7 @@ use CouchbaseBucket;
 /**
  * Couchbase cache driver.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Couchbase extends AbstractAdapter
 {

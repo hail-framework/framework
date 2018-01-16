@@ -5,7 +5,7 @@ namespace Hail\Facade;
  * Class Library
  *
  * @package Hail\Facade
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  *
  * @method static Object get(string $key)
  * @method static bool has(string $key)

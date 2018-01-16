@@ -9,7 +9,7 @@ use Hail\Util\Exception\RegexpException;
  * String tools library.
  *
  * @package Hail\Util
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Strings
 {

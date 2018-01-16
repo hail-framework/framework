@@ -10,7 +10,7 @@ use Hail\Util\Json;
  *
  * @licence  MIT
  * @link     https://github.com/milo/vendor-versions
- * @author   Hao Feng <flyinghail@msn.com>
+ * @author   Feng Hao <flyinghail@msn.com>
  */
 class VendorPanel implements PanelInterface
 {

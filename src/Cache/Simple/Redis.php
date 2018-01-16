@@ -10,7 +10,7 @@ use Hail\Factory\Redis as RedisFactory;
 /**
  * Redis cache provider.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Redis extends AbstractAdapter
 {

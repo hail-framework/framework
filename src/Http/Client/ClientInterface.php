@@ -8,7 +8,7 @@ use Hail\Http\Client\Psr\ClientInterface as PsrClient;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 interface ClientInterface extends PsrClient
 {

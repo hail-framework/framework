@@ -4,7 +4,7 @@ namespace Hail\Cache\Simple;
 /**
  * YAC cache provider.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Yac extends AbstractAdapter
 {

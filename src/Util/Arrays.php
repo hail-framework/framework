@@ -6,7 +6,7 @@ namespace Hail\Util;
  * Class Arrays
  *
  * @package Hail\Util
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Arrays
 {

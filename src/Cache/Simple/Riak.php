@@ -32,7 +32,7 @@ use Riak\Object;
  * @link   www.doctrine-project.org
  * @since  1.1
  * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class Riak extends AbstractAdapter
 {

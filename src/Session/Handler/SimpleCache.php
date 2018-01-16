@@ -6,7 +6,7 @@ use Psr\SimpleCache\CacheInterface;
 /**
  * Class CacheHandler.
  *
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class SimpleCache extends BaseHandler
 {

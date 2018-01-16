@@ -18,7 +18,7 @@ use Hail\Cache\Simple\CacheInterface;
  * in that namespace.
  *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class NamespacedCachePool extends HierarchicalCachePool implements CacheItemPoolInterface
 {

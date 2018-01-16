@@ -10,7 +10,7 @@ use Hail\Util\Exception\CryptoException;
  * Class Crypto
  *
  * @package Hail\Util
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 final class Crypto
 {

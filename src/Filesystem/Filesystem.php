@@ -11,7 +11,7 @@ use Hail\Filesystem\Util\ContentListingFormatter;
  * Class Filesystem
  *
  * @package Hail\Filesystem
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
 class Filesystem implements FilesystemInterface
 {

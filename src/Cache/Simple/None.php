@@ -25,7 +25,7 @@ namespace Hail\Cache\Simple;
  * @link   www.doctrine-project.org
  * @since  1.5
  * @author Kotlyar Maksim <kotlyar.maksim@gmail.com>
- * @author Hao Feng <flyinghail@msn.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 class None extends AbstractAdapter
 {
