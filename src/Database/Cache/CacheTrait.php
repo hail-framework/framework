@@ -84,34 +84,31 @@ trait CacheTrait
      */
     public function delete(string $name, $arguments = null)
     {
-        $this->key($name, $arguments);
+        $this->name || $this->key($name, $arguments);
+        $result = $this->doDelete();
+
         $this->reset();
 
-        return $this->doDelete();
+        return $result;
     }
 
-    /**
-     * @param string $name
-     * @param array  $arguments
-     *
-     * @return mixed
-     */
-    public function __call($name, $arguments)
+    public function select($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
     {
-        $this->key($name, $arguments);
+        return $this->call(__FUNCTION__, $struct, $fetch, $fetchArgs);
+    }
+
+    public function get($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null)
+    {
+        return $this->call(__FUNCTION__, $struct, $fetch, $fetchArgs);
+    }
+
+    protected function call($name, $struct, $fetch, $fetchArgs)
+    {
+        $this->name || $this->key($name, [$struct, $fetch, $fetchArgs]);
 
         $cache = $this->doGet();
         if (($result = $this->getResult($cache)) === null) {
-            switch ($name) {
-                case 'get':
-                    $result = $this->db->get(...$arguments);
-                    break;
-                case 'select':
-                    $result = $this->db->select(...$arguments);
-                    break;
-                default:
-                    throw new \BadMethodCallException('Cached database class only support get/select/selectRow method');
-            }
+            $result = $this->db->$name($struct, $fetch, $fetchArgs);
 
             $this->doSave($result, $cache);
         }
@@ -130,18 +127,13 @@ trait CacheTrait
      */
     public function selectRow($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null): \Generator
     {
-        $args = [$struct, $fetch];
-        if ($fetchArgs !== null) {
-            $args[] = $fetchArgs;
-        }
-
         $lifetime = $this->lifetime;
         $rowLifetime = $lifetime ? $lifetime + 5 : 0;
 
-        $key = $this->key('selectRow', $args);
+        $key = $this->key('selectRow', [$struct, $fetch, $fetchArgs]);
 
         $countCache = $this->name($key . '_count')->doGet();
-        if (($count = $this->getResult($countCache))  === null) {
+        if (($count = $this->getResult($countCache)) === null) {
             $rows = $this->db->selectRow($struct, $fetch, $fetchArgs);
             if (!$rows->valid()) {
                 $this->reset();

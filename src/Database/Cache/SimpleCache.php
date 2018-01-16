@@ -10,9 +10,6 @@ use Psr\SimpleCache\CacheInterface;
  *
  * @package Hail\Database
  * @author  Hao Feng <flyinghail@msn.com>
- *
- * @method array|null select(array|string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
- * @method array|string|null get(array|string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
  */
 class SimpleCache implements CachedDBInterface
 {
