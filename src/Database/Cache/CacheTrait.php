@@ -7,7 +7,14 @@ use Hail\Util\Serialize;
 
 trait CacheTrait
 {
+    /**
+     * @var int
+     */
     protected $lifetime = 0;
+
+    /**
+     * @var string
+     */
     protected $name = '';
 
     /**
@@ -39,39 +46,23 @@ trait CacheTrait
         return $this;
     }
 
-    protected function call($name, $arguments)
-    {
-        switch ($name) {
-            case 'get':
-                return $this->db->get(...$arguments);
-            case 'select':
-                return $this->db->select(...$arguments);
-            default:
-                throw new \InvalidArgumentException('Cached database class only support select/get method');
-        }
-    }
-
     /**
-     * @param            $name
+     * @param string     $name
      * @param array|null $arguments
      *
      * @return string
      */
-    protected function key($name, $arguments = null)
+    protected function key(string $name, array $arguments = null): string
     {
-        if ($this->name) {
+        if ($this->name !== null) {
             return $this->name;
         }
 
         if ($arguments === null) {
-            return $name;
+            return $this->name = $name;
         }
 
-        if (\is_string($arguments[0])) {
-            return $arguments[0];
-        }
-
-        return \sha1(Serialize::encode([$name, $arguments]));
+        return $this->name = \sha1(Serialize::encode([$name, $arguments]));
     }
 
     /**
@@ -79,13 +70,8 @@ trait CacheTrait
      */
     public function reset()
     {
-        if ($this->lifetime !== 0) {
-            $this->lifetime = 0;
-        }
-
-        if ($this->name !== '') {
-            $this->name = '';
-        }
+        $this->lifetime = 0;
+        $this->name = '';
 
         return $this;
     }
@@ -98,13 +84,103 @@ trait CacheTrait
      */
     public function delete(string $name, $arguments = null)
     {
-        $key = $this->key($name, $arguments);
+        $this->key($name, $arguments);
         $this->reset();
 
-        return $this->doDelete($key);
+        return $this->doDelete();
     }
 
-    abstract protected function doDelete($key);
-    abstract public function __call($name, $arguments);
-    abstract public function selectRow($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null): \Generator;
+    /**
+     * @param string $name
+     * @param array  $arguments
+     *
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        $this->key($name, $arguments);
+
+        $cache = $this->doGet();
+        if (($result = $this->getResult($cache)) === null) {
+            switch ($name) {
+                case 'get':
+                    $result = $this->db->get(...$arguments);
+                    break;
+                case 'select':
+                    $result = $this->db->select(...$arguments);
+                    break;
+                default:
+                    throw new \BadMethodCallException('Cached database class only support get/select/selectRow method');
+            }
+
+            $this->doSave($result, $cache);
+        }
+
+        $this->reset();
+
+        return $result;
+    }
+
+    /**
+     * @param      $struct
+     * @param int  $fetch
+     * @param null $fetchArgs
+     *
+     * @return \Generator
+     */
+    public function selectRow($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null): \Generator
+    {
+        $args = [$struct, $fetch];
+        if ($fetchArgs !== null) {
+            $args[] = $fetchArgs;
+        }
+
+        $lifetime = $this->lifetime;
+        $rowLifetime = $lifetime ? $lifetime + 5 : 0;
+
+        $key = $this->key('selectRow', $args);
+
+        $countCache = $this->name($key . '_count')->doGet();
+        if (($count = $this->getResult($countCache))  === null) {
+            $rows = $this->db->selectRow($struct, $fetch, $fetchArgs);
+            if (!$rows->valid()) {
+                $this->reset();
+
+                return;
+            }
+
+            $index = 0;
+            foreach ($rows as $row) {
+                yield $row;
+
+                $this->name($key . '_' . (string) $index++)
+                    ->expiresAfter($rowLifetime)
+                    ->doSave($row);
+            }
+
+            $this->name($key . '_count')
+                ->expiresAfter($lifetime)
+                ->doSave((string) $index);
+        } else {
+            for ($i = 0; $i < $count; ++$i) {
+                yield $this->getResult(
+                    $this->name($key . '_' . (string) $i)
+                        ->doGet()
+                );
+            }
+        }
+
+        $this->reset();
+    }
+
+    protected function getResult($cache)
+    {
+        return $cache;
+    }
+
+    abstract protected function doGet();
+
+    abstract protected function doSave($result, $cache = null);
+
+    abstract protected function doDelete();
 }

@@ -30,77 +30,31 @@ class SimpleCache implements CachedDBInterface
     }
 
     /**
-     * @param string $name
-     * @param array  $arguments
-     *
-     * @return array|bool|mixed
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @return mixed
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function __call($name, $arguments)
+    protected function doGet()
     {
-        $key = $this->key($name, $arguments);
-
-        $result = $this->cache->get($key);
-
-        if ($result === null) {
-            $result = $this->call($name, $arguments);
-            $this->cache->set($key, $result, $this->lifetime);
-        }
-
-        $this->reset();
-
-        return $result;
+        return $this->cache->get($this->name);
     }
 
     /**
-     * @param      $struct
-     * @param int  $fetch
-     * @param null $fetchArgs
+     * @param mixed $result
      *
-     * @return \Generator
-     * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function selectRow($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null): \Generator
+    protected function doSave($result)
     {
-        $args = [$struct, $fetch];
-        if ($fetchArgs !== null) {
-            $args[] = $fetchArgs;
-        }
-
-        $key = $this->key('selectRow', $args);
-
-        $count = $this->cache->get($key . '_count');
-        if ($count === null) {
-            $rows = $this->db->selectRow($struct, $fetch, $fetchArgs);
-            if (!$rows->valid()) {
-                return;
-            }
-
-            $index = 0;
-            foreach ($rows as $row) {
-                yield $row;
-
-                $this->cache->set($key . '_' . $index++, $row, $this->lifetime ? $this->lifetime + 5 : 0);
-            }
-
-            $this->cache->set($key . '_count', $index, $this->lifetime);
-        } else {
-            for ($i = 0; $i < $count; ++$i) {
-                yield $this->cache->get($key . '_' . $i);
-            }
-        }
+        $this->cache->set($this->name, $result, $this->lifetime);
     }
 
     /**
-     * @param string $key
      * @return bool
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function doDelete($key): bool
+    protected function doDelete(): bool
     {
-        return $this->cache->delete($key);
+        return $this->cache->delete($this->name);
     }
 }

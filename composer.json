@@ -45,7 +45,7 @@
   },
   "suggest": {
     "ext-intl": "to use Utf8String::compare, Utf8String::transliterate, Strings::toAscii, Strings::normalize, Strings::compare, NumberFormatCell, DateFormatCell, ",
-    "ext-iconv": "to use Strings::reverse, Strings::chr,, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
+    "ext-iconv": "to use Strings::reverse, Strings::chr, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
     "ext-seaslog": "improve the performance for logger",
     "ext-php-cp": "improve the performance for PDO/Redis",
     "ext-fileinfo": "to use for image processing.",

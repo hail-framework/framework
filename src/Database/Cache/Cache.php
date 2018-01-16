@@ -11,8 +11,8 @@ use Psr\Cache\CacheItemPoolInterface;
  * @package Hail\Database
  * @author  Hao Feng <flyinghail@msn.com>
  *
- * @method array|null select(array|string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
- * @method array|string|null get(array|string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
+ * @method array|null select(array | string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
+ * @method array|string|null get(array | string $struct, int $fetch = \PDO::FETCH_ASSOC, mixed $fetchArgs = null)
  */
 class Cache implements CachedDBInterface
 {
@@ -30,86 +30,52 @@ class Cache implements CachedDBInterface
     }
 
     /**
-     * @param string $name
-     * @param array  $arguments
-     *
-     * @return array|bool|mixed
+     * @return \Psr\Cache\CacheItemInterface
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function __call($name, $arguments)
+    protected function doGet()
     {
-        $key = $this->key($name, $arguments);
-        $item = $this->cache->getItem($key);
-
-        if ($item->isHit()) {
-            $result = $item->get();
-        } else {
-            $result = $this->call($name, $arguments);
-
-            $this->cache->save(
-                $item->expiresAfter($this->lifetime)->set($result)
-            );
-        }
-
-        $this->reset();
-
-        return $result;
+        return $this->cache->getItem($this->name);
     }
 
     /**
-     * @param      $struct
-     * @param int  $fetch
-     * @param null $fetchArgs
+     * @param \Psr\Cache\CacheItemInterface $cache
      *
-     * @return \Generator
-     * @throws \Psr\Cache\InvalidArgumentException
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @return mixed
      */
-    public function selectRow($struct, $fetch = \PDO::FETCH_ASSOC, $fetchArgs = null): \Generator
+    protected function getResult($cache)
     {
-        $args = [$struct, $fetch];
-        if ($fetchArgs !== null) {
-            $args[] = $fetchArgs;
+        if (!$cache->isHit()) {
+            return null;
         }
 
-        $key = $this->key('selectRow', $args);
-
-        $item = $this->cache->getItem($key . '_count');
-
-        if ($item->isHit()) {
-            for ($i = 0, $n = $item->get(); $i < $n; ++$i) {
-                yield $this->cache->getItem($key . '_' . $i)->get();
-            }
-        } else {
-            $rows = $this->db->selectRow($struct, $fetch, $fetchArgs);
-            if (!$rows->valid()) {
-                return;
-            }
-
-            $index = 0;
-            foreach ($rows as $row) {
-                yield $row;
-
-                $current = $this->cache->getItem($key . '_' . $index++);
-                $this->cache->save(
-                    $current->expiresAfter($this->lifetime ? $this->lifetime + 5: 0)->set($row)
-                );
-            }
-
-            $this->cache->save(
-                $item->expiresAfter($this->lifetime)->set($index)
-            );
-        }
+        return $cache->get();
     }
 
     /**
-     * @param string $key
+     * @param mixed                              $result
+     * @param \Psr\Cache\CacheItemInterface|null $cache
+     *
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    protected function doSave($result, $cache = null)
+    {
+        if ($cache === null) {
+            $cache = $this->doGet();
+        }
+
+        $this->cache->save(
+            $cache->expiresAfter($this->lifetime)->set($result)
+        );
+    }
+
+    /**
      * @return bool
      *
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    protected function doDelete($key): bool
+    protected function doDelete(): bool
     {
-        return $this->cache->deleteItem($key);
+        return $this->cache->deleteItem($this->name);
     }
 }
