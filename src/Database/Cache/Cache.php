@@ -9,13 +9,11 @@ use Psr\Cache\CacheItemPoolInterface;
  * Cache database query with PSR6
  *
  * @package Hail\Database
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
-class Cache implements CachedDBInterface
+class Cache extends AbstractCache
 {
-    use CacheTrait;
-
-    /**
+     /**
      * @var CacheItemPoolInterface
      */
     protected $cache;

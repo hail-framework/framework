@@ -9,12 +9,10 @@ use Psr\SimpleCache\CacheInterface;
  * Cache database query with PSR16
  *
  * @package Hail\Database
- * @author  Hao Feng <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
-class SimpleCache implements CachedDBInterface
+class SimpleCache extends AbstractCache
 {
-    use CacheTrait;
-
     /**
      * @var CacheInterface
      */
@@ -37,10 +35,11 @@ class SimpleCache implements CachedDBInterface
 
     /**
      * @param mixed $result
+     * @param null  $cache
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    protected function doSave($result)
+    protected function doSave($result, $cache = null)
     {
         $this->cache->set($this->name, $result, $this->lifetime);
     }

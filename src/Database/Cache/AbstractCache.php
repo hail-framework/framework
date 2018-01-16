@@ -5,7 +5,7 @@ namespace Hail\Database\Cache;
 use Hail\Database\Database;
 use Hail\Util\Serialize;
 
-trait CacheTrait
+abstract class AbstractCache implements CachedDBInterface
 {
     /**
      * @var int
