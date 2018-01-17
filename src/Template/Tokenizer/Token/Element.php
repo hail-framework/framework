@@ -1,9 +1,9 @@
 <?php
 
-namespace Hail\Template\Html\Token;
+namespace Hail\Template\Tokenizer\Token;
 
-use Hail\Template\Html\Exception\ParseException;
-use Hail\Template\Html\Tokenizer;
+use Hail\Template\Tokenizer\Exception\ParseException;
+use Hail\Template\Tokenizer\Tokenizer;
 
 final class Element extends AbstractToken
 {

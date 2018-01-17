@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Template\Html\Token;
+namespace Hail\Template\Tokenizer\Token;
 
 final class PhpEcho extends Php
 {

@@ -1,11 +1,11 @@
 <?php
 
-namespace Hail\Template\Html\Token;
+namespace Hail\Template\Tokenizer\Token;
 
 
-use Hail\Template\Html\Tokenizer;
+use Hail\Template\Tokenizer\Tokenizer;
 
-final class Root extends AbstractToken implements \IteratorAggregate
+final class Collection extends AbstractToken implements \IteratorAggregate
 {
     public function __construct()
     {

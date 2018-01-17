@@ -1,10 +1,10 @@
 <?php
 
-namespace Hail\Template\Html;
+namespace Hail\Template\Tokenizer;
 
-use Hail\Template\Html\Exception\TokenMatchingException;
-use Hail\Template\Html\Token\Root;
-use Hail\Template\Html\Token\TokenInterface;
+use Hail\Template\Tokenizer\Exception\TokenMatchingException;
+use Hail\Template\Tokenizer\Token\Collection;
+use Hail\Template\Tokenizer\Token\TokenInterface;
 
 final class Tokenizer
 {
@@ -39,7 +39,7 @@ final class Tokenizer
         self::$throwOnError = false;
     }
 
-    public static function parseFile(string $file): Root
+    public static function parseFile(string $file): Collection
     {
         return self::parse(\file_get_contents($file));
     }
@@ -49,14 +49,14 @@ final class Tokenizer
      *
      * @param $html string The HTML to tokenize.
      *
-     * @return Root
-     * @throws \Hail\Template\Html\Exception\TokenMatchingException
+     * @return Collection
+     * @throws \Hail\Template\Tokenizer\Exception\TokenMatchingException
      */
-    public static function parse(string $html): Root
+    public static function parse(string $html): Collection
     {
         self::$allHtml = $html;
 
-        $root = new Root();
+        $root = new Collection();
         $root->parse($html);
 
         return $root;

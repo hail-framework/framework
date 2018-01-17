@@ -356,7 +356,7 @@ class Engine
             return $cache;
         }
 
-        $root = Html\Tokenizer::parseFile($template);
+        $root = Tokenizer\Tokenizer::parseFile($template);
 
         Processor::parseElement($root, $this->processors);
 

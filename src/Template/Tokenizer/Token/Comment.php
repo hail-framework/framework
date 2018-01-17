@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\Template\Html\Token;
+namespace Hail\Template\Tokenizer\Token;
 
-use Hail\Template\Html\Exception\ParseException;
+use Hail\Template\Tokenizer\Exception\ParseException;
 
 final class Comment extends AbstractToken
 {

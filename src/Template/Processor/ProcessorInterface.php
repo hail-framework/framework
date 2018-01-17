@@ -2,7 +2,7 @@
 
 namespace Hail\Template\Processor;
 
-use Hail\Template\Html\Token\Element;
+use Hail\Template\Tokenizer\Token\Element;
 
 interface ProcessorInterface
 {

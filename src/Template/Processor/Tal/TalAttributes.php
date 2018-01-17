@@ -2,7 +2,7 @@
 
 namespace Hail\Template\Processor\Tal;
 
-use Hail\Template\Html\Token\Element;
+use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalAttributes implements ProcessorInterface

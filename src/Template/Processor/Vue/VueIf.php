@@ -2,7 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
-use Hail\Template\Html\Token\Element;
+use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
 

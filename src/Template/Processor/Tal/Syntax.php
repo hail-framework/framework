@@ -3,7 +3,7 @@
 namespace Hail\Template\Processor\Tal;
 
 
-use Hail\Template\Html\Token\Element;
+use Hail\Template\Tokenizer\Token\Element;
 
 final class Syntax
 {

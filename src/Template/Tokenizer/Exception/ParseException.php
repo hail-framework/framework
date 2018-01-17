@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Template\Html\Exception;
+namespace Hail\Template\Tokenizer\Exception;
 
 class ParseException extends \RuntimeException
 {
