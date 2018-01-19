@@ -9,7 +9,7 @@ namespace Hail\Mail;
 
 use Hail\Exception\FileNotFoundException;
 use Hail\Util\{
-    Exception\RegexpException, Strings, Generators
+    Exception\RegexpException, MimeType, Strings, Generators
 };
 
 
@@ -375,7 +375,7 @@ class Message extends MimePart
         }
 
         if (!$contentType) {
-            $contentType = \finfo_buffer(\finfo_open(FILEINFO_MIME_TYPE), $content);
+            $contentType = MimeType::getMimeTypeByContent($content);
         }
 
         if (!\strcasecmp($contentType, 'message/rfc822')) { // not allowed for attached files

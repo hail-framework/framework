@@ -3,6 +3,7 @@
 namespace Hail\Image;
 
 use Closure;
+use Hail\Util\MimeType;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Response as IlluminateResponse;
 use Config;
@@ -146,7 +147,7 @@ class ImageCacheController extends BaseController
     protected function buildResponse($content)
     {
         // define mime type
-        $mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $content);
+        $mime = MimeType::getMimeTypeByContent($content);
 
         // respond with 304 not modified if browser has the image cached
         $etag = md5($content);

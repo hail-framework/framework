@@ -3,6 +3,7 @@
 namespace Hail\Image;
 
 use Hail\Http\Factory;
+use Hail\Util\MimeType;
 use Psr\Http\Message\StreamInterface;
 
 abstract class AbstractDecoder
@@ -11,6 +12,7 @@ abstract class AbstractDecoder
      * Initiates new image from path in filesystem
      *
      * @param  string $path
+     *
      * @return \Hail\Image\Image
      */
     abstract public function initFromPath($path);
@@ -19,6 +21,7 @@ abstract class AbstractDecoder
      * Initiates new image from binary data
      *
      * @param  string $data
+     *
      * @return \Hail\Image\Image
      */
     abstract public function initFromBinary($data);
@@ -27,6 +30,7 @@ abstract class AbstractDecoder
      * Initiates new image from GD resource
      *
      * @param  Resource $resource
+     *
      * @return \Hail\Image\Image
      */
     abstract public function initFromGdResource($resource);
@@ -35,6 +39,7 @@ abstract class AbstractDecoder
      * Initiates new image from Imagick object
      *
      * @param \Imagick $object
+     *
      * @return \Hail\Image\Image
      */
     abstract public function initFromImagick(\Imagick $object);
@@ -60,28 +65,29 @@ abstract class AbstractDecoder
      * Init from fiven URL
      *
      * @param  string $url
+     *
      * @return \Hail\Image\Image
      */
     public function initFromUrl($url)
     {
-        
+
         $options = [
             'http' => [
-                'method'=>"GET",
-                'header'=>"Accept-language: en\r\n".
-                "User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.2 (KHTML, like Gecko) Chrome/22.0.1216.0 Safari/537.2\r\n"
-          ]
+                'method' => "GET",
+                'header' => "Accept-language: en\r\n" .
+                    "User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.2 (KHTML, like Gecko) Chrome/22.0.1216.0 Safari/537.2\r\n",
+            ],
         ];
-        
-        $context  = stream_context_create($options);
-        
+
+        $context = stream_context_create($options);
+
 
         if ($data = @file_get_contents($url, false, $context)) {
             return $this->initFromBinary($data);
         }
 
         throw new Exception\NotReadableException(
-            "Unable to init from given url (".$url.")."
+            "Unable to init from given url (" . $url . ")."
         );
     }
 
@@ -89,6 +95,7 @@ abstract class AbstractDecoder
      * Init from given stream
      *
      * @param StreamInterface|resource $stream
+     *
      * @return \Hail\Image\Image
      */
     public function initFromStream($stream)
@@ -224,7 +231,8 @@ abstract class AbstractDecoder
     public function isBinary()
     {
         if (is_string($this->data)) {
-            $mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $this->data);
+            $mime = MimeType::getMimeTypeByContent($this->data);
+
             return (strpos($mime, 'text') !== 0 && $mime !== 'application/x-empty');
         }
 
@@ -261,6 +269,7 @@ abstract class AbstractDecoder
      * Parses and decodes binary image data from data-url
      *
      * @param  string $data_url
+     *
      * @return string
      */
     private function decodeDataUrl($data_url)
@@ -283,6 +292,7 @@ abstract class AbstractDecoder
      * Initiates new image from mixed data
      *
      * @param  mixed $data
+     *
      * @return \Hail\Image\Image
      */
     public function init($data)

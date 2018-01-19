@@ -3,6 +3,7 @@
 namespace Hail\Image\Commands;
 
 use Hail\Http\Factory;
+use Hail\Util\MimeType;
 
 class PsrResponseCommand extends AbstractCommand
 {
@@ -27,13 +28,10 @@ class PsrResponseCommand extends AbstractCommand
         //Encoded property will be populated at this moment
         $stream = $image->stream($format, $quality);
 
-        $mimetype = finfo_buffer(
-            finfo_open(FILEINFO_MIME_TYPE),
-            $image->getEncoded()
-        );
+        $mime = MimeType::getMimeTypeByContent($image->getEncoded());
 
         $this->setOutput(Factory::response(200, $stream, [
-            'Content-Type' => $mimetype,
+            'Content-Type' => $mime,
             'Content-Length' => strlen($image->getEncoded()),
         ]));
 

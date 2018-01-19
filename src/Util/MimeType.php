@@ -79,13 +79,13 @@ class MimeType
     /**
      * Detects MIME Type based on given content.
      *
-     * @param mixed $content
+     * @param string $content
      *
      * @return string|null MIME Type or NULL if no mime type detected
      */
-    public static function getMimeTypeByContent($content)
+    public static function getMimeTypeByContent(string $content)
     {
-        if (!\is_string($content) || !\class_exists('\finfo', false)) {
+        if (!\class_exists('\finfo', false)) {
             return null;
         }
 
@@ -93,6 +93,30 @@ class MimeType
             $finfo = new \finfo(FILEINFO_MIME_TYPE);
 
             return $finfo->buffer($content) ?: null;
+            // @codeCoverageIgnoreStart
+        } catch (\ErrorException $e) {
+            // This is caused by an array to string conversion error.
+            return null;
+        }
+    } // @codeCoverageIgnoreEnd
+
+    /**
+     * Detects MIME Type based on file.
+     *
+     * @param string $file
+     *
+     * @return string|null MIME Type or NULL if no mime type detected
+     */
+    public static function getMimeTypeByFile(string $file)
+    {
+        if (!\is_file($file) || !\class_exists('\finfo', false)) {
+            return null;
+        }
+
+        try {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+
+            return $finfo->file($file) ?: null;
             // @codeCoverageIgnoreStart
         } catch (\ErrorException $e) {
             // This is caused by an array to string conversion error.

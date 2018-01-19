@@ -3,6 +3,7 @@
 namespace Hail\Image\Gd;
 
 use Hail\Image\Image;
+use Hail\Util\MimeType;
 
 class Decoder extends \Hail\Image\AbstractDecoder
 {
@@ -21,7 +22,7 @@ class Decoder extends \Hail\Image\AbstractDecoder
         }
 
         // get mime type of file
-        $mime = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $path);
+        $mime = MimeType::getMimeTypeByFile($path);
 
         // define core
         switch (strtolower($mime)) {
@@ -116,7 +117,7 @@ class Decoder extends \Hail\Image\AbstractDecoder
         }
 
         $image = $this->initFromGdResource($resource);
-        $image->mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $binary);
+        $image->mime = MimeType::getMimeTypeByContent($binary);
 
         return $image;
     }

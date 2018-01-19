@@ -3,6 +3,7 @@
 namespace Hail\Image\Imagick;
 
 use Hail\Image\Image;
+use Hail\Util\MimeType;
 
 class Decoder extends \Hail\Image\AbstractDecoder
 {
@@ -90,7 +91,7 @@ class Decoder extends \Hail\Image\AbstractDecoder
 
         // build image
         $image = $this->initFromImagick($core);
-        $image->mime = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $binary);
+        $image->mime = MimeType::getMimeTypeByContent($binary);
 
         return $image;
     }
