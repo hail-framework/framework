@@ -109,3 +109,10 @@
 
 ### Console
 - 基于命令行工具进行项目优化、Migration、服务管理等
+
+### 有用的库
+项目中如果有需要可以自行 composer 安装
+
+- [Mobile Detect](https://github.com/serbanghita/Mobile-Detect) 通过 User-Agent 和 header 检测移动设备
+- [Crawler Detect](https://github.com/JayBizzle/Crawler-Detect) 通过 User-Agent 和 header 检测爬虫
+- [Spout](https://github.com/box/spout) 读写 Excel 文件 (CSV, XLSX, ODS)，速度快，支持超大文件，占用内存小
