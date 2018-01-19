@@ -153,8 +153,7 @@ class MountManager
 	 */
 	public function listContents($directory = '', $recursive = false)
 	{
-		[$prefix, $directory] = $this->getPrefixAndPath($directory);
-		$filesystem = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
+		[$filesystem, $directory, $prefix] = $this->getFilesystemAndPath($directory);
 		$result = $filesystem->listContents($directory, $recursive);
 
 		foreach ($result as &$file) {
@@ -189,23 +188,17 @@ class MountManager
 	 *
 	 * @return bool
 	 * @throws FilesystemNotFoundException
-     * @throws Exception\FileExistsException
-     * @throws FileNotFoundException
      */
 	public function copy($from, $to, array $config = [])
 	{
-		[$prefixFrom, $from] = $this->getPrefixAndPath($from);
-
-		$fsFrom = $this->filesystems[$prefixFrom] ?? $this->getFilesystem($prefixFrom);
+        [$fsFrom, $from] = $this->getFilesystemAndPath($from);
 		$buffer = $fsFrom->readStream($from);
 
 		if ($buffer === false) {
 			return false;
 		}
 
-		[$prefixTo, $to] = $this->getPrefixAndPath($to);
-
-		$fsTo = $this->filesystems[$prefixTo] ?? $this->getFilesystem($prefixTo);
+        [$fsTo, $to] = $this->getFilesystemAndPath($to);
 		$result = $fsTo->writeStream($to, $buffer, $config);
 
 		if (\is_resource($buffer)) {
@@ -226,11 +219,22 @@ class MountManager
 	 */
 	public function listWith(array $keys = [], $directory = '', $recursive = false)
 	{
-		[$prefix, $directory] = $this->getPrefixAndPath($directory);
-		$fs = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
+        [$fs, $directory] = $this->getFilesystemAndPath($directory);
 
 		return $fs->listWith($keys, $directory, $recursive);
 	}
+
+    /**
+     * Empty a directory's contents.
+     *
+     * @param string $directory
+     */
+    public function emptyDir($directory)
+    {
+        [$fs, $directory] = $this->getFilesystemAndPath($directory);
+
+        $fs->emptyDir($directory);
+    }
 
 	/**
 	 * Move a file.
@@ -250,7 +254,7 @@ class MountManager
         [$prefixTo, $pathTo] = $this->getPrefixAndPath($to);
 
         if ($prefixFrom === $prefixTo) {
-            $filesystem = $this->getFilesystem($prefixFrom);
+            $filesystem = $this->filesystems[$prefixFrom] ?? $this->getFilesystem($prefixFrom);
             $renamed = $filesystem->rename($pathFrom, $pathTo);
 
             if ($renamed && isset($config['visibility'])) {
@@ -306,5 +310,13 @@ class MountManager
         }
 
         return \explode('://', $path, 2);
+    }
+
+    protected function getFilesystemAndPath($directory)
+    {
+        [$prefix, $directory] = $this->getPrefixAndPath($directory);
+        $filesystem = $this->filesystems[$prefix] ?? $this->getFilesystem($prefix);
+
+        return [$filesystem, $directory, $prefix];
     }
 }

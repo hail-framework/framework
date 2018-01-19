@@ -576,6 +576,24 @@ class Filesystem implements FilesystemInterface
     }
 
     /**
+     * @inheritdoc
+     *
+     * @throws FileNotFoundException
+     */
+    public function emptyDir($dirname)
+    {
+        $contents = $this->listContents($dirname);
+
+        foreach ($contents as $item) {
+            if ($item['type'] === 'dir') {
+                $this->deleteDir($item['path']);
+            } else {
+                $this->delete($item['path']);
+            }
+        }
+    }
+
+    /**
      * List contents with metadata.
      *
      * @param array  $keys
@@ -601,8 +619,8 @@ class Filesystem implements FilesystemInterface
     /**
      * Get a meta-data value by key name.
      *
-     * @param array $object
-     * @param       $key
+     * @param array  $object
+     * @param string $key
      *
      * @return array
      */

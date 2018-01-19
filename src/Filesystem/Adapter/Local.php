@@ -7,7 +7,6 @@ use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
-use finfo as Finfo;
 use Hail\Filesystem\Exception\{
 	FileSystemException,
 	NotSupportedException,
@@ -313,7 +312,7 @@ class Local extends AbstractAdapter
 	public function getMimetype($path)
 	{
 		$location = $this->applyPathPrefix($path);
-		$finfo = new Finfo(FILEINFO_MIME_TYPE);
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
 		$mimetype = $finfo->file($location);
 
 		if (\in_array($mimetype, ['application/octet-stream', 'inode/x-empty'], true)) {

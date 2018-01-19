@@ -17,7 +17,7 @@ class File extends Handler
     /**
      * Read the file.
      *
-     * @return string file contents
+     * @return string|false file contents
      * @throws Exception\FileNotFoundException
      */
     public function read()
@@ -28,7 +28,7 @@ class File extends Handler
     /**
      * Read the file as a stream.
      *
-     * @return resource file stream
+     * @return resource|false file stream
      * @throws Exception\FileNotFoundException
      */
     public function readStream()
@@ -153,7 +153,7 @@ class File extends Handler
     /**
      * Get the file's timestamp.
      *
-     * @return int unix timestamp
+     * @return int|false The timestamp or false on failure.
      * @throws Exception\FileNotFoundException
      */
     public function getTimestamp()
@@ -164,7 +164,7 @@ class File extends Handler
     /**
      * Get the file's mimetype.
      *
-     * @return string mimetime
+     * @return string|false The file mime-type or false on failure.
      * @throws Exception\FileNotFoundException
      */
     public function getMimetype()
@@ -175,7 +175,7 @@ class File extends Handler
     /**
      * Get the file's visibility.
      *
-     * @return string visibility
+     * @return string|false The visibility (public|private) or false on failure.
      * @throws Exception\FileNotFoundException
      */
     public function getVisibility()
@@ -186,7 +186,7 @@ class File extends Handler
     /**
      * Get the file's metadata.
      *
-     * @return array
+     * @return array|false The file metadata or false on failure.
      * @throws Exception\FileNotFoundException
      */
     public function getMetadata()
@@ -197,7 +197,7 @@ class File extends Handler
     /**
      * Get the file size.
      *
-     * @return int file size
+     * @return int|false The file size or false on failure.
      */
     public function getSize()
     {

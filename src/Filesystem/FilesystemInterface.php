@@ -62,17 +62,6 @@ interface FilesystemInterface
 	 */
 	public function getMetadata($path);
 
-    /**
-     * List contents with metadata.
-     *
-     * @param array  $keys
-     * @param string $directory
-     * @param bool   $recursive
-     *
-     * @return array listing with metadata
-     */
-    public function listWith(array $keys = [], $directory = '', $recursive = false);
-
 	/**
 	 * Get a file's size.
 	 *
@@ -281,5 +270,23 @@ interface FilesystemInterface
 	 * @return Handler Either a file or directory handler.
 	 */
 	public function get($path, Handler $handler = null);
+
+    /**
+     * List contents with metadata.
+     *
+     * @param array  $keys
+     * @param string $directory
+     * @param bool   $recursive
+     *
+     * @return array listing with metadata
+     */
+    public function listWith(array $keys = [], $directory = '', $recursive = false);
+
+    /**
+     * Empty a directory's contents.
+     *
+     * @param string $directory
+     */
+    public function emptyDir($directory);
 }
 
