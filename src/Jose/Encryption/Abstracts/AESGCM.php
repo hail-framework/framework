@@ -22,7 +22,7 @@ abstract class AESGCM implements EncryptionInterface
 
         $keyLength = \mb_strlen($cek, '8bit') * 8;
         if ($keyLength !== $this->getCEKSize()) {
-            throw new \RangeException('Bad key encryption key length.');
+            throw new \UnexpectedValueException('Bad key encryption key length.');
         }
 
         $mode = 'aes-' . $keyLength . '-gcm';
@@ -51,7 +51,7 @@ abstract class AESGCM implements EncryptionInterface
 
         $keyLength = \mb_strlen($cek, '8bit') * 8;
         if ($keyLength !== $this->getCEKSize()) {
-            throw new \RangeException('Bad key encryption key length.');
+            throw new \UnexpectedValueException('Bad key encryption key length.');
         }
 
         $tag_length = \mb_strlen($tag, '8bit') * 8;

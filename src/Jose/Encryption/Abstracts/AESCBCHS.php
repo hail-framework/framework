@@ -15,11 +15,23 @@ abstract class AESCBCHS implements EncryptionInterface
         string $header,
         string &$tag
     ): string {
-        $k = \mb_substr($cek, \mb_strlen($cek, '8bit') / 2, null, '8bit');
+        $cekLen = \mb_substr($cek, '8bit');
+        if ($cekLen * 8 !== $this->getCEKSize()) {
+            throw new \UnexpectedValueException('Bad key encryption key length.');
+        }
 
-        $cypherText = \openssl_encrypt($data, $this->getMode($k), $k, \OPENSSL_RAW_DATA, $iv);
+        if ($cekLen % 2 !== 0) {
+            throw new \UnexpectedValueException('AES-CBC with HMAC encryption expected key of even number size');
+        }
 
-        $tag = $this->authenticationTag($cypherText, $cek, $iv, $aad, $header);
+        $len = $cekLen / 2;
+        $aesKey = \mb_substr($cek, $len, null, '8bit');
+        $mode = 'aes-' . ($cekLen * 4) . '-cbc';
+
+        $cypherText = \openssl_encrypt($data, $mode, $aesKey, \OPENSSL_RAW_DATA, $iv);
+
+        $hmacKey = \mb_substr($cek, 0, $len, '8bit');
+        $tag = $this->computeAuthTag($cypherText, $hmacKey, $iv, $aad, $header);
 
         return $cypherText;
     }
@@ -32,52 +44,47 @@ abstract class AESCBCHS implements EncryptionInterface
         string $header,
         string $tag
     ): string {
-        if ($tag !== $this->authenticationTag($data, $cek, $iv, $aad, $header)) {
+        $cekLen = \mb_substr($cek, '8bit');
+        if ($cekLen * 8 !== $this->getCEKSize()) {
+            throw new \UnexpectedValueException('Bad key encryption key length.');
+        }
+
+        if ($cekLen % 2 !== 0) {
+            throw new \UnexpectedValueException('AES-CBC with HMAC encryption expected key of even number size');
+        }
+
+        $len = $cekLen / 2;
+        $hmacKey = \mb_substr($cek, 0, $len, '8bit');
+
+        if ($tag !== $this->computeAuthTag($data, $hmacKey, $iv, $aad, $header)) {
             throw new \UnexpectedValueException('Unable to verify the tag.');
         }
 
-        $k = \mb_substr($cek, \mb_strlen($cek, '8bit') / 2, null, '8bit');
+        $aesKey = \mb_substr($cek, $len, null, '8bit');
+        $mode = 'aes-' . ($cekLen * 4) . '-cbc';
 
-        return \openssl_decrypt($data, $this->getMode($k), $k, OPENSSL_RAW_DATA, $iv);
+        return \openssl_decrypt($data, $mode, $aesKey, \OPENSSL_RAW_DATA, $iv);
     }
 
-    protected function authenticationTag($data, $cek, $iv, $aad, $header)
+    protected function computeAuthTag($data, $hmacKey, $iv, $aad, $header)
     {
         $calculatedAad = $header;
         if (null !== $aad) {
             $calculatedAad .= '.' . $aad;
         }
-        $macKey = \mb_substr($cek, 0, \mb_strlen($cek, '8bit') / 2, '8bit');
-        $authDataLength = \mb_strlen($header, '8bit');
 
-        $secured_input = \implode('', [
+        $aadLen = \mb_strlen($calculatedAad, '8bit');
+        $max32bit = 2147483647;
+
+        $hmacInput = \implode('', [
             $calculatedAad,
             $iv,
             $data,
-            \pack('N2',
-                ($authDataLength / 2147483647) * 8,
-                ($authDataLength % 2147483647) * 8
-            ), // str_pad(dechex($auth_data_length), 4, "0", STR_PAD_LEFT)
+            \pack('N2', ($aadLen / $max32bit) * 8, ($aadLen % $max32bit) * 8),
         ]);
-        $hash = \hash_hmac($this->getHashAlgorithm(), $secured_input, $macKey, true);
+        $hash = \hash_hmac('sha' . $this->getCEKSize(), $hmacInput, $hmacKey, true);
 
         return \mb_substr($hash, 0, \mb_strlen($hash, '8bit') / 2, '8bit');
-    }
-
-    /**
-     * @return string
-     */
-    protected function getHashAlgorithm()
-    {
-        static $hash;
-
-        if ($hash === null) {
-            $hash = 'sha' . \substr(static::class,
-                    \strrpos(static::class, 'HS') + 2
-                );
-        }
-
-        return $hash;
     }
 
     /**
@@ -86,15 +93,5 @@ abstract class AESCBCHS implements EncryptionInterface
     public function getIVSize(): int
     {
         return 128;
-    }
-
-    /**
-     * @param string $k
-     *
-     * @return string
-     */
-    private function getMode($k): string
-    {
-        return 'aes-' . (8 * \mb_strlen($k, '8bit')) . '-cbc';
     }
 }
