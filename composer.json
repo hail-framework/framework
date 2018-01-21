@@ -48,10 +48,14 @@
     "ext-iconv": "to use Strings::reverse, Strings::chr, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
     "ext-seaslog": "improve the performance for logger",
     "ext-php-cp": "improve the performance for PDO/Redis",
-    "ext-fileinfo": "to use for image processing.",
+    "ext-fileinfo": "to use for MemeType, image processing.",
     "ext-gd": "to use GD library based image processing.",
     "ext-imagick": "to use Imagick based image processing.",
     "ext-ftp": "to handle filesystem with ftp support.",
-    "ext-curl": "to handle http client with curl support."
+    "ext-curl": "to handle http client with curl support.",
+    "fgrosse/phpasn1": "to use ES256, ES384, ES512 signer for JWT"
+  },
+  "require-dev": {
+    "fgrosse/phpasn1": "^2.0"
   }
 }

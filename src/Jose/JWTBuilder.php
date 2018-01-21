@@ -1,11 +1,13 @@
 <?php
 
-namespace Hail\JWT;
+namespace Hail\Jose;
 
 
+use Hail\Jose\Key\KeyInterface;
+use Hail\Jose\Signer\SignerInterface;
 use Hail\Util\Json;
 
-class TokenBuilder
+class JWTBuilder
 {
     /**
      * The token header
@@ -22,20 +24,15 @@ class TokenBuilder
     protected $claims = [];
 
     /**
-     * @var Key
+     * @var SignerInterface
      */
-    protected $key;
+    protected $signer;
 
     public function __construct(array $config = [])
     {
         foreach ($config as $k => $v)
         {
             switch ($k) {
-                case 'key':
-                    $v = (array) $v;
-                    $this->setKey(...$v);
-                    break;
-
                 case 'alg':
                     $this->setAlgorithm($v);
                     break;
@@ -71,30 +68,34 @@ class TokenBuilder
         }
     }
 
-    public function setKey($key, string $passphrase = '')
+    public function setAlgorithm($alg)
     {
-        if (\is_string($key)) {
-            $key = new Key($key, $passphrase);
+        $alg = \strtoupper($alg);
+        if ($alg === 'NONE') {
+            $alg = 'None';
         }
 
-        if (!$key instanceof Key) {
-            throw new \InvalidArgumentException('Key must be string or Hail\JWT\Key');
+        $class = __NAMESPACE__ . '\\Signer\\' . $alg;
+        if (!\class_exists($class)) {
+            throw new \DomainException('Algorithm not supported');
         }
 
-        $this->key = $key;
+        return $this->setSigner(new $class);
+    }
+
+    public function setSigner(SignerInterface $signer): self
+    {
+        $this->signer = $signer;
 
         return $this;
     }
 
-    public function setAlgorithm($algorithm): self
+    /**
+     * @return SignerInterface
+     */
+    public function getSigner(): SignerInterface
     {
-        if (!isset(Algorithms::ALL[$algorithm])) {
-            throw new \DomainException('Algorithm not supported');
-        }
-
-        $this->headers['alg'] = $algorithm;
-
-        return $this;
+        return $this->signer ?? new Signer\None();
     }
 
     public function setAudience(string $audience)
@@ -175,58 +176,22 @@ class TokenBuilder
     }
 
 
-    public function getToken()
+    public function getToken(KeyInterface $key)
     {
         if (isset($this->claims[Claims::AUDIENCE][0]) && !isset($this->claims[Claims::AUDIENCE][1])) {
             $this->claims[Claims::AUDIENCE] = $this->claims[Claims::AUDIENCE][0];
         }
 
+        $signer = $this->getSigner();
+        $this->headers['alg'] = $signer->getAlgorithm();
+
         $encodedHeaders = $this->encode($this->headers);
         $encodedClaims = $this->encode($this->claims);
 
         $payload = $encodedHeaders . '.' . $encodedClaims;
-        $signature = $this->sign($payload);
+        $signature = $signer->sign($payload, $key);
 
         return $payload . '.' . $this->base64UrlEncode($signature);
-    }
-
-    /**
-     * Sign a string with a given key and algorithm.
-     *
-     * @param string              $msg The message to sign
-     *
-     * @return string An encrypted message
-     *
-     * @throws \DomainException Unsupported algorithm was specified
-     */
-    protected function sign($msg)
-    {
-        $alg = $this->headers['alg'];
-
-        if (isset(Algorithms::ALL[$alg])) {
-            [$function, $algorithm] = Algorithms::ALL[$alg];
-
-            switch ($function) {
-                case 'hmac':
-                    $key = $this->key->getContent();
-
-                    return \hash_hmac($algorithm, $msg, $key, true);
-
-                case 'rsa':
-                    $key = $this->key->toPrivateKey();
-
-                    $signature = '';
-                    if (!\openssl_sign($msg, $signature, $key, $algorithm)) {
-                        throw new \DomainException(
-                            'There was an error while creating the signature: ' . \openssl_error_string()
-                        );
-                    }
-
-                    return $signature;
-            }
-        }
-
-        return '';
     }
 
     protected function convertDate(\DateTimeInterface $date)

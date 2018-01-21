@@ -1,14 +1,15 @@
 <?php
 
-namespace Hail\JWT;
+namespace Hail\Jose;
 
-use Hail\JWT\Exception\BeforeValidException;
-use Hail\JWT\Exception\ClaimValidateException;
-use Hail\JWT\Exception\ExpiredException;
-use Hail\JWT\Exception\SignatureInvalidException;
+use Hail\Jose\Exception\BeforeValidException;
+use Hail\Jose\Exception\ClaimValidateException;
+use Hail\Jose\Exception\ExpiredException;
+use Hail\Jose\Exception\SignatureInvalidException;
+use Hail\Jose\Key\KeyInterface;
 use Hail\Util\Json;
 
-class TokenParser
+class JWTParser
 {
     /**
      * The token header
@@ -27,17 +28,13 @@ class TokenParser
     protected $validation = [];
 
     /**
-     * @var Key
-     */
-    protected $key;
-
-    /**
      * @var \DateTimeInterface
      */
     protected $time;
 
     /**
      * @param string $jwt
+     * @param KeyInterface|array $keys
      *
      * @throws \UnexpectedValueException    Provided JWT was invalid
      * @throws SignatureInvalidException    Provided JWT was invalid because the signature verification failed
@@ -46,7 +43,7 @@ class TokenParser
      * @throws ExpiredException             Provided JWT has since expired, as defined by the 'exp' claim
      * @throws ClaimValidateException       Provided JWT was invalid because 'iss', 'aud', 'jti', 'subject' verification failed
      */
-    public function parse(string $jwt)
+    public function parse(string $jwt, $keys)
     {
         $tks = \explode('.', $jwt);
 
@@ -58,26 +55,39 @@ class TokenParser
 
         $this->parseHeader($encodedHeaders);
 
-        if (!$this->verify("$encodedHeaders.$encodedClaims", $this->parseSignature($encodedSignature))) {
+        $algorithm = $this->getAlgorithm();
+        if ($this->headers['alg'] === 'none') {
+            $signer = new Signer\None();
+        } else {
+            $class = __NAMESPACE__ . '\\Signer\\' . $algorithm;
+            if (!\class_exists($class)) {
+                throw new \UnexpectedValueException('Algorithm not allowed');
+            }
+
+            $signer = new $class;
+        }
+
+        if (\is_array($keys)) {
+            if (($kid = $this->getHeader('kid')) !== null) {
+                if (!isset($keys[$kid])) {
+                    throw new \UnexpectedValueException('"kid" invalid, unable to lookup correct key');
+                }
+
+                $key = $keys[$kid];
+            } else {
+                throw new \UnexpectedValueException('"kid" empty, unable to lookup correct key');
+            }
+        } else {
+            $key = $keys;
+        }
+
+        $signature = $this->parseSignature($encodedSignature);
+
+        if (!$signer->verify("$encodedHeaders.$encodedClaims", $signature, $key)) {
             throw new SignatureInvalidException('Signature verification failed');
         }
 
         $this->parseClaims($encodedClaims);
-    }
-
-    public function setKey($key, string $passphrase = '')
-    {
-        if (\is_string($key)) {
-            $key = new Key($key, $passphrase);
-        }
-
-        if (!$key instanceof Key) {
-            throw new \InvalidArgumentException('Key must be string or Hail\JWT\Key');
-        }
-
-        $this->key = $key;
-
-        return $this;
     }
 
     /**
@@ -182,10 +192,6 @@ class TokenParser
             throw new \UnexpectedValueException('Encryption is not supported yet');
         }
 
-        if (isset($headers['alg']) && !isset(Algorithms::ALL[$headers['alg']])) {
-            throw new \UnexpectedValueException('Algorithm not allowed');
-        }
-
         $this->headers = $headers;
     }
 
@@ -277,40 +283,6 @@ class TokenParser
         }
 
         return $signature;
-    }
-
-    protected function verify($msg, $signature)
-    {
-        $alg = $this->getAlgorithm();
-        if ($alg === 'none') {
-            return $signature === '';
-        }
-
-        [$function, $algorithm] = Algorithms::ALL[$alg];
-
-        switch ($function) {
-            case 'rsa':
-                $key = $this->key->toPublicKey();
-                switch (\openssl_verify($msg, $signature, $key, $algorithm)) {
-                    case 1:
-                        return true;
-
-                    case 0:
-                        return false;
-
-                    default:
-                        // returns 1 on success, 0 on failure, -1 on error.
-                        throw new \DomainException('OpenSSL error: ' . \openssl_error_string());
-                }
-                break;
-
-            case 'hmac':
-            default:
-                $key = $this->key->getContent();
-                $hash = \hash_hmac($algorithm, $msg, $key, true);
-
-                return \hash_equals($signature, $hash);
-        }
     }
 
     protected function convertDate(string $value): \DateTimeImmutable

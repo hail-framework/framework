@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\JWT;
+namespace Hail\Jose;
 
 /**
  * Defines the list of claims that are registered in the IANA "JSON Web Token Claims" registry
