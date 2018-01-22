@@ -32,8 +32,50 @@ class JWTParser
     protected $time;
 
     /**
+     * @var string|array
+     */
+    protected $keys;
+
+    public function __construct(array $config = [])
+    {
+        foreach ($config as $k => $v)
+        {
+            switch ($k) {
+                case 'keys':
+                    $this->setKeys($v);
+                    break;
+
+                case RegisteredClaims::AUDIENCE:
+                    $this->validation[RegisteredClaims::AUDIENCE] = (array) $v;
+                    break;
+
+                case RegisteredClaims::ID:
+                    $this->validIdentifier($v);
+                    break;
+
+
+                case RegisteredClaims::ISSUER:
+                    $this->validIssuer($v);
+                    break;
+
+
+                case RegisteredClaims::SUBJECT:
+                    $this->validSubject($v);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @param array|string $keys
+     */
+    public function setKeys($keys): void
+    {
+        $this->keys = $keys;
+    }
+
+    /**
      * @param string $jwt
-     * @param KeyInterface|array $keys
      *
      * @return array
      *
@@ -44,7 +86,7 @@ class JWTParser
      * @throws ExpiredException             Provided JWT has since expired, as defined by the 'exp' claim
      * @throws ClaimInvalidException       Provided JWT was invalid because 'iss', 'aud', 'jti', 'subject' verification failed
      */
-    public function parse(string $jwt, $keys): array
+    public function parse(string $jwt): array
     {
         $tks = \explode('.', $jwt);
 
@@ -56,6 +98,7 @@ class JWTParser
 
         $this->parseHeader($encodedHeaders);
 
+        $keys = $this->keys;
         if (\is_array($keys)) {
             if (($kid = $this->getHeader('kid')) !== null) {
                 if (!isset($keys[$kid])) {
@@ -170,7 +213,7 @@ class JWTParser
         return $this->getClaim(RegisteredClaims::SUBJECT);
     }
 
-    protected function parseHeader(string $data)
+    protected function parseHeader(string $data): void
     {
         $headers = $this->decode($data);
 
@@ -228,7 +271,7 @@ class JWTParser
 
             if ($claims[$claim] > $time) {
                 throw new BeforeValidException(
-                    'Cannot handle token prior to ' . $claims[$claim]->format(\DateTime::ISO8601)
+                    'Cannot handle token prior to ' . $claims[$claim]->format(\DateTime::ATOM)
                 );
             }
         }
