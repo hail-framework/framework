@@ -4,7 +4,6 @@ namespace Hail\Jose;
 
 
 use Hail\Jose\Key\KeyInterface;
-use Hail\Jose\Signer\SignerInterface;
 use Hail\Util\Json;
 
 class JWTBuilder
@@ -14,7 +13,10 @@ class JWTBuilder
      *
      * @var array
      */
-    protected $headers = ['typ' => 'JWT', 'alg' => 'none'];
+    protected $headers = [
+        'typ' => 'JWT',
+        'alg' => Signer::NONE
+    ];
 
     /**
      * The token claim set
@@ -24,9 +26,12 @@ class JWTBuilder
     protected $claims = [];
 
     /**
-     * @var SignerInterface
+     * @var Signer
      */
     protected $signer;
+
+    protected $key;
+    protected $passphrase = '';
 
     public function __construct(array $config = [])
     {
@@ -37,31 +42,36 @@ class JWTBuilder
                     $this->setAlgorithm($v);
                     break;
 
-                case Claims::AUDIENCE:
-                    $this->claims[Claims::AUDIENCE] = (array) $v;
+                case 'key':
+                    $v = (array) $v;
+                    $this->setKey(...$v);
                     break;
 
-                case Claims::EXPIRATION_TIME:
+                case RegisteredClaims::AUDIENCE:
+                    $this->claims[RegisteredClaims::AUDIENCE] = (array) $v;
+                    break;
+
+                case RegisteredClaims::EXPIRATION_TIME:
                     $this->setExpiresAt($v);
                     break;
 
-                case Claims::ID:
+                case RegisteredClaims::ID:
                     $this->setIdentifier($v);
                     break;
 
-                case Claims::ISSUED_AT:
+                case RegisteredClaims::ISSUED_AT:
                     $this->setIssuedAt($v);
                     break;
 
-                case Claims::ISSUER:
+                case RegisteredClaims::ISSUER:
                     $this->setIssuer($v);
                     break;
 
-                case Claims::NOT_BEFORE:
+                case RegisteredClaims::NOT_BEFORE:
                     $this->setNotBefore($v);
                     break;
 
-                case Claims::SUBJECT:
+                case RegisteredClaims::SUBJECT:
                     $this->setSubject($v);
                     break;
             }
@@ -70,42 +80,37 @@ class JWTBuilder
 
     public function setAlgorithm($alg)
     {
-        $alg = \strtoupper($alg);
-        if ($alg === 'NONE') {
-            $alg = 'None';
-        }
-
-        $class = __NAMESPACE__ . '\\Signer\\' . $alg;
-        if (!\class_exists($class)) {
-            throw new \DomainException('Algorithm not supported');
-        }
-
-        return $this->setSigner(new $class);
-    }
-
-    public function setSigner(SignerInterface $signer): self
-    {
-        $this->signer = $signer;
+        $this->headers['alg'] = Signer::supported($alg);
 
         return $this;
     }
 
-    /**
-     * @return SignerInterface
-     */
-    public function getSigner(): SignerInterface
+    public function setKey(string $key, string $passphrase = '')
     {
-        return $this->signer ?? new Signer\None();
+        $this->key = $key;
+        $this->passphrase = $passphrase;
+    }
+
+    /**
+     * @return Signer
+     */
+    public function getSigner(): Signer
+    {
+        if ($this->signer === null) {
+            $this->signer = new Signer($this->headers['alg'], $this->key, $this->passphrase);
+        }
+
+        return $this->signer;
     }
 
     public function setAudience(string $audience)
     {
-        $audiences = $this->claims[Claims::AUDIENCE] ?? [];
+        $audiences = $this->claims[RegisteredClaims::AUDIENCE] ?? [];
 
         if (!\in_array($audience, $audiences, true)) {
             $audiences[] = $audience;
 
-            $this->claims[Claims::AUDIENCE] = $audiences;
+            $this->claims[RegisteredClaims::AUDIENCE] = $audiences;
         }
 
         return $this;
@@ -113,42 +118,42 @@ class JWTBuilder
 
     public function setExpiresAt(\DateTimeInterface $expiration)
     {
-        $this->claims[Claims::EXPIRATION_TIME] = $this->convertDate($expiration);
+        $this->claims[RegisteredClaims::EXPIRATION_TIME] = $this->convertDate($expiration);
 
         return $this;
     }
 
     public function setIdentifier(string $id)
     {
-        $this->claims[Claims::ID] = $id;
+        $this->claims[RegisteredClaims::ID] = $id;
 
         return $this;
     }
 
     public function setIssuedAt(\DateTimeInterface $issuedAt)
     {
-        $this->claims[Claims::ISSUED_AT] = $this->convertDate($issuedAt);
+        $this->claims[RegisteredClaims::ISSUED_AT] = $this->convertDate($issuedAt);
 
         return $this;
     }
 
     public function setIssuer(string $issuer)
     {
-        $this->claims[Claims::ISSUER] = $issuer;
+        $this->claims[RegisteredClaims::ISSUER] = $issuer;
 
         return $this;
     }
 
     public function setNotBefore(\DateTimeInterface $notBefore)
     {
-        $this->claims[Claims::NOT_BEFORE] = $this->convertDate($notBefore);
+        $this->claims[RegisteredClaims::NOT_BEFORE] = $this->convertDate($notBefore);
 
         return $this;
     }
 
     public function setSubject(string $subject)
     {
-        $this->claims[Claims::SUBJECT] = $subject;
+        $this->claims[RegisteredClaims::SUBJECT] = $subject;
 
         return $this;
     }
@@ -166,7 +171,7 @@ class JWTBuilder
 
     public function setClaim(string $name, $value)
     {
-        if (\in_array($name, Claims::ALL, true)) {
+        if (\in_array($name, RegisteredClaims::ALL, true)) {
             throw new \InvalidArgumentException('You should use the correct methods to set registered claims');
         }
 
@@ -176,20 +181,17 @@ class JWTBuilder
     }
 
 
-    public function getToken(KeyInterface $key)
+    public function getToken()
     {
-        if (isset($this->claims[Claims::AUDIENCE][0]) && !isset($this->claims[Claims::AUDIENCE][1])) {
-            $this->claims[Claims::AUDIENCE] = $this->claims[Claims::AUDIENCE][0];
+        if (isset($this->claims[RegisteredClaims::AUDIENCE][0]) && !isset($this->claims[RegisteredClaims::AUDIENCE][1])) {
+            $this->claims[RegisteredClaims::AUDIENCE] = $this->claims[RegisteredClaims::AUDIENCE][0];
         }
-
-        $signer = $this->getSigner();
-        $this->headers['alg'] = $signer->getAlgorithm();
 
         $encodedHeaders = $this->encode($this->headers);
         $encodedClaims = $this->encode($this->claims);
 
         $payload = $encodedHeaders . '.' . $encodedClaims;
-        $signature = $signer->sign($payload, $key);
+        $signature = $this->getSigner()->sign($payload);
 
         return $payload . '.' . $this->base64UrlEncode($signature);
     }

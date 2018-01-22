@@ -10,7 +10,7 @@ namespace Hail\Jose;
  *
  * @see https://tools.ietf.org/html/rfc7519#section-4.1
  */
-interface Claims
+interface RegisteredClaims
 {
     public const ALL = [
         self::AUDIENCE,

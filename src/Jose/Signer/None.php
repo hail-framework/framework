@@ -2,22 +2,14 @@
 
 namespace Hail\Jose\Signer;
 
-
-use Hail\Jose\Key\KeyInterface;
-
-final class None implements SignerInterface
+final class None
 {
-    public function getAlgorithm(): string
-    {
-        return 'none';
-    }
-
-    public function sign(string $payload, KeyInterface $key): string
+    public static function sign(): string
     {
         return '';
     }
 
-    public function verify(string $expected, string $payload, KeyInterface $key): bool
+    public static function verify(string $hash, string $expected): bool
     {
         return $expected === '';
     }

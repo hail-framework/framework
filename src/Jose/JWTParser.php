@@ -3,10 +3,9 @@
 namespace Hail\Jose;
 
 use Hail\Jose\Exception\BeforeValidException;
-use Hail\Jose\Exception\ClaimValidateException;
+use Hail\Jose\Exception\ClaimInvalidException;
 use Hail\Jose\Exception\ExpiredException;
 use Hail\Jose\Exception\SignatureInvalidException;
-use Hail\Jose\Key\KeyInterface;
 use Hail\Util\Json;
 
 class JWTParser
@@ -36,14 +35,16 @@ class JWTParser
      * @param string $jwt
      * @param KeyInterface|array $keys
      *
+     * @return array
+     *
      * @throws \UnexpectedValueException    Provided JWT was invalid
      * @throws SignatureInvalidException    Provided JWT was invalid because the signature verification failed
      * @throws BeforeValidException         Provided JWT is trying to be used before it's eligible as defined by 'nbf'
      * @throws BeforeValidException         Provided JWT is trying to be used before it's been created as defined by 'iat'
      * @throws ExpiredException             Provided JWT has since expired, as defined by the 'exp' claim
-     * @throws ClaimValidateException       Provided JWT was invalid because 'iss', 'aud', 'jti', 'subject' verification failed
+     * @throws ClaimInvalidException       Provided JWT was invalid because 'iss', 'aud', 'jti', 'subject' verification failed
      */
-    public function parse(string $jwt, $keys)
+    public function parse(string $jwt, $keys): array
     {
         $tks = \explode('.', $jwt);
 
@@ -54,18 +55,6 @@ class JWTParser
         [$encodedHeaders, $encodedClaims, $encodedSignature] = $tks;
 
         $this->parseHeader($encodedHeaders);
-
-        $algorithm = $this->getAlgorithm();
-        if ($this->headers['alg'] === 'none') {
-            $signer = new Signer\None();
-        } else {
-            $class = __NAMESPACE__ . '\\Signer\\' . $algorithm;
-            if (!\class_exists($class)) {
-                throw new \UnexpectedValueException('Algorithm not allowed');
-            }
-
-            $signer = new $class;
-        }
 
         if (\is_array($keys)) {
             if (($kid = $this->getHeader('kid')) !== null) {
@@ -81,13 +70,14 @@ class JWTParser
             $key = $keys;
         }
 
+        $signer = new Signer($this->getAlgorithm(), $key);
         $signature = $this->parseSignature($encodedSignature);
 
-        if (!$signer->verify("$encodedHeaders.$encodedClaims", $signature, $key)) {
+        if (!$signer->verify($signature, "$encodedHeaders.$encodedClaims")) {
             throw new SignatureInvalidException('Signature verification failed');
         }
 
-        $this->parseClaims($encodedClaims);
+        return $this->parseClaims($encodedClaims);
     }
 
     /**
@@ -100,17 +90,17 @@ class JWTParser
 
     public function getTime()
     {
-        return $this->time ?? new \DateTimeImmutable('now', \date_default_timezone_get());
+        return $this->time ?? new \DateTimeImmutable('now', new \DateTimeZone(\date_default_timezone_get()));
     }
 
     public function validAudience(string $audience)
     {
-        $audiences = $this->validation[Claims::AUDIENCE] ?? [];
+        $audiences = $this->validation[RegisteredClaims::AUDIENCE] ?? [];
 
         if (!\in_array($audience, $audiences, true)) {
             $audiences[] = $audience;
 
-            $this->validation[Claims::AUDIENCE] = $audiences;
+            $this->validation[RegisteredClaims::AUDIENCE] = $audiences;
         }
 
         return $this;
@@ -118,21 +108,21 @@ class JWTParser
 
     public function validIdentifier(string $id)
     {
-        $this->validation[Claims::ID] = $id;
+        $this->validation[RegisteredClaims::ID] = $id;
 
         return $this;
     }
 
     public function validIssuer(string $id)
     {
-        $this->validation[Claims::ISSUER] = $id;
+        $this->validation[RegisteredClaims::ISSUER] = $id;
 
         return $this;
     }
 
     public function validSubject(string $subject)
     {
-        $this->validation[Claims::SUBJECT] = $subject;
+        $this->validation[RegisteredClaims::SUBJECT] = $subject;
 
         return $this;
     }
@@ -162,22 +152,22 @@ class JWTParser
 
     public function getAudience()
     {
-        return $this->getClaim(Claims::AUDIENCE) ?? [];
+        return $this->getClaim(RegisteredClaims::AUDIENCE) ?? [];
     }
 
     public function getIdentifier()
     {
-        return $this->getClaim(Claims::ID);
+        return $this->getClaim(RegisteredClaims::ID);
     }
 
     public function getIssuer()
     {
-        return $this->getClaim(Claims::ISSUER);
+        return $this->getClaim(RegisteredClaims::ISSUER);
     }
 
     public function getSubject()
     {
-        return $this->getClaim(Claims::SUBJECT);
+        return $this->getClaim(RegisteredClaims::SUBJECT);
     }
 
     protected function parseHeader(string $data)
@@ -198,12 +188,14 @@ class JWTParser
     /**
      * @param string $data
      *
+     * @return array
+     *
      * @throws \UnexpectedValueException
      * @throws BeforeValidException
      * @throws ExpiredException
-     * @throws ClaimValidateException
+     * @throws ClaimInvalidException
      */
-    protected function parseClaims(string $data)
+    protected function parseClaims(string $data): array
     {
         $claims = $this->decode($data);
 
@@ -211,8 +203,8 @@ class JWTParser
             throw new \UnexpectedValueException('Invalid claims encoding');
         }
 
-        if (isset($claims[Claims::AUDIENCE])) {
-            $claims[Claims::AUDIENCE] = (array) $claims[Claims::AUDIENCE];
+        if (isset($claims[RegisteredClaims::AUDIENCE])) {
+            $claims[RegisteredClaims::AUDIENCE] = (array) $claims[RegisteredClaims::AUDIENCE];
         }
 
         $time = $this->getTime();
@@ -221,11 +213,11 @@ class JWTParser
             [
                 // Check if the nbf if it is defined. This is the time that the
                 // token can actually be used. If it's not yet that time, abort.
-                Claims::NOT_BEFORE,
+                RegisteredClaims::NOT_BEFORE,
                 // Check that this token has been created before 'now'. This prevents
                 // using tokens that have been created for later use (and haven't
                 // correctly used the nbf claim).
-                Claims::ISSUED_AT,
+                RegisteredClaims::ISSUED_AT,
             ] as $claim
         ) {
             if (!isset($claims[$claim])) {
@@ -242,32 +234,32 @@ class JWTParser
         }
 
         // Check if this token has expired.
-        if (isset($claims[Claims::EXPIRATION_TIME])) {
-            $claims[Claims::EXPIRATION_TIME] = $this->convertDate((string) $claims[Claims::EXPIRATION_TIME]);
+        if (isset($claims[RegisteredClaims::EXPIRATION_TIME])) {
+            $claims[RegisteredClaims::EXPIRATION_TIME] = $this->convertDate((string) $claims[RegisteredClaims::EXPIRATION_TIME]);
 
-            if ($time >= $claims[Claims::EXPIRATION_TIME]) {
+            if ($time >= $claims[RegisteredClaims::EXPIRATION_TIME]) {
                 throw new ExpiredException('Expired token');
             }
         }
 
-        foreach ([Claims::ISSUER, Claims::SUBJECT, Claims::ID] as $claim) {
+        foreach ([RegisteredClaims::ISSUER, RegisteredClaims::SUBJECT, RegisteredClaims::ID] as $claim) {
             if (isset($this->validation[$claim])) {
                 if (!isset($claims[$claim]) || $claims[$claim] !== $this->validation[$claim]) {
-                    throw new ClaimValidateException("Invalid $claim");
+                    throw new ClaimInvalidException("Invalid $claim");
                 }
             }
         }
 
-        if (isset($this->validation[Claims::AUDIENCE])) {
+        if (isset($this->validation[RegisteredClaims::AUDIENCE])) {
             if (
-                !isset($claims[Claims::AUDIENCE]) ||
-                [] === \array_intersect($this->validation[Claims::AUDIENCE], $claims[Claims::AUDIENCE])
+                !isset($claims[RegisteredClaims::AUDIENCE]) ||
+                [] === \array_intersect($this->validation[RegisteredClaims::AUDIENCE], $claims[RegisteredClaims::AUDIENCE])
             ) {
-                throw new ClaimValidateException('Invalid aud');
+                throw new ClaimInvalidException('Invalid aud');
             }
         }
 
-        $this->claims = $claims;
+        return $this->claims = $claims;
     }
 
     protected function parseSignature(string $data)
