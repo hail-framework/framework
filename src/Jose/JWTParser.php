@@ -113,8 +113,8 @@ class JWTParser
             $key = $keys;
         }
 
-        $signer = new Signer($this->getAlgorithm(), $key);
         $signature = $this->parseSignature($encodedSignature);
+        $signer = new Signer($this->getAlgorithm(), $key);
 
         if (!$signer->verify($signature, "$encodedHeaders.$encodedClaims")) {
             throw new SignatureInvalidException('Signature verification failed');

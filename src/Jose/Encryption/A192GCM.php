@@ -7,9 +7,9 @@ use Hail\Jose\Encryption\Abstracts\AESGCM;
 
 final class A192GCM extends AESGCM
 {
-    public function getCEKSize(): int
+    public function getKeySize(): int
     {
-        return 192;
+        return 24; // 24 * 8 = 192
     }
 
     public function getAlgorithmName()

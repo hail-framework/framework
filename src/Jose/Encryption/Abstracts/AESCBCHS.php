@@ -10,13 +10,11 @@ abstract class AESCBCHS implements EncryptionInterface
     public function encrypt(
         string $data,
         string $cek,
-        string $iv,
         ?string $aad,
-        string $header,
-        string &$tag
-    ): string {
-        $cekLen = \mb_substr($cek, '8bit');
-        if ($cekLen * 8 !== $this->getCEKSize()) {
+        string $header
+    ): array {
+        $cekLen = \mb_strlen($cek, '8bit');
+        if ($cekLen !== $this->getKeySize()) {
             throw new \UnexpectedValueException('Bad key encryption key length.');
         }
 
@@ -27,13 +25,14 @@ abstract class AESCBCHS implements EncryptionInterface
         $len = $cekLen / 2;
         $aesKey = \mb_substr($cek, $len, null, '8bit');
         $mode = 'aes-' . ($cekLen * 4) . '-cbc';
+        $iv = \random_bytes(16);
 
         $cypherText = \openssl_encrypt($data, $mode, $aesKey, \OPENSSL_RAW_DATA, $iv);
 
         $hmacKey = \mb_substr($cek, 0, $len, '8bit');
         $tag = $this->computeAuthTag($cypherText, $hmacKey, $iv, $aad, $header);
 
-        return $cypherText;
+        return [$iv, $cypherText, $tag];
     }
 
     public function decrypt(
@@ -44,8 +43,8 @@ abstract class AESCBCHS implements EncryptionInterface
         string $header,
         string $tag
     ): string {
-        $cekLen = \mb_substr($cek, '8bit');
-        if ($cekLen * 8 !== $this->getCEKSize()) {
+        $cekLen = \mb_strlen($cek, '8bit');
+        if ($cekLen !== $this->getKeySize()) {
             throw new \UnexpectedValueException('Bad key encryption key length.');
         }
 
@@ -82,16 +81,8 @@ abstract class AESCBCHS implements EncryptionInterface
             $data,
             \pack('N2', ($aadLen / $max32bit) * 8, ($aadLen % $max32bit) * 8),
         ]);
-        $hash = \hash_hmac('sha' . $this->getCEKSize(), $hmacInput, $hmacKey, true);
+        $hash = \hash_hmac('sha' . ($this->getKeySize() * 8) , $hmacInput, $hmacKey, true);
 
         return \mb_substr($hash, 0, \mb_strlen($hash, '8bit') / 2, '8bit');
-    }
-
-    /**
-     * @return int
-     */
-    public function getIVSize(): int
-    {
-        return 128;
     }
 }

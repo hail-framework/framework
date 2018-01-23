@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Jose\Signer;
+namespace Hail\Jose\Signature;
 
 final class None
 {

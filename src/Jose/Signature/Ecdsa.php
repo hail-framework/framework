@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Jose\Signer;
+namespace Hail\Jose\Signature;
 
 use FG\ASN1\Universal\Integer;
 use FG\ASN1\Universal\Sequence;

@@ -2,8 +2,6 @@
 
 namespace Hail\Jose;
 
-
-use Hail\Jose\Key\KeyInterface;
 use Hail\Util\Json;
 
 class JWTBuilder
@@ -15,7 +13,7 @@ class JWTBuilder
      */
     protected $headers = [
         'typ' => 'JWT',
-        'alg' => Signer::NONE
+        'alg' => Signer::NONE,
     ];
 
     /**
@@ -35,8 +33,7 @@ class JWTBuilder
 
     public function __construct(array $config = [])
     {
-        foreach ($config as $k => $v)
-        {
+        foreach ($config as $k => $v) {
             switch ($k) {
                 case 'alg':
                     $this->setAlgorithm($v);
@@ -81,6 +78,7 @@ class JWTBuilder
     public function setAlgorithm($alg)
     {
         $this->headers['alg'] = Signer::supported($alg);
+        $this->signer = null;
 
         return $this;
     }
@@ -89,6 +87,7 @@ class JWTBuilder
     {
         $this->key = $key;
         $this->passphrase = $passphrase;
+        $this->signer = null;
     }
 
     /**
@@ -181,9 +180,12 @@ class JWTBuilder
     }
 
 
-    public function getToken()
+    public function build()
     {
-        if (isset($this->claims[RegisteredClaims::AUDIENCE][0]) && !isset($this->claims[RegisteredClaims::AUDIENCE][1])) {
+        if (
+            isset($this->claims[RegisteredClaims::AUDIENCE][0]) &&
+            !isset($this->claims[RegisteredClaims::AUDIENCE][1])
+        ) {
             $this->claims[RegisteredClaims::AUDIENCE] = $this->claims[RegisteredClaims::AUDIENCE][0];
         }
 

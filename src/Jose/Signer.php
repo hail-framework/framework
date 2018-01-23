@@ -2,10 +2,7 @@
 
 namespace Hail\Jose;
 
-
-use Hail\Jose\Key\HmacKey;
-use Hail\Jose\Key\KeyInterface;
-use Hail\Jose\Signer\{
+use Hail\Jose\Signature\{
     None, Hmac, Rsa, Ecdsa
 };
 
@@ -99,24 +96,23 @@ final class Signer
 
     private function getKey($type)
     {
-        switch ($this->method) {
-            case Hmac::class:
-                return $this->key;
-
-            case Rsa::class:
-            case Ecdsa::class:
-                if ($type === 'sign') {
-                    return $this->method::getPrivateKey($this->key, $this->passphrase);
-                }
-
-                if ($type === 'verify') {
-                    return $this->method::getPublicKey($this->key, $this->passphrase);
-                }
-
-            case None::class:
-            default:
-                return null;
+        if ($this->method === Hmac::class) {
+            return $this->key;
         }
+
+        if ($this->method === Rsa::class || $this->method === Ecdsa::class) {
+            if ($type === 'sign') {
+                return $this->method::getPrivateKey($this->key, $this->passphrase);
+            }
+
+            if ($type === 'verify') {
+                return $this->method::getPublicKey($this->key);
+            }
+        }
+
+        \trigger_error('JWT use `none` algorithm is not safe', E_USER_WARNING);
+
+        return null;
     }
 
     public static function supported($algorithm)
