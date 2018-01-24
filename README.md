@@ -41,16 +41,16 @@
 - 如果您追求极致的性能，可以先试试： [Phalcon](http://phalconphp.com/) ([github](https://github.com/phalcon/cphalcon)) 或者 [Ice](http://www.iceframework.org/) ([github](https://github.com/ice/framework))
 
 ### 遵循 PSR
-- [PSR-2 Coding Style Guide](http://www.php-fig.org/psr/psr-2/)
-- [PSR-3 Logger Interface](http://www.php-fig.org/psr/psr-3/)
-- [PSR-4 Autoloading Standard](http://www.php-fig.org/psr/psr-4/)
-- [PSR-6 Caching Interface](http://www.php-fig.org/psr/psr-6/)
-- [PSR-7 HTTP message interfaces](http://www.php-fig.org/psr/psr-7/)
-- [PSR-11 Container Interface](https://github.com/container-interop/fig-standards/blob/master/proposed/container.md)
+- [PSR-2 Coding Style Guide](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md)
+- [PSR-3 Logger Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)
+- [PSR-4 Autoloading Standard](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader-meta.md)
+- [PSR-6 Caching Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-6-cache.md)
+- [PSR-7 HTTP message interfaces](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-7-http-message.md)
+- [PSR-11 Container Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PPSR-11-container.md)
 - [PSR-14 Event Manager](https://github.com/php-fig/fig-standards/blob/master/proposed/event-manager.md)
-- [PSR-15 HTTP Handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers)
-- [PSR-16 Simple Cache](http://www.php-fig.org/psr/psr-16/)
-- [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/blob/master/proposed/http-client)
+- [PSR-15 HTTP Handlers](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md)
+- [PSR-16 Simple Cache](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-16-simple-cache.md)
+- [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/tree/master/proposed/http-client/)
 
 ## 框架功能
 
