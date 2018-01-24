@@ -15,8 +15,27 @@ namespace Hail\Jose\Signature\ASN1;
  */
 abstract class ASNObject
 {
-    private $contentLength;
-    private $nrOfLengthOctets;
+    protected $contentLength;
+    protected $nrOfLengthOctets;
+
+    protected const TYPE = null;
+
+    public function __construct($contentLength = null)
+    {
+        if ($contentLength === null) {
+            $contentLength = $this->calculateContentLength();
+        }
+
+        $this->contentLength = $contentLength;
+
+        $this->nrOfLengthOctets = 1;
+        if ($contentLength > 127) {
+            do { // long form
+                ++$this->nrOfLengthOctets;
+                $contentLength >>= 8;
+            } while ($contentLength > 0);
+        }
+    }
 
     /**
      * Must return the number of octets of the content part.
@@ -43,37 +62,13 @@ abstract class ASNObject
     abstract public function getContent();
 
     /**
-     * Return the object type octet.
-     * This should use the class constants of Identifier.
-     *
-     * @see Identifier
-     *
-     * @return int
-     */
-    abstract public static function getType();
-
-    /**
-     * Returns all identifier octets. If an inheriting class models a tag with
-     * the long form identifier format, it MUST reimplement this method to
-     * return all octets of the identifier.
-     *
-     * @throws \LogicException If the identifier format is long form
-     *
-     * @return string Identifier as a set of octets
-     */
-    public function getIdentifier()
-    {
-        return \chr(static::getType());
-    }
-
-    /**
      * Encode this object using DER encoding.
      *
      * @return string the full binary representation of the complete object
      */
     public function getBinary()
     {
-        $result = $this->getIdentifier();
+        $result = \chr(static::TYPE);
         $result .= $this->createLengthPart();
         $result .= $this->getEncodedValue();
 
@@ -82,8 +77,8 @@ abstract class ASNObject
 
     private function createLengthPart()
     {
-        $contentLength = $this->getContentLength();
-        $nrOfLengthOctets = $this->getNumberOfLengthOctets($contentLength);
+        $contentLength = $this->contentLength;
+        $nrOfLengthOctets = $this->nrOfLengthOctets;
 
         if ($nrOfLengthOctets === 1) {
             return \chr($contentLength);
@@ -97,51 +92,12 @@ abstract class ASNObject
 
         return $lengthOctets;
     }
-
-    protected function getNumberOfLengthOctets($contentLength = null)
-    {
-        if (null === $this->nrOfLengthOctets) {
-            if ($contentLength === null) {
-                $contentLength = $this->getContentLength();
-            }
-
-            $this->nrOfLengthOctets = 1;
-            if ($contentLength > 127) {
-                do { // long form
-                    $this->nrOfLengthOctets++;
-                    $contentLength >>= 8;
-                } while ($contentLength > 0);
-            }
-        }
-
-        return $this->nrOfLengthOctets;
-    }
-
-    protected function getContentLength()
-    {
-        if (null === $this->contentLength) {
-            $this->contentLength = $this->calculateContentLength();
-        }
-
-        return $this->contentLength;
-    }
-
-    protected function setContentLength($newContentLength)
-    {
-        $this->contentLength = $newContentLength;
-        $this->getNumberOfLengthOctets($newContentLength);
-    }
-
     /**
      * Returns the length of the whole object (including the identifier and length octets).
      */
     public function getObjectLength()
     {
-        $nrOfIdentifierOctets = \strlen($this->getIdentifier());
-        $contentLength = $this->getContentLength();
-        $nrOfLengthOctets = $this->getNumberOfLengthOctets($contentLength);
-
-        return $nrOfIdentifierOctets + $nrOfLengthOctets + $contentLength;
+        return 1 + $this->nrOfLengthOctets + $this->contentLength;
     }
 
     protected static function parseIdentifier($identifierOctet, $typeName)
@@ -150,7 +106,7 @@ abstract class ASNObject
             $identifierOctet = \ord($identifierOctet);
         }
 
-        if ($identifierOctet !== static::getType()) {
+        if ($identifierOctet !== static::TYPE) {
             throw new \UnexpectedValueException("Can not create ASN.1 $typeName'");
         }
     }

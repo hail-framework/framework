@@ -15,9 +15,13 @@ class Sequence extends ASNObject
     /** @var \Hail\Jose\Signature\ASN1\Integer[] */
     protected $children;
 
-    private function __construct($children)
+    protected const TYPE = 0x30;
+
+    public function __construct($children, $contentLength = null)
     {
         $this->children = $children;
+
+        parent::__construct($contentLength);
     }
 
     protected function calculateContentLength()
@@ -41,16 +45,11 @@ class Sequence extends ASNObject
     }
 
     /**
-     * @return ASNObject[]
+     * @return \Hail\Jose\Signature\ASN1\Integer[]
      */
     public function getContent()
     {
         return $this->children;
-    }
-
-    public static function getType()
-    {
-        return 0x30;
     }
 
     /**
@@ -74,9 +73,6 @@ class Sequence extends ASNObject
             $children[] = $newChild;
         }
 
-        $parsedObject = new static($children);
-        $parsedObject->setContentLength($contentLength);
-
-        return $parsedObject;
+        return new static($children, $contentLength);
     }
 }

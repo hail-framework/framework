@@ -16,17 +16,17 @@ class Integer extends ASNObject
     /** @var int */
     private $value;
 
-    /**
-     * @param int $value
-     */
-    private function __construct($value)
-    {
-        $this->value = $value;
-    }
+    protected const TYPE = 0x02;
 
-    public static function getType()
+    public function __construct($value, $contentLength = null)
     {
-        return 0x02;
+        if (!\is_numeric($value)) {
+            throw new \InvalidArgumentException("Invalid VALUE [{$value}] for ASN.1_Integer");
+        }
+
+        $this->value = $value;
+
+        parent::__construct($contentLength);
     }
 
     public function getContent()
@@ -51,16 +51,16 @@ class Integer extends ASNObject
      *
      * @return resource|\GMP
      */
-    private function rightShift($number, $positions)
+    private function rightShift($number, int $positions)
     {
         // Shift 1 right = div / 2
-        return \gmp_div($number, \gmp_pow(2, (int) $positions));
+        return \gmp_div($number, \gmp_pow(2, $positions));
     }
 
     protected function getEncodedValue()
     {
         $numericValue = \gmp_init($this->value, 10);
-        $contentLength = $this->getContentLength();
+        $contentLength = $this->contentLength;
 
         if (\gmp_sign($numericValue) < 0) {
             $numericValue = \gmp_add($numericValue, \gmp_sub(\gmp_pow(2, 8 * $contentLength), 1));
@@ -94,9 +94,6 @@ class Integer extends ASNObject
             $number = \gmp_sub($number, \gmp_pow(2, 8 * $contentLength - 1));
         }
 
-        $parsedObject = new static(\gmp_strval($number, 10));
-        $parsedObject->setContentLength($contentLength);
-
-        return $parsedObject;
+        return new static(\gmp_strval($number, 10), $contentLength);
     }
 }
