@@ -179,6 +179,10 @@ class JWTBuilder
         return $this;
     }
 
+    public function getClaim(string $name)
+    {
+        return $this->claims[$name] ?? null;
+    }
 
     public function build()
     {
@@ -195,7 +199,7 @@ class JWTBuilder
         $payload = $encodedHeaders . '.' . $encodedClaims;
         $signature = $this->getSigner()->sign($payload);
 
-        return $payload . '.' . $this->base64UrlEncode($signature);
+        return $payload . '.' . Helpers::base64UrlEncode($signature);
     }
 
     protected function convertDate(\DateTimeInterface $date)
@@ -212,13 +216,8 @@ class JWTBuilder
 
     protected function encode(array $items): string
     {
-        return $this->base64UrlEncode(
+        return Helpers::base64UrlEncode(
             Json::encode($items)
         );
-    }
-
-    protected function base64UrlEncode(string $input): string
-    {
-        return \str_replace('=', '', \strtr(\base64_encode($input), '+/', '-_'));
     }
 }

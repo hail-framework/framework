@@ -2,7 +2,7 @@
 
 namespace Hail\Jose\Signature;
 
-final class None
+final class NONE
 {
     public static function sign(): string
     {

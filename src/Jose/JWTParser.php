@@ -311,7 +311,7 @@ class JWTParser
             return '';
         }
 
-        $signature = $this->base64UrlDecode($data);
+        $signature = Helpers::base64UrlDecode($data);
 
         if (false === $signature) {
             throw new \UnexpectedValueException('Invalid signature encoding');
@@ -332,16 +332,7 @@ class JWTParser
     protected function decode(string $encoded): array
     {
         return Json::decode(
-            $this->base64UrlDecode($encoded)
+            Helpers::base64UrlDecode($encoded)
         );
-    }
-
-    protected function base64UrlDecode(string $input): string
-    {
-        if ($remainder = \strlen($input) % 4) {
-            $input .= \str_repeat('=', 4 - $remainder);
-        }
-
-        return \base64_decode(\strtr($input, '-_', '+/'));
     }
 }

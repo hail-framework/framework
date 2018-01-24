@@ -3,7 +3,7 @@
 namespace Hail\Jose;
 
 use Hail\Jose\Signature\{
-    None, Hmac, Rsa, Ecdsa
+    NONE, HMAC, RSA, EC
 };
 
 final class Signer
@@ -27,16 +27,16 @@ final class Signer
     ];
 
     private const METHOD = [
-        self::NONE => None::class,
-        self::HS256 => Hmac::class,
-        self::HS384 => Hmac::class,
-        self::HS512 => Hmac::class,
-        self::RS256 => Rsa::class,
-        self::RS384 => Rsa::class,
-        self::RS512 => Rsa::class,
-        self::ES256 => Ecdsa::class,
-        self::ES384 => Ecdsa::class,
-        self::ES512 => Ecdsa::class,
+        self::NONE => NONE::class,
+        self::HS256 => HMAC::class,
+        self::HS384 => HMAC::class,
+        self::HS512 => HMAC::class,
+        self::RS256 => RSA::class,
+        self::RS384 => RSA::class,
+        self::RS512 => RSA::class,
+        self::ES256 => EC::class,
+        self::ES384 => EC::class,
+        self::ES512 => EC::class,
     ];
 
     private const HASH = [
@@ -96,11 +96,11 @@ final class Signer
 
     private function getKey($type)
     {
-        if ($this->method === Hmac::class) {
+        if ($this->method === HMAC::class) {
             return $this->key;
         }
 
-        if ($this->method === Rsa::class || $this->method === Ecdsa::class) {
+        if ($this->method === RSA::class || $this->method === EC::class) {
             if ($type === 'sign') {
                 return $this->method::getPrivateKey($this->key, $this->passphrase);
             }

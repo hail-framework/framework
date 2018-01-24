@@ -2,13 +2,19 @@
 
 namespace Hail\Jose\Signature;
 
-use FG\ASN1\Universal\Integer;
-use FG\ASN1\Universal\Sequence;
-use FG\ASN1\ASNObject;
+use Hail\Jose\Signature\ASN1\Integer;
+use Hail\Jose\Signature\ASN1\Sequence;
 
-final class Ecdsa extends Rsa
+final class EC extends RSA
 {
     protected const KEY_TYPE = \OPENSSL_KEYTYPE_EC;
+
+    protected const JOSE_KTY = 'ec';
+    protected const JOSE_MAP = [
+        'x' => 'x',
+        'y' => 'y',
+        'd' => 'd',
+    ];
 
     private const HASH_LENGTH_MAP = [
         'sha256' => 64,
@@ -16,18 +22,16 @@ final class Ecdsa extends Rsa
         'sha512' => 132,
     ];
 
-    public static function sign(string $hash, string $payload, resource $key): string
+    public static function sign(string $hash, string $payload, $key): string
     {
         $signature = parent::sign($hash, $payload, $key);
 
-        /* @var \FG\ASN1\Universal\Sequence $asn */
-        $asn = ASNObject::fromBinary($signature);
+        $asn = Sequence::fromBinary($signature);
 
         $length = self::getLength($key, $hash);
 
         $signature = '';
-        foreach ($asn->getChildren() as $child) {
-            /* @var \FG\ASN1\Universal\Integer $child */
+        foreach ($asn->getContent() as $child) {
             $content = $child->getContent();
             $content = \gmp_strval(\gmp_init($content), 16);
             $content = \str_pad($content, $length, '0', STR_PAD_LEFT);
@@ -39,7 +43,7 @@ final class Ecdsa extends Rsa
         return $signature;
     }
 
-    public static function verify(string $hash, string $expected, string $payload, resource $key): bool
+    public static function verify(string $hash, string $expected, string $payload, $key): bool
     {
         $signature = \bin2hex($expected);
         $length = self::getLength($key, $hash);
@@ -47,15 +51,15 @@ final class Ecdsa extends Rsa
         $R = \mb_substr($signature, 0, $length, '8bit');
         $S = \mb_substr($signature, $length, null, '8bit');
 
-        $sequence = new Sequence(
+        $sequence = new Sequence([
             new Integer(\gmp_strval(\gmp_init($R, 16), 10)),
-            new Integer(\gmp_strval(\gmp_init($S, 16), 10))
-        );
+            new Integer(\gmp_strval(\gmp_init($S, 16), 10)),
+        ]);
 
         return parent::verify($hash, $sequence->getBinary(), $payload, $key);
     }
 
-    private static function getLength(resource $key, string $hash = null): int
+    private static function getLength($key, string $hash = null): int
     {
         if ($hash !== null && isset(self::HASH_LENGTH_MAP[$hash])) {
             return self::HASH_LENGTH_MAP[$hash];
