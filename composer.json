@@ -51,6 +51,7 @@
     "ext-gd": "to use GD library based image processing.",
     "ext-imagick": "to use Imagick based image processing.",
     "ext-ftp": "to handle filesystem with ftp support.",
-    "ext-curl": "to handle http client with curl support."
+    "ext-curl": "to handle http client with curl support.",
+    "ext-gmp": "to use ES256, ES384, ES512 signature for JWT"
   }
 }
