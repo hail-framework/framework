@@ -50,7 +50,6 @@
 - [PSR-14 Event Manager](https://github.com/php-fig/fig-standards/blob/master/proposed/event-manager.md)
 - [PSR-15 HTTP Handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers)
 - [PSR-16 Simple Cache](http://www.php-fig.org/psr/psr-16/)
-- [PSR-17 HTTP Factories](https://github.com/php-fig/fig-standards/tree/master/proposed/http-factory)
 - [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/blob/master/proposed/http-client)
 
 ## 框架功能

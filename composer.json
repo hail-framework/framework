@@ -39,9 +39,8 @@
     "psr/container": "^1.0",
     "psr/cache": "^1.0",
     "psr/simple-cache": "^1.0",
-    "http-interop/http-factory": "^0.3.0",
-    "http-interop/http-server-handler": "^1.0",
-    "http-interop/http-server-middleware": "^1.0"
+    "psr/http-server-handler": "^1.0",
+    "psr/http-server-middleware": "^1.0"
   },
   "suggest": {
     "ext-intl": "to use Utf8String::compare, Utf8String::transliterate, Strings::toAscii, Strings::normalize, Strings::compare, NumberFormatCell, DateFormatCell, ",
@@ -52,10 +51,6 @@
     "ext-gd": "to use GD library based image processing.",
     "ext-imagick": "to use Imagick based image processing.",
     "ext-ftp": "to handle filesystem with ftp support.",
-    "ext-curl": "to handle http client with curl support.",
-    "fgrosse/phpasn1": "to use ES256, ES384, ES512 signer for JWT"
-  },
-  "require-dev": {
-    "fgrosse/phpasn1": "^2.0"
+    "ext-curl": "to handle http client with curl support."
   }
 }

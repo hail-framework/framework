@@ -4,12 +4,12 @@ namespace Hail\Http\Middleware;
 
 use Hail\Http\Factory;
 use Hail\Http\Helpers;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface,
+    Message\StreamInterface
 };
 
 

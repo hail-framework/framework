@@ -3,12 +3,13 @@
 namespace Hail\Http\Middleware;
 
 use Hail\Session\Session as HailSession;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface
 };
+
 
 class Session implements MiddlewareInterface
 {

@@ -2,14 +2,14 @@
 
 namespace Hail\Http\Middleware;
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
-};
 use Hail\Http\Factory;
 use Hail\Http\Helpers;
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface
+};
 
 class GzipEncoder implements MiddlewareInterface
 {

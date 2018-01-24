@@ -2,7 +2,7 @@
 
 namespace Hail\Http;
 
-use Interop\Http\Server\{
+use Psr\Http\Server\{
     MiddlewareInterface,
     RequestHandlerInterface
 };

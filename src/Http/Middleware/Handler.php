@@ -6,11 +6,11 @@ use Hail\Application;
 use Hail\Exception\ActionForward;
 use Hail\Exception\BadRequestException;
 use Hail\Http\Exception\HttpErrorException;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface
 };
 
 class Handler implements MiddlewareInterface

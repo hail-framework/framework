@@ -18,11 +18,9 @@
 namespace Hail\Http\Middleware;
 
 use Hail\Http\Factory;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
-};
 use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
 	Message\UriInterface,
 	Message\RequestInterface,
 	Message\ResponseInterface,

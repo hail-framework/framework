@@ -2,11 +2,11 @@
 
 namespace Hail\Http\Middleware;
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface
 };
 
 class ClientIp implements MiddlewareInterface

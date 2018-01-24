@@ -5,11 +5,11 @@ namespace Hail\Http\Middleware;
 
 use Hail\Http\Factory;
 use Hail\Http\Middleware\Util\NegotiatorTrait;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Interop\Http\Server\{
-    MiddlewareInterface,
-    RequestHandlerInterface
+use Psr\Http\{
+    Server\MiddlewareInterface,
+    Server\RequestHandlerInterface,
+    Message\ServerRequestInterface,
+    Message\ResponseInterface
 };
 
 class ContentLanguage implements MiddlewareInterface
