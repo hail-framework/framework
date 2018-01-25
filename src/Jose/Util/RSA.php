@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\JWT\Util;
+namespace Hail\Jose\Util;
 
 
 class RSA

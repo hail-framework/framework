@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\JWT\Signature;
+namespace Hail\Jose\Signature;
 
-use Hail\JWT\Util\RSA as JoseRSA;
+use Hail\Jose\Util\RSA as JoseRSA;
 
 final class ECDSA extends RSA
 {

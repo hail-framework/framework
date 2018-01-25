@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\JWT\Signature;
+namespace Hail\Jose\Signature;
 
-use Hail\JWT\Util\Base64Url;
+use Hail\Jose\Util\Base64Url;
 
 class RSA
 {

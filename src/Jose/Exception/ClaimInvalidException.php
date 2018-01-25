@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\JWT\Exception;
+namespace Hail\Jose\Exception;
 
 
 class ClaimInvalidException extends \UnexpectedValueException implements JWTException
