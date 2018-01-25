@@ -3,12 +3,12 @@
 namespace Hail\Jose;
 
 use Hail\Jose\Signature\{
-    EdDSA, NONE, HMAC, RSA, ECDSA, PSS
+    EdDSA, HMAC, RSA, ECDSA, PSS
 };
 
 final class Signer
 {
-    public const NONE = 'none',
+    public const
         EdDSA = 'EdDSA',
         HS256 = 'HS256',
         HS384 = 'HS384',
@@ -23,17 +23,7 @@ final class Signer
         PS384 = 'PS384',
         PS512 = 'PS512';
 
-
-    public const ALL = [
-        self::NONE, self::EdDSA,
-        self::HS256, self::HS384, self::HS512,
-        self::RS256, self::RS384, self::RS512,
-        self::ES256, self::ES384, self::ES512,
-        self::PS256, self::PS384, self::PS512,
-    ];
-
     private const METHOD = [
-        self::NONE => NONE::class,
         self::EdDSA => EdDSA::class,
         self::HS256 => HMAC::class,
         self::HS384 => HMAC::class,
@@ -109,29 +99,29 @@ final class Signer
 
     private function getKey($type)
     {
+        if (empty($this->key)) {
+            throw new \LogicException('Key not set');
+        }
+
         if ($this->method === HMAC::class) {
-            return \base64_decode($this->key);
+            return \hex2bin($this->key);
         }
 
-        if (\in_array($this->method, [RSA::class, ECDSA::class, PSS::class, EdDSA::class], true)) {
-            if ($type === 'sign') {
-                return $this->method::getPrivateKey($this->key, $this->passphrase);
-            }
-
-            if ($type === 'verify') {
-                return $this->method::getPublicKey($this->key);
-            }
+        if ($type === 'sign') {
+            return $this->method::getPrivateKey($this->key, $this->passphrase);
         }
 
-        \trigger_error('JWT use `none` algorithm is not safe', E_USER_WARNING);
+        if ($type === 'verify') {
+            return $this->method::getPublicKey($this->key);
+        }
 
-        return null;
+        throw new \LogicException('unknown method');
     }
 
     public static function supported($algorithm)
     {
-        if (!\in_array($algorithm, self::ALL, true)) {
-            throw new \RangeException('Algorithm not supported');
+        if (!isset(self::METHOD[$algorithm])) {
+            throw new \UnexpectedValueException('Signature algorithm not supported');
         }
 
         return $algorithm;
@@ -147,8 +137,8 @@ final class Signer
         return $this->method::sign($payload, $this->getKey(__FUNCTION__), $this->hash);
     }
 
-    public function verify(string $expected, string $payload): bool
+    public function verify(string $signature, string $payload): bool
     {
-        return $this->method::verify($expected, $payload, $this->getKey(__FUNCTION__), $this->hash);
+        return $this->method::verify($signature, $payload, $this->getKey(__FUNCTION__), $this->hash);
     }
 }

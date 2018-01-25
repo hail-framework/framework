@@ -10,11 +10,14 @@ class JWTBuilder
     /**
      * The token header
      *
+     *  The algorithm `none` is not safe, only use for init.
+     *  If not set `alg` to any others, the builder will throw a exception when JWT building.
+     *
      * @var array
      */
     protected $headers = [
         'typ' => 'JWT',
-        'alg' => Signer::NONE,
+        'alg' => 'none',
     ];
 
     /**
