@@ -1,15 +1,15 @@
 <?php
 
-namespace Hail\Jose;
+namespace Hail\JWT;
 
-use Hail\Jose\Exception\BeforeValidException;
-use Hail\Jose\Exception\ClaimInvalidException;
-use Hail\Jose\Exception\ExpiredException;
-use Hail\Jose\Exception\SignatureInvalidException;
-use Hail\Jose\Util\Base64Url;
+use Hail\JWT\Exception\BeforeValidException;
+use Hail\JWT\Exception\ClaimInvalidException;
+use Hail\JWT\Exception\ExpiredException;
+use Hail\JWT\Exception\SignatureInvalidException;
+use Hail\JWT\Util\Base64Url;
 use Hail\Util\Json;
 
-class JWTParser
+class Parser
 {
     /**
      * The token header

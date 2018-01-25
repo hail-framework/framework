@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\Jose;
+namespace Hail\JWT;
 
-use Hail\Jose\Signature\{
+use Hail\JWT\Signature\{
     EdDSA, NONE, HMAC, RSA, ECDSA, PSS
 };
 

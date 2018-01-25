@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\Jose\Signature;
+namespace Hail\JWT\Signature;
 
-use Hail\Jose\Util\RSA as JoseRSA;
+use Hail\JWT\Util\RSA as JoseRSA;
 
 class PSS extends RSA
 {

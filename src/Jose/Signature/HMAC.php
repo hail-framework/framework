@@ -1,8 +1,8 @@
 <?php
 
-namespace Hail\Jose\Signature;
+namespace Hail\JWT\Signature;
 
-use Hail\Jose\Util\Base64Url;
+use Hail\JWT\Util\Base64Url;
 
 final class HMAC
 {

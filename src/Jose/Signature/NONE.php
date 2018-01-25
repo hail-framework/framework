@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Jose\Signature;
+namespace Hail\JWT\Signature;
 
 final class NONE
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Jose\Util;
+namespace Hail\JWT\Util;
 
 
 class Base64Url

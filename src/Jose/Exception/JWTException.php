@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Jose\Exception;
+namespace Hail\JWT\Exception;
 
 
 interface JWTException

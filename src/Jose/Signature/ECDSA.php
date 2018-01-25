@@ -1,6 +1,8 @@
 <?php
 
-namespace Hail\Jose\Signature;
+namespace Hail\JWT\Signature;
+
+use Hail\JWT\Util\RSA as JoseRSA;
 
 final class ECDSA extends RSA
 {
@@ -11,19 +13,14 @@ final class ECDSA extends RSA
         'x' => 'x',
         'y' => 'y',
         'd' => 'd',
-    ];
-
-    private const HASH_LENGTH_MAP = [
-        'sha256' => 64,
-        'sha384' => 96,
-        'sha512' => 132,
+        'curve_oid' => 'crv',
     ];
 
     public static function sign(string $payload, $key, string $hash): string
     {
         return self::fromDER(
             parent::sign($payload, $key, $hash),
-            self::HASH_LENGTH_MAP[$hash]
+            JoseRSA::getHashLength($hash)
         );
     }
 
@@ -74,11 +71,11 @@ final class ECDSA extends RSA
         return $data;
     }
 
-    public static function verify(string $hash, string $signature, string $payload, $key): bool
+    public static function verify(string $signature, string $payload, $key, string $hash): bool
     {
         return parent::verify(
             $hash,
-            self::toDER($signature, self::HASH_LENGTH_MAP[$hash]),
+            self::toDER($signature, JoseRSA::getHashLength($hash)),
             $payload, $key
         );
     }
@@ -116,5 +113,13 @@ final class ECDSA extends RSA
         }
 
         return $data;
+    }
+
+    public static function getJWK($key): array
+    {
+        $jwk = parent::getJWK($key);
+        $jwk['crv'] = JoseRSA::getECKeyCurve($jwk['crv']);
+
+        return $jwk;
     }
 }
