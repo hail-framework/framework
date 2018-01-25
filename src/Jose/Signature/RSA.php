@@ -2,7 +2,7 @@
 
 namespace Hail\Jose\Signature;
 
-use Hail\Jose\Helpers;
+use Hail\Jose\Util\Base64Url;
 
 class RSA
 {
@@ -20,14 +20,8 @@ class RSA
         'iqmp' => 'qi',
     ];
 
-    /**
-     * @param string   $hash
-     * @param string   $payload
-     * @param resource $key
-     *
-     * @return string
-     */
-    public static function sign(string $hash, string $payload, $key): string
+
+    public static function sign(string $payload, $key, string $hash): string
     {
         if (!\is_resource($key)) {
             throw new \InvalidArgumentException('Key is not a openssl key resource');
@@ -43,21 +37,13 @@ class RSA
         return $signature;
     }
 
-    /**
-     * @param string   $hash
-     * @param string   $expected
-     * @param string   $payload
-     * @param resource $key
-     *
-     * @return bool
-     */
-    public static function verify(string $hash, string $expected, string $payload, $key): bool
+    public static function verify(string $signature, string $payload, $key, string $hash): bool
     {
         if (!\is_resource($key)) {
             throw new \InvalidArgumentException('Key is not a openssl key resource');
         }
 
-        switch (\openssl_verify($payload, $expected, $key, $hash)) {
+        switch (\openssl_verify($payload, $signature, $key, $hash)) {
             case 1:
                 return true;
 
@@ -70,7 +56,7 @@ class RSA
         }
     }
 
-    public static function getPrivateKey(string $content, string $passphrase): resource
+    public static function getPrivateKey(string $content, string $passphrase)
     {
         $key = \openssl_pkey_get_private($content, $passphrase);
         static::validateKey($key);
@@ -78,7 +64,7 @@ class RSA
         return $key;
     }
 
-    public static function getPublicKey(string $content): resource
+    public static function getPublicKey(string $content)
     {
         $key = \openssl_pkey_get_public($content);
         static::validateKey($key);
@@ -113,7 +99,7 @@ class RSA
 
         foreach ($details[static::JOSE_KTY] as $k => $v) {
             if (isset(static::JOSE_MAP[$k])) {
-                $jwk[static::JOSE_MAP[$k]] = Helpers::base64UrlEncode($v);
+                $jwk[static::JOSE_MAP[$k]] = Base64Url::encode($v);
             }
         }
 

@@ -6,6 +6,7 @@ use Hail\Jose\Exception\BeforeValidException;
 use Hail\Jose\Exception\ClaimInvalidException;
 use Hail\Jose\Exception\ExpiredException;
 use Hail\Jose\Exception\SignatureInvalidException;
+use Hail\Jose\Util\Base64Url;
 use Hail\Util\Json;
 
 class JWTParser
@@ -311,7 +312,7 @@ class JWTParser
             return '';
         }
 
-        $signature = Helpers::base64UrlDecode($data);
+        $signature = Base64Url::decode($data);
 
         if (false === $signature) {
             throw new \UnexpectedValueException('Invalid signature encoding');
@@ -332,7 +333,7 @@ class JWTParser
     protected function decode(string $encoded): array
     {
         return Json::decode(
-            Helpers::base64UrlDecode($encoded)
+            Base64Url::decode($encoded)
         );
     }
 }

@@ -3,12 +3,13 @@
 namespace Hail\Jose;
 
 use Hail\Jose\Signature\{
-    NONE, HMAC, RSA, EC
+    EdDSA, NONE, HMAC, RSA, ECDSA, PSS
 };
 
 final class Signer
 {
     public const NONE = 'none',
+        EdDSA = 'EdDSA',
         HS256 = 'HS256',
         HS384 = 'HS384',
         HS512 = 'HS512',
@@ -17,26 +18,35 @@ final class Signer
         RS512 = 'RS512',
         ES256 = 'ES256',
         ES384 = 'ES384',
-        ES512 = 'ES512';
+        ES512 = 'ES512',
+        PS256 = 'PS256',
+        PS384 = 'PS384',
+        PS512 = 'PS512';
+
 
     public const ALL = [
-        self::NONE,
+        self::NONE, self::EdDSA,
         self::HS256, self::HS384, self::HS512,
         self::RS256, self::RS384, self::RS512,
         self::ES256, self::ES384, self::ES512,
+        self::PS256, self::PS384, self::PS512,
     ];
 
     private const METHOD = [
         self::NONE => NONE::class,
+        self::EdDSA => EdDSA::class,
         self::HS256 => HMAC::class,
         self::HS384 => HMAC::class,
         self::HS512 => HMAC::class,
         self::RS256 => RSA::class,
         self::RS384 => RSA::class,
         self::RS512 => RSA::class,
-        self::ES256 => EC::class,
-        self::ES384 => EC::class,
-        self::ES512 => EC::class,
+        self::ES256 => ECDSA::class,
+        self::ES384 => ECDSA::class,
+        self::ES512 => ECDSA::class,
+        self::PS256 => PSS::class,
+        self::PS384 => PSS::class,
+        self::PS512 => PSS::class,
     ];
 
     private const HASH = [
@@ -49,6 +59,9 @@ final class Signer
         self::ES256 => 'sha256',
         self::ES384 => 'sha384',
         self::ES512 => 'sha512',
+        self::PS256 => 'sha256',
+        self::PS384 => 'sha384',
+        self::PS512 => 'sha512',
     ];
 
     /**
@@ -97,10 +110,10 @@ final class Signer
     private function getKey($type)
     {
         if ($this->method === HMAC::class) {
-            return $this->key;
+            return \base64_decode($this->key);
         }
 
-        if ($this->method === RSA::class || $this->method === EC::class) {
+        if (\in_array($this->method, [RSA::class, ECDSA::class, PSS::class, EdDSA::class], true)) {
             if ($type === 'sign') {
                 return $this->method::getPrivateKey($this->key, $this->passphrase);
             }
@@ -131,11 +144,11 @@ final class Signer
 
     public function sign(string $payload): string
     {
-        return $this->method::sign($this->hash, $payload, $this->getKey(__FUNCTION__));
+        return $this->method::sign($payload, $this->getKey(__FUNCTION__), $this->hash);
     }
 
     public function verify(string $expected, string $payload): bool
     {
-        return $this->method::verify($this->hash, $expected, $payload, $this->getKey(__FUNCTION__));
+        return $this->method::verify($expected, $payload, $this->getKey(__FUNCTION__), $this->hash);
     }
 }

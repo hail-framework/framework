@@ -9,8 +9,8 @@ final class NONE
         return '';
     }
 
-    public static function verify(string $hash, string $expected): bool
+    public static function verify(string $signature): bool
     {
-        return $expected === '';
+        return $signature === '';
     }
 }

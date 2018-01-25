@@ -2,6 +2,7 @@
 
 namespace Hail\Jose;
 
+use Hail\Jose\Util\Base64Url;
 use Hail\Util\Json;
 
 class JWTBuilder
@@ -199,7 +200,7 @@ class JWTBuilder
         $payload = $encodedHeaders . '.' . $encodedClaims;
         $signature = $this->getSigner()->sign($payload);
 
-        return $payload . '.' . Helpers::base64UrlEncode($signature);
+        return $payload . '.' . Base64Url::encode($signature);
     }
 
     protected function convertDate(\DateTimeInterface $date)
@@ -216,7 +217,7 @@ class JWTBuilder
 
     protected function encode(array $items): string
     {
-        return Helpers::base64UrlEncode(
+        return Base64Url::encode(
             Json::encode($items)
         );
     }

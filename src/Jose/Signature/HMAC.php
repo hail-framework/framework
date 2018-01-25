@@ -2,27 +2,25 @@
 
 namespace Hail\Jose\Signature;
 
-
-
-use Hail\Jose\Helpers;
+use Hail\Jose\Util\Base64Url;
 
 final class HMAC
 {
-    public static function sign(string $hash, string $payload, string $key): string
+    public static function sign(string $payload, string $key, string $hash): string
     {
         return \hash_hmac($hash, $payload, $key, true);
     }
 
-    public static function verify(string $hash, string $expected, string $payload, string $key): bool
+    public static function verify(string $signature, string $payload, string $key, string $hash): bool
     {
-        return \hash_equals($expected, self::sign($hash, $payload, $key));
+        return \hash_equals($signature, self::sign($payload, $key, $hash));
     }
 
     public static function getJWK(string $key): array
     {
         return [
             'kty' => 'oct',
-            'k' => Helpers::base64UrlEncode($key),
+            'k' => Base64Url::encode($key),
         ];
     }
 }
