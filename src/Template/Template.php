@@ -2,13 +2,16 @@
 
 namespace Hail\Template;
 
-use LogicException;
+use Hail\Template\Wrapper\ArrayWrapper;
+use Hail\Template\Wrapper\StringWrapper;
 
 /**
  * Container which holds template data and provides access to template functions.
  */
 class Template
 {
+    protected $name;
+
     /**
      * Instance of the template engine.
      *
@@ -76,8 +79,8 @@ class Template
     {
         $this->engine = $engine;
         $this->template = $file;
-
-        $this->data($this->engine->getData($name));
+        $this->name = $name;
+        $this->data = $engine->getData($name);
     }
 
     /**
@@ -94,19 +97,37 @@ class Template
     }
 
     /**
-     * Assign or get template data.
+     * Assign template data.
      *
      * @param  array $data
-     *
-     * @return mixed
      */
-    public function data(array $data = null)
+    public function addData(array $data)
     {
-        if (null !== $data) {
-            $this->data = array_merge($this->data, $data);
+        if ($data !== []) {
+            $this->data = \array_merge($this->data, $data);
         }
+    }
 
+    /**
+     * @return array
+     */
+    public function data(): array
+    {
         return $this->data;
+    }
+
+    public function wrap($data)
+    {
+        switch (\gettype($data)) {
+            case 'array':
+                return new ArrayWrapper($data);
+
+            case 'string':
+                return new StringWrapper($data);
+
+            default:
+                return $data;
+        }
     }
 
     /**
@@ -115,10 +136,12 @@ class Template
      * @param array $data
      *
      * @return string
+     *
+     * @throws \Throwable
      */
     public function render(array $data = []): string
     {
-        $this->data($data);
+        $this->addData($data);
         unset($data);
         \extract($this->data, EXTR_OVERWRITE);
 

@@ -23,6 +23,17 @@ class StringWrapper implements \ArrayAccess
 
     public function __construct(string $string)
     {
+        $this->setValue($string);
+    }
+
+    public function setValue($string)
+    {
+        if ($string instanceof self) {
+            $string = $string->value;
+        } else {
+            $string = (string) $string;
+        }
+
         $this->value = $string;
         $this->length = \mb_strlen($string);
     }
@@ -32,11 +43,10 @@ class StringWrapper implements \ArrayAccess
         return $this->value;
     }
 
-    public function withString($string, $length = null)
+    public function withString($string)
     {
         $new = clone $this;
-        $new->value = $string;
-        $new->length = $length ?? \mb_strlen($string);
+        $this->setValue($string);
 
         return $new;
     }
@@ -57,7 +67,7 @@ class StringWrapper implements \ArrayAccess
     public function offsetGet($index)
     {
         return $this->withString(
-            \mb_substr($this->value, $index, 1), 1
+            \mb_substr($this->value, $index, 1)
         );
     }
 
@@ -162,22 +172,20 @@ class StringWrapper implements \ArrayAccess
             return $this->substr($start, $end);
         }
 
-        return $this->withString('', 0);
+        return $this->withString('');
     }
 
     public function toLowerCase()
     {
         return $this->withString(
-            \mb_strtolower($this->value),
-            $this->length
+            \mb_strtolower($this->value)
         );
     }
 
     public function toUpperCase()
     {
         return $this->withString(
-            \mb_strtoupper($this->value),
-            $this->length
+            \mb_strtoupper($this->value)
         );
     }
 

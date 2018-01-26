@@ -7,6 +7,8 @@ use Hail\Template\Tokenizer\Token\Element;
 
 final class Syntax
 {
+    private const SEMI = '&@#semi#@&';
+
     private const PHP_OPERATORS = [
         ' LT ' => ' < ',
         ' GT ' => ' > ',
@@ -48,18 +50,17 @@ final class Syntax
     public static function multiLine(string $expression, callable $resolve): array
     {
         $hasSemi = \strpos($expression, ';;') !== false;
+        if ($hasSemi) {
+            $expression = \str_replace(';;', self::SEMI, $expression);
+        }
 
         if (\strpos(';', $expression) !== false) {
-            if ($hasSemi) {
-                $expression = \str_replace(';;', '&@#semi#@&', $expression);
-            }
-
             $parts = \explode(';', $expression);
 
             $result = [];
             foreach ($parts as $part) {
                 if ($hasSemi) {
-                    $part = \str_replace('&@#semi#@&', ';', $part);
+                    $part = \str_replace(self::SEMI, ';', $part);
                 }
 
                 $result[] = $resolve($part);
@@ -69,7 +70,7 @@ final class Syntax
         }
 
         if ($hasSemi) {
-            $expression = \str_replace(';;', ';', $expression);
+            $expression = \str_replace(self::SEMI, ';', $expression);
         }
 
         return [$resolve($expression)];
@@ -126,9 +127,16 @@ final class Syntax
 
     public static function phptales(string $expression): array
     {
-        [$tag, $expression] = \explode(':', $expression, 2);
+        $parts = \explode(':', $expression, 2);
+        if (isset($parts[1])) {
+            $tag = \trim($parts[0]);
+            $expression = \trim($parts[1]);
+        } else {
+            $tag = null;
+            $expression = \trim($parts[0]);
+        }
 
-        return [\trim($tag), \trim($expression)];
+        return [$tag, $expression];
     }
 
     public static function line(string $expression)
@@ -167,7 +175,21 @@ final class Syntax
 
     public static function variable(string $expression): string
     {
-        if (\strpos($expression, '$') === false) {
+        $expression = \trim($expression);
+
+        if ($expression[0] === '$') {
+            if ($expression[1] === '{' && $expression[-1] === '}') {
+                $expression = \substr($expression, 2, -1);
+            } else {
+                return $expression;
+            }
+        }
+
+        if (\strpos($expression, 'repeat/') === 0) {
+            return self::repeatVariable($expression);
+        }
+
+        if (\strpos($expression, '/') !== false) {
             $arr = \explode('/', $expression);
             $str = '$';
 
@@ -182,7 +204,24 @@ final class Syntax
             return \substr($str, -2);
         }
 
-        return self::repeatVariable($expression);
+        if (\strpos($expression, '.') !== false) {
+            $arr = \explode('.', $expression);
+
+            $str = '';
+            foreach ($arr as $v) {
+                if ($str === '') {
+                    $str .= '$this->warp($' . self::variable($v) . ')->';
+                } elseif ($v[-1] === ')' && $v[-2] !== '(' && ($pos = \strpos($v, '(')) !== false) {
+                    $str .= \substr($v, 0, $pos) . '(' . self::variable(\substr($v, $pos + 1, -1)) . ')->';
+                } else {
+                    $str .= $v . '->';
+                }
+            }
+
+            return \substr($str, -2);
+        }
+
+        return '$' . $expression;
     }
 
     /**
@@ -203,11 +242,9 @@ final class Syntax
      */
     private static function repeatVariable(string $expression): string
     {
-        if (\strpos($expression, 'repeat/') !== false) {
-            foreach (self::REPEAT_VARIABLE as $k => $replace) {
-                if (\strpos($expression, $k) > 8) {
-                    $expression = \preg_replace("/repeat\/(\w+)\\{$k}/", $replace, $expression);
-                }
+        foreach (self::REPEAT_VARIABLE as $k => $replace) {
+            if (\strpos($expression, $k) > 8) {
+                $expression = \preg_replace("/repeat\/(\w+)\\{$k}/", $replace, $expression);
             }
         }
 

@@ -296,7 +296,7 @@ final class Element extends AbstractToken
         );
         if ($elementMatchSuccessful !== 1) {
             if ($this->getThrowOnError()) {
-                throw new ParseException('Invalid element name. Truncated html = ' . mb_substr($html, 0, 20));
+                throw new ParseException('Invalid element name. Truncated html = ' . \mb_substr($html, 0, 20));
             }
 
             return '';

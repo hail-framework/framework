@@ -23,6 +23,11 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
 
     public function __construct($array)
     {
+        $this->setArray($array);
+    }
+
+    protected function setArray($array)
+    {
         if ($array instanceof self) {
             $array = $array->array;
         } else {
@@ -33,17 +38,10 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
         $this->length = \count($array);
     }
 
-    public function withArray($array, $length = null)
+    public function withArray($array)
     {
-        if ($array instanceof self) {
-            $array = $array->array;
-        } else {
-            $array = (array) $array;
-        }
-
         $new = clone $this;
-        $new->array = $array;
-        $new->length = $length ?? \count($array);
+        $new->setArray($array);
 
         return $new;
     }
@@ -57,7 +55,7 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
     {
         $value = $this->array[$offset] ?? null;
 
-        if ($value) {
+        if ($value !== null) {
             if (\is_array($value)) {
                 return $this->withArray($value);
             }
@@ -73,14 +71,12 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
 
     public function offsetSet($offset, $value)
     {
-        $this->array[$offset] = $value;
-        if ($offset > $this->length) {
-            for ($i = $this->length; $i < $offset; $i++) {
-                $this->array[$i] = null;
-            }
-
-            $this->length = \count($this->array);
+        if ($offset >= $this->length) {
+            $this->length = $offset + 1;
+            $this->array = \array_pad($this->array, $this->length, null);
         }
+
+        $this->array[$offset] = $value;
     }
 
 
@@ -105,8 +101,9 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
     {
         foreach ($args as $v) {
             $this->array[] = $v;
-            ++$this->length;
         }
+
+        $this->length += \count($args);
 
         return $this;
     }
@@ -176,8 +173,7 @@ class ArrayWrapper implements \ArrayAccess, \IteratorAggregate
     public function reverse()
     {
         return $this->withArray(
-            \array_reverse($this->array),
-            $this->length
+            \array_reverse($this->array)
         );
     }
 

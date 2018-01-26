@@ -118,14 +118,7 @@ class Engine
         );
     }
 
-    /**
-     * Get all preassigned template data.
-     *
-     * @param  null|string $template ;
-     *
-     * @return array
-     */
-    public function getData($template = null): array
+    public function getData($template = null)
     {
         if (isset($template, $this->templateVariables[$template])) {
             return \array_merge($this->sharedVariables, $this->templateVariables[$template]);
