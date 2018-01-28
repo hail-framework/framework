@@ -34,7 +34,7 @@ trait RegexTrait
         foreach ($parts as $part) {
             $started = $temp !== '';
 
-            if ($part[\strlen($part) - 1] === '}') {
+            if ($part[-1] === '}') {
                 if ($started) {
                     $part = $temp . $tag . $part;
                     $temp = '';

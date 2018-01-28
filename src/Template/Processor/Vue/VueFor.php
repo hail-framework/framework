@@ -37,7 +37,7 @@ final class VueFor implements ProcessorInterface
         $startCode = $endCode = '';
 
         $sub = \trim($sub);
-        if ($sub[0] === '(' && $sub[\strlen($sub) - 1] === ')') {
+        if ($sub[0] === '(' && $sub[-1] === ')') {
             $sub = \substr($sub, 1, -1);
             $sub = \array_map('trim', \explode(',', $sub));
 

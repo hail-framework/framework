@@ -10,25 +10,26 @@ final class Syntax
     private const SEMI = '&@#semi#@&';
 
     private const PHP_OPERATORS = [
-        ' LT ' => ' < ',
-        ' GT ' => ' > ',
-        ' LE ' => ' <= ',
-        ' GE ' => ' >= ',
-        ' EQ ' => ' == ',
-        ' NE ' => ' != ',
-        ' AND ' => ' && ',
-        ' OR ' => ' || ',
+        'LT' => '<',
+        'GT' => '>',
+        'LE' => '<=',
+        'GE' => '>=',
+        'EQ' => '==',
+        'NE' => '!=',
+        'AND' => '&&',
+        'OR' => '||',
+        'NOT' => '!',
     ];
 
     private const REPEAT_VARIABLE = [
-        '/key' => '$__$1_key',
-        '/index' => '$__$1_num - 1',
-        '/number' => '$__$1_num',
-        '/even' => '$__$1_num % 2 === 1',
-        '/odd' => '$__$1_num % 2 === 0',
-        '/start' => '$__$1_num === 1',
-        '/end' => '$__$1_num === $__$1_count',
-        '/length' => '$__$1_count',
+        'key' => '$__{$item}_key',
+        'index' => '$__{$item}_num - 1',
+        'number' => '$__{$item}_num',
+        'even' => '$__{$item}_num % 2 === 1',
+        'odd' => '$__{$item}_num % 2 === 0',
+        'start' => '$__{$item}_num === 1',
+        'end' => '$__{$item}_num === $__{$item}_count',
+        'length' => '$__{$item}_count',
     ];
 
     public static function resolve(string $expression): string
@@ -89,6 +90,8 @@ final class Syntax
 
     public static function isStructure(string $expression): array
     {
+        $expression = \trim($expression);
+
         if (\strpos($expression, 'structure ') === 0) {
             return [true, \substr($expression, 10)];
         }
@@ -145,22 +148,13 @@ final class Syntax
 
         switch ($tag) {
             case 'php': // php格式
-                $exp = \strtr($exp, self::PHP_OPERATORS);
-
-                // 里面的variable格式需要替换。不带$符号，且有数组形式
-                if (\strpos($exp, '$') === false && \preg_match('/(\w+)\[/', $exp, $matches) === 1) {
-                    $exp = \preg_replace('/(\w+)\[/', '$$1[', $exp);
-                }
-
-                return self::repeatVariable($exp);
+                return self::phpLine($exp);
 
             case 'not':
                 return '!(' . self::line($exp) . ')';
 
             case 'string':
-                $exp = \str_replace(['$$', '"'], ['\\$', '\\"'], $exp);
-
-                return '"' . $exp . '"';
+                return self::string($exp);
 
             case 'exists':
                 return 'isset(' . self::line($exp) . ')';
@@ -177,16 +171,16 @@ final class Syntax
     {
         $expression = \trim($expression);
 
-        if ($expression[0] === '$') {
-            if ($expression[1] === '{' && $expression[-1] === '}') {
-                $expression = \substr($expression, 2, -1);
-            } else {
-                return $expression;
-            }
+        if (!\preg_match('/[a-zA-Z]/', $expression)) {
+            return $expression;
         }
 
-        if (\strpos($expression, 'repeat/') === 0) {
-            return self::repeatVariable($expression);
+        if ($expression[0] === '$') {
+            return $expression;
+        }
+
+        if (($str = self::repeatVariable($expression)) !== null) {
+            return $str;
         }
 
         if (\strpos($expression, '/') !== false) {
@@ -195,13 +189,15 @@ final class Syntax
 
             foreach ($arr as $v) {
                 if ($str === '$') {
-                    $str .= $v . '[\'';
+                    $str .= $v;
+                } elseif ($v === (string) ((int) $v)) {
+                    $str = '[' . $v . ']';
                 } else {
-                    $str .= $v . '\'][\'';
+                    $str .= '[\'' . $v . '\']';
                 }
             }
 
-            return \substr($str, -2);
+            return $str;
         }
 
         if (\strpos($expression, '.') !== false) {
@@ -210,18 +206,97 @@ final class Syntax
             $str = '';
             foreach ($arr as $v) {
                 if ($str === '') {
-                    $str .= '$this->warp($' . self::variable($v) . ')->';
-                } elseif ($v[-1] === ')' && $v[-2] !== '(' && ($pos = \strpos($v, '(')) !== false) {
-                    $str .= \substr($v, 0, $pos) . '(' . self::variable(\substr($v, $pos + 1, -1)) . ')->';
-                } else {
-                    $str .= $v . '->';
+                    $str .= '$this->wrap($' . self::variable($v) . ')';
+                    continue;
                 }
+
+                if (($fn = self::variableBrackets($v)) !== null) {
+                    $v = $fn;
+                }
+
+                $str .= '->' . $v;
             }
 
-            return \substr($str, -2);
+            return $str;
+        }
+
+        if (($fn = self::variableBrackets($expression)) !== null) {
+            return $fn;
+        }
+
+        if (!\preg_match('/^[\w\\\]+::\$?\w+$/', $expression)) {
+            return $expression;
         }
 
         return '$' . $expression;
+    }
+
+    private static function variableBrackets(string $expression): ?string
+    {
+        $expression = \trim($expression);
+        if ($expression[0] === '(' && $expression[-1] === ')') {
+            return '(' . self::phpLine(\substr($expression, 1, -1)) . ')';
+        }
+
+        if (!\preg_match('/^([\w\\\]+)(?:::(\w*))\((.*)\)$/', $expression,$matches)) {
+            return null;
+        }
+
+        $fn = $matches[1];
+        if (empty($matches[2])) {
+            $fn .= '::' . $matches[2];
+        }
+
+        if (empty($matches[3])) {
+            return $fn . '()';
+        }
+
+        $args = [];
+        $temp = '';
+        $inStr = false;
+
+        $chars = \preg_split('//u', $matches[3]);
+        foreach ($chars as $char) {
+            switch ($char) {
+                case '\'':
+                    if ($inStr) {
+                        if ($temp[-1] === '\\') {
+                            $temp .= $char;
+                        } else {
+                            $args[] = self::string($temp);
+                            $temp = '';
+                            $inStr = false;
+                        }
+                    } else {
+                        $inStr = true;
+
+                        if ($temp !== '') {
+                            throw new \LogicException('TAL function struct error');
+                        }
+                    }
+                    break;
+
+                case ',':
+                    if ($inStr) {
+                        $temp .= $char;
+                    } elseif ($temp !== '') {
+                        $args[] = self::variable($temp);
+                        $temp = '';
+                    }
+                    break;
+
+                default:
+                    if ($temp !== '' || $char !== ' ') {
+                        $temp .= $char;
+                    }
+            }
+        }
+
+        if ($temp !== '') {
+            $args[] = self::variable($temp);
+        }
+
+        return $matches[1] . '(' . \implode(',', $args) . ')';
     }
 
     /**
@@ -238,16 +313,140 @@ final class Syntax
      *
      * @param string $expression
      *
+     * @return string|null
+     */
+    private static function repeatVariable(string $expression): ?string
+    {
+        if (\strpos($expression, 'repeat/') !== 0) {
+            return null;
+        }
+
+        $parts = \explode('/', $expression, 3);
+        if (!isset($parts[2], self::REPEAT_VARIABLE[$parts[2]])) {
+            return null;
+        }
+
+        return \str_replace('{$item}', $parts[1], self::REPEAT_VARIABLE[$parts[2]]);
+    }
+
+    /**
+     * string:
+     *
+     * foo $bar baz : "foo $bar baz"
+     * foo $$bar baz : "foo \$bar baz"
+     * foo ${bar} baz : "foo " . $bar . " baz"
+     * foo ${bar/a} baz : "foo " . $bar['a'] . " baz"
+     * foo ${bar.a} baz : "foo " . $bar->a . " baz"
+     * foo ${bar.a baz : "foo \${bar.a baz"
+     *
+     * @param string $expression
+     *
      * @return string
      */
-    private static function repeatVariable(string $expression): string
+    public static function string(string $expression): string
     {
-        foreach (self::REPEAT_VARIABLE as $k => $replace) {
-            if (\strpos($expression, $k) > 8) {
-                $expression = \preg_replace("/repeat\/(\w+)\\{$k}/", $replace, $expression);
+        if ($expression === '') {
+            return '\'\'';
+        }
+
+        $return = '"';
+        $string = $expression;
+        while (($pos = \strpos($string, '$')) !== false) {
+            $return .= \substr($string, 0, $pos);
+            $string = \substr($string, $pos + 1);
+
+            switch ($string[0]) {
+                case '$':
+                    $return .= '\\$';
+                    $string = \substr($string, 1);
+                    break;
+
+                case '{':
+                    if (($end = \strpos($string, '}')) === false) {
+                        $return .= '\\$';
+                    } else {
+                        $return .= '" .' . self::line(\substr($string, 1, $end - 1)) . ' . "';
+                        $string = \substr($string, $end + 1);
+                    }
+                    break;
+
+                default:
+                    $return .= '$';
+                    $string = \substr($string, 1);
+                    break;
             }
         }
 
-        return $expression;
+        $return .= $string . '"';
+
+        return $return;
+    }
+
+    private static function phpLine(string $expression)
+    {
+        $chars = \preg_split('//u', $expression);
+
+        $parts = [];
+        $temp = '';
+        $inFun = 0;
+        $inStr = false;
+        foreach ($chars as $char) {
+            switch ($char) {
+                case ' ':
+                    if ($inStr || $inFun > 0) {
+                        $temp .= $char;
+                    } elseif ($temp !== '') {
+                        $parts[] = self::PHP_OPERATORS[$temp] ?? self::variable($temp);
+                        $temp = '';
+                    }
+                    break;
+
+                case '\'':
+                    if ($inFun > 0) {
+                        $temp .= $char;
+                    } elseif ($inStr) {
+                        if ($temp[-1] === '\\') {
+                            $temp .= $char;
+                        } else {
+                            $parts[] = self::string($temp);
+                            $temp = '';
+                            $inStr = false;
+                        }
+                    } else {
+                        $inStr = true;
+
+                        if ($temp !== '') {
+                            throw new \LogicException('TAL function struct error');
+                        }
+                    }
+                    break;
+
+                case '(':
+                    if (!$inStr) {
+                        ++$inFun;
+                    }
+                    $temp .= $char;
+                    break;
+
+                case ')':
+                    $temp .= $char;
+                    if (!$inStr && $inFun > 0 && --$inFun === 0) {
+                        $parts[] = self::variableBrackets($temp);
+                        $temp = '';
+                    }
+                    break;
+
+                default:
+                    if ($temp !== '') {
+                        $temp .= $char;
+                    }
+            }
+        }
+
+        if ($temp !== '') {
+            $parts[] = self::variable($temp);
+        }
+
+        return \implode(' ', $parts);
     }
 }
