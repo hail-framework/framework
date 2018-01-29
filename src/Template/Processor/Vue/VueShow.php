@@ -19,9 +19,9 @@ final class VueShow implements ProcessorInterface
             throw  new \LogicException('v-show not support for template tag');
         }
 
-        $expression = \trim($expression);
+        $expression = Syntax::parse($expression);
 
-        $style = '<?php echo (' . $expression . ') ? \'\': \'display: none\' ?>';
+        $style = '<?=(' . $expression . ') ? \'\': \'display: none\'?>';
         Helpers::addStyle($element, $style);
 
         $element->removeAttribute('v-show');

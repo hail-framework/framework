@@ -14,9 +14,9 @@ final class VueHtml implements ProcessorInterface
             return false;
         }
 
-        $expression = \trim($expression);
+        $expression = Syntax::parse($expression);
 
-        Helpers::text($element, 'echo $' . $expression);
+        Helpers::text($element, 'echo ' . $expression);
 
         $element->removeAttribute('v-html');
 

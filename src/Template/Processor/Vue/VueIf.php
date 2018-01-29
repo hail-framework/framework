@@ -15,7 +15,7 @@ final class VueIf implements ProcessorInterface
             return false;
         }
 
-        $expression = \trim($expression);
+        $expression = Syntax::parse($expression);
 
         $startCode = 'if (' . $expression . ') {';
         $endCode = '}';
@@ -43,7 +43,7 @@ final class VueIf implements ProcessorInterface
             return;
         }
 
-        $expression = \trim($element->getAttribute('v-else-if'));
+        $expression = Syntax::parse($element->getAttribute('v-else-if'));
 
         $startCode = 'elseif (' . $expression . ') {';
         $endCode = '}';

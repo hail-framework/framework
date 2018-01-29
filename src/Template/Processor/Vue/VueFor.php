@@ -31,7 +31,7 @@ final class VueFor implements ProcessorInterface
         if (((string) $int) === $items) {
             $items = \var_export(\range(1, $int), true);
         } else {
-            $items = '$' . $items;
+            $items = Syntax::parse($items);
         }
 
         $startCode = $endCode = '';

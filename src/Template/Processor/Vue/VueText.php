@@ -14,9 +14,9 @@ final class VueText implements ProcessorInterface
             return false;
         }
 
-        $expression = \trim($expression);
+        $expression = Syntax::parse($expression);
 
-        Helpers::text($element, 'echo \htmlspecialchars($' . $expression . ', ENT_HTML5)');
+        Helpers::text($element, 'echo \htmlspecialchars(' . $expression . ', ENT_HTML5)');
 
         $element->removeAttribute('v-text');
 

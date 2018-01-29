@@ -39,7 +39,7 @@ class Helpers
     /**
      * set inner text of the an element.
      *
-     * @param Element $element
+     * @param Element     $element
      * @param             $phpExpression
      */
     public static function text(Element $element, $phpExpression): void
@@ -90,10 +90,14 @@ class Helpers
     /**
      * @param TokenInterface $element
      * @param array          $processors
+     * @param string         $class
      */
-    public static function parseElement(TokenInterface $element, array $processors): void
-    {
-        if ($element instanceof Element) {
+    public static function parseElement(
+        TokenInterface $element,
+        array $processors,
+        string $class = Element::class
+    ): void {
+        if ($element instanceof $class) {
             foreach ($processors as $processor) {
                 if ($processor::process($element)) {
                     return;

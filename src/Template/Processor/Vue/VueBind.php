@@ -3,7 +3,6 @@
 namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class VueBind implements ProcessorInterface
@@ -11,7 +10,9 @@ final class VueBind implements ProcessorInterface
     public static function process(Element $element): bool
     {
         foreach (self::findBindAttribute($element) as $attr => $val) {
-            $element->setAttribute($attr, '<?php echo $' . $val . '; ?>');
+            $value = VuePhp::$parser->parse($val)->toExpression();
+
+            $element->setAttribute($attr, '<?=' . $value . '?>');
             $element->removeAttribute($attr);
         }
 

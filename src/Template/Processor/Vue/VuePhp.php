@@ -2,9 +2,11 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Processor\Vue\Parser\FilterParser;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
+use Hail\Template\Tokenizer\Token\Text;
 
 final class VuePhp implements ProcessorInterface
 {
@@ -19,6 +21,12 @@ final class VuePhp implements ProcessorInterface
         VueHtml::class,
         VueBind::class,
     ];
+
+    /**
+     * @var FilterParser
+     */
+    public static $parser;
+
 
     public static function process(Element $element): bool
     {
@@ -43,7 +51,10 @@ final class VuePhp implements ProcessorInterface
             }
         }
 
+        self::$parser = new FilterParser();
+
         Helpers::parseElement($element, self::PROCESSORS);
+        Helpers::parseElement($element, [TextVar::class], Text::class);
 
         if ($element->getName() === 'template') {
             foreach ($element->getChildren() as $child) {
