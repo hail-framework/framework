@@ -18,13 +18,13 @@ class Syntax
     public static function parse(string $expression): string
     {
         $expression = \trim($expression);
-        if (isset(static::$cache[$expression])) {
-            return static::$cache[$expression];
+        if (isset(self::$cache[$expression])) {
+            return self::$cache[$expression];
         }
 
-        $result = static::jsParse($expression);
+        $result = self::jsParse($expression);
 
-        return static::$cache[$expression] = $result;
+        return self::$cache[$expression] = $result;
     }
 
     /**
@@ -32,7 +32,7 @@ class Syntax
      *
      * @return string
      */
-    protected static function jsParse(string $expression): string
+    private static function jsParse(string $expression): string
     {
         if ($expression === '') {
             return '';
@@ -43,24 +43,24 @@ class Syntax
         }
 
         if ($expression[0] === '!') { // ! operator application
-            return '!(' . static::parse(\substr($expression, 1)) . ')';
+            return '!(' . self::parse(\substr($expression, 1)) . ')';
         }
 
         if ($expression[0] === '\'' && $expression[-1] === '\'') {
-            return static::string(\substr($expression, 1, -1));
+            return self::string(\substr($expression, 1, -1));
         }
 
         $parts = \explode('.', $expression);
 
-        return static::variable($parts);
+        return self::variable($parts);
     }
 
-    protected static function string(string $exp): string
+    private static function string(string $exp): string
     {
         return \var_export($exp, true);
     }
 
-    protected static function variable(array $parts): string
+    private static function variable(array $parts): string
     {
         $value = '';
         foreach ($parts as $part) {
@@ -70,7 +70,7 @@ class Syntax
                 if (\preg_match('/^(\w+)\((.*)\)$/', $part, $matches)) {
                     $args = '';
                     if (!empty($matches[2])) {
-                        $args = static::explode(',', $matches[2]);
+                        $args = self::explode(',', $matches[2]);
                     }
 
                     $value .= "->{$matches[1]}({$args})";
@@ -83,7 +83,7 @@ class Syntax
         return $value;
     }
 
-    protected static function explode(string $delimiter, string $string): string
+    private static function explode(string $delimiter, string $string): string
     {
         $temp = '';
         $args = [];
