@@ -15,8 +15,6 @@ final class VueFor implements ProcessorInterface
             return false;
         }
 
-        $expression = \trim($expression);
-
         if (\strpos($expression, ' of ') !== false) {
             $delimiter = ' of ';
         } elseif (\strpos($expression, ' in ') !== false) {
@@ -27,6 +25,7 @@ final class VueFor implements ProcessorInterface
 
         [$sub, $items] = \explode($delimiter, $expression, 2);
 
+        $items = \trim($items);
         $int = (int) $items;
         if (((string) $int) === $items) {
             $items = \var_export(\range(1, $int), true);
@@ -38,24 +37,18 @@ final class VueFor implements ProcessorInterface
 
         $sub = \trim($sub);
         if ($sub[0] === '(' && $sub[-1] === ')') {
-            $sub = \substr($sub, 1, -1);
-            $sub = \array_map('trim', \explode(',', $sub));
+            $parts = \explode(',', \substr($sub, 1, -1), 3);
 
-            switch (\count($sub)) {
-                case 1:
-                    $sub = '$' . $sub[0];
-                    break;
-                case 2:
-                    $sub = '$' . $sub[1] . ' => $' . $sub[0];
-                    break;
-                case 3:
-                    $startCode = '$' . $sub[2] . ' = 0; ';
-                    $endCode = '++$' . $sub[2] . '; ';
-                    $sub = '$' . $sub[1] . ' => $' . $sub[0];
-                    break;
+            $sub = '$' . \trim($parts[0]);
 
-                default:
-                    throw new \LogicException('v-for syntax error: ' . \implode(', ', $sub));
+            if (isset($parts[1])) {
+                $sub = '$' . \trim($parts[1]) . ' => ' . $sub;
+
+                if (isset($parts[2])) {
+                    $c = \trim($parts[2]);
+                    $startCode = '$' . $c . ' = 0; ';
+                    $endCode = '++$' . $c . '; ';
+                }
             }
         } else {
             $sub = '$' . $sub;

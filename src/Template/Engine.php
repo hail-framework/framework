@@ -5,9 +5,7 @@ namespace Hail\Template;
 use Hail\Template\Extension\ExtensionInterface;
 use Hail\Template\Processor\Helpers as Processor;
 use Hail\Template\Processor\ProcessorInterface;
-use Hail\Template\Processor\{
-    Tal, Vue
-};
+use Hail\Template\Processor\Vue;
 
 class Engine
 {
@@ -15,13 +13,6 @@ class Engine
      * @var ProcessorInterface[]
      */
     protected $processors = [
-        Tal\TalDefine::class,
-        Tal\TalCondition::class,
-        Tal\TalRepeat::class,
-        Tal\TalContent::class,
-        Tal\TalReplace::class,
-        Tal\TalAttributes::class,
-
         Vue\VuePhp::class,
     ];
 

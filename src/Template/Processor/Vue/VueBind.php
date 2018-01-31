@@ -23,10 +23,7 @@ final class VueBind implements ProcessorInterface
     {
         foreach ($element->getAttributes() as $attribute) {
             $attr = $attribute->nodeName;
-            if (
-                \strpos($attr, 'v-bind:') === 0 ||
-                \strpos($attr, ':') === 0
-            ) {
+            if ($attr[0] === ':' || \strpos($attr, 'v-bind:') === 0) {
                 $attr = \explode(':', $attr, 2)[1];
                 yield $attr => \trim($attribute->nodeValue);
             }
