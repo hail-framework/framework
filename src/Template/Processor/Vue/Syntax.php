@@ -7,15 +7,6 @@ class Syntax
 {
     private const TAG_QUOTE = '#@!QUOTE!@#';
 
-    private const SUPPORT_SIGN = [
-        '--', '++',
-        '===', '==', '!==', '!=',
-        '&&', '||',
-        '!',
-        '=>', '>=', '<=', '>', '<',
-        '/', '%', '*', '-', '+',
-    ];
-
     /**
      * @var string[] Indexed by expression string
      */
@@ -28,17 +19,6 @@ class Syntax
      */
     public static function parse(string $expression): string
     {
-        if (($result = self::getCache($expression)) !== null) {
-            return $result;
-        }
-
-        if (self::hasSign($expression)) {
-            return self::setCache(
-                $expression,
-                self::sign($expression)
-            );
-        }
-
         return self::line($expression);
     }
 
@@ -58,56 +38,6 @@ class Syntax
         return self::$cache[$expression] = $result;
     }
 
-
-    private static function hasSign(string $expression): bool
-    {
-        static $replaceSign = null;
-
-        if ($replaceSign === null) {
-            $replaceSign = \array_combine(self::SUPPORT_SIGN,
-                \array_fill(0, \count(self::SUPPORT_SIGN), '')
-            );
-        }
-
-        return \strtr($expression, $replaceSign) !== $expression;
-    }
-
-    private static function sign(string $expression, int $i = 0): string
-    {
-        if (!isset(self::SUPPORT_SIGN[$i])) {
-            $prefix = $suffix = '';
-
-            if ($expression[0] === '(') {
-                $prefix = '(';
-                $expression = \substr($expression, 1);
-            }
-
-            if ($expression[-1] === ')') {
-                $suffix = ')';
-                $expression = \substr($expression, 0, -1);
-            }
-
-            return $prefix . self::line($expression) . $suffix;
-        }
-
-        $sign = self::SUPPORT_SIGN[$i++];
-
-        if (\strpos($expression, $sign) === false) {
-            return self::sign($expression, $i);
-        }
-
-        $parts = self::explode($sign, $expression);
-
-        foreach ($parts as &$exp) {
-            $exp = self::sign($exp, $i);
-        }
-
-        if ($sign === '+') {
-            return '$this->jsPlus(' . \implode(',', $parts) . ')';
-        }
-
-        return \implode($sign, $parts);
-    }
 
     /**
      * @param string $expression
