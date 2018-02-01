@@ -7,18 +7,18 @@ class Token
 {
     private const WHITESPACE = [
         '?', ':', '-', '*', '/', '<', '>',
-        T_BOOLEAN_AND,
-        T_BOOLEAN_OR,
-        T_IS_EQUAL,
-        T_IS_GREATER_OR_EQUAL,
-        T_IS_IDENTICAL,
-        T_IS_NOT_EQUAL,
-        T_IS_NOT_IDENTICAL,
-        T_IS_SMALLER_OR_EQUAL,
+        'T_BOOLEAN_AND',
+        'T_BOOLEAN_OR',
+        'T_IS_EQUAL',
+        'T_IS_GREATER_OR_EQUAL',
+        'T_IS_IDENTICAL',
+        'T_IS_NOT_EQUAL',
+        'T_IS_NOT_IDENTICAL',
+        'T_IS_SMALLER_OR_EQUAL',
     ];
 
     /**
-     * @var int|null
+     * @var string
      */
     private $type;
 
@@ -30,18 +30,24 @@ class Token
     public function __construct($token)
     {
         if (\is_array($token)) {
-            [$this->type, $this->content] = $token;
+            [$type, $this->content] = $token;
+            $this->type = \token_name($type);
         } else {
             $this->type = $this->content = $token;
         }
     }
 
-    public function is($type): bool
+    public function is(string $name): bool
     {
-        return $this->type === $type;
+        return $this->type === $name;
     }
 
-    public function __toString()
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function getContent(): string
     {
         if (\in_array($this->type, self::WHITESPACE, true)) {
             return " {$this->content} ";
@@ -52,5 +58,10 @@ class Token
         }
 
         return $this->content;
+    }
+
+    public function __toString()
+    {
+        return $this->getContent();
     }
 }

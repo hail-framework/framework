@@ -124,5 +124,7 @@ class Parser
         }
 
         $tree = $temp[0];
+
+        return $tree;
     }
 }
