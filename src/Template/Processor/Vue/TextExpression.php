@@ -6,7 +6,7 @@ use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\Text;
 
-final class TextVar implements ProcessorInterface
+final class TextExpression implements ProcessorInterface
 {
     public static function process(Element $element): bool
     {

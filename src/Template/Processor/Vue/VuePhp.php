@@ -54,7 +54,7 @@ final class VuePhp implements ProcessorInterface
         self::$parser = new FilterParser();
 
         Helpers::parseElement($element, self::PROCESSORS);
-        Helpers::parseElement($element, [TextVar::class], Text::class);
+        Helpers::parseElement($element, [TextExpression::class], Text::class);
 
         if ($element->getName() === 'template') {
             foreach ($element->getChildren() as $child) {
