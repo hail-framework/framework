@@ -329,7 +329,14 @@ final class Element extends AbstractToken
             return $remainingHtml;
         }
 
-        $text = new Text($this, $this->value);
+        if ($tag === 'script') {
+            $text = new TextJs($this, $this->value);
+        } elseif ($tag === 'style') {
+            $text = new TextCss($this, $this->value);
+        } else {
+            $text = new Text($this, $this->value);
+        }
+
         $this->children[] = $text;
 
         return $remainingHtml;

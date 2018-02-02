@@ -4,11 +4,16 @@ namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\ProcessorInterface;
+use Hail\Template\Tokenizer\Token\TokenInterface;
 
 final class VueBind implements ProcessorInterface
 {
-    public static function process(Element $element): bool
+    public static function process(TokenInterface $element): bool
     {
+        if (!$element instanceof Element) {
+            return false;
+        }
+
         foreach (self::findBindAttribute($element) as $attr => $val) {
             $value = VuePhp::$parser->parse($val)->toExpression();
 

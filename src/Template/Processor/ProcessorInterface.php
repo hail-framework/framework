@@ -2,9 +2,9 @@
 
 namespace Hail\Template\Processor;
 
-use Hail\Template\Tokenizer\Token\Element;
+use Hail\Template\Tokenizer\Token\TokenInterface;
 
 interface ProcessorInterface
 {
-    public static function process(Element $element): bool;
+    public static function process(TokenInterface $element): bool;
 }

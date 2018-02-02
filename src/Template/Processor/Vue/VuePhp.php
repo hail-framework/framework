@@ -7,6 +7,7 @@ use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\Text;
+use Hail\Template\Tokenizer\Token\TokenInterface;
 
 final class VuePhp implements ProcessorInterface
 {
@@ -14,12 +15,13 @@ final class VuePhp implements ProcessorInterface
      * @var ProcessorInterface[]
      */
     private const PROCESSORS = [
-        VueFor::class,
-        VueShow::class,
-        VueIf::class,
-        VueText::class,
-        VueHtml::class,
-        VueBind::class,
+        VueFor::class => Element::class,
+        VueShow::class => Element::class,
+        VueIf::class => Element::class,
+        VueText::class => Element::class,
+        VueHtml::class => Element::class,
+        VueBind::class => Element::class,
+        TextExpression::class => Text::class,
     ];
 
     /**
@@ -28,8 +30,12 @@ final class VuePhp implements ProcessorInterface
     public static $parser;
 
 
-    public static function process(Element $element): bool
+    public static function process(TokenInterface $element): bool
     {
+        if (!$element instanceof Element) {
+            return false;
+        }
+
         if (!$element->hasAttribute('v-php')) {
             return $element->getName() === 'template';
         }
@@ -54,7 +60,6 @@ final class VuePhp implements ProcessorInterface
         self::$parser = new FilterParser();
 
         Helpers::parseElement($element, self::PROCESSORS);
-        Helpers::parseElement($element, [TextExpression::class], Text::class);
 
         if ($element->getName() === 'template') {
             foreach ($element->getChildren() as $child) {

@@ -2,7 +2,7 @@
 
 namespace Hail\Template\Tokenizer\Token;
 
-final class Text extends AbstractToken
+class Text extends AbstractToken
 {
     /**
      * Constructor

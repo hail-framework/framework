@@ -6,6 +6,7 @@ use Hail\Template\Extension\ExtensionInterface;
 use Hail\Template\Processor\Helpers as Processor;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Processor\Vue;
+use Hail\Template\Tokenizer\Token\Element;
 
 class Engine
 {
@@ -13,7 +14,7 @@ class Engine
      * @var ProcessorInterface[]
      */
     protected $processors = [
-        Vue\VuePhp::class,
+        Vue\VuePhp::class => Element::class,
     ];
 
     /**
