@@ -37,9 +37,17 @@ class Token
         }
     }
 
-    public function is(string $name): bool
+    public function is($name): bool
     {
-        return $this->type === $name;
+        $name = (array) $name;
+
+        foreach ($name as &$v) {
+            if (\is_int($v)) {
+                $v = \token_name($v);
+            }
+        }
+
+        return \in_array($this->type, $name, true);
     }
 
     public function getType(): string

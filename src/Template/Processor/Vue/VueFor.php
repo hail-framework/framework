@@ -2,6 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
@@ -30,7 +31,7 @@ final class VueFor implements ProcessorInterface
         if (((string) $int) === $items) {
             $items = \var_export(\range(1, $int), true);
         } else {
-            $items = Syntax::parse($items);
+            $items = Expression::parse($items);
         }
 
         $startCode = $endCode = '';

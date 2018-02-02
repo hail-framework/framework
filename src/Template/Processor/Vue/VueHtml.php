@@ -1,6 +1,7 @@
 <?php
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
@@ -14,7 +15,7 @@ final class VueHtml implements ProcessorInterface
             return false;
         }
 
-        $expression = Syntax::parse($expression);
+        $expression = Expression::parse($expression);
 
         Helpers::text($element, 'echo ' . $expression);
 

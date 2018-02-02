@@ -2,6 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
@@ -15,7 +16,7 @@ final class VueIf implements ProcessorInterface
             return false;
         }
 
-        $expression = Syntax::parse($expression);
+        $expression = Expression::parse($expression);
 
         $startCode = 'if (' . $expression . ') {';
         $endCode = '}';
@@ -43,7 +44,7 @@ final class VueIf implements ProcessorInterface
             return;
         }
 
-        $expression = Syntax::parse($element->getAttribute('v-else-if'));
+        $expression = Expression::parse($element->getAttribute('v-else-if'));
 
         $startCode = 'elseif (' . $expression . ') {';
         $endCode = '}';

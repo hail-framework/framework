@@ -2,6 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
@@ -19,7 +20,7 @@ final class VueShow implements ProcessorInterface
             throw  new \LogicException('v-show not support for template tag');
         }
 
-        $expression = Syntax::parse($expression);
+        $expression = Expression::parse($expression);
 
         $style = '<?=(' . $expression . ') ? \'\': \'display: none\'?>';
         Helpers::addStyle($element, $style);

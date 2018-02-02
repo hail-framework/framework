@@ -2,7 +2,7 @@
 
 namespace Hail\Template\Processor\Vue\Parser;
 
-use Hail\Template\Processor\Vue\Syntax;
+use Hail\Template\Expression\Expression;
 
 class ParseResult
 {
@@ -40,7 +40,7 @@ class ParseResult
     public function toExpression(): string
     {
         if (\count($this->filterCalls) === 0) {
-            return Syntax::parse($this->expressions[0]);
+            return Expression::parse($this->expressions[0]);
         }
 
         $nextFilterArguments = $this->parseExpressions($this->expressions);
@@ -64,7 +64,7 @@ class ParseResult
     private function parseExpressions(array $expressions): array
     {
         foreach ($expressions as &$exp) {
-            $exp = Syntax::parse($exp);
+            $exp = Expression::parse($exp);
         }
 
         return $expressions;
