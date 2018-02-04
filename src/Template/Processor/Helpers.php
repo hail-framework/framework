@@ -88,16 +88,15 @@ class Helpers
     }
 
     /**
-     * @param TokenInterface $element
-     * @param array          $processors
+     * @param TokenInterface       $element
+     * @param ProcessorInterface[] $processors
      */
     public static function parseElement(
         TokenInterface $element,
         array $processors
     ): void {
-        /* @var ProcessorInterface $processor */
-        foreach ($processors as $processor => $class) {
-            if ($element instanceof $class && $processor::process($element)) {
+        foreach ($processors as $processor) {
+            if ($processor::process($element)) {
                 return;
             }
         }

@@ -2,6 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\Text;
 use Hail\Template\Tokenizer\Token\TokenInterface;
@@ -21,8 +22,7 @@ final class TextExpression implements ProcessorInterface
 
         if ($matches['expression'] !== []) {
             foreach ($matches['expression'] as $index => $expression) {
-                $value = VuePhp::$parser->parse($expression)
-                    ->toExpression();
+                $value = Expression::parseWithFilters($expression);
 
                 $text = \str_replace($matches[0][$index], $value, $text);
             }

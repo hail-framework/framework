@@ -42,13 +42,106 @@ class Expression
             return $expression;
         }
 
-        if (isset(self::$cache[$expression])) {
-            return self::$cache[$expression];
+        if (!isset(self::$cache[$expression])) {
+            $tree = self::treeStruct($expression);
+            self::$cache[$expression] = self::transform($tree);
         }
 
-        $tree = self::treeStruct($expression);
+        return self::$cache[$expression];
+    }
 
-        return self::$cache[$expression] = self::transform($tree);
+    /**
+     * @param string $expression
+     *
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    public static function parseWithFilters(string $expression): string
+    {
+        $expression = \trim($expression);
+
+        if ($expression === '' || \is_numeric($expression)) {
+            return $expression;
+        }
+
+        if (!isset(self::$cache[$expression])) {
+            $tree = self::treeStruct($expression);
+            [$tree, $filters] = self::splitFilters($tree);
+
+            $code = self::transform($tree);
+            if ($filters !== []) {
+                $code = '$this->filter(' . $code . ')';
+
+                /* @var Token $filter */
+                foreach ($filters as [$filter, $args]) {
+                    $code .= '->' . $filter->getContent();
+                    if ($args === []) {
+                        $code .= '()';
+                    } else {
+                        $code .= self::transform($args);
+                    }
+                }
+            }
+
+            self::$cache[$expression] = $code . '->getResult()';
+        }
+
+        return self::$cache[$expression];
+    }
+
+    /**
+     * @param array $tree
+     *
+     * @return array[]
+     * @throws \InvalidArgumentException
+     */
+    private static function splitFilters(array $tree): array
+    {
+        $n = \count($tree);
+
+        $filters = $temp = [];
+        $lastSplit = null;
+
+        $first = \array_search('|', $tree, false);
+
+        for ($i = $n - 1; $i >= $first; --$i) {
+            $part = $tree[$n];
+
+            if (\is_array($part)) {
+                $temp[] = $part;
+                continue;
+            }
+
+            /* @var Token $part */
+            if ($part->is('|')) {
+                if ($temp === []) {
+                    throw new \InvalidArgumentException('Invalid filter syntax');
+                }
+
+                $count = \count($temp);
+
+                if ($count === 1) {
+                    $lastSplit = $i;
+                    $filters[] = [$temp[0], []];
+                } elseif ($count === 2 &&
+                    \is_array($temp[0]) &&
+                    $temp[1] instanceof Token &&
+                    $temp[1]->is(T_STRING)
+                ) {
+                    $lastSplit = $i;
+                    $filters[] = [$temp[1], $temp[0]];
+                } else {
+                    break;
+                }
+            } else {
+                $temp[] = $part;
+            }
+        }
+
+        $tree = \array_slice($tree, 0, $lastSplit);
+        $filters = \array_reverse($filters);
+
+        return [$tree, $filters];
     }
 
     /**

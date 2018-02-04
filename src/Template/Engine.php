@@ -6,7 +6,6 @@ use Hail\Template\Extension\ExtensionInterface;
 use Hail\Template\Processor\Helpers as Processor;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Processor\Vue;
-use Hail\Template\Tokenizer\Token\Element;
 
 class Engine
 {
@@ -14,7 +13,7 @@ class Engine
      * @var ProcessorInterface[]
      */
     protected $processors = [
-        Vue\VuePhp::class => Element::class,
+        Vue\VuePhp::class,
     ];
 
     /**
@@ -53,6 +52,11 @@ class Engine
      */
     protected $functions;
 
+    /**
+     * @var array
+     */
+    protected $filters;
+
     public function __construct(array $config = [])
     {
         if (!isset($config['directory']) && !isset($config['fallback'])) {
@@ -69,6 +73,10 @@ class Engine
 
         if (isset($config['processors']) && \is_array($config['processors'])) {
             $this->processors = \array_merge($this->processors, $config['processors']);
+        }
+
+        if (isset($config['filters']) && \is_array($config['filters'])) {
+            $this->filters = $config['filters'];
         }
     }
 
@@ -456,5 +464,13 @@ class Engine
         $file = $this->compile($name);
 
         return new Template($this, $name, $file);
+    }
+
+    /**
+     * @return array
+     */
+    public function getFilters(): array
+    {
+        return $this->filters;
     }
 }

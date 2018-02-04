@@ -116,7 +116,12 @@ class Template
         return $this->data;
     }
 
-    public function wrap($data)
+    /**
+     * @param mixed $data
+     *
+     * @return ArrayWrapper|StringWrapper|mixed
+     */
+    protected function wrap($data)
     {
         switch (\gettype($data)) {
             case 'array':
@@ -128,6 +133,19 @@ class Template
             default:
                 return $data;
         }
+    }
+
+    /**
+     * @param $value
+     *
+     * @return Filter
+     */
+    protected function filter($value): Filter
+    {
+        return new Filter(
+            $this->engine->getFilters(),
+            $value
+        );
     }
 
     /**

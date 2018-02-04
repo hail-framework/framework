@@ -2,6 +2,7 @@
 
 namespace Hail\Template\Processor\Vue;
 
+use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\TokenInterface;
@@ -15,7 +16,7 @@ final class VueBind implements ProcessorInterface
         }
 
         foreach (self::findBindAttribute($element) as $attr => $val) {
-            $value = VuePhp::$parser->parse($val)->toExpression();
+            $value = Expression::parseWithFilters($val);
 
             $element->setAttribute($attr, '<?=' . $value . '?>');
             $element->removeAttribute($attr);

@@ -2,11 +2,9 @@
 
 namespace Hail\Template\Processor\Vue;
 
-use Hail\Template\Processor\Vue\Parser\FilterParser;
 use Hail\Template\Tokenizer\Token\Element;
 use Hail\Template\Processor\Helpers;
 use Hail\Template\Processor\ProcessorInterface;
-use Hail\Template\Tokenizer\Token\Text;
 use Hail\Template\Tokenizer\Token\TokenInterface;
 
 final class VuePhp implements ProcessorInterface
@@ -15,20 +13,14 @@ final class VuePhp implements ProcessorInterface
      * @var ProcessorInterface[]
      */
     private const PROCESSORS = [
-        VueFor::class => Element::class,
-        VueShow::class => Element::class,
-        VueIf::class => Element::class,
-        VueText::class => Element::class,
-        VueHtml::class => Element::class,
-        VueBind::class => Element::class,
-        TextExpression::class => Text::class,
+        VueFor::class,
+        VueShow::class,
+        VueIf::class,
+        VueText::class,
+        VueHtml::class,
+        VueBind::class,
+        TextExpression::class,
     ];
-
-    /**
-     * @var FilterParser
-     */
-    public static $parser;
-
 
     public static function process(TokenInterface $element): bool
     {
@@ -56,8 +48,6 @@ final class VuePhp implements ProcessorInterface
                 self::after($element, clone $element);
             }
         }
-
-        self::$parser = new FilterParser();
 
         Helpers::parseElement($element, self::PROCESSORS);
 
