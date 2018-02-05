@@ -1,6 +1,6 @@
 <?php
 /* ===========================================================================
- * Copyright (c) 2014-2017 The Opis Project
+ * Copyright (c) 2014-2018 The Opis Project
  *
  * Licensed under the MIT License
  * =========================================================================== */
@@ -70,8 +70,11 @@ class ReflectionClosure extends ReflectionFunction
         }
 
 
-        $php7 = '7' === "\u{37}";
-        $php7_types = ['string', 'int', 'bool', 'float'];
+        $php7_types = ['string', 'int', 'bool', 'float', 'void'];
+        if (PHP_VERSION_ID >= 70200) {
+            $php7_types[] = 'object';
+        }
+
         $ns = $this->getNamespaceName();
         $nsf = $ns === '' ? '' : ($ns[0] === '\\' ? $ns : '\\' . $ns);
 
@@ -158,6 +161,10 @@ class ReflectionClosure extends ReflectionFunction
                             $lastState = 'closure_args';
                             $state = 'ignore_next';
                             break;
+                        case ':':
+                            $code .= ':';
+                            $state = 'return';
+                            break;
                         case '{':
                             $code .= '{';
                             $state = 'closure';
@@ -178,8 +185,38 @@ class ReflectionClosure extends ReflectionFunction
                             $state = 'closure';
                             $open++;
                             break;
+                        case ':':
+                            $code .= ':';
+                            $state = 'return';
+                            break;
                         default:
                             $code .= \is_array($token) ? $token[1] : $token;
+                            break;
+                    }
+                    break;
+                case 'return':
+                    switch ($token[0]) {
+                        case T_WHITESPACE:
+                        case T_COMMENT:
+                        case T_DOC_COMMENT:
+                            $code .= $token[1];
+                            break;
+                        case T_NS_SEPARATOR:
+                        case T_STRING:
+                            $id_start = $token[1];
+                            $id_start_ci = strtolower($id_start);
+                            $id_name = '';
+                            $context = 'return_type';
+                            $state = 'id_name';
+                            $lastState = 'return';
+                            break 2;
+                        case '{':
+                            $code .= '{';
+                            $state = 'closure';
+                            $open++;
+                            break;
+                        default:
+                            $code .= is_array($token) ? $token[1] : $token;
                             break;
                     }
                     break;
@@ -376,7 +413,7 @@ class ReflectionClosure extends ReflectionFunction
                             if ($id_start !== '\\') {
                                 if ($id_start_ci === 'self' || $id_start_ci === 'static') {
                                     $isUsingScope = true;
-                                } elseif (!($php7 && \in_array($id_start_ci, $php7_types, true))) {
+                                } elseif (!\in_array($id_start_ci, $php7_types, true)) {
                                     if ($classes === null) {
                                         $classes = $this->getClasses();
                                     }
@@ -393,10 +430,10 @@ class ReflectionClosure extends ReflectionFunction
                             break;
                         default:
                             if ($id_start !== '\\') {
-                                if ($context === 'instanceof' || $context === 'args') {
+                                if ($context === 'instanceof' || $context === 'args' || $context === 'return_type') {
                                     if ($id_start_ci === 'self' || $id_start_ci === 'static') {
                                         $isUsingScope = true;
-                                    } elseif (!($php7 && \in_array($id_start_ci, $php7_types, true))) {
+                                    } elseif (!\in_array($id_start_ci, $php7_types, true)) {
                                         if ($classes === null) {
                                             $classes = $this->getClasses();
                                         }

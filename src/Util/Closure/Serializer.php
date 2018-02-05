@@ -138,6 +138,8 @@ class Serializer
      *
      * @param mixed      $data       Any variable that contains closures.
      * @param Serializer $serializer The serializer to use.
+     *
+     * @throws \ReflectionException
      */
     public static function wrapClosures(&$data, Serializer $serializer)
     {
