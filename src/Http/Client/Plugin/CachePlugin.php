@@ -101,7 +101,9 @@ final class CachePlugin implements PluginInterface
         $method = \strtoupper($request->getMethod());
         // if the request not is cachable, move to $next
         if (!\in_array($method, $this->config['methods'], true)) {
-            return $handler->handle($request);
+            return $handler->handle($request)->then(static function (ResponseInterface $response) {
+                return $response->withHeader('X-Cache', 'MISS');
+            });
         }
 
         // If we can cache the request
@@ -113,7 +115,9 @@ final class CachePlugin implements PluginInterface
             // The array_key_exists() is to be removed in 2.0.
             if (\array_key_exists('expiresAt', $data) && (null === $data['expiresAt'] || time() < $data['expiresAt'])) {
                 // This item is still valid according to previous cache headers
-                return Promise::promise($this->createResponseFromCacheItem($cacheItem));
+                return Promise::promise($this->createResponseFromCacheItem($cacheItem))->then(static function (ResponseInterface $response) {
+                    return $response->withHeader('X-Cache', 'HIT');
+                });
             }
 
             // Add headers to ask the server if this cache is still valid
@@ -133,7 +137,7 @@ final class CachePlugin implements PluginInterface
                      * We do not have the item in cache. This plugin did not add If-Modified-Since
                      * or If-None-Match headers. Return the response from server.
                      */
-                    return $response;
+                    return $response->withHeader('X-Cache', 'MISS');
                 }
 
                 // The cached response we have is still valid
@@ -143,7 +147,7 @@ final class CachePlugin implements PluginInterface
                 $cacheItem->set($data)->expiresAfter($this->calculateCacheItemExpiresAfter($maxAge));
                 $this->pool->save($cacheItem);
 
-                return $this->createResponseFromCacheItem($cacheItem);
+                return $this->createResponseFromCacheItem($cacheItem)->withHeader('X-Cache', 'HIT');
             }
 
             if ($this->isCacheable($response)) {
@@ -168,7 +172,7 @@ final class CachePlugin implements PluginInterface
                 $this->pool->save($cacheItem);
             }
 
-            return $response;
+            return $response->withHeader('X-Cache', 'HIT');
         });
     }
 
