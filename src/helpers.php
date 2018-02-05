@@ -201,3 +201,37 @@ function config(string $key)
 
     return (new \Hail\Config(root_path('@base')))->get($key);
 }
+
+/**
+ * @param array ...$args
+ *
+ * @return mixed|null
+ * @tracySkipLocation
+ */
+function dump(...$args)
+{
+    array_map('Hail\Debugger\Debugger::dump', $args);
+
+    return $args[0] ?? null;
+}
+
+/**
+ * @param array ...$args
+ * @tracySkipLocation
+ */
+function dumpe(...$args)
+{
+    array_map('Hail\Debugger\Debugger::dump', $args);
+
+    exit;
+}
+
+/**
+ * Tracy\Debugger::barDump() shortcut.
+ * @tracySkipLocation
+ */
+function bdump($var)
+{
+    call_user_func_array('Tracy\Debugger::barDump', func_get_args());
+    return $var;
+}

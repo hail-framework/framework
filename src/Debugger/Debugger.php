@@ -21,7 +21,7 @@ use Psr\Log\LogLevel;
  */
 class Debugger
 {
-    public const VERSION = '2.4.10';
+    public const VERSION = '2.4.11';
 
     /** server modes for Debugger::enable() */
     public const
@@ -217,14 +217,6 @@ class Debugger
         // logging configuration
         if ($email !== null) {
             self::$email = $email;
-        }
-
-        if (
-            $logDirectory === null ||
-            !\is_dir(self::$logDirectory) ||
-            !\preg_match('#([a-z]+:)?[/\\\\]#Ai', self::$logDirectory)
-        ) {
-            self::exceptionHandler(new \RuntimeException('Logging directory not found or is not absolute path.'));
         }
 
         if ($logDirectory) {
@@ -815,30 +807,39 @@ class Debugger
     /**
      * Logs message or exception.
      *
-     * @param  string|\Exception|\Throwable
+     * @param string|\Throwable $message
+     * @param string            $priority
      *
-     * @return mixed
+     * @return string|null
      */
-    public static function log($message, $priority = self::INFO)
+    public static function log($message, $priority = self::INFO): ?string
     {
-        return self::sendToLogger(self::getLogger(), $priority, $message);
-    }
+        $logger = self::sendToLogger(self::getLogger(), $priority, $message);
 
-    protected static function sendToLogger(LoggerInterface $logger, $level, $message)
-    {
-        if ($message instanceof \Throwable) {
-            return $logger->log($level, '{exception}', [
-                'exception' => $message,
-            ]);
+        if ($logger instanceof Logger) {
+            return $logger->getLastExceptionFile();
         }
 
-        return $logger->log($level, $message);
+        return null;
+    }
+
+    protected static function sendToLogger(LoggerInterface $logger, $level, $message): LoggerInterface
+    {
+        if ($message instanceof \Throwable) {
+            $logger->log($level, '{exception}', [
+                'exception' => $message,
+            ]);
+        } else {
+            $logger->log($level, $message);
+        }
+
+        return $logger;
     }
 
     /**
      * Sends message to ChromeLogger console.
      *
-     * @param  mixed $message message to log
+     * @param mixed  $message message to log
      * @param string $priority
      *
      * @return bool    was successful?
@@ -846,7 +847,9 @@ class Debugger
     public static function chromeLog($message, $priority = self::DEBUG)
     {
         if (!self::isProductionMode()) {
-            return self::sendToLogger(self::getChromeLogger(), $priority, $message);
+            self::sendToLogger(self::getChromeLogger(), $priority, $message);
+
+            return true;
         }
 
         return false;

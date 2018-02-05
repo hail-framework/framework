@@ -51,6 +51,8 @@ class Logger implements LoggerInterface
     /** @var BlueScreen */
     private $blueScreen;
 
+    private $exceptionFile;
+
 
     public function __construct($directory, $email = null, BlueScreen $blueScreen = null)
     {
@@ -92,7 +94,7 @@ class Logger implements LoggerInterface
      * @param string $message
      * @param array  $context
      *
-     * @return null|string logged error filename
+     * @return void
      */
     public function log($level, $message, array $context = [])
     {
@@ -100,8 +102,10 @@ class Logger implements LoggerInterface
             $level = LogLevel::DEBUG;
         }
 
+        $this->exceptionFile = null;
+
         if ($this->logLevels[$level] < $this->level) {
-            return null;
+            return;
         }
 
         $exceptionFile = null;
@@ -132,9 +136,13 @@ class Logger implements LoggerInterface
             $this->sendEmail($message);
         }
 
-        return $exceptionFile;
+        $this->exceptionFile = $exceptionFile;
     }
 
+    public function getLastExceptionFile()
+    {
+        return $this->exceptionFile;
+    }
 
     /**
      * @param  string|\Exception|\Throwable $message
