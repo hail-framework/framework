@@ -120,16 +120,18 @@ class Expression
 
                 $count = \count($temp);
 
+                $args = [];
                 if ($count === 1) {
+                    $name = $temp[0];
+                } elseif ($count === 2) {
+                    [$args, $name] = $temp;
+                } else {
+                    break;
+                }
+
+                if ($name instanceof Token && \is_array($args) && $name->is(T_STRING)) {
                     $lastSplit = $i;
-                    $filters[] = [$temp[0], []];
-                } elseif ($count === 2 &&
-                    \is_array($temp[0]) &&
-                    $temp[1] instanceof Token &&
-                    $temp[1]->is(T_STRING)
-                ) {
-                    $lastSplit = $i;
-                    $filters[] = [$temp[1], $temp[0]];
+                    $filters[] = [$name, $args];
                 } else {
                     break;
                 }
