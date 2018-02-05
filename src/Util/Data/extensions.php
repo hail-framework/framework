@@ -174,6 +174,8 @@ return [
         'dump',
         'elc',
         'deploy',
+        'dmn',
+        'bpmn',
     ],
     'application/oda' => [
         'oda',

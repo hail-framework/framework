@@ -15,6 +15,9 @@ return [
     'atomsvc' => [
         'application/atomsvc+xml',
     ],
+    'bpmn' => [
+        'application/octet-stream',
+    ],
     'ccxml' => [
         'application/ccxml+xml',
     ],
@@ -44,6 +47,9 @@ return [
     ],
     'dssc' => [
         'application/dssc+der',
+    ],
+    'dmn' => [
+        'application/octet-stream',
     ],
     'xdssc' => [
         'application/dssc+xml',
@@ -1913,7 +1919,7 @@ return [
     ],
     'wmz' => [
         'application/x-ms-wmz',
-            1 => 'application/x-msmetafile',
+        1 => 'application/x-msmetafile',
     ],
     'xbap' => [
         'application/x-ms-xbap',
@@ -2406,7 +2412,7 @@ return [
     ],
     'sub' => [
         'image/vnd.dvb.subtitle',
-            1 => 'text/vnd.dvb.subtitle',
+        1 => 'text/vnd.dvb.subtitle',
     ],
     'dwg' => [
         'image/vnd.dwg',
