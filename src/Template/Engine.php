@@ -3,17 +3,16 @@
 namespace Hail\Template;
 
 use Hail\Template\Extension\ExtensionInterface;
-use Hail\Template\Processor\Helpers as Processor;
-use Hail\Template\Processor\ProcessorInterface;
-use Hail\Template\Processor\Vue;
+use Hail\Template\Processor\Processor;
+use Hail\Template\Processor\VuePhp;
 
 class Engine
 {
     /**
-     * @var ProcessorInterface[]
+     * @var Processor[]
      */
     protected $processors = [
-        Vue\VuePhp::class,
+        VuePhp::class,
     ];
 
     /**
@@ -351,7 +350,7 @@ class Engine
 
         $root = Tokenizer\Tokenizer::parseFile($template);
 
-        Processor::parseElement($root, $this->processors);
+        Processor::parseToken($root, $this->processors);
 
         \file_put_contents($cache, (string) $root);
 

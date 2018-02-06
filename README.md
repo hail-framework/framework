@@ -40,19 +40,19 @@
 - 在打开 Opcache 的情况下， PHP 本身已经相当快，一些简单的功能，并不会比使用 C 扩展慢很多
 - 如果您追求极致的性能，可以先试试： [Phalcon](http://phalconphp.com/) ([github](https://github.com/phalcon/cphalcon)) 或者 [Ice](http://www.iceframework.org/) ([github](https://github.com/ice/framework))
 
-### 遵循 PSR
-- [PSR-2 Coding Style Guide](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md)
-- [PSR-3 Logger Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md)
-- [PSR-4 Autoloading Standard](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader-meta.md)
-- [PSR-6 Caching Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-6-cache.md)
-- [PSR-7 HTTP message interfaces](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-7-http-message.md)
-- [PSR-11 Container Interface](https://github.com/php-fig/fig-standards/blob/master/accepted/PPSR-11-container.md)
-- [PSR-14 Event Manager](https://github.com/php-fig/fig-standards/blob/master/proposed/event-manager.md)
-- [PSR-15 HTTP Handlers](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-15-request-handlers.md)
-- [PSR-16 Simple Cache](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-16-simple-cache.md)
+### Implements PSR
+- [PSR-2 Coding Style Guide](https://www.php-fig.org/psr/psr-2)
+- [PSR-3 Logger Interface](https://www.php-fig.org/psr/psr-3)
+- [PSR-4 Autoloading Standard](https://www.php-fig.org/psr/psr-4)
+- [PSR-6 Caching Interface](https://www.php-fig.org/psr/psr-6)
+- [PSR-7 HTTP message interfaces](https://www.php-fig.org/psr/psr-7)
+- [PSR-11 Container Interface](https://www.php-fig.org/psr/psr-11)
+- [PSR-14 Event Manager](https://www.php-fig.org/psr/psr-14)
+- [PSR-15 HTTP Handlers](https://www.php-fig.org/psr/psr-15)
+- [PSR-16 Simple Cache](https://www.php-fig.org/psr/psr-16)
 - [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/tree/master/proposed/http-client/)
 
-## 框架功能
+## Features
 
 ### Optimize & OptimizeTrait
 - 自动选择 PHP 缓存 extension： ['yac', 'pcache', 'xcache', 'wincache', 'apcu']，类内缓存，最大限度的减少性能损失
@@ -100,8 +100,8 @@
 ### Template
 - 直接使用原生 PHP 作为模板语言
 - 使用 VUE.js 作为默认的 JS 动态处理库
-- 支持编译简单的 VUE.js 模板语法为原生模板 *[未测试]*
-- 支持 TAL 语法, 语法参考 [PHPTAL](https://phptal.org/)，未 100% 实现 *[未测试]* 
+- 支持编译 VUE.js 模板语法为 PHP 语句 (使用 v-php 标注） *[未测试]*
+- h:* HTML属性模板语法, 灵感来自 [Latte](https://github.com/nette/latte) *[未测试]* 
 
 ### Swoole
 - 基于命令行的 Http Server *[未测试]*
@@ -109,9 +109,30 @@
 ### Console
 - 基于命令行工具进行项目优化、Migration、服务管理等
 
-### 有用的库
+## Useful Libraries
 项目中如果有需要可以自行 composer 安装
 
 - [Mobile Detect](https://github.com/serbanghita/Mobile-Detect) 通过 User-Agent 和 header 检测移动设备
 - [Crawler Detect](https://github.com/JayBizzle/Crawler-Detect) 通过 User-Agent 和 header 检测爬虫
 - [Spout](https://github.com/box/spout) 读写 Excel 文件 (CSV, XLSX, ODS)，速度快，支持超大文件，占用内存小
+
+## Extensions
+
+### Required
+- [ext-mbstring](http://php.net/manual/book.mbstring.php)
+
+### Suggest
+- [ext-intl](http://php.net/manual/book.intl.php) 部分字符串处理函数和 CLI 命令中使用
+- [ext-iconv](http://php.net/manual/book.iconv.php) 部分字符串处理函数中使用
+- [ext-openssl](http://php.net/manual/book.openssl.php) 基于 RSA/AES 加/解密 和 JWT 中使用 RS 签名
+- [ext-fileinfo](http://php.net/manual/book.fileinfo.php) MimeType 判断和图像处理中使用
+- [ext-curl](http://php.net/manual/book.curl.php) 基于 Curl 的 HTTP 客户端
+- [ext-imagick](http://php.net/manual/book.imagick.php) 基于 ImageMagick 的图像处理
+- [ext-gd](http://php.net/manual/book.gd.php) 基于 GD 的图像处理
+- [ext-ftp](http://php.net/manual/book.ftp.php) 文件系统中支持 FTP
+- [ext-gmp](http://php.net/manual/book.gmp.php) JWT 中使用 ES 签名
+
+### Performance
+- [ext-psr](http://pecl.php.net/package/psr) 提供 PSR Interface
+- [ext-seaslog](http://pecl.php.net/package/SeasLog) 提高 Logger 性能
+- [ext-php-cp](https://github.com/swoole/php-cp) PDO/Redis 连接池

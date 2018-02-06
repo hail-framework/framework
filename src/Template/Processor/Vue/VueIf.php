@@ -4,11 +4,10 @@ namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
-use Hail\Template\Processor\ProcessorInterface;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Tokenizer\Token\TokenInterface;
 
-final class VueIf implements ProcessorInterface
+final class VueIf extends Processor
 {
     public static function process(TokenInterface $element): bool
     {
@@ -26,8 +25,8 @@ final class VueIf implements ProcessorInterface
         $startCode = 'if (' . $expression . ') {';
         $endCode = '}';
 
-        Helpers::before($element, $startCode);
-        Helpers::after($element, $endCode);
+        self::before($element, $startCode);
+        self::after($element, $endCode);
 
         self::processElseIf($element);
 
@@ -54,8 +53,8 @@ final class VueIf implements ProcessorInterface
         $startCode = 'elseif (' . $expression . ') {';
         $endCode = '}';
 
-        Helpers::before($next, $startCode);
-        Helpers::after($next, $endCode);
+        self::before($next, $startCode);
+        self::after($next, $endCode);
 
         self::processElse($next);
 
@@ -72,8 +71,8 @@ final class VueIf implements ProcessorInterface
         $startCode = 'else {';
         $endCode = '}';
 
-        Helpers::before($next, $startCode);
-        Helpers::after($next, $endCode);
+        self::before($next, $startCode);
+        self::after($next, $endCode);
 
         $next->removeAttribute('v-else');
     }

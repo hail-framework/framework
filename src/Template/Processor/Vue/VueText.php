@@ -3,11 +3,10 @@ namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
-use Hail\Template\Processor\ProcessorInterface;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Tokenizer\Token\TokenInterface;
 
-final class VueText implements ProcessorInterface
+final class VueText extends Processor
 {
     public static function process(TokenInterface $element): bool
     {
@@ -22,7 +21,7 @@ final class VueText implements ProcessorInterface
 
         $expression = Expression::parse($expression);
 
-        Helpers::text($element, 'echo \htmlspecialchars(' . $expression . ', ENT_HTML5)');
+        self::text($element, 'echo \htmlspecialchars(' . $expression . ', ENT_HTML5)');
 
         $element->removeAttribute('v-text');
 

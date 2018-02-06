@@ -3,11 +3,11 @@
 namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Expression\Expression;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\TokenInterface;
 
-final class VueBind implements ProcessorInterface
+final class VueBind extends Processor
 {
     public static function process(TokenInterface $element): bool
     {

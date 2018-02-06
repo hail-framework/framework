@@ -39,7 +39,7 @@ final class Filter
      * @param string $name
      * @param array  $arguments
      *
-     * @return $this
+     * @return self
      * @throws \BadMethodCallException
      */
     public function __call($name, $arguments)

@@ -2,11 +2,11 @@
 
 namespace Hail\Template\Processor;
 
-use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Tokenizer\Token\Php;
-use Hail\Template\Tokenizer\Token\TokenInterface;
+use Hail\Template\Tokenizer\Token\{
+    Element, Php, TokenInterface
+};
 
-class Helpers
+abstract class Processor
 {
     /**
      * insert a php code before an element.
@@ -14,7 +14,7 @@ class Helpers
      * @param Element     $element
      * @param             $phpExpression
      */
-    public static function before(Element $element, $phpExpression): void
+    protected static function before(Element $element, $phpExpression): void
     {
         $exp = new Php();
         $exp->setValue($phpExpression);
@@ -28,7 +28,7 @@ class Helpers
      * @param Element     $element
      * @param             $phpExpression
      */
-    public static function after(Element $element, $phpExpression): void
+    protected static function after(Element $element, $phpExpression): void
     {
         $exp = new Php();
         $exp->setValue($phpExpression);
@@ -42,7 +42,7 @@ class Helpers
      * @param Element     $element
      * @param             $phpExpression
      */
-    public static function text(Element $element, $phpExpression): void
+    protected static function text(Element $element, $phpExpression): void
     {
         $element->removeChildren();
 
@@ -54,7 +54,7 @@ class Helpers
         }
     }
 
-    public static function addStyle(Element $element, string $expression): void
+    protected static function addStyle(Element $element, string $expression): void
     {
         $expression = \trim($expression);
         if ($expression) {
@@ -68,7 +68,7 @@ class Helpers
      *
      * @return Element[]
      */
-    public static function findVueIfBlocks(Element $element): array
+    protected static function findVueIfBlocks(Element $element): array
     {
         $next = $element->getNextSibling();
 
@@ -88,22 +88,25 @@ class Helpers
     }
 
     /**
-     * @param TokenInterface       $element
-     * @param ProcessorInterface[] $processors
+     * @param TokenInterface       $token
+     * @param Processor[] $processors
      */
-    public static function parseElement(
-        TokenInterface $element,
+    public static function parseToken(
+        TokenInterface $token,
         array $processors
     ): void {
         foreach ($processors as $processor) {
-            if ($processor::process($element)) {
+            if ($processor::process($token)) {
                 return;
             }
         }
 
-        foreach ($element->getChildren() as $childNode) {
-            self::parseElement($childNode, $processors);
+        if ($token instanceof Element) {
+            foreach ($token->getChildren() as $childNode) {
+                self::parseToken($childNode, $processors);
+            }
         }
     }
 
+    abstract public static function process(TokenInterface $element): bool;
 }

@@ -3,7 +3,7 @@
 namespace Hail\Template\Processor\Tal;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalContent implements ProcessorInterface
@@ -19,7 +19,7 @@ final class TalContent implements ProcessorInterface
         $expression = Syntax::resolveWithDefault($expression, $element);
         $expression = Syntax::structure($structure, $expression);
 
-        Helpers::text($element, $expression);
+        Processor::text($element, $expression);
 
         $element->removeAttribute('tal:content');
 

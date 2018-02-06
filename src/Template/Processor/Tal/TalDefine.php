@@ -2,7 +2,7 @@
 namespace Hail\Template\Processor\Tal;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalDefine implements ProcessorInterface
@@ -22,7 +22,7 @@ final class TalDefine implements ProcessorInterface
         self::$element = $element;
 
         $result = Syntax::multiLine($expression, [self::class, 'resolve']);
-        Helpers::before($element, \implode('; ', $result));
+        Processor::before($element, \implode('; ', $result));
 
         $element->removeAttribute('tal:define');
 

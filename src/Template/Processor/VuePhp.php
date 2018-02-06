@@ -1,16 +1,18 @@
 <?php
 
-namespace Hail\Template\Processor\Vue;
+namespace Hail\Template\Processor;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
-use Hail\Template\Processor\ProcessorInterface;
 use Hail\Template\Tokenizer\Token\TokenInterface;
+use Hail\Template\Processor\Vue\{
+    VueFor, VueShow, VueIf, VueText, VueHtml, VueBind,
+    TextExpression
+};
 
-final class VuePhp implements ProcessorInterface
+final class VuePhp extends Processor
 {
     /**
-     * @var ProcessorInterface[]
+     * @var Processor[]
      */
     private const PROCESSORS = [
         VueFor::class,
@@ -35,7 +37,7 @@ final class VuePhp implements ProcessorInterface
         $once = $element->hasAttribute('v-once');
         if (!$once) {
             if ($element->hasAttribute('v-if')) {
-                $elements = Helpers::findVueIfBlocks($element);
+                $elements = self::findVueIfBlocks($element);
                 $end = \end($elements);
 
                 foreach ($elements as $v) {
@@ -45,11 +47,11 @@ final class VuePhp implements ProcessorInterface
                 !$element->hasAttribute('v-else-if') &&
                 !$element->hasAttribute('v-else')
             ) {
-                self::after($element, clone $element);
+                self::insertAfter($element, clone $element);
             }
         }
 
-        Helpers::parseElement($element, self::PROCESSORS);
+        self::parseToken($element, self::PROCESSORS);
 
         if ($element->getName() === 'template') {
             foreach ($element->getChildren() as $child) {
@@ -65,7 +67,7 @@ final class VuePhp implements ProcessorInterface
         return true;
     }
 
-    private static function after(Element $ref, Element $new)
+    private static function insertAfter(Element $ref, Element $new)
     {
         $new->removeAttribute('v-php');
 

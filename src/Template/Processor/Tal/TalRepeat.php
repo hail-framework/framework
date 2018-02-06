@@ -2,7 +2,7 @@
 namespace Hail\Template\Processor\Tal;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalRepeat implements ProcessorInterface
@@ -22,8 +22,8 @@ final class TalRepeat implements ProcessorInterface
         $startCode = "\$__{$item}_num = 1;\n\$__{$item}_count = count($lists);\nforeach ($lists as \$__{$item}_key => $name) {";
         $endCode = "++\$__{$item}_num;\n}";
 
-        Helpers::before($element, $startCode);
-        Helpers::after($element, $endCode);
+        Processor::before($element, $startCode);
+        Processor::after($element, $endCode);
 
         $element->removeAttribute('tal:repeat');
 

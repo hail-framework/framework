@@ -3,7 +3,7 @@
 namespace Hail\Template\Processor\Tal;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalOmitTag implements ProcessorInterface
@@ -27,8 +27,8 @@ final class TalOmitTag implements ProcessorInterface
             $startCode = 'if (' . $expression . ') { echo ' . \var_export($element->getOpenTag(), 'true') . '; }';
             $endCode = 'if (' . $expression . ') { echo ' . \var_export($element->getCloseTag(), 'true') . '; }';
 
-            Helpers::before($element, $startCode);
-            Helpers::after($element, $endCode);
+            Processor::before($element, $startCode);
+            Processor::after($element, $endCode);
         }
 
         foreach ($element->getChildren() as $child) {

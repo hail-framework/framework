@@ -2,7 +2,7 @@
 namespace Hail\Template\Processor\Tal;
 
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Processor\ProcessorInterface;
 
 final class TalCondition implements ProcessorInterface
@@ -19,8 +19,8 @@ final class TalCondition implements ProcessorInterface
         $startCode = 'if (' . $expression . ') {';
         $endCode = '}';
         
-        Helpers::before($element, $startCode);
-        Helpers::after($element, $endCode);
+        Processor::before($element, $startCode);
+        Processor::after($element, $endCode);
         
         $element->removeAttribute('tal:condition');
 

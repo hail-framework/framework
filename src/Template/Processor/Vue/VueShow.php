@@ -4,11 +4,10 @@ namespace Hail\Template\Processor\Vue;
 
 use Hail\Template\Expression\Expression;
 use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Helpers;
-use Hail\Template\Processor\ProcessorInterface;
+use Hail\Template\Processor\Processor;
 use Hail\Template\Tokenizer\Token\TokenInterface;
 
-final class VueShow implements ProcessorInterface
+final class VueShow extends Processor
 {
     public static function process(TokenInterface $element): bool
     {
@@ -28,7 +27,7 @@ final class VueShow implements ProcessorInterface
         $expression = Expression::parse($expression);
 
         $style = '<?=(' . $expression . ') ? \'\': \'display: none\'?>';
-        Helpers::addStyle($element, $style);
+        self::addStyle($element, $style);
 
         $element->removeAttribute('v-show');
 
