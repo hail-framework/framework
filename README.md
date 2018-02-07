@@ -119,20 +119,20 @@
 ## Extensions
 
 ### Required
-- [ext-mbstring](http://php.net/manual/book.mbstring.php)
+- [mbstring](http://php.net/manual/book.mbstring.php)
 
 ### Suggest
-- [ext-intl](http://php.net/manual/book.intl.php) 部分字符串处理函数和 CLI 命令中使用
-- [ext-iconv](http://php.net/manual/book.iconv.php) 部分字符串处理函数中使用
-- [ext-openssl](http://php.net/manual/book.openssl.php) 基于 RSA/AES 加/解密 和 JWT 中使用 RS 签名
-- [ext-fileinfo](http://php.net/manual/book.fileinfo.php) MimeType 判断和图像处理中使用
-- [ext-curl](http://php.net/manual/book.curl.php) 基于 Curl 的 HTTP 客户端
-- [ext-imagick](http://php.net/manual/book.imagick.php) 基于 ImageMagick 的图像处理
-- [ext-gd](http://php.net/manual/book.gd.php) 基于 GD 的图像处理
-- [ext-ftp](http://php.net/manual/book.ftp.php) 文件系统中支持 FTP
-- [ext-gmp](http://php.net/manual/book.gmp.php) JWT 中使用 ES 签名
+- [intl](http://php.net/manual/book.intl.php) 部分字符串处理函数和 CLI 命令中使用
+- [iconv](http://php.net/manual/book.iconv.php) 部分字符串处理函数中使用
+- [openssl](http://php.net/manual/book.openssl.php) 基于 RSA/AES 加/解密 和 JWT 中使用 RS 签名
+- [fileinfo](http://php.net/manual/book.fileinfo.php) MimeType 判断和图像处理中使用
+- [curl](http://php.net/manual/book.curl.php) 基于 Curl 的 HTTP 客户端
+- [imagick](http://php.net/manual/book.imagick.php) 基于 ImageMagick 的图像处理
+- [gd](http://php.net/manual/book.gd.php) 基于 GD 的图像处理
+- [ftp](http://php.net/manual/book.ftp.php) 文件系统中支持 FTP
+- [gmp](http://php.net/manual/book.gmp.php) JWT 中使用 ES 签名
 
 ### Performance
-- [ext-psr](http://pecl.php.net/package/psr) 提供 PSR Interface
-- [ext-seaslog](http://pecl.php.net/package/SeasLog) 提高 Logger 性能
-- [ext-php-cp](https://github.com/swoole/php-cp) PDO/Redis 连接池
+- [psr](http://pecl.php.net/package/psr) 提供 PSR Interface
+- [seaslog](http://pecl.php.net/package/SeasLog) 提高 Logger 性能
+- [php-cp](https://github.com/swoole/php-cp) PDO/Redis 连接池
