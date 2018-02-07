@@ -31,35 +31,44 @@ final class VueFor extends Processor
         [$sub, $items] = \explode($delimiter, $expression, 2);
 
         $items = \trim($items);
-        $int = (int) $items;
-        if (((string) $int) === $items) {
-            $items = \var_export(\range(1, $int), true);
-        } else {
-            $items = Expression::parse($items);
-        }
 
         $startCode = $endCode = '';
 
         $sub = \trim($sub);
         if ($sub[0] === '(' && $sub[-1] === ')') {
             $parts = \explode(',', \substr($sub, 1, -1), 3);
-
-            $sub = '$' . \trim($parts[0]);
-
-            if (isset($parts[1])) {
-                $sub = '$' . \trim($parts[1]) . ' => ' . $sub;
-
-                if (isset($parts[2])) {
-                    $c = \trim($parts[2]);
-                    $startCode = '$' . $c . ' = 0; ';
-                    $endCode = '++$' . $c . '; ';
-                }
-            }
         } else {
-            $sub = '$' . $sub;
+            $parts = [$sub];
         }
 
-        $startCode .= 'foreach (' . $items . ' as ' . $sub . ') { ';
+        $val = '$' . \trim($parts[0]);
+
+        $key = $c = null;
+        if (isset($parts[1])) {
+            $key = '$' . \trim($parts[1]);
+
+            if (isset($parts[2])) {
+                $c = '$' . \trim($parts[2]);
+            }
+        }
+
+        $int = (int) $items;
+        if (((string) $int) === $items) {
+            $c = $c ?? '$_i';
+            $startCode .= 'for (' . $c . ' = 0; ' . $c . ' < ' . $int . '; ++' . $c . ') { ';
+            $startCode .= null !== $key ? $key . ' = ' : '';
+            $startCode .= $val . ' = ' . $c . '; ';
+        } else {
+            if ($c !== null) {
+                $startCode = $c . ' = 0; ';
+                $endCode = '++' . $c . '; ';
+            }
+
+            $startCode .= 'foreach (' . Expression::parse($items) . ' as ';
+            $startCode .= $key !== null ? $key . ' => ' : '';
+            $startCode .=  $val . ') { ';
+        }
+
         $endCode .= '} ';
 
         self::before($element, $startCode);
