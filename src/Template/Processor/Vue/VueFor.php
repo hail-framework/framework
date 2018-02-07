@@ -55,7 +55,7 @@ final class VueFor extends Processor
         $int = (int) $items;
         if (((string) $int) === $items) {
             $c = $c ?? '$_i';
-            $startCode .= 'for (' . $c . ' = 0; ' . $c . ' < ' . $int . '; ++' . $c . ') { ';
+            $startCode .= 'for (' . $c . ' = 0; ' . $c . ' < ' . $items . '; ++' . $c . ') { ';
             $startCode .= null !== $key ? $key . ' = ' : '';
             $startCode .= $val . ' = ' . $c . '; ';
         } else {
