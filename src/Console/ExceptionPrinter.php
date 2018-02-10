@@ -61,8 +61,8 @@ class ExceptionPrinter
             $logger->notice(sprintf('    %d) %s%s%s(%s)', $idx, @$entry['class'], @$entry['type'],
                 $entry['function'], $argDesc));
 
-            if (isset($entry['file'])) {
-                $logger->notice(sprintf('        from %s: %d', @$entry['file'], @$entry['line']));
+            if (isset($entry['file'], $entry['line'])) {
+                $logger->notice(sprintf('        from %s: %d', $entry['file'], $entry['line']));
             }
 
             $logger->newline();
