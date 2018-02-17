@@ -251,7 +251,8 @@ class Helpers
     {
         $request = Debugger::getRequest();
 
-        if ($request->getHeaderLine('X-Requested-With') !== '' ||
+        if ($request === null ||
+            $request->getHeaderLine('X-Requested-With') !== '' ||
             $request->getHeaderLine('X-Tracy-Ajax') !== '' ||
             \strpos($request->getHeaderLine('Accept'), 'text/html') === false
         ) {
@@ -269,7 +270,7 @@ class Helpers
     public static function isAjax(): bool
     {
         $request = Debugger::getRequest();
-        if (!$request->hasHeader('X-Tracy-Ajax')) {
+        if ($request === null || !$request->hasHeader('X-Tracy-Ajax')) {
             return false;
         }
 

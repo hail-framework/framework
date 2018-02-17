@@ -69,4 +69,40 @@ abstract class Reflection
 
         return $type;
     }
+
+    /**
+     * @param callable $callback
+     *
+     * @return array[]
+     */
+    public static function getParameters(callable $callback): array
+    {
+        $params = self::createFromCallable($callback)->getParameters();
+
+        if ($params === []) {
+            return [];
+        }
+
+        $return = [];
+        foreach ($params as $param) {
+            $array = [
+                'name' => $param->name,
+                'type' => self::getParameterType($param),
+            ];
+
+            if ($param->isOptional()) {
+                $array['default'] = $param->getDefaultValue();
+            } elseif ($array['type'] && $param->allowsNull()) {
+                $array['default'] = null;
+            }
+
+            $reflection = $param->getDeclaringFunction();
+            $array['file'] = $reflection->getFileName();
+            $array['line'] = $reflection->getStartLine();
+
+            $return[] = $array;
+        }
+
+        return $return;
+    }
 }

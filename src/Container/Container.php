@@ -1,6 +1,7 @@
 <?php
 /**
  * Some code from https://github.com/mindplay-dk/unbox
+ *
  * @copyright Rasmus Schultz <http://blog.mindplay.dk/>
  */
 
@@ -180,17 +181,18 @@ class Container implements ContainerInterface
      *
      * See also {@see create()} which lets you invoke any constructor.
      *
-     * @param callable|object $callback any arbitrary closure or callable, or object implementing __invoke()
-     * @param mixed|mixed[]   $map      mixed list/map of parameter values (and/or boxed values)
+     * @param callable                            $callback any arbitrary closure or callable, or object implementing __invoke()
+     * @param mixed|mixed[]                       $map      mixed list/map of parameter values (and/or boxed values)
+     * @param \ReflectionParameter[]|array[]|null $params
      *
      * @return mixed return value from the given callable
      *
      * @throws InvalidArgumentException
      * @throws NotFoundException
      */
-    public function call(callable $callback, array $map = [])
+    public function call(callable $callback, array $map = [], array $params = null)
     {
-        $params = Reflection::createFromCallable($callback)->getParameters();
+        $params = $params ?? Reflection::createFromCallable($callback)->getParameters();
         if ($params !== []) {
             $params = $this->resolve($params, $map);
 
@@ -245,9 +247,9 @@ class Container implements ContainerInterface
      *
      * This is the heart of the beast.
      *
-     * @param \ReflectionParameter[] $params parameter reflections
-     * @param array                  $map    mixed list/map of parameter values (and/or boxed values)
-     * @param bool                   $safe   if TRUE, it's considered safe to resolve against parameter names
+     * @param \ReflectionParameter[]|array[] $params parameter reflections
+     * @param array                          $map    mixed list/map of parameter values (and/or boxed values)
+     * @param bool                           $safe   if TRUE, it's considered safe to resolve against parameter names
      *
      * @return array parameters
      *
@@ -256,40 +258,8 @@ class Container implements ContainerInterface
     protected function resolve(array $params, array $map, bool $safe = true): array
     {
         $args = [];
-
         foreach ($params as $index => $param) {
-            $name = $param->name;
-
-            if (\array_key_exists($name, $map)) {
-                $value = $map[$name]; // // resolve as user-provided named argument
-            } elseif (\array_key_exists($index, $map)) {
-                $value = $map[$index]; // resolve as user-provided positional argument
-            } else {
-                // as on optimization, obtain the argument type without triggering autoload:
-
-                $type = Reflection::getParameterType($param);
-
-                if ($type && isset($map[$type])) {
-                    $value = $map[$type]; // resolve as user-provided type-hinted argument
-                } elseif ($type && $this->has($type)) {
-                    $value = $this->get($type); // resolve as component registered by class/interface name
-                } elseif ($safe && $this->has($name)) {
-                    $value = $this->get($name); // resolve as component with matching parameter name
-                } elseif ($param->isOptional()) {
-                    $value = $param->getDefaultValue(); // unresolved, optional: resolve using default value
-                } elseif ($type && $param->allowsNull()) {
-                    $value = null; // unresolved, type-hinted, nullable: resolve as NULL
-                } else {
-                    // unresolved - throw a container exception:
-
-                    $reflection = $param->getDeclaringFunction();
-
-                    throw new InvalidArgumentException(
-                        "Unable to resolve parameter: \${$name} " . ($type ? "({$type}) " : '') .
-                        'in file: ' . $reflection->getFileName() . ', line ' . $reflection->getStartLine()
-                    );
-                }
-            }
+            $value = $this->getParameterValue($param, $index, $map, $safe);
 
             if ($value instanceof \Closure) {
                 $value = $value($this); // unbox a boxed value
@@ -299,6 +269,75 @@ class Container implements ContainerInterface
         }
 
         return $args;
+    }
+
+    /**
+     * @param \ReflectionParameter|array $param
+     * @param int                        $index
+     * @param array                      $map
+     * @param bool                       $safe
+     *
+     * @return mixed
+     *
+     * @throws InvalidArgumentException
+     */
+    protected function getParameterValue($param, int $index, array $map, bool $safe)
+    {
+        if ($isReflection = ($param instanceof \ReflectionParameter)) {
+            $name = $param->name;
+        } elseif (\is_array($param)) {
+            $name = $param['name'];
+        } else {
+            throw new InvalidArgumentException('Parameter must be the instance of \ReflectionParameter or array');
+        }
+
+        if (\array_key_exists($name, $map)) {
+            return $map[$name]; // // resolve as user-provided named argument
+        }
+
+        if (\array_key_exists($index, $map)) {
+            return $map[$index]; // resolve as user-provided positional argument
+        }
+
+        $type = $isReflection ? Reflection::getParameterType($param) : $param['type'];
+
+        if ($type) {
+            if (\array_key_exists($type, $map)) {
+                return $map[$type]; // resolve as user-provided type-hinted argument
+            }
+
+            if ($this->has($type)) {
+                return $this->get($type); // resolve as component registered by class/interface name
+            }
+        }
+
+        if ($safe && $this->has($name)) {
+            return $this->get($name); // resolve as component with matching parameter name
+        }
+
+        if ($isReflection) {
+            if ($param->isOptional()) {
+                return $param->getDefaultValue(); // unresolved, optional: resolve using default value
+            }
+
+            if ($type && $param->allowsNull()) {
+                return null; // unresolved, type-hinted, nullable: resolve as NULL
+            }
+
+            $reflection = $param->getDeclaringFunction();
+            $file = $reflection->getFileName();
+            $line = $reflection->getStartLine();
+        } elseif (\array_key_exists('default', $param)) {
+            return $param['default'];
+        } else {
+            ['file' => $file, 'line' => $line] = $param;
+        }
+
+        // unresolved - throw a container exception:
+        throw new InvalidArgumentException(
+            "Unable to resolve parameter: \${$name} " . ($type ? "({$type}) " : '') .
+            'in file: ' . $file . ', line ' . $line
+        );
     }
 
     /**
@@ -670,6 +709,11 @@ class Container implements ContainerInterface
         return $this->get($name);
     }
 
+    /**
+     * @param string $key
+     *
+     * @return mixed
+     */
     public function build(string $key)
     {
         if ($this->has($key)) {

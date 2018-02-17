@@ -3,13 +3,14 @@
 namespace Hail;
 
 use Hail\Container\Container;
+use Hail\Container\Reflection;
 use Hail\Exception\ActionForward;
-use Hail\Exception\ActionError;
 use Hail\Http\{
     Server,
     Response
 };
 use Hail\Exception\BadRequestException;
+use Hail\Util\OptimizeTrait;
 use Psr\Http\Message\{
     ResponseInterface,
     ServerRequestInterface
@@ -17,6 +18,8 @@ use Psr\Http\Message\{
 
 class Application
 {
+    use OptimizeTrait;
+
     /**
      * @var Container
      */
@@ -177,14 +180,22 @@ class Application
      */
     public function handle($handler): ResponseInterface
     {
+        $params = null;
         if (!$handler instanceof \Closure) {
             [$class, $method] = $this->convert($handler);
-            $controller = $this->container->build($class);
+            $controller = new $class;
 
             $handler = [$controller, $method];
+
+            $key = "{$class}::{$method}";
+            $params = self::optimizeGet($key);
+            if ($params === false) {
+                $params = Reflection::getParameters($handler);
+                self::optimizeSet($key, $params);
+            }
         }
 
-        $result = $this->container->call($handler);
+        $result = $this->container->call($handler, $this->params(), $params);
 
         if ($result instanceof ResponseInterface) {
             return $result;

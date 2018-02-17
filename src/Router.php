@@ -6,8 +6,9 @@
 
 namespace Hail;
 
+use Hail\Http\RequestMethod;
 use Hail\Util\OptimizeTrait;
-use Hail\Util\Serialize;
+
 
 /**
  * Class Router
@@ -21,7 +22,7 @@ use Hail\Util\Serialize;
  * @method put(string $route, array | callable $handler)
  * @method patch(string $route, array | callable $handler)
  * @method delete(string $route, array | callable $handler)
- * @method pruge(string $route, array | callable $handler)
+ * @method purge(string $route, array | callable $handler)
  * @method options(string $route, array | callable $handler)
  * @method trace(string $route, array | callable $handler)
  * @method connect(string $route, array | callable $handler)
@@ -30,7 +31,6 @@ class Router
 {
     use OptimizeTrait;
 
-    private const PARAM_REGEXP = '/^{((([^:]+):(.+))|(.+))}$/';
     private const SEPARATOR_TRIM = "/ \t\n\r";
     private $routes = ['children' => [], 'regexps' => []];
     private $result = [];
@@ -48,7 +48,7 @@ class Router
     private function match(string $url): ?array
     {
         $parts = \explode('?', $url, 2)[0];
-        $parts = \explode('/', \trim($parts, static::SEPARATOR_TRIM));
+        $parts = \explode('/', \trim($parts, self::SEPARATOR_TRIM));
         if (!isset($parts[1]) && $parts[0] === '') {
             $parts = [];
         }
@@ -61,11 +61,13 @@ class Router
                 continue;
             }
 
-            foreach ($current['regexps'] as $regexp => $route) {
-                if (\preg_match($regexp, $v)) {
-                    $current = $route;
-                    $params[$current['name']] = $v;
-                    continue 2;
+            if ($current['regexps'] !== []) {
+                foreach ($current['regexps'] as $regexp => $route) {
+                    if (\preg_match($regexp, $v)) {
+                        $current = $route;
+                        $params[$current['name']] = $v;
+                        continue 2;
+                    }
                 }
             }
 
@@ -75,10 +77,6 @@ class Router
 
             $current = $current['others'];
             $params[$current['name']] = $v;
-        }
-
-        if (!isset($current['methods'])) {
-            return null;
         }
 
         return [
@@ -140,6 +138,10 @@ class Router
      */
     public function addRoute(array $methods, string $route, $handler): void
     {
+        if ($methods === []) {
+            throw new \InvalidArgumentException('Methods is empty');
+        }
+
         if (\is_callable($handler)) {
             $handler = \Closure::fromCallable($handler);
         } elseif (!\is_array($handler)) {
@@ -154,24 +156,26 @@ class Router
 
         $current = &$this->routes;
         foreach ($parts as $v) {
-            $paramsMatch = \preg_match(static::PARAM_REGEXP, $v, $paramsMatches);
-            if ($paramsMatch) {
-                if (!empty($paramsMatches[2])) {
-                    $paramsMatches[4] = '/^' . \preg_quote($paramsMatches[4], '/') . '$/';
-                    if (!isset($current['regexps'][$paramsMatches[4]])) {
-                        $current['regexps'][$paramsMatches[4]] = [
+            if ($v[0] === '{' && $v[-1] === '}') {
+                $v = \substr($v, 1, -1);
+                if (\strpos($v, ':') !== false) {
+                    [$name, $regexp] = \explode(':', $v, 2);
+
+                    $regexp = '/^' . \preg_quote($regexp, '/') . '$/';
+                    if (!isset($current['regexps'][$regexp])) {
+                        $current['regexps'][$regexp] = [
                             'children' => [],
                             'regexps' => [],
-                            'name' => $paramsMatches[3],
+                            'name' => $name,
                         ];
                     }
-                    $current = &$current['regexps'][$paramsMatches[4]];
+                    $current = &$current['regexps'][$regexp];
                 } else {
                     if (!isset($current['others'])) {
                         $current['others'] = [
                             'children' => [],
                             'regexps' => [],
-                            'name' => $paramsMatches[5],
+                            'name' => $v,
                         ];
                     }
                     $current = &$current['others'];
@@ -298,16 +302,16 @@ class Router
     public function __call($name, $arguments)
     {
         static $methods = [
-            'HEAD' => true,
-            'GET' => true,
-            'POST' => true,
-            'PUT' => true,
-            'PATCH' => true,
-            'DELETE' => true,
-            'PURGE' => true,
-            'OPTIONS' => true,
-            'TRACE' => true,
-            'CONNECT' => true,
+            RequestMethod::HEAD => true,
+            RequestMethod::GET => true,
+            RequestMethod::POST => true,
+            RequestMethod::PUT => true,
+            RequestMethod::PATCH => true,
+            RequestMethod::DELETE => true,
+            RequestMethod::PURGE => true,
+            RequestMethod::OPTIONS => true,
+            RequestMethod::TRACE => true,
+            RequestMethod::CONNECT => true,
         ];
 
         $method = \strtoupper($name);

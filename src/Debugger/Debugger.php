@@ -312,7 +312,7 @@ class Debugger
      * @return ServerRequestInterface
      * @throws \RuntimeException
      */
-    public static function getRequest(): ServerRequestInterface
+    public static function getRequest(): ?ServerRequestInterface
     {
         return self::$request;
     }

@@ -189,7 +189,7 @@ class Response
             $name = $this->app->config('app.output' . $app);
         }
 
-        if (!\in_array($name, ['json', 'template', 'redirect', 'html', 'text', 'empty'], true)) {
+        if (!\in_array($name, ['json', 'template', 'html', 'text', 'redirect', 'file', 'empty'], true)) {
             throw new \InvalidArgumentException('Output type not defined: ' . $name);
         }
 
@@ -467,7 +467,7 @@ class Response
     }
 
     /**
-     * @param $return
+     * @param mixed $return
      *
      * @return ResponseInterface
      */
@@ -507,7 +507,7 @@ class Response
 
     /**
      * @param array $to
-     * @param bool $return
+     * @param bool  $return
      *
      * @return \Psr\Http\Message\ResponseInterface
      * @throws BadRequestException

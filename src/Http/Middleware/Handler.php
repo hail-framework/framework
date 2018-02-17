@@ -30,7 +30,7 @@ class Handler implements MiddlewareInterface
     public function __construct(Application $app, $max = null)
     {
         $this->app = $app;
-        $this->max = $max ?: 30;
+        $this->max = $max ?: 10;
     }
 
     /**
