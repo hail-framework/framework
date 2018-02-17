@@ -2,14 +2,15 @@
 
 namespace Hail;
 
-use Hail\Container\Container;
-use Hail\Container\Reflection;
-use Hail\Exception\ActionForward;
-use Hail\Http\{
-    Server,
-    Response
+use Hail\Container\{
+    Container, Reflection
 };
-use Hail\Exception\BadRequestException;
+use Hail\Http\{
+    Server, Response
+};
+use Hail\Exception\{
+    ActionForward, BadRequestException
+};
 use Hail\Util\OptimizeTrait;
 use Psr\Http\Message\{
     ResponseInterface,
