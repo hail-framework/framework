@@ -32,12 +32,47 @@ class Router
     use OptimizeTrait;
 
     private const SEPARATOR_TRIM = "/ \t\n\r";
+
+    /**
+     * @var array[]
+     */
     private $routes = ['children' => [], 'regexps' => []];
+
+    /**
+     * @var array
+     */
     private $result = [];
+
+    /**
+     * @var string
+     */
+    private $prefix;
 
     public function __construct(array $config)
     {
+        $this->refreshPrefix();
         $this->addRoutes($config);
+    }
+
+    private function refreshPrefix(): void
+    {
+        $save = true;
+        if ($this->prefix === null) {
+            $prefix = self::optimizeGet('prefix');
+            if (empty($prefix)) {
+                $prefix = '1';
+            } else {
+                $save = false;
+            }
+        } else {
+            $prefix = (int) $this->prefix + 1;
+        }
+
+        $this->prefix = (string) $prefix;
+
+        if ($save) {
+            self::optimizeSet('prefix', $this->prefix);
+        }
     }
 
     /**
@@ -47,8 +82,15 @@ class Router
      */
     private function match(string $url): ?array
     {
-        $parts = \explode('?', $url, 2)[0];
-        $parts = \explode('/', \trim($parts, self::SEPARATOR_TRIM));
+        $path = \trim(\explode('?', $url, 2)[0], self::SEPARATOR_TRIM);
+
+        $key = $this->prefix . '_' . $path;
+        $result = self::optimizeGet($key);
+        if (!empty($result)) {
+            return $result;
+        }
+
+        $parts = \explode('/', $path);
         if (!isset($parts[1]) && $parts[0] === '') {
             $parts = [];
         }
@@ -79,11 +121,15 @@ class Router
             $params[$current['name']] = $v;
         }
 
-        return [
+        $result = [
             'methods' => $current['methods'],
             'route' => $current['route'],
             'params' => $params,
         ];
+
+        self::optimizeSet($key, $result);
+
+        return $result;
     }
 
     /**
@@ -91,8 +137,8 @@ class Router
      */
     protected function addRoutes(array $config): void
     {
-        if (static::optimizeGet('hail-routes-sign') === $config) {
-            $routes = static::optimizeGet('hail-routes');
+        if (static::optimizeGet('sign') === $config) {
+            $routes = static::optimizeGet('routes');
 
             if (!empty($routes)) {
                 $this->routes = $routes;
@@ -124,9 +170,11 @@ class Router
         }
 
         static::optimizeSet([
-            'hail-routes' => $this->routes,
-            'hail-routes-sign' => $config,
+            'routes' => $this->routes,
+            'sign' => $config,
         ]);
+
+        $this->refreshPrefix();
     }
 
     /**
