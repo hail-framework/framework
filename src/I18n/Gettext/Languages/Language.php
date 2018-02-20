@@ -293,11 +293,11 @@ class Language
             default:
                 $formula = (string) ($numCategories - 1);
                 for ($i = $numCategories - 2; $i >= 0; $i--) {
-                    $f = self::reduceFormula($this->categories[$i]->formula);
-                    if (!\preg_match('/^\([^()]+\)$/', $f)) {
-                        $f = "($f)";
+                    $fl = self::reduceFormula($this->categories[$i]->formula);
+                    if (!\preg_match('/^\([^()]+\)$/', $fl)) {
+                        $fl = "($fl)";
                     }
-                    $formula = "$f ? $i : $formula";
+                    $formula = "$fl ? $i : $formula";
                     if ($i > 0) {
                         $formula = "($formula)";
                     }

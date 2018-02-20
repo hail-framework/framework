@@ -1,4 +1,5 @@
 <?php
+
 namespace Hail\Session\Handler;
 
 use Psr\SimpleCache\CacheInterface;
@@ -8,78 +9,63 @@ use Psr\SimpleCache\CacheInterface;
  *
  * @author Feng Hao <flyinghail@msn.com>
  */
-class SimpleCache extends BaseHandler
+class SimpleCache extends AbstractHandler
 {
-	/**
-	 * @var CacheInterface
-	 */
-	private $cache;
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
 
-	public function __construct(CacheInterface $cache, array $settings)
-	{
-		$settings += [
-			'prefix' => 'PSR16Ses',
-		];
+    public function __construct(CacheInterface $cache, array $settings)
+    {
+        $settings += [
+            'prefix' => 'psr16ses_',
+        ];
 
-		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
-			$settings['lifetime'] = (int) \ini_get('session.gc_maxlifetime');
-		}
+        $this->cache = $cache;
 
-		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
+        parent::__construct($settings);
+    }
 
-		$this->cache = $cache;
 
-		parent::__construct($settings);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function updateTimestamp($sessionId, $data)
+    {
+        $key = $this->settings['prefix'] . $sessionId;
+        $value = $this->cache->get($key);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function open($savePath, $sessionName)
-	{
-		return true;
-	}
+        if ($value === null) {
+            return false;
+        }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function close()
-	{
-		return true;
-	}
+        return $this->cache->set($key, $value,
+            \DateTime::createFromFormat('U', \time() + $this->settings['lifetime'])
+        );
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function read($id)
-	{
-		return $this->cache->get($this->key($id), '');
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doRead($sessionId)
+    {
+        return $this->cache->get($this->settings['prefix'] . $sessionId, '');
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function write($id, $data)
-	{
-		return $this->cache->set($this->key($id), $data, $this->settings['lifetime']);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doWrite($sessionId, $data)
+    {
+        return $this->cache->set($this->settings['prefix'] . $sessionId, $data, $this->settings['lifetime']);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function destroy($id)
-	{
-		return $this->cache->delete(
-			$this->key($id)
-		);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function gc($lifetime)
-	{
-		// not required here because cache will auto expire the records anyhow.
-		return true;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doDestroy($sessionId)
+    {
+        return $this->cache->delete($this->settings['prefix'] . $sessionId);
+    }
 }

@@ -1,14 +1,13 @@
 <?php
 namespace Hail\Session\Handler;
 
-use Hail\Redis\Exception\RedisException;
 
 /**
  * Class RedisHandler
  *
  * @package Hail\Session
  */
-class Redis extends BaseHandler
+class Redis extends AbstractHandler
 {
 	/**
 	 * @var \Hail\Redis\Client\AbstractClient
@@ -20,24 +19,25 @@ class Redis extends BaseHandler
 	 *
 	 * @param $redis
 	 * @param array $settings
-	 * @throws RedisException
 	 */
 	public function __construct($redis, array $settings)
 	{
 		$settings += [
-			'prefix' => 'RedisSes',
+			'prefix' => 'redisses_',
 		];
-
-		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
-			$settings['lifetime'] = (int) \ini_get('session.gc_maxlifetime');
-		}
-
-		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
 
 		$this->redis = $redis;
 
 		parent::__construct($settings);
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function updateTimestamp($sessionId, $data)
+    {
+        return $this->redis->expire($this->settings['prefix'] . $sessionId, $this->settings['lifetime']);
+    }
 
 	/**
 	 * {@inheritDoc}
@@ -52,21 +52,11 @@ class Redis extends BaseHandler
 	/**
 	 * {@inheritDoc}
 	 */
-	public function destroy($id)
+	protected function doDestroy($sessionId)
 	{
-		$result = $this->redis->del(
-			$this->key($id)
-		);
+		$result = $this->redis->del($this->settings['prefix'] . $sessionId);
 
 		return $result !== false;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function gc($lifetime)
-	{
-		return true;
 	}
 
 	/**
@@ -80,20 +70,20 @@ class Redis extends BaseHandler
 	/**
 	 * {@inheritDoc}
 	 */
-	public function read($id)
+    protected function doRead($sessionId)
 	{
 		return $this->redis->get(
-			$this->key($id)
+            $this->settings['prefix'] . $sessionId
 		) ?: '';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function write($id, $data)
+    protected function doWrite($sessionId, $data)
 	{
 		return $this->redis->setEx(
-			$this->key($id), $this->settings['lifetime'], $data
+            $this->settings['prefix'] . $sessionId, $this->settings['lifetime'], $data
 		);
 	}
 }

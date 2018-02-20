@@ -9,93 +9,70 @@ use Psr\Cache\CacheItemPoolInterface;
  *
  * @author Feng Hao <flyinghail@msn.com>
  */
-class Cache extends BaseHandler
+class Cache extends AbstractHandler
 {
-	/**
-	 * @type CacheItemPoolInterface Cache driver.
-	 */
-	private $cache;
+    /**
+     * @type CacheItemPoolInterface Cache driver.
+     */
+    private $cache;
 
-	public function __construct(CacheItemPoolInterface $cache, array $settings)
-	{
-		$settings += [
-			'prefix' => 'PSR6Ses',
-		];
+    public function __construct(CacheItemPoolInterface $cache, array $settings)
+    {
+        $settings += [
+            'prefix' => 'psr6ses_',
+        ];
 
-		if (!isset($settings['lifetime']) || $settings['lifetime'] === 0) {
-			$settings['lifetime'] = (int) \ini_get('session.gc_maxlifetime');
-		}
+        $this->cache = $cache;
 
-		$settings['lifetime'] = $settings['lifetime'] ?: 86400;
+        parent::__construct($settings);
+    }
 
-		$this->cache = $cache;
 
-		parent::__construct($settings);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function updateTimestamp($sessionId, $data)
+    {
+        $item = $this->cache->getItem($this->settings['prefix'] . $sessionId);
+        $item->expiresAt(\DateTime::createFromFormat('U', \time() + $this->settings['lifetime']));
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function open($savePath, $sessionName)
-	{
-		return true;
-	}
+        return $this->cache->save($item);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function close()
-	{
-		return true;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doRead($sessionId)
+    {
+        $item = $this->cache->getItem($this->settings['prefix'] . $sessionId);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function read($id)
-	{
-		$item = $this->cache->getItem(
-			$this->key($id)
-		);
+        if ($item->isHit()) {
+            return $item->get();
+        }
 
-		if ($item->isHit()) {
-			return $item->get();
-		}
+        return '';
+    }
 
-		return '';
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doWrite($sessionId, $data)
+    {
+        $item = $this->cache->getItem($this->settings['prefix'] . $sessionId);
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function write($id, $data)
-	{
-		$item = $this->cache->getItem(
-			$this->key($id)
-		);
+        $item->set($data)
+            ->expiresAfter($this->settings['lifetime']);
 
-		$item->set($data)
-			->expiresAfter($this->settings['lifetime']);
+        return $this->cache->save($item);
+    }
 
-		return $this->cache->save($item);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function destroy($id)
-	{
-		return $this->cache->deleteItem(
-			$this->key($id)
-		);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function gc($lifetime)
-	{
-		// not required here because cache will auto expire the records anyhow.
-		return true;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function doDestroy($sessionId)
+    {
+        return $this->cache->deleteItem(
+            $this->settings['prefix'] . $sessionId
+        );
+    }
 }

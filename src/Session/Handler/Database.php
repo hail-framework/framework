@@ -1,4 +1,5 @@
 <?php
+
 namespace Hail\Session\Handler;
 
 use Hail\Database\Database as DB;
@@ -7,94 +8,124 @@ use Hail\Database\Database as DB;
  * Class DBHandler
  *
  * @package Hail\Session
- * @author Feng Hao <flyinghail@msn.com>
+ * @author  Feng Hao <flyinghail@msn.com>
  */
-class Database extends BaseHandler
+class Database extends AbstractHandler
 {
-	/**
-	 * @var DB
-	 */
-	private $db;
+    /**
+     * @var DB
+     */
+    private $db;
 
-	public function __construct(DB $db, array $settings = [])
-	{
-		$settings += [
-			'table' => 'sessions',
-			'id' => 'id',
-			'time' => 'time',
-			'data' => 'data',
-		];
-		$this->db = $db;
+    /**
+     * @var bool Whether gc() has been called
+     */
+    private $gcCalled = false;
 
-		parent::__construct($settings);
-	}
+    public function __construct(DB $db, array $settings = [])
+    {
+        $settings += [
+            'table' => 'sessions',
+            'id' => 'id',
+            'time' => 'time',
+            'data' => 'data',
+        ];
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function close()
-	{
-		return true;
-	}
+        $this->db = $db;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function destroy($id)
-	{
-		$result = $this->db->delete(
-			$this->settings['table'],
-			[$this->settings['id'] => $id]
-		);
-		return $result !== false;
-	}
+        parent::__construct($settings);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function gc($lifetime)
-	{
-		$result = $this->db->delete(
-			$this->settings['table'], [
-				$this->settings['time'] . '[<]' => time() - $lifetime,
-			]
-		);
-		return $result !== false;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function updateTimestamp($sessionId, $data)
+    {
+        $this->db->update($this->settings['table'],
+            [$this->settings['time'] => \time()],
+            [$this->settings['id'] => $sessionId]
+        );
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function open($path, $name)
-	{
-		return $this->db ? true : false;
-	}
+        return true;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function read($id)
-	{
-		$result = $this->db->get([
-			'SELECT' => $this->settings['data'],
-			'FROM' => $this->settings['table'],
-			'WHERE' => [$this->settings['id'] => $id],
-		]);
+    /**
+     * {@inheritDoc}
+     */
+    public function close()
+    {
+        if ($this->gcCalled) {
+            $this->gcCalled = false;
 
-		return $result ?: '';
-	}
+            $this->db->delete(
+                $this->settings['table'], [
+                    $this->settings['time'] . '[<]' => \time() - $this->settings['lifetime'],
+                ]
+            );
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function write($id, $data)
-	{
-		$result = $this->db->insert(
-			$this->settings['table'], [
-			$this->settings['id'] => $id,
-			$this->settings['time'] => \time(),
-			$this->settings['data'] => $data,
-		], 'REPLACE');
-		return $result !== false;
-	}
+        $this->db = null;
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function doDestroy($sessionId)
+    {
+        $result = $this->db->delete(
+            $this->settings['table'],
+            [$this->settings['id'] => $sessionId]
+        );
+
+        return $result !== false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function gc($lifetime)
+    {
+        $this->gcCalled = true;
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function open($path, $name)
+    {
+        return $this->db ? true : false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function doRead($sessionId)
+    {
+        $result = $this->db->get([
+            'SELECT' => $this->settings['data'],
+            'FROM' => $this->settings['table'],
+            'WHERE' => [$this->settings['id'] => $sessionId],
+        ]);
+
+        return $result ?: '';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function doWrite($sessionId, $data)
+    {
+        $result = $this->db->insert(
+            $this->settings['table'], [
+            $this->settings['id'] => $sessionId,
+            $this->settings['time'] => \time(),
+            $this->settings['data'] => $data,
+        ], 'REPLACE');
+
+        return $result !== false;
+    }
 }
