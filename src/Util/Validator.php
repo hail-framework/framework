@@ -146,9 +146,10 @@ class Validator
      */
     protected function validateEquals($field, $value, array $params)
     {
-        $field2 = $params[0];
+        // extract the second field value, this accounts for nested array values
+        [$field2Value, $multiple] = $this->getPart($this->_fields, \explode('.', $params[0]));
 
-        return isset($this->_fields[$field2]) && $value === $this->_fields[$field2];
+        return null !== $field2Value && $value === $field2Value;
     }
 
     /**
@@ -163,9 +164,10 @@ class Validator
      */
     protected function validateDifferent($field, $value, array $params)
     {
-        $field2 = $params[0];
+        // extract the second field value, this accounts for nested array values
+        [$field2Value, $multiple] = $this->getPart($this->_fields, \explode('.', $params[0]));
 
-        return isset($this->_fields[$field2]) && $value !== $this->_fields[$field2];
+        return null !== $field2Value && $value !== $field2Value;
     }
 
     /**
@@ -479,6 +481,27 @@ class Validator
     {
         return \filter_var($value, \FILTER_VALIDATE_EMAIL) !== false;
     }
+
+    /**
+     * Validate that a field is a valid e-mail address and the domain name is active
+     *
+     * @param  string $field
+     * @param  mixed  $value
+     * @return bool
+     */
+    protected function validateEmailDNS($field, $value)
+    {
+        if ($this->validateEmail($field, $value)) {
+            $domain = \ltrim(\strstr($value, '@'), '@') . '.';
+            if (\defined('INTL_IDNA_VARIANT_UTS46') && \function_exists('\idn_to_ascii')) {
+                $domain = \idn_to_ascii($domain, 0, INTL_IDNA_VARIANT_UTS46);
+            }
+
+            return \checkdnsrr($domain, 'ANY');
+         }
+
+        return false;
+     }
 
     /**
      * Validate that a field is a valid URL by syntax
@@ -1120,7 +1143,7 @@ class Validator
     }
 
     /**
-     * Returns true if either a valdiator with the given name has been
+     * Returns true if either a validator with the given name has been
      * registered or there is a default validator by that name.
      *
      * @param string $name
@@ -1183,6 +1206,8 @@ class Validator
     }
 
     /**
+     * Add label to rule
+     *
      * @param  string $value
      *
      * @internal param array $labels
@@ -1197,6 +1222,8 @@ class Validator
     }
 
     /**
+     * Add labels to rules
+     *
      * @param  array $labels
      *
      * @return $this
