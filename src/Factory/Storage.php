@@ -6,7 +6,6 @@ use Hail\Filesystem\{
 	Filesystem,
 	FilesystemInterface
 };
-use Hail\Util\Serialize;
 
 class Storage extends AbstractFactory
 {
