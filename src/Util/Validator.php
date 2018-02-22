@@ -8,7 +8,6 @@
 
 namespace Hail\Util;
 
-use InvalidArgumentException;
 
 /**
  * Validates input against certain criteria
@@ -20,6 +19,10 @@ class Validator
      */
     protected const ERROR_DEFAULT = 'Invalid';
 
+    public const SKIP_CONTINUE = 0;
+    public const SKIP_ONE = 1;
+    public const SKIP_ALL = 2;
+
     /**
      * @var array
      */
@@ -29,6 +32,11 @@ class Validator
      * @var array
      */
     protected $_errors = [];
+
+    /**
+     * @var array
+     */
+    protected $_skips = [];
 
     /**
      * @var array
@@ -487,6 +495,7 @@ class Validator
      *
      * @param  string $field
      * @param  mixed  $value
+     *
      * @return bool
      */
     protected function validateEmailDNS($field, $value)
@@ -498,10 +507,10 @@ class Validator
             }
 
             return \checkdnsrr($domain, 'ANY');
-         }
+        }
 
         return false;
-     }
+    }
 
     /**
      * Validate that a field is a valid URL by syntax
@@ -875,8 +884,7 @@ class Validator
         foreach ($params as $param) {
             if (\is_array($param)) {
                 $param = "['" . implode("', '", $param) . "']";
-            }
-            if ($param instanceof \DateTime) {
+            } elseif ($param instanceof \DateTime) {
                 $param = $param->format('Y-m-d');
             } elseif (\is_object($param)) {
                 $param = \get_class($param);
@@ -917,6 +925,7 @@ class Validator
         $this->_errors = [];
         $this->_validations = [];
         $this->_labels = [];
+        $this->_skips = [];
 
         return $this;
     }
@@ -937,15 +946,13 @@ class Validator
 
         // Glob match
         if ($identifier === '*') {
-            $values = [
-                0 => [],
-            ];
+            $values = [];
             foreach ($data as $row) {
                 [$value, $multiple] = $this->getPart($row, $identifiers, $allowEmpty);
                 if ($multiple) {
                     $values[] = $value;
                 } else {
-                    $values[0][] = $value;
+                    $values[] = [$value];
                 }
             }
 
@@ -988,15 +995,25 @@ class Validator
     {
         foreach ($this->_validations as $v) {
             foreach ($v['fields'] as $field) {
-                list($values, $multiple) = $this->getPart($this->_fields, \explode('.', $field));
+                if (isset($this->_skips[$field])) {
+                    if ($this->_skips[$field] === self::SKIP_ALL) {
+                        break 2;
+                    }
+
+                    if ($this->_skips[$field] === self::SKIP_ONE) {
+                        break;
+                    }
+                }
+
+                [$values, $multiple] = $this->getPart($this->_fields, \explode('.', $field));
 
                 // Don't validate if the field is not required and the value is empty
-                if ($this->hasRule('optional', $field) && isset($values)) {
+                if (null !== $values && $this->hasRule('optional', $field)) {
                     //Continue with execution below if statement
                 } elseif (
                     $v['rule'] !== 'accepted' &&
                     $v['rule'] !== 'required' && !$this->hasRule('required', $field) &&
-                    (!isset($values) || $values === '' || ($multiple && \count($values) == 0))
+                    (null === $values || $values === '' || ($multiple && \count($values) === 0))
                 ) {
                     continue;
                 }
@@ -1020,11 +1037,36 @@ class Validator
 
                 if (!$result) {
                     $this->error($field, $v['message'], $v['params']);
+                    $this->_skips[$field] = $v['skip'];
                 }
             }
         }
 
         return \count($this->errors()) === 0;
+    }
+
+    /**
+     * If the validation for a field fails, skip all other checks for this field.
+     *
+     * @return $this
+     */
+    public function onErrorSkipField()
+    {
+        $this->_validations[\count($this->_validations) - 1]['skip'] = self::SKIP_ONE;
+
+        return $this;
+    }
+
+    /**
+     * If the validation of a field fails, stop the validation process.
+     *
+     * @return $this
+     */
+    public function onErrorQuit()
+    {
+        $this->_validations[\count($this->_validations) - 1]['skip'] = self::SKIP_ALL;
+
+        return $this;
     }
 
     /**
@@ -1072,7 +1114,7 @@ class Validator
     protected static function assertRuleCallback($callback)
     {
         if (!\is_callable($callback)) {
-            throw new InvalidArgumentException('Second argument must be a valid callback. Given argument was not callable.');
+            throw new \InvalidArgumentException('Second argument must be a valid callback. Given argument was not callable.');
         }
     }
 
@@ -1085,7 +1127,7 @@ class Validator
      * @param string $message
      *
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addInstanceRule(string $name, callable $callback, string $message = null)
     {
@@ -1105,7 +1147,7 @@ class Validator
      * @param  string $message
      *
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function addRule(string $name, callable $callback, string $message = null)
     {
@@ -1165,7 +1207,7 @@ class Validator
      * @param  mixed           ...$params
      *
      * @return $this
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public function rule($rule, $fields, ...$params)
     {
@@ -1182,7 +1224,7 @@ class Validator
         if (!isset($errors[$rule])) {
             $ruleMethod = 'validate' . \ucfirst($rule);
             if (!\method_exists($this, $ruleMethod)) {
-                throw new InvalidArgumentException("Rule '" . $rule . "' has not been registered with " . __CLASS__ . "::addRule().");
+                throw new \InvalidArgumentException("Rule '" . $rule . "' has not been registered with " . __CLASS__ . "::addRule().");
             }
         }
 
@@ -1200,6 +1242,7 @@ class Validator
             'fields' => (array) $fields,
             'params' => (array) $params,
             'message' => '{field} ' . $message,
+            'skip' => self::SKIP_CONTINUE,
         ];
 
         return $this;
