@@ -4,7 +4,7 @@ namespace Hail\Factory;
 use Hail\Facade\Config;
 use Hail\Util\Serialize;
 
-abstract class Factory
+abstract class AbstractFactory
 {
 	protected static $pool = [];
 
