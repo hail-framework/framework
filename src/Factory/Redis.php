@@ -2,12 +2,9 @@
 namespace Hail\Factory;
 
 use Hail\Redis\Factory as RedisFactory;
-use Hail\Redis\Exception\RedisException;
 use Hail\Redis\RedisInterface;
-use Hail\Util\Serialize;
-use Hail\Facade\Config;
 
-class Redis extends Factory
+class Redis extends AbstractFactory
 {
 	/**
 	 * @param array $config

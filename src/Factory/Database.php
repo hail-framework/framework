@@ -11,7 +11,7 @@ use Hail\Database\{
 };
 use Hail\Debugger\Debugger;
 
-class Database extends Factory
+class Database extends AbstractFactory
 {
     protected static $connectPool;
 

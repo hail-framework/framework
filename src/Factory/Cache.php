@@ -11,7 +11,7 @@ use Hail\Cache\Simple\{
 };
 
 
-class Cache extends Factory
+class Cache extends AbstractFactory
 {
     /**
      * @param array $config

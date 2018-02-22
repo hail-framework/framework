@@ -8,7 +8,7 @@ use Hail\Filesystem\{
 };
 use Hail\Util\Serialize;
 
-class Storage extends Factory
+class Storage extends AbstractFactory
 {
 	/**
 	 * @param array $config
