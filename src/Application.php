@@ -11,7 +11,7 @@ use Hail\Http\{
 use Hail\Exception\{
     ActionForward, BadRequestException
 };
-use Hail\Util\OptimizeTrait;
+use Hail\Optimize\OptimizeTrait;
 use Psr\Http\Message\{
     ResponseInterface,
     ServerRequestInterface

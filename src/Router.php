@@ -7,7 +7,7 @@
 namespace Hail;
 
 use Hail\Http\RequestMethod;
-use Hail\Util\OptimizeTrait;
+use Hail\Optimize\OptimizeTrait;
 
 
 /**

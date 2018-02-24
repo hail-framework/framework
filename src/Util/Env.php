@@ -2,6 +2,8 @@
 
 namespace Hail\Util;
 
+use Hail\Optimize\OptimizeTrait;
+
 /**
  * This is the dotenv class.
  *

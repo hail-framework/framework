@@ -2,8 +2,9 @@
 
 namespace Hail;
 
+use Hail\Optimize\OptimizeTrait;
 use Hail\Util\{
-    Arrays, ArrayTrait, OptimizeTrait, Yaml
+    Arrays, ArrayTrait, Yaml
 };
 
 /**

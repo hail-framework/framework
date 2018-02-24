@@ -2,6 +2,7 @@
 
 namespace Hail\Util;
 
+use Hail\Optimize\OptimizeTrait;
 
 class MimeType
 {

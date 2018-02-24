@@ -2,7 +2,7 @@
 
 namespace Hail\I18n\Gettext\Languages;
 
-use Hail\Util\OptimizeTrait;
+use Hail\Optimize\OptimizeTrait;
 
 /**
  * Holds the CLDR data.

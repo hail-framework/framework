@@ -3,7 +3,7 @@
 namespace Hail\I18n\Gettext;
 
 use Hail\I18n\Gettext\Generators\PhpArray;
-use Hail\Util\OptimizeTrait;
+use Hail\Optimize\OptimizeTrait;
 
 class Translator implements TranslatorInterface
 {
