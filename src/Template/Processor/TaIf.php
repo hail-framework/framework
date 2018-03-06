@@ -1,13 +1,12 @@
 <?php
 
-namespace Hail\Template\Processor\Vue;
+namespace Hail\Template\Processor;
 
-use Hail\Template\Expression\Expression;
-use Hail\Template\Tokenizer\Token\Element;
-use Hail\Template\Processor\Processor;
-use Hail\Template\Tokenizer\Token\TokenInterface;
+use Hail\Template\Tokenizer\Token\{
+    TokenInterface, Element
+};
 
-final class VueIf extends Processor
+class TaIf extends Processor
 {
     public static function process(TokenInterface $element): bool
     {
@@ -15,12 +14,10 @@ final class VueIf extends Processor
             return false;
         }
 
-        $expression = $element->getAttribute('v-if');
+        $expression = $element->getAttribute('h:if');
         if ($expression === null) {
             return false;
         }
-
-        $expression = Expression::parse($expression);
 
         $startCode = 'if (' . $expression . ') {';
         $endCode = '}';
@@ -30,7 +27,7 @@ final class VueIf extends Processor
 
         self::processElseIf($element);
 
-        $element->removeAttribute('v-if');
+        $element->removeAttribute('h:if');
 
         return false;
     }
@@ -42,13 +39,13 @@ final class VueIf extends Processor
             return;
         }
 
-        if (!$next->hasAttribute('v-else-if')) {
+        if (!$next->hasAttribute('h:elseif')) {
             self::processElse($element);
 
             return;
         }
 
-        $expression = Expression::parse($element->getAttribute('v-else-if'));
+        $expression = $next->getAttribute('h:elseif');
 
         $startCode = 'elseif (' . $expression . ') {';
         $endCode = '}';
@@ -58,13 +55,13 @@ final class VueIf extends Processor
 
         self::processElse($next);
 
-        $next->removeAttribute('v-else-if');
+        $next->removeAttribute('h:elseif');
     }
 
     private static function processElse(Element $element): void
     {
         $next = $element->getNextSibling();
-        if (!$next instanceof Element || !$next->hasAttribute('v-else')) {
+        if (!$next instanceof Element || !$next->hasAttribute('h:else')) {
             return;
         }
 
@@ -74,6 +71,6 @@ final class VueIf extends Processor
         self::before($next, $startCode);
         self::after($next, $endCode);
 
-        $next->removeAttribute('v-else');
+        $next->removeAttribute('h:else');
     }
 }
