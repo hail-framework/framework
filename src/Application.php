@@ -184,11 +184,15 @@ class Application
         $params = null;
         if (!$handler instanceof \Closure) {
             [$class, $method] = $this->convert($handler);
-            $controller = new $class;
 
-            $handler = [$controller, $method];
+            if ($method === null) {
+                $key = $handler = $class;
+            } else {
+                $controller = new $class;
+                $handler = [$controller, $method];
+                $key = "{$class}::{$method}";
+            }
 
-            $key = "{$class}::{$method}";
             $params = self::optimizeGet($key);
             if ($params === false) {
                 $params = Reflection::getParameters($handler);
@@ -219,9 +223,13 @@ class Application
         $class = $this->class($handler);
 
         $action = $handler['action'] ?? 'index';
+
         $actionClass = $class . '\\' . \ucfirst($action);
 
-        if (\is_a($actionClass, Action::class, true)) {
+        if (\function_exists($actionClass)) {
+            $class = $actionClass;
+            $method = null;
+        } elseif (\is_a($actionClass, Action::class, true)) {
             $class = $actionClass;
             $method = '__invoke';
         } elseif (\is_a($class, Controller::class, true)) {
