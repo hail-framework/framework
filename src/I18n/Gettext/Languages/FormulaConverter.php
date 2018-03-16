@@ -130,7 +130,7 @@ class FormulaConverter
                 if (null === $chunk) {
                     if (\preg_match('/^\d+$/', $range)) {
                         $chunk = "$what $op $range";
-                    } else if (\preg_match('/^(\d+)\.\.(\d+)$/', $range, $m)) {
+                    } elseif (\preg_match('/^(\d+)\.\.(\d+)$/', $range, $m)) {
                         $from = (int) $m[1];
                         $to = (int) $m[2];
                         if (($to - $from) === 1) {

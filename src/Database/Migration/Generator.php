@@ -63,6 +63,32 @@ class Generator
     }
 
     /**
+     * Get Db
+     *
+     * @param array $settings
+     *
+     * @return PDO
+     */
+    public function getPdo($settings)
+    {
+        if (isset($settings['pdo']) && $settings['pdo'] instanceof PDO) {
+            $settings['pdo']->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $settings['pdo']->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+            return $settings['pdo'];
+        }
+        $options = array_replace_recursive($settings['options'], [
+            // Enable exceptions
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            // Set default fetch mode
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        $pdo = new PDO($settings['dsn'], $settings['username'], $settings['password'], $options);
+
+        return $pdo;
+    }
+
+    /**
      * Generate
      *
      * @return int Status
@@ -76,7 +102,7 @@ class Generator
         if (empty($diffs[0]) && empty($diffs[1])) {
             $this->getOutput()->writeln('No database changes detected.');
 
-            return false;
+            return 1;
         }
 
         if (empty($this->settings['name'])) {
@@ -87,7 +113,7 @@ class Generator
         if (empty($name)) {
             $this->getOutput()->writeln('Aborted');
 
-            return false;
+            return 1;
         }
         $path = $this->settings['migration_path'];
         $className = $this->createClassName($name);
@@ -142,70 +168,6 @@ class Generator
     }
 
     /**
-     * Mark migration as completed.
-     *
-     * @param string $migrationName migrationName
-     * @param string $fileName      fileName
-     */
-    protected function markMigration($migrationName, $fileName)
-    {
-        $this->getOutput()->writeln('Mark migration');
-
-        /* @var Adapter\AdapterInterface $adapter */
-        $adapter = $this->settings['adapter'];
-
-        /* @var $manager Manager */
-        $manager = $this->settings['manager'];
-
-        $envName = $this->settings['environment'];
-
-        /* @var $env Environment */
-        $env = $manager->getEnvironment($envName);
-        $schemaTableName = $env->getSchemaTableName();
-
-        /* @var $pdo \PDO */
-        $pdo = $this->settings['adapter'];
-
-        // Get version from filename prefix
-        $version = explode('_', $fileName)[0];
-
-        // Record it in the database
-        $time = time();
-        $startTime = date('Y-m-d H:i:s', $time);
-        $endTime = date('Y-m-d H:i:s', $time);
-        $breakpoint = 0;
-
-        $sql = sprintf(
-            "INSERT INTO %s (%s, %s, %s, %s, %s) VALUES ('%s', '%s', '%s', '%s', %s);",
-            $schemaTableName,
-            $adapter->quoteColumnName('version'),
-            $adapter->quoteColumnName('migration_name'),
-            $adapter->quoteColumnName('start_time'),
-            $adapter->quoteColumnName('end_time'),
-            $adapter->quoteColumnName('breakpoint'),
-            $version,
-            substr($migrationName, 0, 100),
-            $startTime,
-            $endTime,
-            $breakpoint
-        );
-
-        $pdo->query($sql);
-    }
-
-    /**
-     * Save migration file.
-     *
-     * @param string $filePath  Name of migration file
-     * @param string $migration Migration code
-     */
-    protected function saveMigrationFile($filePath, $migration)
-    {
-        $this->getOutput()->writeln(sprintf('Generate migration file: %s', $filePath));
-        file_put_contents($filePath, $migration);
-    }
-
-    /**
      * Get old database schema.
      *
      * @param array $settings
@@ -215,6 +177,65 @@ class Generator
     public function getOldSchema($settings)
     {
         return $this->getSchemaFileData($settings);
+    }
+
+    /**
+     * Get schema data.
+     *
+     * @param array $settings
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function getSchemaFileData($settings)
+    {
+        $schemaFile = $this->getSchemaFilename($settings);
+        $fileExt = pathinfo($schemaFile, PATHINFO_EXTENSION);
+
+        if (!file_exists($schemaFile)) {
+            return [];
+        }
+
+        if ($fileExt === 'php') {
+            $data = $this->read($schemaFile);
+        } elseif ($fileExt === 'json') {
+            $content = file_get_contents($schemaFile);
+            $data = json_decode($content, true);
+        } else {
+            throw new Exception(sprintf('Invalid schema file extension: %s', $fileExt));
+        }
+
+        return $data;
+    }
+
+    /**
+     * Generate schema filename.
+     *
+     * @param array $settings
+     *
+     * @return string Schema filename
+     */
+    public function getSchemaFilename($settings)
+    {
+        // Default
+        $schemaFile = sprintf('%s/%s', getcwd(), 'schema.php');
+        if (!empty($settings['schema_file'])) {
+            $schemaFile = $settings['schema_file'];
+        }
+
+        return $schemaFile;
+    }
+
+    /**
+     * Read php file
+     *
+     * @param string $filename
+     *
+     * @return mixed
+     */
+    public function read($filename)
+    {
+        return require $filename;
     }
 
     /**
@@ -270,50 +291,81 @@ class Generator
     }
 
     /**
-     * Generate schema filename.
+     * Create a class name.
      *
-     * @param array $settings
+     * @param string $name Name
      *
-     * @return string Schema filename
+     * @return string Class name
      */
-    public function getSchemaFilename($settings)
+    protected function createClassName($name)
     {
-        // Default
-        $schemaFile = sprintf('%s/%s', getcwd(), 'schema.php');
-        if (!empty($settings['schema_file'])) {
-            $schemaFile = $settings['schema_file'];
-        }
+        $result = str_replace('_', ' ', $name);
 
-        return $schemaFile;
+        return str_replace(' ', '', ucwords($result));
     }
 
     /**
-     * Get schema data.
+     * Save migration file.
      *
-     * @param array $settings
-     *
-     * @return array
-     * @throws Exception
+     * @param string $filePath  Name of migration file
+     * @param string $migration Migration code
      */
-    public function getSchemaFileData($settings)
+    protected function saveMigrationFile($filePath, $migration)
     {
-        $schemaFile = $this->getSchemaFilename($settings);
-        $fileExt = pathinfo($schemaFile, PATHINFO_EXTENSION);
+        $this->getOutput()->writeln(sprintf('Generate migration file: %s', $filePath));
+        file_put_contents($filePath, $migration);
+    }
 
-        if (!file_exists($schemaFile)) {
-            return [];
-        }
+    /**
+     * Mark migration as completed.
+     *
+     * @param string $migrationName migrationName
+     * @param string $fileName      fileName
+     */
+    protected function markMigration($migrationName, $fileName)
+    {
+        $this->getOutput()->writeln('Mark migration');
 
-        if ($fileExt === 'php') {
-            $data = $this->read($schemaFile);
-        } elseif ($fileExt === 'json') {
-            $content = file_get_contents($schemaFile);
-            $data = json_decode($content, true);
-        } else {
-            throw new Exception(sprintf('Invalid schema file extension: %s', $fileExt));
-        }
+        /* @var Adapter\AdapterInterface $adapter */
+        $adapter = $this->settings['adapter'];
 
-        return $data;
+        /* @var $manager Manager */
+        $manager = $this->settings['manager'];
+
+        $envName = $this->settings['environment'];
+
+        /* @var $env Environment */
+        $env = $manager->getEnvironment($envName);
+        $schemaTableName = $env->getSchemaTableName();
+
+        /* @var $pdo \PDO */
+        $pdo = $this->settings['adapter'];
+
+        // Get version from filename prefix
+        $version = explode('_', $fileName)[0];
+
+        // Record it in the database
+        $time = time();
+        $startTime = date('Y-m-d H:i:s', $time);
+        $endTime = date('Y-m-d H:i:s', $time);
+        $breakpoint = 0;
+
+        $sql = sprintf(
+            "INSERT INTO %s (%s, %s, %s, %s, %s) VALUES ('%s', '%s', '%s', '%s', %s);",
+            $schemaTableName,
+            $adapter->quoteColumnName('version'),
+            $adapter->quoteColumnName('migration_name'),
+            $adapter->quoteColumnName('start_time'),
+            $adapter->quoteColumnName('end_time'),
+            $adapter->quoteColumnName('breakpoint'),
+            $version,
+            substr($migrationName, 0, 100),
+            $startTime,
+            $endTime,
+            $breakpoint
+        );
+
+        $pdo->query($sql);
     }
 
     /**
@@ -339,57 +391,5 @@ class Generator
             throw new Exception(sprintf('Invalid schema file extension: %s', $fileExt));
         }
         file_put_contents($schemaFile, $content);
-    }
-
-    /**
-     * Get Db
-     *
-     * @param array $settings
-     *
-     * @return PDO
-     */
-    public function getPdo($settings)
-    {
-        if (isset($settings['pdo']) && $settings['pdo'] instanceof PDO) {
-            $settings['pdo']->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $settings['pdo']->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-
-            return $settings['pdo'];
-        }
-        $options = array_replace_recursive($settings['options'], [
-            // Enable exceptions
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            // Set default fetch mode
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        $pdo = new PDO($settings['dsn'], $settings['username'], $settings['password'], $options);
-
-        return $pdo;
-    }
-
-    /**
-     * Read php file
-     *
-     * @param string $filename
-     *
-     * @return mixed
-     */
-    public function read($filename)
-    {
-        return require $filename;
-    }
-
-    /**
-     * Create a class name.
-     *
-     * @param string $name Name
-     *
-     * @return string Class name
-     */
-    protected function createClassName($name)
-    {
-        $result = str_replace('_', ' ', $name);
-
-        return str_replace(' ', '', ucwords($result));
     }
 }

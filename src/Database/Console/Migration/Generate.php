@@ -5,6 +5,7 @@ namespace Hail\Database\Console\Migration;
 use PDO;
 use Exception;
 use Hail\Database\Migration\Generator;
+use Hail\Database\Migration\Adapter\AdapterWrapper;
 use Hail\Database\Migration\Adapter\PdoAdapter;
 use Hail\Database\Migration\Manager;
 
@@ -123,7 +124,7 @@ class Generate extends AbstractCommand
      */
     protected function getPdo(Manager $manager, $environment)
     {
-        // Gets the database adapter.
+        /* @var AdapterWrapper $dbAdapter */
         $dbAdapter = $manager->getEnvironment($environment)->getAdapter();
 
         if ($dbAdapter instanceof PdoAdapter) {

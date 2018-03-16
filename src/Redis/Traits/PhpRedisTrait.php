@@ -236,7 +236,7 @@ trait PhpRedisTrait
                 $this->redis->clearLastError();
                 if ($error && \strpos($error, 'NOSCRIPT') === 0) {
                     $response = null;
-                } else if ($error) {
+                } elseif ($error) {
                     throw new RedisException($error);
                 }
                 break;

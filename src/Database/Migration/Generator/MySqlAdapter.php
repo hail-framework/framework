@@ -47,6 +47,16 @@ class MySqlAdapter
     }
 
     /**
+     * Get current database name
+     *
+     * @return string
+     */
+    public function getDbName()
+    {
+        return $this->pdo->query('select database()')->fetchColumn();
+    }
+
+    /**
      * Load current database schema.
      *
      * @return array
@@ -72,16 +82,6 @@ class MySqlAdapter
     }
 
     /**
-     * Get current database name
-     *
-     * @return string
-     */
-    public function getDbName()
-    {
-        return $this->pdo->query('select database()')->fetchColumn();
-    }
-
-    /**
      * Get database schemata.
      *
      * @param string $dbName
@@ -99,6 +99,21 @@ class MySqlAdapter
         $row = $this->pdo->query($sql)->fetch();
 
         return $row;
+    }
+
+    /**
+     * Quote value.
+     *
+     * @param string|null $value
+     * @return string
+     */
+    public function quote($value)
+    {
+        if ($value === null) {
+            return 'NULL';
+        }
+
+        return $this->pdo->quote($value);
     }
 
     /**
@@ -141,9 +156,9 @@ class MySqlAdapter
      */
     public function getColumns($tableName)
     {
-        $sql = sprintf("SELECT * FROM information_schema.columns
+        $sql = sprintf('SELECT * FROM information_schema.columns
                     WHERE table_schema=database()
-                    AND table_name = %s", $this->quote($tableName));
+                    AND table_name = %s', $this->quote($tableName));
         $rows = $this->pdo->query($sql)->fetchAll();
 
         $result = [];
@@ -180,11 +195,33 @@ class MySqlAdapter
     }
 
     /**
+     * Escape identifier (column, table) with backtick
+     *
+     * @see: http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
+     *
+     * @param string $value
+     * @param string $quote
+     * @return string identifier escaped string
+     */
+    public function ident($value, $quote = '`')
+    {
+        $value = preg_replace('/[^A-Za-z0-9_]+/', '', $value);
+        if (strpos($value, '.') !== false) {
+            $values = explode('.', $value);
+            $value = $quote . implode($quote . '.' . $quote, $values) . $quote;
+        } else {
+            $value = $quote . $value . $quote;
+        }
+
+        return $value;
+    }
+
+    /**
      * Get foreign keys.
      *
      * @param string $tableName
      *
-     * @return array
+     * @return array|null
      */
     public function getForeignKeys($tableName)
     {
@@ -196,7 +233,7 @@ class MySqlAdapter
                 refs.REFERENCED_COLUMN_NAME,
                 cRefs.UPDATE_RULE,
                 cRefs.DELETE_RULE
-            FROM INFORMATION_SCHEMA.COLUMNS as cols
+            FROM INFORMATION_SCHEMA.COLUMNS AS cols
             LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS refs
                 ON refs.TABLE_SCHEMA=cols.TABLE_SCHEMA
                 AND refs.REFERENCED_TABLE_SCHEMA=cols.TABLE_SCHEMA
@@ -245,32 +282,9 @@ class MySqlAdapter
     }
 
     /**
-     * Escape identifier (column, table) with backtick
-     *
-     * @see: http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
-     *
-     * @param string $value
-     * @param string $quote
-     *
-     * @return string identifier escaped string
-     */
-    public function ident($value, $quote = '`')
-    {
-        $value = preg_replace('/[^A-Za-z0-9_]+/', '', $value);
-        if (strpos($value, '.') !== false) {
-            $values = explode('.', $value);
-            $value = $quote . implode($quote . '.' . $quote, $values) . $quote;
-        } else {
-            $value = $quote . $value . $quote;
-        }
-
-        return $value;
-    }
-
-    /**
      * Escape value.
      *
-     * @param string $value
+     * @param string|null $value
      *
      * @return string
      */
@@ -281,21 +295,5 @@ class MySqlAdapter
         }
 
         return substr($this->pdo->quote($value), 1, -1);
-    }
-
-    /**
-     * Quote value.
-     *
-     * @param string $value
-     *
-     * @return string
-     */
-    public function quote($value)
-    {
-        if ($value === null) {
-            return 'NULL';
-        }
-
-        return $this->pdo->quote($value);
     }
 }
