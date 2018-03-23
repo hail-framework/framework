@@ -12,7 +12,9 @@
 
 ### Composer (recommended)
 
-``composer require "hail/framework:dev-master"``
+```bash
+composer require "hail/framework:dev-master"
+```
 
 ## 框架设计
 
