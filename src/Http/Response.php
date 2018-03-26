@@ -530,13 +530,18 @@ class Response
     }
 
     /**
-     * @param string $msg
      * @param int    $code
+     * @param string $msg
+     * @param array  ...$args
      *
-     * @throws ActionError
+     * @throws
      */
-    public function error(string $msg, int $code = 0): void
+    public function error(int $code = 0, string $msg = '', ...$args): void
     {
+        if ($msg !== '' && $args !== []) {
+            $msg = \sprintf($msg, ...$args);
+        }
+
         throw new ActionError($msg, $code);
     }
 
