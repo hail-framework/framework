@@ -534,7 +534,7 @@ class Response
      * @param string $msg
      * @param array  ...$args
      *
-     * @throws
+     * @throws ActionError
      */
     public function error(int $code = 0, string $msg = null, ...$args): void
     {
