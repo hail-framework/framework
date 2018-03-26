@@ -551,7 +551,7 @@ class Response
      *
      * @throws ActionError
      */
-    public function exception(string $msg = '', int $code = 0)
+    public function exception(string $msg = '', int $code = -1)
     {
         throw new ActionError($msg, $code);
     }
