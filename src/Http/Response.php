@@ -546,6 +546,17 @@ class Response
     }
 
     /**
+     * @param string $msg
+     * @param int    $code
+     *
+     * @throws ActionError
+     */
+    public function exception(string $msg = '', int $code = 0)
+    {
+        throw new ActionError($msg, $code);
+    }
+
+    /**
      * @param string $name
      * @param string $value
      * @param int    $time
