@@ -536,9 +536,9 @@ class Response
      *
      * @throws
      */
-    public function error(int $code = 0, string $msg = '', ...$args): void
+    public function error(int $code = 0, string $msg = null, ...$args): void
     {
-        if ($msg !== '' && $args !== []) {
+        if ($msg !== null && $args !== []) {
             $msg = \sprintf($msg, ...$args);
         }
 
