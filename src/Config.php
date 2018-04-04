@@ -103,22 +103,19 @@ class Config implements \ArrayAccess
      */
     protected function load(string $space): ?array
     {
-        $files = $this->getFile($space);
+        $file = $this->getFile($space);
 
-        if ($files === []) {
+        if ($file === null) {
             return null;
         }
 
-        if (($config = static::optimizeGet($space, $files)) !== false) {
+        if (($config = static::optimizeGet($space, $file)) !== false) {
             return (array) $config;
         }
 
-        $config = [];
-        foreach ($files as $v) {
-            $config += static::loadFromFile($v);
-        }
+        $config = static::loadFromFile($file);
 
-        static::optimizeSet($space, $config, $files);
+        static::optimizeSet($space, $config, $file);
 
         return $config;
     }

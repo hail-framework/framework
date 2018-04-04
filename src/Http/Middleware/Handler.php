@@ -70,7 +70,15 @@ class Handler implements MiddlewareInterface
 
             return $this->app->handle($handler);
         } catch (ActionForward $e) {
-            return $this->handle($e->getForwardTo());
+            $this->app->params(
+                $e->getParams()
+            );
+
+            return $this->handle(
+                $this->app->handler(
+                    $e->getHandler()
+                )
+            );
         } catch (BadRequestException $e) {
             throw HttpErrorException::create($e->getCode(), [
                 'code' => $e->getCode(),

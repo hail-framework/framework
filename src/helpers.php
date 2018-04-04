@@ -83,8 +83,8 @@ function absolute_path(string $root, string ...$paths): string
         $path = implode('/', $paths);
     }
 
-    $path = $root . '/' . \trim(
-            str_replace('\\', '/', $path),
+    $path = $absoluteRoot . '/' . \trim(
+            \str_replace('\\', '/', $path),
             '/'
         );
 

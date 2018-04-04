@@ -13,6 +13,7 @@ class ActionError extends ActionForward
         $this->setForwardTo([
             'handler' => [
                 'controller' => 'Error',
+                'action' => 'index',
             ],
             'params' => [
                 'error' => $this,

@@ -8,7 +8,14 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class ScriptPath extends BasePath
 {
-	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    public function __construct(string $basePath = null)
+    {
+        if ($basePath !== null) {
+            parent::__construct($basePath);
+        }
+    }
+
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
 		$path = $request->getUri()->getPath();
 

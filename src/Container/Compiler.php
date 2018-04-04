@@ -49,7 +49,7 @@ class Compiler
         }
         $code .= "\t];\n\n";
 
-		$code .= "\tpublic function get(string \$name)\n";
+		$code .= "\tpublic function get(\$name)\n";
 		$code .= "\t{\n";
 		$code .= "\t\tif (isset(\$this->active[\$name])) {\n";
 		$code .= "\t\t\treturn \$this->values[\$name];\n";

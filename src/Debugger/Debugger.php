@@ -878,7 +878,7 @@ class Debugger
     {
         $cookie = $request->getCookieParams();
 
-        $addr = $server['REMOTE_ADDR'] ?? \php_uname('n');
+        $addr = $request->getServerParams()['REMOTE_ADDR'] ?? \php_uname('n');
         $secret = isset($cookie[self::COOKIE_SECRET]) && \is_string($cookie[self::COOKIE_SECRET])
             ? $cookie[self::COOKIE_SECRET]
             : null;

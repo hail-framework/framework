@@ -209,7 +209,7 @@ class Router
                 if (\strpos($v, ':') !== false) {
                     [$name, $regexp] = \explode(':', $v, 2);
 
-                    $regexp = '/^' . \preg_quote($regexp, '/') . '$/';
+                    $regexp = '/^' . $regexp . '$/';
                     if (!isset($current['regexps'][$regexp])) {
                         $current['regexps'][$regexp] = [
                             'children' => [],
