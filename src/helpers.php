@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
  */
@@ -11,7 +11,7 @@ function base_path(string ...$paths): string
 }
 
 /**
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
  */
@@ -22,7 +22,7 @@ function app_path(string ...$paths): string
 
 
 /**
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
  */
@@ -32,7 +32,7 @@ function storage_path(string ...$paths): string
 }
 
 /**
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
  */
@@ -42,7 +42,7 @@ function runtime_path(string ...$paths): string
 }
 
 /**
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
  */
@@ -53,23 +53,23 @@ function hail_path(string ...$paths): string
 
 /**
  * @param string   $root
- * @param string[] ...$paths
+ * @param string ...$paths
  *
  * @return string
- * @throws \InvalidArgumentException
+ * @throws InvalidArgumentException
  */
 function absolute_path(string $root, string ...$paths): string
 {
     if ($root[0] === '@') {
         $absoluteRoot = root_path($root);
     } else {
-        $root = \rtrim(
-            \str_replace('\\', '/', $root),
+        $root = rtrim(
+            str_replace('\\', '/', $root),
             '/'
         );
 
-        if (($absoluteRoot = \realpath($root)) === false) {
-            throw new \InvalidArgumentException('ROOT path not exists: ' . $root);
+        if (($absoluteRoot = realpath($root)) === false) {
+            throw new InvalidArgumentException('ROOT path not exists: ' . $root);
         }
     }
 
@@ -84,11 +84,11 @@ function absolute_path(string $root, string ...$paths): string
     }
 
     $path = $root . '/' . \trim(
-            \str_replace('\\', '/', $path),
+            str_replace('\\', '/', $path),
             '/'
         );
 
-    if (($absolutePath = \realpath($path)) === false) {
+    if (($absolutePath = realpath($path)) === false) {
         $parts = explode('/', $path);
         $absolutes = [];
         foreach ($parts as $part) {
@@ -106,7 +106,7 @@ function absolute_path(string $root, string ...$paths): string
         $absolutePath = implode(DIRECTORY_SEPARATOR, $absolutes);
 
         if (strpos($absolutePath, $absoluteRoot) !== 0) {
-            throw new \InvalidArgumentException('Path can not higher than ROOT.');
+            throw new InvalidArgumentException('Path can not higher than ROOT.');
         }
     }
 
@@ -138,8 +138,8 @@ function root_path($key, string $path = null): string
     }
 
     foreach ($array as $k => $v) {
-        if (($absolute = \realpath($v)) === false) {
-            throw new \InvalidArgumentException('Path not exists: ' . $path);
+        if (($absolute = realpath($v)) === false) {
+            throw new InvalidArgumentException('Path not exists: ' . $path);
         }
 
         if ($k[0] !== '@') {
@@ -203,7 +203,7 @@ function config(string $key)
 }
 
 /**
- * @param array ...$args
+ * @param mixed ...$args
  *
  * @return mixed|null
  * @tracySkipLocation
@@ -216,7 +216,7 @@ function dump(...$args)
 }
 
 /**
- * @param array ...$args
+ * @param mixed ...$args
  * @tracySkipLocation
  */
 function dumpe(...$args)
@@ -228,10 +228,17 @@ function dumpe(...$args)
 
 /**
  * Tracy\Debugger::barDump() shortcut.
+ *
+ * @param  mixed  $var     variable to dump
+ * @param  string $title   optional title
+ * @param  array  $options dumper options
+ *
+ * @return mixed
  * @tracySkipLocation
  */
-function bdump($var)
+function bdump($var, $title = null, array $options = null)
 {
-    call_user_func_array('Tracy\Debugger::barDump', func_get_args());
+    \Hail\Debugger\Debugger::barDump($var, $title, $options);
+
     return $var;
 }
