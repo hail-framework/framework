@@ -225,10 +225,10 @@ class Session implements \ArrayAccess
             $options = [];
         }
 
-        if (!isset($options['session.serialize_handler'])) {
-            $serializeHandler = \ini_get('session.serialize_handler');
+        if (!isset($options['serialize_handler'])) {
+            $serializeHandler = \ini_get('serialize_handler');
             if ($serializeHandler === 'php' || $serializeHandler === 'php_binary') {
-                $options['session.serialize_handler'] = 'php_serialize';
+                $options['serialize_handler'] = 'php_serialize';
             }
         }
 

@@ -111,11 +111,14 @@ class Cors implements MiddlewareInterface
 		foreach ($default as $k => $v) {
 			if (!isset($settings[$k])) {
 				$settings[$k] = $v;
-			} elseif ($k === self::KEY_ALLOWED_METHODS) {
-				$settings[$k] = \array_change_key_case($v,  CASE_UPPER);
-			} elseif ($k === self::KEY_ALLOWED_ORIGINS || $k === self::KEY_ALLOWED_HEADERS) {
-				$settings[$k] = \array_change_key_case($v,  CASE_LOWER);
-			}
+			} else {
+			    $v = $settings[$k];
+			    if ($k === self::KEY_ALLOWED_METHODS) {
+                    $settings[$k] = \array_change_key_case($v,  CASE_UPPER);
+                } elseif ($k === self::KEY_ALLOWED_ORIGINS || $k === self::KEY_ALLOWED_HEADERS) {
+                    $settings[$k] = \array_change_key_case($v,  CASE_LOWER);
+                }
+            }
 		}
 
 		$this->settings = $settings;
