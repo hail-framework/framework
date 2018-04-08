@@ -26,7 +26,7 @@ use Hail\Util\ArrayTrait;
  * @package Aura.Session
  *
  */
-class Session
+class Session implements \ArrayAccess
 {
     use ArrayTrait;
 
@@ -164,7 +164,7 @@ class Session
      * @return Segment New Segment instance.
      *
      */
-    public function getSegment($name)
+    public function getSegment(string $name): Segment
     {
         return new Segment($this, $name);
     }
@@ -337,7 +337,7 @@ class Session
      *
      * @see session_cache_expire()
      */
-    public function setCacheExpire($expire)
+    public function setCacheExpire(int $expire): int
     {
         return \session_cache_expire($expire);
     }
@@ -349,7 +349,7 @@ class Session
      *
      * @see session_cache_expire()
      */
-    public function getCacheExpire()
+    public function getCacheExpire(): int
     {
         return \session_cache_expire();
     }
@@ -363,7 +363,7 @@ class Session
      *
      * @see session_cache_limiter()
      */
-    public function setCacheLimiter($limiter)
+    public function setCacheLimiter(string $limiter): string
     {
         return \session_cache_limiter($limiter);
     }
@@ -375,7 +375,7 @@ class Session
      *
      * @see session_cache_limiter()
      */
-    public function getCacheLimiter()
+    public function getCacheLimiter(): string
     {
         return \session_cache_limiter();
     }
@@ -385,7 +385,7 @@ class Session
      *
      * @return array
      */
-    public function getCookieParams()
+    public function getCookieParams(): array
     {
         return $this->cookieParams;
     }
@@ -395,7 +395,7 @@ class Session
      *
      * @return string
      */
-    public function getId()
+    public function getId(): string
     {
         return \session_id();
     }
@@ -406,7 +406,7 @@ class Session
      *
      * @return bool True if regeneration worked, false if not.
      */
-    public function regenerateId()
+    public function regenerateId(): bool
     {
         $result = \session_regenerate_id(true);
         if ($result && $this->csrfToken) {
@@ -425,7 +425,7 @@ class Session
      *
      * @see session_name()
      */
-    public function setName($name)
+    public function setName(string $name): string
     {
         return \session_name($name);
     }
@@ -435,7 +435,7 @@ class Session
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return \session_name();
     }
@@ -449,7 +449,7 @@ class Session
      *
      * @see session_save_path()
      */
-    public function setSavePath($path)
+    public function setSavePath(string $path): string
     {
         return \session_save_path($path);
     }
@@ -461,12 +461,12 @@ class Session
      *
      * @see session_save_path()
      */
-    public function getSavePath()
+    public function getSavePath(): string
     {
         return \session_save_path();
     }
 
-    public function destroy()
+    public function destroy(): bool
     {
         if (!$this->isStarted()) {
             $this->start();

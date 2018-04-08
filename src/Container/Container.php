@@ -17,7 +17,7 @@ use Hail\Container\Exception\{
 /**
  * This class implements a simple dependency injection container.
  */
-class Container implements ContainerInterface
+class Container implements ContainerInterface, \ArrayAccess
 {
     use ArrayTrait;
 
