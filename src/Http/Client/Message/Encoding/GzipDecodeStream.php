@@ -4,7 +4,7 @@ namespace Hail\Http\Client\Message\Encoding;
 
 use Psr\Http\Message\StreamInterface;
 
-!\defined('ZLIB_EXTENSION') && \define('ZLIB_EXTENSION', \extension_loaded('zlib'));
+\defined('ZLIB_EXTENSION') || \define('ZLIB_EXTENSION', \extension_loaded('zlib'));
 
 /**
  * Stream for decoding from gzip format (RFC 1952).

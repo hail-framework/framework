@@ -2,27 +2,38 @@
 
 namespace Hail\Optimize\Adapter;
 
+\defined('APCU_EXTENSION') || \define('APCU_EXTENSION', \extension_loaded('apcu'));
 
 use Hail\Optimize\AdapterInterface;
 
 class Apcu implements AdapterInterface
 {
-    public static function init(): bool
+    private static $instance;
+
+    public static function getInstance(array $config): ?AdapterInterface
     {
-        return \extension_loaded('apcu');
+        if (!APCU_EXTENSION) {
+            return null;
+        }
+
+        if (self::$instance === null) {
+            self::$instance = new static();
+        }
+
+        return self::$instance;
     }
 
-    public static function get(string $key)
+    public function get(string $key)
     {
         return \apcu_fetch($key);
     }
 
-    public static function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0)
     {
         return \apcu_store($key, $value, $ttl);
     }
 
-    public static function setMultiple(array $values, int $ttl = 0)
+    public function setMultiple(array $values, int $ttl = 0)
     {
         $result = \apcu_store($values, null, $ttl);
 

@@ -9,7 +9,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
-!\defined('ZLIB_EXTENSION') && \define('ZLIB_EXTENSION', \extension_loaded('zlib'));
+\defined('ZLIB_EXTENSION') || \define('ZLIB_EXTENSION', \extension_loaded('zlib'));
 
 /**
  * Allow to decode response body with a chunk, deflate, compress or gzip encoding.

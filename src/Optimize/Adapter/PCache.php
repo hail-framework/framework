@@ -2,27 +2,38 @@
 
 namespace Hail\Optimize\Adapter;
 
+\defined('PCACHE_EXTENSION') || \define('PCACHE_EXTENSION', \extension_loaded('pcache'));
 
 use Hail\Optimize\AdapterInterface;
 
 class PCache implements AdapterInterface
 {
-    public static function init(): bool
+    private static $instance;
+
+    public static function getInstance(array $config): ?AdapterInterface
     {
-        return \extension_loaded('pcache');
+        if (!PCACHE_EXTENSION) {
+            return null;
+        }
+
+        if (self::$instance === null) {
+            self::$instance = new static();
+        }
+
+        return self::$instance;
     }
 
-    public static function get(string $key)
+    public function get(string $key)
     {
         return \pcache_get($key);
     }
 
-    public static function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0)
     {
         return \pcache_set($key, $value, $ttl);
     }
 
-    public static function setMultiple(array $values, int $ttl = 0)
+    public function setMultiple(array $values, int $ttl = 0)
     {
         $return = true;
         foreach ($values as $k => $v) {

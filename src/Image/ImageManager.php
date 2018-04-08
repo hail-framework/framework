@@ -2,8 +2,8 @@
 
 namespace Hail\Image;
 
-!\defined('IMAGICK_EXTENSION') || \define('IMAGICK_EXTENSION', \extension_loaded('imagick') && \class_exists('Imagick', false));
-!\defined('GD_EXTENSION') || \define('GD_EXTENSION', \extension_loaded('gd') && \function_exists('gd_info'));
+\defined('IMAGICK_EXTENSION') || \define('IMAGICK_EXTENSION', \extension_loaded('imagick') && \class_exists('Imagick', false));
+\defined('GD_EXTENSION') || \define('GD_EXTENSION', \extension_loaded('gd') && \function_exists('gd_info'));
 
 use Closure;
 use Hail\Factory\Cache;

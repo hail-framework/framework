@@ -5,11 +5,11 @@ namespace Hail\Optimize;
 
 interface AdapterInterface
 {
-    public static function init(): bool;
+    public static function getInstance(array $config): ?AdapterInterface;
 
-    public static function get(string $key);
+    public function get(string $key);
 
-    public static function set(string $key, $value, int $ttl = 0);
+    public function set(string $key, $value, int $ttl = 0);
 
-    public static function setMultiple(array $values, int $ttl = 0);
+    public function setMultiple(array $values, int $ttl = 0);
 }

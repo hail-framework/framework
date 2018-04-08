@@ -16,7 +16,7 @@ use Hail\I18n\Gettext\GettextTranslator;
 use Hail\I18n\Gettext\Translator;
 use Hail\I18n\Gettext\TranslatorInterface;
 
-!\defined('GETTEXT_EXTENSION') && \define('GETTEXT_EXTENSION', \extension_loaded('gettext'));
+\defined('GETTEXT_EXTENSION') || \define('GETTEXT_EXTENSION', \extension_loaded('gettext'));
 
 /**
  * Class I18n

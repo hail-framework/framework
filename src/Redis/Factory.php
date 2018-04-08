@@ -2,8 +2,8 @@
 
 namespace Hail\Redis;
 
-!\defined('PHP_REDIS_EXTENSION') && \define('PHP_REDIS_EXTENSION', \extension_loaded('redis'));
-!\defined('REDIS_CONNECT_POOL') && \define('REDIS_CONNECT_POOL', \class_exists('\redisProxy', false));
+\defined('PHP_REDIS_EXTENSION') || \define('PHP_REDIS_EXTENSION', \extension_loaded('redis'));
+\defined('REDIS_CONNECT_POOL') || \define('REDIS_CONNECT_POOL', \class_exists('\redisProxy', false));
 
 class Factory
 {

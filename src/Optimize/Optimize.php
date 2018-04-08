@@ -21,30 +21,32 @@ class Optimize
         'redis' => Redis::class,
     ];
 
+    private static $instance;
+
     /**
      * @var AdapterInterface|null
      */
-    private static $adapter;
+    private $adapter;
 
     /**
      * @var int
      */
-    private static $expire;
+    private $expire;
 
     /**
      * @var int
      */
-    private static $delay;
+    private $delay;
 
-    public static function init(array $config): void
+    public function __construct(array $config)
     {
         $adapter = $config['adapter'] ?? 'auto';
         if ($adapter === 'none') {
             return;
         }
 
-        self::$expire = $config['expire'];
-        self::$delay = $config['delay'];
+        $this->expire = $config['expire'] ?? 0;
+        $this->delay = $config['delay'] ?? 5;
 
         $adapters = [];
         if ($adapter === 'auto') {
@@ -59,12 +61,30 @@ class Optimize
             $adapters = self::ADAPTERS;
         }
 
-        foreach ($adapters as $adapter) {
-            if ($adapter::init($config)) {
-                self::$adapter = $adapter;
+        foreach ($adapters as $class) {
+            $adapter = $class::getInstance($config);
+            if ($adapter !== null) {
+                $this->adapter = $adapter;
                 break;
             }
         }
+    }
+
+    /**
+     * @return static
+     */
+    public static function getInstance()
+    {
+        if (static::$instance === null) {
+            static::$instance = new static([
+                'adapter' => \env('OPTIMIZE_ADAPTER'),
+                'expire' => (int) \env('OPTIMIZE_EXPIRE'),
+                'delay' => (int) \env('OPTIMIZE_DELAY'),
+                'redis' => \env('OPTIMIZE_REDIS'),
+            ]);
+        }
+
+        return static::$instance;
     }
 
     /**
@@ -73,14 +93,14 @@ class Optimize
      *
      * @return mixed
      */
-    private static function setMultiple(string $prefix, array $array)
+    private function setMultiple(string $prefix, array $array)
     {
         $list = [];
         foreach ($array as $k => $v) {
             $list["{$prefix}|{$k}"] = $v;
         }
 
-        return self::$adapter::setMultiple($list, self::$expire);
+        return $this->adapter->setMultiple($list, $this->expire);
     }
 
 
@@ -121,30 +141,30 @@ class Optimize
         return $mtime;
     }
 
-    public static function get(string $prefix, string $key, $file = null)
+    public function get(string $prefix, string $key, $file = null)
     {
-        if (self::$adapter === null) {
+        if ($this->adapter === null) {
             return false;
         }
 
-        if (self::$delay > 0 && $file !== null) {
+        if ($this->delay > 0 && $file !== null) {
             $time = "{$prefix}|{$key}|time";
-            $check = self::$adapter::get($time);
+            $check = $this->adapter->get($time);
             $now = \time();
-            if ($check !== false && $now >= ($check[0] + self::$delay)) {
+            if ($check !== false && $now >= ($check[0] + $this->delay)) {
                 if (self::verifyMTime($file, $check[1])) {
                     return false;
                 }
 
                 $check[0] = $now;
-                self::$adapter::set($time, $check, self::$expire);
+                $this->adapter->set($time, $check, $this->expire);
             }
         }
 
-        return self::$adapter::get("{$prefix}|{$key}");
+        return $this->adapter->get("{$prefix}|{$key}");
     }
 
-    public static function set(string $prefix, $key, $value, $file = null)
+    public function set(string $prefix, $key, $value, $file = null)
     {
         if ($file !== null) {
             $mtime = self::getMTime($file);
@@ -157,18 +177,11 @@ class Optimize
         }
 
         if (\is_array($key)) {
-            return self::setMultiple(
+            return $this->setMultiple(
                 $prefix, $key
             );
         }
 
-        return self::$adapter::set("{$prefix}|{$key}", $value, self::$expire);
+        return $this->adapter->set("{$prefix}|{$key}", $value, $this->expire);
     }
 }
-
-Optimize::init([
-    'adapter' => \env('OPTIMIZE_ADAPTER') ?? 'auto',
-    'expire' => (int) \env('OPTIMIZE_EXPIRE'),
-    'delay' => (int) \env('OPTIMIZE_DELAY'),
-    'redis' => \env('OPTIMIZE_REDIS'),
-]);

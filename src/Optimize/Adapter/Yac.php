@@ -2,6 +2,7 @@
 
 namespace Hail\Optimize\Adapter;
 
+\defined('YAC_EXTENSION') || \define('YAC_EXTENSION', \class_exists('\Yac'));
 
 use Hail\Optimize\AdapterInterface;
 
@@ -10,39 +11,48 @@ class Yac implements AdapterInterface
     /**
      * @var \Yac
      */
-    private static $yac;
+    private $yac;
 
-    public static function init(): bool
+    private static $instance;
+
+    public static function getInstance(array $config): ?AdapterInterface
     {
-        if (!\class_exists('\Yac')) {
-            return false;
+        if (!YAC_EXTENSION) {
+            return null;
         }
 
-        self::$yac = new \Yac();
+        if (self::$instance === null) {
+            self::$instance = new static();
+        }
 
-        return true;
+        return self::$instance;
     }
 
-    public static function get(string $key)
+    public function __construct()
     {
-        return self::$yac->get(
+        $this->yac = new \Yac();
+    }
+
+    public function get(string $key)
+    {
+        return $this->yac->get(
             self::key($key)
         );
     }
 
-    public static function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0)
     {
-        return self::$yac->set(self::key($key), $value, $ttl);
+        return $this->yac->set(self::key($key), $value, $ttl);
     }
 
-    public static function setMultiple(array $values, int $ttl = 0)
+    public function setMultiple(array $values, int $ttl = 0)
     {
         $list = [];
         foreach ($values as $k => $v) {
             $list[self::key($k)] = $v;
         }
 
-        return self::$yac->set($list, $ttl);
+        return $this->yac->set($list, $ttl);
     }
 
     private static function key($key)

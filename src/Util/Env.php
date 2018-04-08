@@ -2,6 +2,7 @@
 
 namespace Hail\Util;
 
+use Hail\Optimize\Optimize;
 use Hail\Optimize\OptimizeTrait;
 
 /**
@@ -15,6 +16,16 @@ class Env
     use OptimizeTrait;
 
     protected const FILE = '.env';
+
+    public static function init()
+    {
+        self::optimizeInstance(
+            new Optimize([
+                'adapter' => 'auto',
+                'delay' => 5,
+            ])
+        );
+    }
 
     /**
      * Load `.env` file in given directory.
@@ -316,3 +327,5 @@ class Env
         $_SERVER[$name] = $value;
     }
 }
+
+Env::init();

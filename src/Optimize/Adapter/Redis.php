@@ -2,6 +2,8 @@
 
 namespace Hail\Optimize\Adapter;
 
+\defined('PHP_REDIS_EXTENSION') || \define('PHP_REDIS_EXTENSION', \extension_loaded('redis'));
+
 use Hail\Optimize\AdapterInterface;
 use Hail\Util\Serialize;
 
@@ -10,18 +12,27 @@ class Redis implements AdapterInterface
     /**
      * @var \Redis
      */
-    private static $redis;
+    private $redis;
 
-    public static function init(array $config): bool
+    public static function getInstance(array $config): ?AdapterInterface
     {
-        if (!isset($config['redis']) || !\extension_loaded('redis')) {
-            return false;
+        if (!PHP_REDIS_EXTENSION || !empty($config['redis'])) {
+            return null;
         }
 
-        [$type, $redis] = \explode('://', $config['redis'], 2);
+        try {
+            return new static($config['redis']);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function __construct(string $config)
+    {
+        [$type, $redis] = \explode('://', $config, 2);
 
         if ($type !== 'unix' && $type !== 'tcp') {
-            return false;
+            throw new \InvalidArgumentException('Redis host invalid!');
         }
 
         $arr = \explode('?', $redis, 2);
@@ -34,33 +45,35 @@ class Redis implements AdapterInterface
             $port = $tcp[1] ?? null;
         }
 
-        self::$redis = new \Redis();
+        $this->redis = new \Redis();
 
         if ($port === null) {
-            $return = self::$redis->connect($redis);
+            $return = $this->redis->connect($redis);
         } else {
-            $return = self::$redis->connect($redis, $port);
+            $return = $this->redis->connect($redis, $port);
         }
 
-        self::$redis->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_NONE);
+        if (!$return) {
+            throw new \RuntimeException('Redis connect failed!');
+        }
 
-        if ($return && isset($arr[1])) {
+        $this->redis->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_NONE);
+
+        if (isset($arr[1])) {
             $params = [];
             \parse_str($arr[1], $params);
 
             foreach ($params as $k => $v) {
                 if ($k === 'auth' || $k === 'select') {
-                    self::$redis->$k($v);
+                    $this->redis->$k($v);
                 }
             }
         }
-
-        return $return;
     }
 
-    public static function get(string $key)
+    public function get(string $key)
     {
-        $value = self::$redis->get($key);
+        $value = $this->redis->get($key);
 
         if ($value === false) {
             return false;
@@ -69,12 +82,12 @@ class Redis implements AdapterInterface
         return Serialize::decode($value);
     }
 
-    public static function setMultiple(array $values, int $ttl = 0)
+    public function setMultiple(array $values, int $ttl = 0)
     {
         if ($ttl > 0) {
             $success = true;
             foreach ($values as $key => $value) {
-                if (!self::$redis->setEx($key, $ttl, $value)) {
+                if (!$this->redis->setEx($key, $ttl, $value)) {
                     $success = false;
                 }
             }
@@ -82,11 +95,11 @@ class Redis implements AdapterInterface
             return $success;
         }
 
-        return self::$redis->mSet($values);
+        return $this->redis->mSet($values);
     }
 
-    public static function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0)
     {
-        return self::$redis->set($key, Serialize::encode($value), $ttl);
+        return $this->redis->set($key, Serialize::encode($value), $ttl);
     }
 }

@@ -2,17 +2,28 @@
 
 namespace Hail\Optimize\Adapter;
 
+\defined('WINCACHE_EXTENSION') || \define('WINCACHE_EXTENSION', \extension_loaded('wincache'));
 
 use Hail\Optimize\AdapterInterface;
 
 class WinCache implements AdapterInterface
 {
-    public static function init(): bool
+    private static $instance;
+
+    public static function getInstance(array $config): ?AdapterInterface
     {
-        return \extension_loaded('wincache');
+        if (!WINCACHE_EXTENSION) {
+            return null;
+        }
+
+        if (self::$instance === null) {
+            self::$instance = new static();
+        }
+
+        return self::$instance;
     }
 
-    public static function get(string $key)
+    public function get(string $key)
     {
         $value = \wincache_ucache_get($key, $success);
         if ($success === false) {
@@ -22,12 +33,12 @@ class WinCache implements AdapterInterface
         return $value;
     }
 
-    public static function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0)
     {
         return \wincache_ucache_set($key, $value, $ttl);
     }
 
-    public static function setMultiple(array $values, int $ttl = 0)
+    public function setMultiple(array $values, int $ttl = 0)
     {
         $result = \wincache_ucache_set($values, null, $ttl);
 
