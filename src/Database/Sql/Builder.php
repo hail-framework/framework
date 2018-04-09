@@ -293,22 +293,22 @@ class Builder
 
     protected function dataImplode(array $data, array &$map, string $conjunctor)
     {
-        $wheres = [];
+        $stack = [];
 
         foreach ($data as $key => $value) {
             $type = \gettype($value);
 
-            if ($type === 'array') {
-                $relationship = \strpos($key, SQL::AND) !== false ? 'AND' :
-                    (\strpos($key, SQL::OR) !== false ? 'OR' : false);
+            if (
+                $type === 'array' &&
+                \preg_match("/^(AND|OR)(\s+#.*)?$/", $key, $relation_match)
+            ) {
+                $relationship = $relation_match[ 1 ];
 
-                if ($relationship) {
-                    $stack[] = !empty(\array_diff_key($value, \array_keys(\array_keys($value)))) ?
-                        '(' . $this->dataImplode($value, $map, ' ' . $relationship) . ')' :
-                        '(' . $this->innerConjunct($value, $map, ' ' . $relationship, $conjunctor) . ')';
+                $stack[] = $value !== \array_keys(\array_keys($value)) ?
+                    '(' . $this->dataImplode($value, $map, ' ' . $relationship) . ')' :
+                    '(' . $this->innerConjunct($value, $map, ' ' . $relationship, $conjunctor) . ')';
 
-                    continue;
-                }
+                continue;
             }
 
             $mapKey = $this->mapKey();
@@ -452,7 +452,7 @@ class Builder
             }
         }
 
-        return \implode($conjunctor . ' ', $wheres);
+        return \implode($conjunctor . ' ', $stack);
     }
 
     protected function suffixClause(array $struct, &$map): string
@@ -475,9 +475,7 @@ class Builder
 
         $clause = '';
         if (\is_array($where)) {
-            $whereKeys = \array_keys($where);
-
-            $conditions = \array_diff_key($whereKeys, \array_flip(
+            $conditions = \array_diff_key($where, \array_flip(
                 [SQL::GROUP, SQL::ORDER, SQL::HAVING, SQL::LIMIT, SQL::LIKE, SQL::MATCH]
             ));
 

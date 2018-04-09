@@ -95,7 +95,11 @@ class Event
 		$time = \microtime(true);
 
 		$this->result = $result;
-		$this->count = \count($result);
+
+        $this->count = 0;
+		if ($result) {
+            $this->count = \count($result);
+        }
 
 		if (isset($this->time['fetch'])) {
 			$this->time['fetch'] += $time;

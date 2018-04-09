@@ -117,6 +117,8 @@ class Request
             $this->all = true;
         }
 
+        $this->cache = [];
+
         return $this->input = $values;
     }
 

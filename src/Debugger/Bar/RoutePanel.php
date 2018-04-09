@@ -51,7 +51,7 @@ class RoutePanel implements PanelInterface
 
     private function getRouteResult()
     {
-        if ($this->result === null) {
+        if ($this->result === []) {
             $result = Router::getResult();
 
             if (isset($result['error'])) {
