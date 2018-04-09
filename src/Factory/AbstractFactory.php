@@ -15,12 +15,13 @@ abstract class AbstractFactory
 
 	protected static function getKey(array $config, $default)
     {
+        $prefix = static::class . '|';
         $defaultConfig = Config::get($default);
 
         if ($config === [] || $config === $defaultConfig) {
-            return ['default', $defaultConfig];
+            return [$prefix . 'default', $defaultConfig];
         }
 
-        return [Serialize::encode($config), $config + $defaultConfig];
+        return [$prefix . Serialize::encode($config), $config + $defaultConfig];
     }
 }

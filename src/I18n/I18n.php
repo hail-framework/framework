@@ -53,6 +53,11 @@ class I18n
         return $previous;
     }
 
+    public function getTranslator()
+    {
+        return self::$translator;
+    }
+
     /**
      * @param string $text
      * @param array  $args
