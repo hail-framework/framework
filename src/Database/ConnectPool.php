@@ -30,7 +30,9 @@ class ConnectPool extends Database
      */
     protected function done($result = null)
     {
-        $this->pdo->release();
+        if ($this->pdo !== null) {
+            $this->pdo->release();
+        }
 
         return $result;
     }

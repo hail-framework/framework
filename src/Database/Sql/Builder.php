@@ -10,8 +10,8 @@
 
 namespace Hail\Database\Sql;
 
+use Hail\Database\Database;
 use Hail\Util\Json;
-use PDO;
 
 /**
  * SQL builder from Medoo
@@ -27,9 +27,9 @@ class Builder
     protected $type;
 
     /**
-     * @var PDO $pdo
+     * @var Database $db
      */
-    protected $pdo;
+    protected $db;
 
     /**
      * @var string
@@ -46,10 +46,10 @@ class Builder
      */
     protected $guid = 0;
 
-    public function __construct(string $type, PDO $pdo, string $prefix = null)
+    public function __construct(Database $db, string $prefix = null)
     {
-        $this->type = \strtolower($type);
-        $this->pdo = $pdo;
+        $this->type = $db->getType();
+        $this->db = $db;
 
         if ($this->type === 'mysql' || $this->type === 'mariadb') {
             $this->quote = '`';
@@ -58,11 +58,6 @@ class Builder
         if ($prefix) {
             $this->prefix = $prefix;
         }
-    }
-
-    public function setPdo(PDO $pdo = null)
-    {
-        $this->pdo = $pdo;
     }
 
     public function raw(string $string, array $map = []): Raw
@@ -144,7 +139,7 @@ class Builder
 
         foreach ($map as $key => $value) {
             if ($value[1] === PDO::PARAM_STR) {
-                $replace = $this->quote($value[0]);
+                $replace = $this->db->quote($value[0]);
             } elseif ($value[1] === PDO::PARAM_NULL) {
                 $replace = 'NULL';
             } elseif ($value[1] === PDO::PARAM_LOB) {
@@ -181,16 +176,6 @@ class Builder
         $this->quote = $quote;
 
         return $this;
-    }
-
-    /**
-     * @param $string
-     *
-     * @return string
-     */
-    public function quote($string)
-    {
-        return $this->pdo->quote($string);
     }
 
     protected function tableQuote($table)
@@ -275,7 +260,7 @@ class Builder
     {
         $temp = [];
         foreach ($array as $value) {
-            $temp[] = \is_int($value) ? $value : $this->pdo->quote($value);
+            $temp[] = \is_int($value) ? $value : $this->db->quote($value);
         }
 
         return \implode(',', $temp);
@@ -950,5 +935,10 @@ class Builder
     public function truncate(string $table): string
     {
         return 'TRUNCATE TABLE ' . $this->tableQuote($table);
+    }
+
+    public function __destruct()
+    {
+        $this->db = null;
     }
 }

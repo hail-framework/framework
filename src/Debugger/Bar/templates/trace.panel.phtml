@@ -39,7 +39,9 @@ namespace Hail\Debugger;
 <div class="xdbgpanel">
     <h1>XDebugTrace</h1>
 
-    <?php foreach( as $traceNo => $trace): ?>
+    <?php $count = 0; $total = count($traces); ?>
+    <?php foreach($traces as $traceNo => $trace): ?>
+    <?php ++$count; ?>
     <div class="nette-inner">
         <table style="width:100%">
             <?php $indent = $indents[$traceNo]?>
@@ -91,7 +93,7 @@ namespace Hail\Debugger;
             <tr>
                 <td class="right"><?=$statistic->count?></td>
                 <td class="right"><?=$this->time($statistic->deltaTime)?></td>
-                <td class="right <?=$this->timeClass($statistic)?>"><?=$this->time($statistic->averageTime)?></td>
+                <td class="right <?=$this->timeClass($statistic->deltaTime)?>"><?=$this->time($statistic->averageTime)?></td>
                 <td width="100%"><?=$function?></td>
             </tr>
             <?php endforeach ?>
@@ -99,7 +101,7 @@ namespace Hail\Debugger;
         </table>
         <?php endif ?>
     </div>
-    <?php if ($traces->hasNext()): ?>
+    <?php if ($count < $total): ?>
     <br>
     <?php endif ?>
     <?php endforeach ?>

@@ -423,15 +423,7 @@ class TracePanel implements PanelInterface
 
                     $cols = \explode("\t", $line);
                     if (!\strlen($cols[0]) && \count($cols) === 5) {    // last line before TRACE END
-                        /*
-                                                $record = (object) [
-                                                    'time' => (float) $cols[3],
-                                                    'memory' => (float) $cols[4],
-                                                ];
-                                                $this->addRecord($record, TRUE);
-                        */
                         continue;
-
                     }
 
                     $record = (object) [
@@ -474,9 +466,7 @@ class TracePanel implements PanelInterface
             return $this->renderError();
         }
 
-        $traces = new \CachingIterator(
-            new \ArrayIterator($this->trace)
-        );
+        $traces = $this->traces;
         $indents = $this->indents;
         $titles = $this->titles;
         $parsingTime = \microtime(true) - $parsingStart;

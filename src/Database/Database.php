@@ -184,10 +184,7 @@ class Database
         $dsn = $driver . ':' . \implode($stack, ';');
 
         $this->dsn = [$dsn, $options['username'], $options['password'], $pdoOptions, $commands];
-
-        $this->connect();
-
-        $this->sql = new Sql\Builder($this->type, $this->pdo, $options['prefix'] ?? '');
+        $this->sql = new Sql\Builder($this, $options['prefix'] ?? '');
 
         return $this;
     }
@@ -195,6 +192,8 @@ class Database
     public function debug()
     {
         $this->debug = true;
+
+        return $this;
     }
 
     public function getType(): string
@@ -209,6 +208,10 @@ class Database
 
     public function getPdo(): \PDO
     {
+        if ($this->pdo === null) {
+            $this->connect();
+        }
+
         return $this->pdo;
     }
 
@@ -256,6 +259,8 @@ class Database
      */
     public function exec(string $query, array $map = [], array $fetchArgs = null): ?\PDOStatement
     {
+        $pdo = $this->pdo ?? $this->getPdo();
+
         if ($this->debug) {
             echo $this->sql->generate($query, $map);
 
@@ -268,7 +273,7 @@ class Database
 
         RETRY_QUERY:
         {
-            $statement = $this->pdo->prepare($query);
+            $statement = $pdo->prepare($query);
 
             if ($statement) {
                 foreach ($map as $key => $value) {
@@ -289,11 +294,8 @@ class Database
             if ($retries === 0) {
                 $error = $statement->errorCode();
                 if ($error === 2006 || $error === 2013) {
-                    $this->pdo = null;
-                    $this->sql->setPdo(null);
-
-                    $this->connect();
-                    $this->sql->setPdo($this->pdo);
+                    $this->pdo = $pdo = null;
+                    $pdo = $this->getPdo();
 
                     ++$retries;
                     goto RETRY_QUERY;
@@ -431,11 +433,13 @@ class Database
             return 0;
         }
 
+        $pdo = $this->pdo ?? $this->getPdo();
+
         if (isset(self::ID_SQL[$type])) {
-            return $this->pdo->query(self::ID_SQL[$type])->fetchColumn();
+            return $pdo->query(self::ID_SQL[$type])->fetchColumn();
         }
 
-        return $this->pdo->lastInsertId();
+        return $pdo->lastInsertId();
     }
 
     /**
@@ -632,18 +636,19 @@ class Database
      */
     public function action(callable $actions)
     {
-        $this->pdo->beginTransaction();
+        $pdo = $this->pdo ?? $this->getPdo();
+        $pdo->beginTransaction();
 
         try {
             $result = $actions($this);
 
             if ($result === false) {
-                $this->pdo->rollBack();
+                $pdo->rollBack();
             } else {
-                $this->pdo->commit();
+                $pdo->commit();
             }
         } catch (\Throwable $e) {
-            $this->pdo->rollBack();
+            $pdo->rollBack();
 
             throw $e;
         }
@@ -666,8 +671,9 @@ class Database
             'connection' => 'CONNECTION_STATUS',
         ];
 
+        $pdo = $this->pdo ?? $this->getPdo();
         foreach ($output as $key => $value) {
-            $output[$key] = @$this->pdo->getAttribute(\constant('\PDO::ATTR_' . $value));
+            $output[$key] = @$pdo->getAttribute(\constant('\PDO::ATTR_' . $value));
         }
 
         return $output;

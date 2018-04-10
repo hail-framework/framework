@@ -207,8 +207,9 @@ class Develop extends Database
 
     public function action(callable $actions)
     {
+        $pdo = $this->pdo ?? $this->getPdo();
         $event = new Event($this, Event::TRANSACTION);
-        $this->pdo->beginTransaction();
+        $pdo->beginTransaction();
 
         try {
             $result = $actions($this);
@@ -217,12 +218,12 @@ class Develop extends Database
             $this->event = $event;
 
             if ($result === false) {
-                $this->pdo->rollBack();
+                $pdo->rollBack();
             } else {
-                $this->pdo->commit();
+                $pdo->commit();
             }
         } catch (\Throwable $e) {
-            $this->pdo->rollBack();
+            $pdo->rollBack();
             $this->done($e);
 
             throw $e;
@@ -254,6 +255,10 @@ class Develop extends Database
     {
         switch ($type) {
             case 'start':
+                if ($this->pdo === null && $arg !== Event::CONNECT) {
+                    $this->connect();
+                }
+
                 $this->event = new Event($this, $arg);
                 break;
 
