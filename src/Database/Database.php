@@ -10,6 +10,8 @@
 
 namespace Hail\Database;
 
+use Hail\Util\SafeStorageTrait;
+
 /**
  * Part of the code from Medoo
  *
@@ -18,6 +20,8 @@ namespace Hail\Database;
  */
 class Database
 {
+    use SafeStorageTrait;
+
     // General
     protected $type;
     protected $database;
@@ -183,7 +187,8 @@ class Database
         }
         $dsn = $driver . ':' . \implode($stack, ';');
 
-        $this->dsn = [$dsn, $options['username'], $options['password'], $pdoOptions, $commands];
+        $this->setPassword($options['password']);
+        $this->dsn = [$dsn, $options['username'], $pdoOptions, $commands];
         $this->sql = new Sql\Builder($this, $options['prefix'] ?? '');
 
         return $this;
@@ -217,7 +222,8 @@ class Database
 
     protected function connect()
     {
-        [$dsn, $username, $password, $options, $commands] = $this->dsn;
+        [$dsn, $username, $options, $commands] = $this->dsn;
+        $password = $this->getPassword();
 
         $this->pdo = new \PDO(
             $dsn,

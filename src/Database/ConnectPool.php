@@ -6,7 +6,8 @@ class ConnectPool extends Database
 {
     protected function connect()
     {
-        [$dsn, $username, $password, $options, $commands] = $this->dsn;
+        [$dsn, $username, $options, $commands] = $this->dsn;
+        $password = $this->getPassword();
 
         $this->pdo = new \pdoProxy(
             $dsn,
