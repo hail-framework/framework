@@ -320,7 +320,9 @@ class Database
      */
     public function quote($string)
     {
-        return $this->sql->quote($string);
+        $pdo = $this->pdo ?? $this->getPdo();
+
+        return $pdo->quote($string);
     }
 
     /**

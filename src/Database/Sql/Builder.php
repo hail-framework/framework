@@ -12,6 +12,7 @@ namespace Hail\Database\Sql;
 
 use Hail\Database\Database;
 use Hail\Util\Json;
+use PDO;
 
 /**
  * SQL builder from Medoo
