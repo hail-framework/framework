@@ -98,7 +98,7 @@ class Event
 
         $this->count = 0;
 		if ($result) {
-            $this->count = \count($result);
+            $this->count = \count((array) $result);
         }
 
 		if (isset($this->time['fetch'])) {
