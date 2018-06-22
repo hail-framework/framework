@@ -301,7 +301,7 @@ class Uri implements UriInterface
         $scheme = \strtolower($scheme);
         $scheme = \preg_replace('#:(//)?$#', '', $scheme);
 
-        if (empty($scheme)) {
+        if ('' === $scheme) {
             return '';
         }
 
@@ -373,7 +373,7 @@ class Uri implements UriInterface
             $path
         );
 
-        if (empty($path)) {
+        if ('' === $path) {
             // No path
             return $path;
         }
@@ -396,7 +396,7 @@ class Uri implements UriInterface
      */
     private function filterFragment(string $fragment)
     {
-        if (!empty($fragment) && \strpos($fragment, '#') === 0) {
+        if ('' !== $fragment && \strpos($fragment, '#') === 0) {
             $fragment = '%23' . \substr($fragment, 1);
         }
 

@@ -31,7 +31,7 @@ use Hail\Filesystem\{
  * @method static bool createDir($dirname, $config = [])
  * @method static array getWithMetadata($path, array $metadata)
  * @method static string|false getMimetype($path)
- * @method static string|false getTimestamp($path)
+ * @method static int|false getTimestamp($path)
  * @method static string|false getVisibility($path)
  * @method static int|false getSize($path);
  * @method static bool setVisibility($path, $visibility)

@@ -57,8 +57,8 @@ abstract class AbstractFont
      * Draws font to given image on given position
      *
      * @param  Image   $image
-     * @param  integer $posx
-     * @param  integer $posy
+     * @param  int $posx
+     * @param  int $posy
      *
      * @return bool
      */
@@ -108,7 +108,7 @@ abstract class AbstractFont
     /**
      * Set font size in pixels
      *
-     * @param  integer $size
+     * @param  int $size
      *
      * @return self
      */
@@ -156,7 +156,7 @@ abstract class AbstractFont
     /**
      * Set rotation angle of text
      *
-     * @param  integer $angle
+     * @param  int $angle
      *
      * @return self
      */

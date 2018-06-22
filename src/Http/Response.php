@@ -529,12 +529,11 @@ class Response
         throw $forward;
     }
 
+    /* @noinspection PhpDocMissingThrowsInspection */
     /**
      * @param int    $code
      * @param string $msg
      * @param array  ...$args
-     *
-     * @throws ActionError
      */
     public function error(int $code = 0, string $msg = null, ...$args): void
     {
@@ -542,6 +541,7 @@ class Response
             $msg = \sprintf($msg, ...$args);
         }
 
+        /* @noinspection PhpUnhandledExceptionInspection */
         throw new ActionError($msg, $code);
     }
 

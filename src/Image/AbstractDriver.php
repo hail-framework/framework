@@ -21,8 +21,8 @@ abstract class AbstractDriver
     /**
      * Creates new image instance
      *
-     * @param  integer $width
-     * @param  integer $height
+     * @param  int $width
+     * @param  int $height
      * @param  string  $background
      * @return \Hail\Image\Image
      */
@@ -62,7 +62,7 @@ abstract class AbstractDriver
      *
      * @param  Image   $image
      * @param  string  $format
-     * @param  integer $quality
+     * @param  int $quality
      * @return \Hail\Image\Image
      */
     public function encode($image, $format, $quality)
@@ -95,6 +95,8 @@ abstract class AbstractDriver
      */
     private function getCommandClassName($name)
     {
+        $name = \mb_convert_case($name[0], MB_CASE_UPPER) . \mb_substr($name, 1, \mb_strlen($name));
+
         $namespace = $this->getNamespace();
         $commandName = ucfirst($name);
 

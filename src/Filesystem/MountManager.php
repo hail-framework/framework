@@ -3,8 +3,7 @@
 namespace Hail\Filesystem;
 
 use Hail\Filesystem\Exception\{
-	FileNotFoundException,
-	FilesystemNotFoundException
+    FileExistsException, FileNotFoundException, FilesystemNotFoundException
 };
 
 
@@ -31,7 +30,7 @@ use Hail\Filesystem\Exception\{
  * @method bool createDir($dirname, array $config = [])
  * @method array getWithMetadata($path, array $metadata)
  * @method string|false getMimetype($path)
- * @method string|false getTimestamp($path)
+ * @method int|false getTimestamp($path)
  * @method string|false getVisibility($path)
  * @method int|false getSize($path);
  * @method bool setVisibility($path, $visibility)
@@ -171,6 +170,7 @@ class MountManager
 	 *
 	 * @return mixed
 	 * @throws FilesystemNotFoundException
+     * @throws FileExistsException
 	 */
 	public function __call($method, $arguments)
 	{
@@ -282,13 +282,18 @@ class MountManager
 	 * @return bool True on success, false on failure.
 	 * @throws FileNotFoundException Thrown if $path does not exist.
 	 * @throws FilesystemNotFoundException
-     * @throws Exception\FileExistsException
+     * @throws FileExistsException
      */
 	public function forceRename(string $path, string $newpath)
 	{
 		$deleted = true;
 		if ($this->has($newpath)) {
-			$deleted = $this->delete($newpath);
+            try {
+                $deleted = $this->delete($newpath);
+            } catch (FileNotFoundException $e) {
+                // The destination path does not exist. That's ok.
+                $deleted = true;
+            }
 		}
 
 		if ($deleted) {

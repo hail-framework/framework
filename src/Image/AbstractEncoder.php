@@ -86,7 +86,7 @@ abstract class AbstractEncoder
      *
      * @param  Image   $image
      * @param  string  $format
-     * @param  integer $quality
+     * @param  int $quality
      * @return Image
      */
     public function process(Image $image, $format = null, $quality = null)

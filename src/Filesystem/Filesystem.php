@@ -535,7 +535,12 @@ class Filesystem implements FilesystemInterface
     {
         $deleted = true;
         if ($this->has($newpath)) {
-            $deleted = $this->delete($newpath);
+            try {
+                $deleted = $this->delete($newpath);
+            } catch (FileNotFoundException $e) {
+                // The destination path does not exist. That's ok.
+                $deleted = true;
+            }
         }
 
         if ($deleted) {

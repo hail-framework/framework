@@ -33,6 +33,7 @@ use Hail\Database\Migration\Table;
 use Hail\Database\Migration\Table\Column;
 use Hail\Database\Migration\Table\Index;
 use Hail\Database\Migration\Table\ForeignKey;
+use Hail\Database\Migration\Literal;
 
 /**
  * Phinx MySQL Adapter.
@@ -225,7 +226,7 @@ class MysqlAdapter extends PdoAdapter implements AdapterInterface
             $column = new Column();
             $column->setName('id')
                 ->setType('integer')
-                ->setSigned(isset($options['signed']) ? $options['signed'] : true)
+                ->setSigned($options['signed'] ?? true)
                 ->setIdentity(true);
 
             array_unshift($columns, $column);
@@ -347,6 +348,7 @@ class MysqlAdapter extends PdoAdapter implements AdapterInterface
                 ->setNull($columnInfo['Null'] !== 'NO')
                 ->setDefault($columnInfo['Default'])
                 ->setType($phinxType['name'])
+                ->setSigned(\strpos($columnInfo['Type'], 'unsigned') === false)
                 ->setLimit($phinxType['limit']);
 
             if ($columnInfo['Extra'] === 'auto_increment') {
