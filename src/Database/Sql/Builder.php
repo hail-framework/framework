@@ -816,6 +816,8 @@ class Builder
             $data = $table[SQL::SET] ?? $table[SQL::VALUES];
             $where = $table;
             $table = $this->getTable($table, SQL::UPDATE);
+        } elseif ($where) {
+            $where = [SQL::WHERE => $where];
         }
 
         $fields = [];
@@ -860,6 +862,8 @@ class Builder
         if (\is_array($table)) {
             $where = $table;
             $table = $this->getTable($table, SQL::DELETE);
+        } elseif ($where) {
+            $where = [SQL::WHERE => $where];
         }
 
         $sql = 'DELETE FROM ' . $this->tableQuote($table) . $this->suffixClause($where, $map);
@@ -880,6 +884,8 @@ class Builder
             $columns = $this->getColumns($table, false);
             $table = $this->getTable($table);
             $where = $table;
+        } elseif ($where) {
+            $where = [SQL::WHERE => $where];
         }
 
         if (!\is_array($columns) || empty($columns)) {
