@@ -2,9 +2,9 @@
 /*!
  * Medoo database framework
  * http://medoo.in
- * Version 1.5.2
+ * Version 1.5.7
  *
- * Copyright 2017, Angel Lai
+ * Copyright 2018, Angel Lai
  * Released under the MIT license
  */
 
@@ -82,10 +82,8 @@ class Builder
 
         if (!empty($rawMap)) {
             foreach ($rawMap as $key => $value) {
-                $rawMap[$key] = $this->typeMap($value, \gettype($value));
+                $map[$key] = $this->typeMap($value, \gettype($value));
             }
-
-            $map = $rawMap;
         }
 
         return $query;
@@ -288,7 +286,7 @@ class Builder
                 $type === 'array' &&
                 \preg_match("/^(AND|OR)(\s+#.*)?$/", $key, $relation_match)
             ) {
-                $relationship = $relation_match[ 1 ];
+                $relationship = $relation_match[1];
 
                 $stack[] = $value !== \array_keys(\array_keys($value)) ?
                     '(' . $this->dataImplode($value, $map, ' ' . $relationship) . ')' :
@@ -301,7 +299,7 @@ class Builder
 
             if (
                 \is_int($key) &&
-                \preg_match('/([a-zA-Z0-9_\.]+)\[(?<operator>\>\=?|\<\=?|\!|\=)\]([a-zA-Z0-9_\.]+)/i', $value, $match)
+                \preg_match('/([a-zA-Z0-9_\.]+)\[(?<operator>\>\=?|\<\=?|\!?\=)\]([a-zA-Z0-9_\.]+)/i', $value, $match)
             ) {
                 $stack[] = $this->columnQuote($match[1]) . ' ' . $match['operator'] . ' ' . $this->columnQuote($match[3]);
             } else {
@@ -336,8 +334,8 @@ class Builder
                                 $placeholders = [];
 
                                 foreach ($value as $index => $item) {
-                                    $placeholders[] = $mapKey . $index;
-                                    $map[$mapKey . $index] = $this->typeMap($item, \gettype($item));
+                                    $placeholders[] = $mapKey . $index . '_i';
+                                    $map[$mapKey . $index . '_i'] = $this->typeMap($item, \gettype($item));
                                 }
 
                                 $stack[] = $column . ' NOT IN (' . \implode(', ', $placeholders) . ')';
@@ -413,8 +411,8 @@ class Builder
                             $placeholders = [];
 
                             foreach ($value as $index => $item) {
-                                $placeholders[] = $mapKey . $index;
-                                $map[$mapKey . $index] = $this->typeMap($item, \gettype($item));
+                                $placeholders[] = $mapKey . $index . '_i';
+                                $map[$mapKey . $index . '_i'] = $this->typeMap($item, \gettype($item));
                             }
 
                             $stack[] = $column . ' IN (' . \implode(', ', $placeholders) . ')';
