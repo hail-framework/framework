@@ -20,43 +20,56 @@ class Handler implements MiddlewareInterface
      */
     protected $app;
 
-    protected $reties = 0;
+    protected $count = 0;
     protected $max;
 
     /**
      * @param Application $app
-     * @param int $max
+     * @param int         $max
      */
     public function __construct(Application $app, $max = null)
     {
         $this->app = $app;
-        $this->max = $max ?: 10;
+        $this->max = $max ?: 30;
     }
 
     /**
      * Process a server request and return a response.
      *
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface      $handler
+     * @param ServerRequestInterface  $request
+     * @param RequestHandlerInterface $handler
      *
      * @return ResponseInterface
      * @throws HttpErrorException
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $this->handle($request);
+        $result = $request->getAttribute('routing');
+
+        if (isset($result['error'])) {
+            throw HttpErrorException::create($result['error'], [
+                'code' => $result['error'],
+                'message' => 'Routing not found',
+            ]);
+        }
+
+        $this->count = 0;
+        $this->app->setRequest($request->withoutAttribute('routing'));
+
+        return $this->handle($result['handler'], $result['params']);
     }
 
     /**
-     * @param ServerRequestInterface|array $handler
+     * @param array|\Closure      $handler
+     * @param array|null $params
      *
      * @return ResponseInterface
      * @throws HttpErrorException
      */
-    protected function handle($handler)
+    protected function handle($handler, array $params = null)
     {
-        ++$this->reties;
-        if ($this->reties > $this->max) {
+        ++$this->count;
+        if ($this->count > $this->max) {
             throw HttpErrorException::create(500, [
                 'code' => 500,
                 'message' => 'Action forward is too much',
@@ -64,21 +77,9 @@ class Handler implements MiddlewareInterface
         }
 
         try {
-            if ($handler instanceof ServerRequestInterface) {
-                $handler = $this->app->dispatch($handler);
-            }
-
-            return $this->app->handle($handler);
+            return $this->app->handle($handler, $params);
         } catch (ActionForward $e) {
-            $this->app->params(
-                $e->getParams()
-            );
-
-            return $this->handle(
-                $this->app->handler(
-                    $e->getHandler()
-                )
-            );
+            return $this->handle($e->getHandler(), $e->getParams());
         } catch (BadRequestException $e) {
             throw HttpErrorException::create($e->getCode(), [
                 'code' => $e->getCode(),

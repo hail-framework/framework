@@ -49,7 +49,7 @@ class Develop extends Database
      */
     protected function done($result = null)
     {
-        if ($result === false &&
+        if ($result === null &&
             ($error = $this->error()) &&
             isset($error[0])
         ) {

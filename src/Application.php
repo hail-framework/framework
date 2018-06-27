@@ -152,36 +152,20 @@ class Application
     }
 
     /**
-     * @param ServerRequestInterface $request
-     *
-     * @return array
-     * @throws BadRequestException
-     */
-    public function dispatch(ServerRequestInterface $request)
-    {
-        $result = $request->getAttribute('routing');
-
-        if (isset($result['error'])) {
-            throw new BadRequestException('Router not found', $result['error']);
-        }
-
-        $this->setRequest($request->withoutAttribute('routing'));
-        $this->params($result['params'] ?? []);
-
-        return $this->handler($result['handler']);
-    }
-
-    /**
      * @param array|\Closure $handler
+     * @param array|null     $params
      *
      * @return ResponseInterface
      *
      * @throws BadRequestException
      * @throws ActionForward when forward to another action
      */
-    public function handle($handler): ResponseInterface
+    public function handle($handler = null, array $params = null): ResponseInterface
     {
-        $params = null;
+        $handler = $this->handler($handler);
+        $params = $this->params($params);
+
+        $parameters = null;
         if (!$handler instanceof \Closure) {
             [$class, $method] = $this->convert($handler);
 
@@ -193,14 +177,14 @@ class Application
                 $key = "{$class}::{$method}";
             }
 
-            $params = self::optimizeGet($key);
-            if ($params === false) {
-                $params = Reflection::getParameters($handler);
-                self::optimizeSet($key, $params);
+            $parameters = self::optimizeGet($key);
+            if ($parameters === false) {
+                $parameters = Reflection::getParameters($handler);
+                self::optimizeSet($key, $parameters);
             }
         }
 
-        $result = $this->container->call($handler, $this->params(), $params);
+        $result = $this->container->call($handler, $params, $parameters);
 
         if ($result instanceof ResponseInterface) {
             return $result;
@@ -297,22 +281,33 @@ class Application
     }
 
     /**
-     * @param array|null $handler
+     * @param array|\Closure|null $handler
      *
      * @return array|\Closure
      */
-    public function handler(array $handler = null)
+    public function handler($handler = null)
     {
         if ($handler !== null) {
-            if ($handler instanceof \Closure) {
-                $this->handler = $handler;
-            } else {
-                $default = \is_array($this->handler) ? $this->handler : static::$default;
-                $this->handler = $handler + $default;
-            }
+            $this->handler = $this->getRealHandler($handler);
         }
 
         return $this->handler;
+    }
+
+    /**
+     * @param array|\Closure $handler
+     *
+     * @return array|\Closure
+     */
+    public function getRealHandler($handler)
+    {
+        if ($handler instanceof \Closure) {
+            return $handler;
+        }
+
+        $default = \is_array($this->handler) ? $this->handler : static::$default;
+
+        return $handler + $default;
     }
 
     public function render(ResponseInterface $response, string $name, array $params = []): ResponseInterface
