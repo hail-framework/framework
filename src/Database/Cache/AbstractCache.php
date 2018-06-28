@@ -54,7 +54,7 @@ abstract class AbstractCache implements CachedDBInterface
      */
     protected function key(string $name, array $arguments = null): string
     {
-        if ($this->name !== null) {
+        if ($this->name !== '') {
             return $this->name;
         }
 
