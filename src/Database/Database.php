@@ -79,7 +79,7 @@ class Database
         ];
 
         if (isset($options['option'])) {
-            $pdoOptions = \array_merge($pdoOptions, $options['option']);
+            $pdoOptions = $options['option'] + $pdoOptions;
         }
 
         $commands = [];
