@@ -58,6 +58,11 @@ class Database
         $this->init($options);
     }
 
+    public function __destruct()
+    {
+        $this->pdo = $this->statement = $this->sql = null;
+    }
+
     /**
      * @param array $options
      *
@@ -185,7 +190,7 @@ class Database
                 $stack[] = $key . '=' . $value;
             }
         }
-        $dsn = $driver . ':' . \implode($stack, ';');
+        $dsn = $driver . ':' . \implode(';', $stack);
 
         $this->setPassword($options['password']);
         $this->dsn = [$dsn, $options['username'], $pdoOptions, $commands];
