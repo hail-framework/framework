@@ -37,6 +37,8 @@ class Optimize extends Command
             \unlink($helperDir . DIRECTORY_SEPARATOR . $file);
         }
 
+        $helperDir .= DIRECTORY_SEPARATOR;
+
         $alias = $this->config->get('alias');
         $template = <<<EOD
 <?php
@@ -57,15 +59,15 @@ EOD;
 
         foreach (
             [
-                ['App\\Service', $check],
-                ['App\\Library', $check],
-                ['App\\Model', $check],
+                ['App\Service', $check],
+                ['App\Library', $check],
+                ['App\Model', $check],
             ] as $v
         ) {
             [$namespace, $check] = $v;
 
             $comment = '/**' . "\n";
-            $dir = \base_path($namespace);
+            $dir = \base_path('app', \explode('\\', $namespace)[1]);
             foreach (\scandir($dir, SCANDIR_SORT_ASCENDING) as $file) {
                 if (\in_array($file, ['.', '..'], true) || \strrchr($file, '.') !== '.php') {
                     continue;
@@ -89,7 +91,7 @@ class %s {}
 EOD;
 
             $class = \substr(\strrchr($namespace, '\\'), 1) . 'Factory';
-            \file_put_contents($helperDir . $class . '.php', sprintf($template, $comment, $class));
+            \file_put_contents($helperDir . $class . '.php', \sprintf($template, $comment, $class));
         }
         $logger->writeln('Object Factory Helper Generated');
     }
