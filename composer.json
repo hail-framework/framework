@@ -29,7 +29,6 @@
       "url": "https://github.com/Hail-Team/framework.git"
     }
   ],
-  "bin": ["bin/hail"],
   "require": {
     "php": ">=7.1.0",
     "ext-mbstring": "*",
