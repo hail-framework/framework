@@ -250,7 +250,7 @@ trait CommandTrait
     public function addCommand(string $class = null): Command
     {
         $realClass = CommandLoader::load($class);
-        if ($realClass === false) {
+        if ($realClass === null) {
             throw new CommandClassNotFoundException($class);
         }
 

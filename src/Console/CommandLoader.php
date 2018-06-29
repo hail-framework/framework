@@ -25,26 +25,26 @@ class CommandLoader
      *
      * @param string $class
      *
-     * @return string loaded class name
+     * @return string|null loaded class name
      * @throws CommandClassNotFoundException
      */
-    public static function load(string $class): string
+    public static function load(string $class): ?string
     {
-        if (is_subclass_of($class, Command::class, true)) {
-            return true;
+        if (\is_subclass_of($class, Command::class, true)) {
+            return $class;
         }
 
-        if (strrchr($class, 'C') !== 'Command') {
+        if (\strrchr($class, 'C') !== 'Command') {
             return static::load($class . 'Command');
         }
 
-        return false;
+        return null;
     }
 
     private static function clearSuffix(string $name): string
     {
-        if (strlen($name) > 7 && strrchr($name, 'C') === 'Command') {
-            $name = substr($name, 0, -7);
+        if (\strlen($name) > 7 && \strrchr($name, 'C') === 'Command') {
+            $name = \substr($name, 0, -7);
         }
 
         return $name;
@@ -62,7 +62,7 @@ class CommandLoader
     public static function autoload(Command $parent)
     {
         $reflector = new \ReflectionObject($parent);
-        $dir = dirname($reflector->getFileName()) . '/';
+        $dir = \dirname($reflector->getFileName()) . '/';
 
         /*
          * Commands to be autoloaded must located at specific directory.
@@ -78,13 +78,13 @@ class CommandLoader
                 $reflector->getShortName()
             );
 
-            if (!is_dir($dir . $subNamespace)) {
+            if (!\is_dir($dir . $subNamespace)) {
                 $subNamespace = 'Command';
             }
         }
 
         $dir .= $subNamespace;
-        if (!is_dir($dir)) {
+        if (!\is_dir($dir)) {
             return;
         }
 
@@ -103,19 +103,19 @@ class CommandLoader
 
     private static function scanPhp($path)
     {
-        if (!is_dir($path)) {
+        if (!\is_dir($path)) {
             return [];
         }
 
-        $files = scandir($path, SCANDIR_SORT_ASCENDING);
+        $files = \scandir($path, SCANDIR_SORT_ASCENDING);
 
         $found = [];
         foreach ($files as $v) {
-            if (strrchr($v, '.') !== '.php') {
+            if (\strrchr($v, '.') !== '.php') {
                 continue;
             }
 
-            $found[] = substr($v, 0, -4);
+            $found[] = \substr($v, 0, -4);
         }
 
         return $found;
@@ -136,10 +136,10 @@ class CommandLoader
     public static function inverseTranslate(string $className): string
     {
         // remove the suffix 'Command', then lower case the first letter
-        $className = lcfirst(static::clearSuffix($className));
+        $className = \lcfirst(static::clearSuffix($className));
 
-        return strtolower(
-            preg_replace('/([A-Z])/', ':\1', $className)
+        return \strtolower(
+            \preg_replace('/([A-Z])/', ':\1', $className)
         );
     }
 }
