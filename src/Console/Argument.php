@@ -59,7 +59,7 @@ class Argument
     protected function initFromSpecString($specString)
     {
         $pattern = '/
-        (?:[a-zA-Z0-9-]+)
+        ([a-zA-Z0-9-]+)
 
         # option attribute operators
         ([+?])?
@@ -67,7 +67,7 @@ class Argument
         # value types
         (?:=(bool|boolean|string|int|number|date|datetime|file|dir|url|email|ip|ipv6|ipv4))?
         /x';
-        $ret = preg_match($pattern, $specString, $regs);
+        $ret = \preg_match($pattern, $specString, $regs);
         if ($ret === false || $ret === 0) {
             throw new \InvalidArgumentException('Incorrect spec string');
         }
@@ -80,10 +80,10 @@ class Argument
         $this->name = $name;
 
         // option is required.
-        if (strpos($attributes, '+') !== false) {
+        if (\strpos($attributes, '+') !== false) {
             // option with multiple value
             $this->multiple();
-        } elseif (strpos($attributes, '?') !== false) {
+        } elseif (\strpos($attributes, '?') !== false) {
             // option is optional.(zero or one value)
             $this->optional();
         }
@@ -211,7 +211,7 @@ class Argument
 
         if (
             ($validValues = $this->getValidValues()) &&
-            !in_array($value, $validValues, true)
+            !\in_array($value, $validValues, true)
         ) {
             return false;
         }
