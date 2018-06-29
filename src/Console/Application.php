@@ -16,15 +16,11 @@ use Hail\Console\Option\ContinuousOptionParser;
 use Hail\Console\Exception\CommandNotFoundException;
 use Hail\Console\Exception\CommandArgumentNotEnoughException;
 
-use Hail\Console\ExceptionPrinter\ProductionExceptionPrinter;
-use Hail\Console\ExceptionPrinter\DevelopmentExceptionPrinter;
-
 use Hail\Console\Command\Help;
 use Hail\Console\Command\ZshCompletion;
 use Hail\Console\Command\BashCompletion;
 use Hail\Console\Command\Meta;
 use Hail\Console\Command\Compile;
-use Hail\Console\Command\Optimize;
 
 use Exception;
 use Hail\Console\Option\OptionResult;
