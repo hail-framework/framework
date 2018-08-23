@@ -78,6 +78,11 @@ class Validator
      */
     protected static $validUrlPrefixes = ['http://', 'https://', 'ftp://'];
 
+    /**
+     * @var bool
+     */
+    protected $stopOnFirstFail = false;
+
     public function __construct()
     {
         static::$_ruleMessages = [
@@ -233,7 +238,7 @@ class Validator
     {
         if (isset($params[0]) && (bool) $params[0]) {
             //strict mode
-            return \preg_match('/^-?(\d)+$/i', $value);
+            return preg_match('/^(\d|-[1-9]|-?[1-9]\d*)$/i', $value);
         }
 
         return \filter_var($value, \FILTER_VALIDATE_INT) !== false;
@@ -993,6 +998,8 @@ class Validator
      */
     public function validate()
     {
+        $setToBreak = false;
+
         foreach ($this->_validations as $v) {
             foreach ($v['fields'] as $field) {
                 if (isset($this->_skips[$field])) {
@@ -1037,8 +1044,16 @@ class Validator
 
                 if (!$result) {
                     $this->error($field, $v['message'], $v['params']);
+                    if ($this->stopOnFirstFail) {
+                        $setToBreak = true;
+                        break;
+                    }
                     $this->_skips[$field] = $v['skip'];
                 }
+            }
+
+            if ($setToBreak) {
+                break;
             }
         }
 
@@ -1046,11 +1061,25 @@ class Validator
     }
 
     /**
+     * Should the validation stop a rule is failed
+     *
+     * @param bool $stop
+     *
+     * @return static
+     */
+    public function stopOnFirstFail(bool $stop): self
+    {
+        $this->stopOnFirstFail = $stop;
+
+        return $this;
+    }
+
+    /**
      * If the validation for a field fails, skip all other checks for this field.
      *
-     * @return $this
+     * @return static
      */
-    public function onErrorSkipField()
+    public function onErrorSkipField(): self
     {
         $this->_validations[\count($this->_validations) - 1]['skip'] = self::SKIP_ONE;
 
@@ -1060,9 +1089,9 @@ class Validator
     /**
      * If the validation of a field fails, stop the validation process.
      *
-     * @return $this
+     * @return static
      */
-    public function onErrorQuit()
+    public function onErrorQuit(): self
     {
         $this->_validations[\count($this->_validations) - 1]['skip'] = self::SKIP_ALL;
 
@@ -1074,7 +1103,7 @@ class Validator
      *
      * @return array
      */
-    protected function getRules()
+    protected function getRules(): array
     {
         return \array_merge($this->_instanceRules, static::$_rules);
     }
@@ -1084,7 +1113,7 @@ class Validator
      *
      * @return array
      */
-    protected function getRuleMessages()
+    protected function getRuleMessages(): array
     {
         return \array_merge($this->_instanceRuleMessage, static::$_ruleMessages);
     }
@@ -1097,21 +1126,18 @@ class Validator
      *
      * @return bool
      */
-
-    protected function hasRule($name, $field)
+    protected function hasRule(string $name, string $field): bool
     {
         foreach ($this->_validations as $validation) {
-            if ($validation['rule'] === $name) {
-                if (\in_array($field, $validation['fields'], true)) {
-                    return true;
-                }
+            if ($validation['rule'] === $name && \in_array($field, $validation['fields'], true)) {
+                return true;
             }
         }
 
         return false;
     }
 
-    protected static function assertRuleCallback($callback)
+    protected static function assertRuleCallback($callback): void
     {
         if (!\is_callable($callback)) {
             throw new \InvalidArgumentException('Second argument must be a valid callback. Given argument was not callable.');
@@ -1122,14 +1148,14 @@ class Validator
      * Adds a new validation rule callback that is tied to the current
      * instance only.
      *
-     * @param string $name
-     * @param mixed  $callback
-     * @param string $message
+     * @param string   $name
+     * @param callable $callback
+     * @param string   $message
      *
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function addInstanceRule(string $name, callable $callback, string $message = null)
+    public function addInstanceRule(string $name, callable $callback, string $message = null): self
     {
         static::assertRuleCallback($callback);
 
@@ -1149,7 +1175,7 @@ class Validator
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function addRule(string $name, callable $callback, string $message = null)
+    public function addRule(string $name, callable $callback, string $message = null): self
     {
         if ($message === null) {
             $message = static::ERROR_DEFAULT;
@@ -1202,7 +1228,7 @@ class Validator
     /**
      * Convenience method to add a single validation rule
      *
-     * @param  string|callback $rule
+     * @param  string|callable $rule
      * @param  array|string    $fields
      * @param  mixed           ...$params
      *
