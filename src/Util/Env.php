@@ -17,14 +17,59 @@ class Env
 
     protected const FILE = '.env';
 
+    /**
+     * Are we immutable?
+     *
+     * @var bool
+     */
+    protected static $immutable = true;
+
+    /**
+     * The list of environment variables declared inside the 'env' file.
+     *
+     * @var array
+     */
+    protected static $variableNames = [];
+
+
     public static function init()
     {
-        self::optimizeInstance(
+        static::optimizeInstance(
             new Optimize([
                 'adapter' => 'auto',
                 'delay' => 5,
             ])
         );
+    }
+
+    /**
+     * Set immutable value.
+     *
+     * @param bool $immutable
+     */
+    public static function setImmutable($immutable = false): void
+    {
+        static::$immutable = $immutable;
+    }
+
+    /**
+     * Get immutable value.
+     *
+     * @return bool
+     */
+    public static function getImmutable(): bool
+    {
+        return static::$immutable;
+    }
+
+    /**
+     * Get the list of environment variables declared inside the 'env' file.
+     *
+     * @return array
+     */
+    public static function getEnvironmentVariableNames()
+    {
+        return static::$variableNames;
     }
 
     /**
@@ -80,13 +125,28 @@ class Env
      */
     protected static function normaliseEnvironmentVariable(string $name, ?string $value): array
     {
-        [$name, $value] = static::splitCompoundStringIntoParts($name, $value);
-        $name = static::sanitiseVariableName($name);
-        $value = static::sanitiseVariableValue($value);
+        [$name, $value] = static::processFilters($name, $value);
 
         $value = static::resolveNestedVariables($value);
 
         return [$name, $value];
+    }
+
+    /**
+     * Process the runtime filters.
+     *
+     * Called from the `normaliseEnvironmentVariable`, passed as a callback in `static::load()`.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return array
+     */
+    public static function processFilters(string $name, string $value): array
+    {
+        [$name, $value] = static::splitCompoundStringIntoParts($name, $value);
+
+        return [static::sanitiseVariableName($name), static::sanitiseVariableValue($value)];
     }
 
     /**
@@ -165,16 +225,16 @@ class Env
             $quote = $value[0];
             $regexPattern = \sprintf(
                 '/^
-                %1$s          # match a quote at the start of the value
-                (             # capturing sub-pattern used
-                 (?:          # we do not need to capture this
-                  [^%1$s\\\\] # any character other than a quote or backslash
-                  |\\\\\\\\   # or two backslashes together
-                  |\\\\%1$s   # or an escaped quote e.g \"
-                 )*           # as many characters that match the previous rules
-                )             # end of the capturing sub-pattern
-                %1$s          # and the closing quote
-                .*$           # and discard any string after the closing quote
+                %1$s           # match a quote at the start of the value
+                (              # capturing sub-pattern used
+                 (?:           # we do not need to capture this
+                  [^%1$s\\\\]* # any character other than a quote or backslash
+                  |\\\\\\\\    # or two backslashes together
+                  |\\\\%1$s    # or an escaped quote e.g \"
+                 )*            # as many characters that match the previous rules
+                )              # end of the capturing sub-pattern
+                %1$s           # and the closing quote
+                .*$            # and discard any string after the closing quote
                 /mx',
                 $quote
             );
@@ -183,6 +243,11 @@ class Env
         } else {
             $parts = \explode(' #', $value, 2);
             $value = \trim($parts[0]);
+
+            // Check if value is a comment (usually triggered when empty value with comment)
+            if (\preg_match('/^#/', $value) > 0) {
+                $value = '';
+            }
 
             // Unquoted values cannot contain whitespace
             if (\preg_match('/\s+/', $value) > 0) {
@@ -307,24 +372,56 @@ class Env
 
     protected static function setEnvironmentVariableInternal(string $name, string $value = null): void
     {
+        static::$variableNames[] = $name;
+
         // Don't overwrite existing environment variables
         // Ruby's dotenv does this with `ENV[key] ||= value`.
-        if (static::getEnvironmentVariable($name) !== null) {
+        if (static::$immutable && static::getEnvironmentVariable($name) !== null) {
             return;
         }
 
         // If PHP is running as an Apache module and an existing
         // Apache environment variable exists, overwrite it
-        if (\function_exists('apache_getenv') && \function_exists('apache_setenv') && \apache_getenv($name)) {
+        if (\function_exists('\\apache_getenv') && \function_exists('\\apache_setenv') && \apache_getenv($name)) {
             \apache_setenv($name, $value);
         }
 
-        if (\function_exists('putenv')) {
+        if (\function_exists('\\putenv')) {
             \putenv("$name=$value");
         }
 
         $_ENV[$name] = $value;
         $_SERVER[$name] = $value;
+    }
+
+    /**
+     * Clear an environment variable.
+     *
+     * This is not (currently) used by Dotenv but is provided as a utility
+     * method for 3rd party code.
+     *
+     * This is done using:
+     * - putenv,
+     * - unset($_ENV, $_SERVER).
+     *
+     * @param string $name
+     *
+     * @see setEnvironmentVariable()
+     *
+     * @return void
+     */
+    public static function clearEnvironmentVariable($name)
+    {
+        // Don't clear anything if we're immutable.
+        if (static::$immutable) {
+            return;
+        }
+
+        if (\function_exists('\\putenv')) {
+            \putenv($name);
+        }
+
+        unset($_ENV[$name], $_SERVER[$name]);
     }
 }
 
