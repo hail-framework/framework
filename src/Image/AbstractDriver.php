@@ -80,6 +80,8 @@ abstract class AbstractDriver
      */
     public function executeCommand($image, $name, $arguments)
     {
+        $name = \mb_convert_case($name[0], MB_CASE_UPPER) . \mb_substr($name, 1, \mb_strlen($name));
+
         $commandName = $this->getCommandClassName($name);
         $command = new $commandName($arguments);
         $command->execute($image);

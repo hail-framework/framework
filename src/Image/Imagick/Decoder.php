@@ -80,6 +80,7 @@ class Decoder extends \Hail\Image\AbstractDecoder
         $core = new \Imagick;
 
         try {
+            $core->setBackgroundColor(new \ImagickPixel('transparent'));
             $core->readImageBlob($binary);
         } catch (\ImagickException $e) {
             throw new \Hail\Image\Exception\NotReadableException(
