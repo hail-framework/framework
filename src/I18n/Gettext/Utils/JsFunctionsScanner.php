@@ -14,7 +14,8 @@ class JsFunctionsScanner extends FunctionsScanner
      */
     public function __construct($code)
     {
-        $this->code = $code;
+        // Normalize newline characters
+        $this->code = str_replace(["\r\n", "\n\r", "\r"], "\n", $code);
     }
 
     /**
@@ -113,6 +114,7 @@ class JsFunctionsScanner extends FunctionsScanner
                         case 'double-quote':
                         case 'line-comment':
                         case 'block-comment':
+                        case 'line-comment':
                             break;
 
                         default:
@@ -138,7 +140,7 @@ class JsFunctionsScanner extends FunctionsScanner
 
                         $this->upStatus();
                         $buffer = '';
-                        continue 2;
+                            continue 2;
                     }
                     break;
 

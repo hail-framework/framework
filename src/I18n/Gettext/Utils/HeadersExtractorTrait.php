@@ -17,9 +17,10 @@ trait HeadersExtractorTrait
      */
     private static function extractHeaders($headers, Translations $translations)
     {
+        $headers = explode("\n", $headers);
         $currentHeader = null;
 
-        foreach (\explode("\n", $headers) as $line) {
+        foreach ($headers as $line) {
             $line = self::convertString($line);
 
             if ($line === '') {

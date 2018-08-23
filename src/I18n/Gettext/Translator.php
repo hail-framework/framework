@@ -50,7 +50,7 @@ class Translator implements TranslatorInterface
     public function loadTranslations($translations)
     {
         if (\is_object($translations) && $translations instanceof Translations) {
-            $translations = PhpArray::generate($translations);
+            $translations = PhpArray::generate($translations, ['includeHeaders' => false]);
         } elseif (\is_string($translations) && \is_file($translations)) {
             $translations = include $translations;
         } elseif (!\is_array($translations)) {

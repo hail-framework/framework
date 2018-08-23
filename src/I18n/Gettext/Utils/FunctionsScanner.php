@@ -29,6 +29,10 @@ abstract class FunctionsScanner
         foreach ($this->getFunctions($options['constants']) as $function) {
             list($name, $line, $args) = $function;
 
+            if (isset($options['lineOffset'])) {
+                $line += $options['lineOffset'];
+            }
+
             if (!isset($functions[$name])) {
                 continue;
             }
@@ -105,16 +109,31 @@ abstract class FunctionsScanner
                     throw new \RuntimeException('Not valid function ' . $functions[$name]);
             }
 
-            if ((string) $original !== '' && ($domain === null || $domain === $translations->getDomain())) {
-                $translation = $translations->insert($context, $original, $plural);
-                $translation->addReference($file, $line);
+            if ((string) $original === '') {
+                continue;
+            }
 
-                if (isset($function[3])) {
-                    foreach ($function[3] as $extractedComment) {
-                        $translation->addExtractedComment($extractedComment);
-                    }
+            $isDefaultDomain = $domain === null;
+            $isMatchingDomain = $domain === $translations->getDomain();
+
+            if (!empty($options['domainOnly']) && $isDefaultDomain) {
+                // If we want to find translations for a specific domain, skip default domain messages
+                continue;
+            }
+
+            if (!$isDefaultDomain && !$isMatchingDomain) {
+                continue;
+            }
+
+            $translation = $translations->insert($context, $original, $plural);
+            $translation->addReference($file, $line);
+
+            if (isset($function[3])) {
+                foreach ($function[3] as $extractedComment) {
+                    $translation->addExtractedComment($extractedComment);
                 }
             }
         }
     }
+}
 }
