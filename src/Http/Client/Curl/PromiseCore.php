@@ -74,9 +74,26 @@ class PromiseCore
      */
     public function __construct(
         RequestInterface $request,
-        resource $handle,
+        $handle,
         ResponseBuilder $responseBuilder
     ) {
+        if (!\is_resource($handle)) {
+            throw new \InvalidArgumentException(
+                \sprintf(
+                    'Parameter $handle expected to be a cURL resource, %s given',
+                    \gettype($handle)
+                )
+            );
+        }
+        if (\get_resource_type($handle) !== 'curl') {
+            throw new \InvalidArgumentException(
+                \sprintf(
+                    'Parameter $handle expected to be a cURL resource, %s resource given',
+                    \get_resource_type($handle)
+                )
+            );
+        }
+
         $this->request = $request;
         $this->handle = $handle;
         $this->responseBuilder = $responseBuilder;

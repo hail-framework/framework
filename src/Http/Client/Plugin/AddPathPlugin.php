@@ -40,9 +40,11 @@ final class AddPathPlugin implements PluginInterface
      */
     public function process(RequestInterface $request, RequestHandlerInterface $handler): PromiseInterface
     {
-        $request = $request->withUri($request->getUri()
-            ->withPath($this->uri->getPath().$request->getUri()->getPath())
-        );
+        if (!$handler->isRestarted()) {
+            $request = $request->withUri($request->getUri()
+                ->withPath($this->uri->getPath() . $request->getUri()->getPath())
+            );
+        }
 
         return $handler->handle($request);
     }

@@ -90,6 +90,11 @@ class RequestHandler implements RequestHandlerInterface
         return $this->dispatch($request);
     }
 
+    public function isRestarted(): bool
+    {
+        return $this->restartNum > 0;
+    }
+
     public function insertAfter(PluginInterface $plugin): void
     {
         \array_splice($this->plugins, $this->index, 0, $plugin);

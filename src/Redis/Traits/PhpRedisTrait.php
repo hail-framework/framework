@@ -240,6 +240,10 @@ trait PhpRedisTrait
                     throw new RedisException($error);
                 }
                 break;
+            case 'exists':
+                // smooth over phpredis-v4 vs earlier difference to match documented credis return results
+                $response = (int) $response;
+                break;
             default:
                 $error = $this->redis->getLastError();
                 $this->redis->clearLastError();

@@ -112,7 +112,11 @@ final class LoggerPlugin implements PluginInterface
             } else {
                 $data = '[non-seekable stream omitted]';
             }
-            $command .= \sprintf(' --data %s', \escapeshellarg($data));
+            $escapedData = @\escapeshellarg($data);
+            if (empty($escapedData)) {
+                $escapedData = 'We couldn\'t not escape the data properly';
+            }
+            $command .= \sprintf(' --data %s', $escapedData);
         }
 
         return $command;
@@ -123,20 +127,24 @@ final class LoggerPlugin implements PluginInterface
      */
     public function process(RequestInterface $request, RequestHandlerInterface $handler): PromiseInterface
     {
+        $start = \microtime(true);
         $this->logger->info(\sprintf("Sending request:\n%s", self::formatRequest($request)), ['request' => $request]);
 
-        return $handler->handle($request)->then(function (ResponseInterface $response) use ($request) {
+        return $handler->handle($request)->then(function (ResponseInterface $response) use ($request, $start) {
+            $milliseconds = (int) \round((\microtime(true) - $start) * 1000);
             $this->logger->info(
                 \sprintf("Received response:\n%s\n\nfor request:\n%s", self::formatResponse($response),
                     self::formatRequest($request)),
                 [
                     'request' => $request,
                     'response' => $response,
+                    'milliseconds' => $milliseconds,
                 ]
             );
 
             return $response;
-        }, function (ClientException $exception) use ($request) {
+        }, function (ClientException $exception) use ($request, $start) {
+            $milliseconds = (int) \round((\microtime(true) - $start) * 1000);
             if ($exception instanceof HttpException) {
                 $this->logger->error(
                     \sprintf("Error:\n%s\nwith response:\n%s\n\nwhen sending request:\n%s", $exception->getMessage(),
@@ -145,6 +153,7 @@ final class LoggerPlugin implements PluginInterface
                         'request' => $request,
                         'response' => $exception->getResponse(),
                         'exception' => $exception,
+                        'milliseconds' => $milliseconds,
                     ]
                 );
             } else {
@@ -154,6 +163,7 @@ final class LoggerPlugin implements PluginInterface
                     [
                         'request' => $request,
                         'exception' => $exception,
+                        'milliseconds' => $milliseconds,
                     ]
                 );
             }

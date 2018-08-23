@@ -28,4 +28,9 @@ interface RequestHandlerInterface
      * @param PluginInterface $plugin
      */
     public function insertAfter(PluginInterface $plugin): void;
+
+    /**
+     * @return bool
+     */
+    public function isRestarted(): bool;
 }

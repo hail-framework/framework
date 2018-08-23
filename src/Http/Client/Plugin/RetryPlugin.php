@@ -4,6 +4,7 @@ namespace Hail\Http\Client\Plugin;
 
 use Hail\Http\Client\RequestHandlerInterface;
 use Hail\Promise\PromiseInterface;
+use Hail\Promise\Promise;
 use Hail\Http\Client\Psr\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -71,20 +72,28 @@ final class RetryPlugin implements PluginInterface
     {
         $chainIdentifier = \spl_object_hash($handler);
 
-        return $handler->handle($request)->then(function (ResponseInterface $response) use ($chainIdentifier) {
+        $promise = $handler->handle($request);
+        $deferred = new Promise(function () use ($promise) {
+            $promise->wait(false);
+        });
+
+        $onFulfilled = function (ResponseInterface $response) use ($chainIdentifier, $deferred) {
             if (isset($this->retryStorage[$chainIdentifier])) {
                 unset($this->retryStorage[$chainIdentifier]);
             }
 
+            $deferred->resolve($response);
             return $response;
-        }, function (ClientException $exception) use ($request, $handler, $chainIdentifier) {
+        };
+
+        $onRejected = function (ClientException $exception) use ($request, $handler, $onFulfilled, &$onRejected, $chainIdentifier, $deferred) {
             if (!isset($this->retryStorage[$chainIdentifier])) {
                 $this->retryStorage[$chainIdentifier] = 0;
             }
 
             if ($this->retryStorage[$chainIdentifier] >= $this->retry) {
                 unset($this->retryStorage[$chainIdentifier]);
-
+                $deferred->reject($exception);
                 throw $exception;
             }
 
@@ -93,14 +102,20 @@ final class RetryPlugin implements PluginInterface
             }
 
             $time = ($this->delay)($request, $exception, $this->retryStorage[$chainIdentifier]);
-            \usleep($time);
+            if ($time > 0) {
+                \usleep($time);
+            }
 
             // Retry in synchrone
             ++$this->retryStorage[$chainIdentifier];
-            $promise = $this->process($request, $handler);
+            $handler->handle($request)->then($onFulfilled, $onRejected);
 
-            return $promise->wait();
-        });
+            throw $exception;
+        };
+
+        $promise->then($onFulfilled, $onRejected);
+
+        return $deferred;
     }
 
     /**

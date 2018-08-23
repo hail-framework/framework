@@ -19,6 +19,25 @@ use Psr\Http\Message\ResponseInterface;
 final class ErrorPlugin implements PluginInterface
 {
     /**
+     * @var bool Whether this plugin should only throw 5XX Exceptions (default to false).
+     *
+     * If set to true 4XX Responses code will never throw an exception
+     */
+    private $onlyServerException = false;
+    /**
+     * @param array $config {
+     *
+     *    @var bool only_server_exception Whether this plugin should only throw 5XX Exceptions (default to false).
+     * }
+     */
+    public function __construct(array $config = [])
+    {
+        if (isset($config['only_server_exception'])) {
+            $this->onlyServerException = (bool) $config['only_server_exception'];
+        }
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function process(RequestInterface $request, RequestHandlerInterface $handler): PromiseInterface
@@ -41,7 +60,7 @@ final class ErrorPlugin implements PluginInterface
      */
     protected function transformResponseToException(RequestInterface $request, ResponseInterface $response)
     {
-        if ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500) {
+        if (!$this->onlyServerException && $response->getStatusCode() >= 400 && $response->getStatusCode() < 500) {
             throw new ClientErrorException($response->getReasonPhrase(), $request, $response);
         }
 

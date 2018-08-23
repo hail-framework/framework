@@ -35,6 +35,7 @@ abstract class FilteredStream implements StreamInterface
     public function __construct(StreamInterface $stream, $readFilterOptions = null)
     {
         $this->readFilterCallback = StreamFilter::create($this->readFilter(), $readFilterOptions);
+
         $this->stream = $stream;
     }
 

@@ -41,7 +41,7 @@ final class QueryParam implements AuthenticationInterface
 
         $params = \array_merge($params, $this->params);
 
-        $query = \http_build_query($params);
+        $query = \http_build_query($params, null, '&');;
 
         $uri = $uri->withQuery($query);
 
