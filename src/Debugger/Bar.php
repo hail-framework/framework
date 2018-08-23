@@ -32,7 +32,7 @@ class Bar
      *
      * @return static
      */
-    public function addPanel(Bar\PanelInterface $panel, $id = null)
+    public function addPanel(Bar\PanelInterface $panel, string $id = null): self
     {
         if ($id === null) {
             $c = 0;
@@ -53,7 +53,7 @@ class Bar
      *
      * @return Bar\PanelInterface|NULL
      */
-    public function getPanel($id)
+    public function getPanel(string $id): ?Bar\PanelInterface
     {
         return $this->panels[$id] ?? null;
     }
@@ -63,7 +63,7 @@ class Bar
      *
      * @return void
      */
-    public function renderLoader()
+    public function renderLoader(): void
     {
         if (!$this->useSession) {
             throw new \LogicException('Start session before Tracy is enabled.');
@@ -79,7 +79,7 @@ class Bar
      *
      * @return void
      */
-    public function render()
+    public function render(): void
     {
         $useSession = $this->useSession && \session_status() === PHP_SESSION_ACTIVE;
         $redirectQueue = &$_SESSION['_tracy']['redirect'];
@@ -91,6 +91,8 @@ class Bar
                 return isset($item['time']) && $item['time'] > \time() - 60;
             });
         }
+
+        $rows = [];
 
         if (Helpers::isAjax()) {
 			if ($useSession) {
@@ -129,11 +131,7 @@ class Bar
         }
     }
 
-
-	/**
-	 * @return string
-	 */
-	private function renderHtmlRows(array $rows)
+	private static function renderHtmlRows(array $rows): string
 	{
         \ob_start();
         require __DIR__ . '/assets/Bar/panels.phtml';
@@ -142,11 +140,7 @@ class Bar
         return Strings::fixEncoding(\ob_get_clean());
     }
 
-
-    /**
-     * @return array
-     */
-    private function renderPanels($suffix = null)
+    private function renderPanels($suffix = null): array
     {
         \set_error_handler(static function ($severity, $message, $file, $line) {
             if (\error_reporting() & $severity) {
@@ -160,12 +154,9 @@ class Bar
         foreach ($this->panels as $id => $panel) {
             $idHtml = \preg_replace('#[^a-z0-9]+#i', '-', $id) . $suffix;
             try {
-                $tab = (string) $panel->getTab();
-                $panelHtml = $tab ? (string) $panel->getPanel() : null;
-
+                $tab = $panel->getTab();
+                $panelHtml = $tab ? $panel->getPanel() : null;
             } catch (\Throwable $e) {
-            }
-            if (isset($e)) {
                 while (\ob_get_level() > $obLevel) { // restore ob-level if broken
                     \ob_end_clean();
                 }
@@ -192,9 +183,9 @@ class Bar
     {
         $asset = $_GET['_tracy_bar'] ?? null;
         if ($asset === 'js') {
-            ob_start();
+            \ob_start();
             $this->renderAssets();
-            $body = ob_get_clean();
+            $body = \ob_get_clean();
 
             return Factory::response(200, $body, [
                 'Content-Type' => 'text/javascript',
@@ -202,36 +193,36 @@ class Bar
             ]);
         }
 
-        $this->useSession = session_status() === PHP_SESSION_ACTIVE;
+        $this->useSession = \session_status() === PHP_SESSION_ACTIVE;
 
         $headers = [];
         if ($this->useSession && Helpers::isAjax()) {
             $headers['X-Tracy-Ajax'] = '1'; // session must be already locked
         }
 
-        if ($this->useSession && $asset && preg_match('#^content(-ajax)?\.(\w+)$#', $asset, $m)) {
+        if ($this->useSession && $asset && \preg_match('#^content(-ajax)?\.(\w+)$#', $asset, $m)) {
             $session = &$_SESSION['_tracy']['bar'][$m[2] . $m[1]];
             $headers['Content-Type'] = 'text/javascript';
             $headers['Cache-Control'] = 'max-age=60';
 
-            ob_start();
+            \ob_start();
             if (!$m[1]) {
                 $this->renderAssets();
             }
 
             if ($session) {
                 $method = $m[1] ? 'loadAjax' : 'init';
-                echo "Tracy.Debug.$method(", json_encode($session['content']), ', ', json_encode($session['dumps']), ');';
+                echo "Tracy.Debug.$method(", \json_encode($session['content']), ', ', \json_encode($session['dumps']), ');';
                 $session = null;
             }
 
             $session = &$_SESSION['_tracy']['bluescreen'][$m[2]];
             if ($session) {
-                echo 'Tracy.BlueScreen.loadAjax(', json_encode($session['content']), ', ', json_encode($session['dumps']), ');';
+                echo 'Tracy.BlueScreen.loadAjax(', \json_encode($session['content']), ', ', \json_encode($session['dumps']), ');';
                 $session = null;
             }
 
-            $body = ob_get_clean();
+            $body = \ob_get_clean();
 
             return Factory::response(200, $body, $headers);
         }
@@ -239,18 +230,18 @@ class Bar
         return null;
     }
 
-    private function renderAssets()
+    private function renderAssets(): void
     {
-        $css = array_map('file_get_contents', [
+        $css = \array_map('\\file_get_contents', [
             __DIR__ . '/assets/Bar/bar.css',
             __DIR__ . '/assets/Toggle/toggle.css',
             __DIR__ . '/assets/Dumper/dumper.css',
             __DIR__ . '/assets/BlueScreen/bluescreen.css',
         ]);
-        $css = json_encode(preg_replace('#\s+#u', ' ', implode($css)));
+        $css = \json_encode(\preg_replace('#\s+#u', ' ', \implode('', $css)));
         echo "(function(){var el = document.createElement('style'); el.className='tracy-debug'; el.textContent=$css; document.head.appendChild(el);})();\n";
 
-        array_map('readfile', [
+        \array_map('\\readfile', [
             __DIR__ . '/assets/Bar/bar.js',
             __DIR__ . '/assets/Toggle/toggle.js',
             __DIR__ . '/assets/Dumper/dumper.js',

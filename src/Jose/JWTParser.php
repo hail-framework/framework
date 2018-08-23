@@ -132,7 +132,7 @@ class JWTParser
         $this->time = $time;
     }
 
-    public function getTime()
+    public function getTime(): \DateTimeInterface
     {
         return $this->time ?? new \DateTimeImmutable('now', new \DateTimeZone(\date_default_timezone_get()));
     }

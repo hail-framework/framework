@@ -57,7 +57,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return void
      */
-    public function log($level, $message, array $context = [])
+    public function log($level, $message, array $context = []): void
     {
         $this->entries[] = [$level, $message, $context];
     }
@@ -71,7 +71,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @param int $limit header size limit (in bytes)
      */
-    public function setLimit($limit)
+    public function setLimit(int $limit): void
     {
         $this->limit = $limit;
     }
@@ -79,7 +79,7 @@ class ChromeLogger implements LoggerInterface
     /**
      * @return int header size limit (in bytes)
      */
-    public function getLimit()
+    public function getLimit(): int
     {
         return $this->limit;
     }
@@ -94,7 +94,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return ResponseInterface
      */
-    public function writeToResponse(ResponseInterface $response)
+    public function writeToResponse(ResponseInterface $response): ResponseInterface
     {
         if ($this->entries !== []) {
             $value = $this->getHeaderValue();
@@ -116,7 +116,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return void
      */
-    public function emitHeader()
+    public function emitHeader(): void
     {
         if (\headers_sent()) {
             throw new \RuntimeException('unable to emit ChromeLogger header: headers have already been sent');
@@ -130,7 +130,7 @@ class ChromeLogger implements LoggerInterface
     /**
      * @return string raw value for the X-ChromeLogger-Data header
      */
-    protected function getHeaderValue()
+    protected function getHeaderValue(): string
     {
         $data = $this->createData($this->entries);
 
@@ -166,7 +166,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return string
      */
-    protected function encodeData(array $data)
+    protected function encodeData(array $data): string
     {
         $json = \json_encode(
             $data,
@@ -183,7 +183,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return array
      */
-    protected function createData(array $entries)
+    protected function createData(array $entries): array
     {
         $rows = [];
 
@@ -205,7 +205,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return array log entry in ChromeLogger row-format
      */
-    protected function createEntryData(array $entry)
+    protected function createEntryData(array $entry): array
     {
         // NOTE: "log" level type is deliberately omitted from the following map, since
         //       it's the default entry-type in ChromeLogger, and can be omitted.
@@ -269,7 +269,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return mixed marshalled and sanitized context
      */
-    protected function sanitize($data, &$processed = [])
+    protected function sanitize($data, array &$processed = [])
     {
         if (\is_array($data)) {
             /**
@@ -302,7 +302,7 @@ class ChromeLogger implements LoggerInterface
                 $data = $this->sanitize($data->jsonSerialize(), $processed);
             } elseif ($data instanceof \DateTimeInterface) {
                 $data = $this->extractDateTimeProperties($data);
-            } elseif ($data instanceof \Exception || $data instanceof \Error) {
+            } elseif ($data instanceof \Throwable) {
                 $data = $this->extractExceptionProperties($data);
             } else {
                 $data = $this->sanitize($this->extractObjectProperties($data), $processed);
@@ -332,7 +332,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return array
      */
-    protected function extractDateTimeProperties(\DateTimeInterface $datetime)
+    protected function extractDateTimeProperties(\DateTimeInterface $datetime): array
     {
         $utc = \date_create_from_format('U', $datetime->format('U'), \timezone_open('UTC'));
 
@@ -347,7 +347,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return array
      */
-    protected function extractObjectProperties($object)
+    protected function extractObjectProperties($object): array
     {
         $properties = [];
 
@@ -383,7 +383,7 @@ class ChromeLogger implements LoggerInterface
      *
      * @return array
      */
-    protected function extractExceptionProperties($exception)
+    protected function extractExceptionProperties(\Throwable $exception): array
     {
         $previous = $exception->getPrevious();
 

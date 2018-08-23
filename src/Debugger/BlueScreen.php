@@ -28,10 +28,14 @@ class BlueScreen
     /** @var int */
     public $maxLength = 150;
 
+    /** @var callable[] functions that returns action for exceptions */
+    private $actions = [];
+
 
     public function __construct()
     {
-        $this->collapsePaths[] = \preg_match('#(.+/vendor)/tracy/tracy/src/Tracy$#', str_replace('\\', '/', __DIR__), $m)
+        $this->collapsePaths[] = \preg_match('#(.+/vendor)/tracy/tracy/src/Tracy$#', str_replace('\\', '/', __DIR__),
+            $m)
             ? $m[1]
             : __DIR__;
     }
@@ -40,11 +44,11 @@ class BlueScreen
     /**
      * Add custom panel.
      *
-     * @param  callable
+     * @param callable $panel
      *
      * @return static
      */
-    public function addPanel($panel)
+    public function addPanel(callable $panel): self
     {
         if (!\in_array($panel, $this->panels, true)) {
             $this->panels[] = $panel;
@@ -53,15 +57,28 @@ class BlueScreen
         return $this;
     }
 
+    /**
+     * Add action.
+     *
+     * @param  callable $action
+     *
+     * @return static
+     */
+    public function addAction(callable $action): self
+    {
+        $this->actions[] = $action;
+
+        return $this;
+    }
 
     /**
      * Renders blue screen.
      *
-     * @param  \Exception|\Throwable
+     * @param \Throwable $exception
      *
      * @return string
      */
-    public function render($exception): string
+    public function render(\Throwable $exception): string
     {
         \ob_start();
         if (Helpers::isAjax() && \session_status() === PHP_SESSION_ACTIVE) {
@@ -88,7 +105,7 @@ class BlueScreen
      *
      * @return void
      */
-    public function renderToFile(\Throwable $exception, string $file)
+    public function renderToFile(\Throwable $exception, string $file): void
     {
         if ($handle = @\fopen($file, 'xb')) {
             \ob_start(); // double buffer prevents sending HTTP headers in some PHP
@@ -103,17 +120,19 @@ class BlueScreen
     }
 
 
-    private function renderTemplate($exception, $template)
+    private function renderTemplate(\Throwable $exception, string $template): void
     {
+        $messageHtml = \preg_replace(
+            '#\'\S[^\']*\S\'|"\S[^"]*\S"#U',
+            '<i>$0</i>',
+            \htmlspecialchars((string) $exception->getMessage(), \ENT_SUBSTITUTE, 'UTF-8')
+        );
         $info = \array_filter($this->info);
         $source = Helpers::getSource();
         $sourceIsUrl = \preg_match('#^https?://#', $source);
         $title = $exception instanceof \ErrorException
             ? Helpers::errorTypeToString($exception->getSeverity())
             : Helpers::getClass($exception);
-        $skipError = $sourceIsUrl && $exception instanceof \ErrorException && !empty($exception->skippable)
-            ? $source . (\strpos($source, '?') ? '&' : '?') . '_tracy_skip_error'
-            : null;
         $lastError = $exception instanceof \ErrorException || $exception instanceof \Error ? null : \error_get_last();
         $dump = function ($v) {
             return Dumper::toHtml($v, [
@@ -125,16 +144,19 @@ class BlueScreen
         };
         $nonce = Helpers::getNonce();
         $css = \file_get_contents(__DIR__ . '/assets/BlueScreen/bluescreen.css');
-		$css = \preg_replace('#\s+#u', ' ', $css);
+        $css = \preg_replace('#\s+#u', ' ', $css);
+        $actions = $this->renderActions($exception);
 
         require $template;
     }
 
 
     /**
+     * @param null|\Throwable $ex
+     *
      * @return \stdClass[]
      */
-    private function renderPanels($ex)
+    private function renderPanels(?\Throwable $ex): array
     {
         $obLevel = \ob_get_level();
         $res = [];
@@ -163,17 +185,66 @@ class BlueScreen
         return $res;
     }
 
+    /**
+     * @param \Throwable $ex
+     *
+     * @return array[]
+     */
+    private function renderActions(\Throwable $ex): array
+    {
+        $actions = [];
+        foreach ($this->actions as $callback) {
+            $action = $callback($ex);
+            if (!empty($action['link']) && !empty($action['label'])) {
+                $actions[] = $action;
+            }
+        }
+
+        if (\property_exists($ex,
+                'tracyAction') && !empty($ex->tracyAction['link']) && !empty($ex->tracyAction['label'])) {
+            $actions[] = $ex->tracyAction;
+        }
+
+        if (\preg_match('# ([\'"])((?:/|[a-z]:[/\\\\])\w[^\'"]+\.\w{2,5})\\1#i', $ex->getMessage(), $m)) {
+            $actions[] = [
+                'link' => Helpers::editorUri($m[2], 1, $tmp = is_file($m[2]) ? 'open' : 'create'),
+                'label' => $tmp . ' file',
+            ];
+        }
+
+        $query = ($ex instanceof \ErrorException ? '' : Helpers::getClass($ex) . ' ')
+            . \preg_replace('#\'.*\'|".*"#Us', '', $ex->getMessage());
+        $actions[] = [
+            'link' => 'https://www.google.com/search?sourceid=tracy&q=' . urlencode($query),
+            'label' => 'search',
+            'external' => true,
+        ];
+
+        if (
+            $ex instanceof \ErrorException
+            && !empty($ex->skippable)
+            && \preg_match('#^https?://#', $source = Helpers::getSource())
+        ) {
+            $actions[] = [
+                'link' => $source . (\strpos($source, '?') ? '&' : '?') . '_tracy_skip_error',
+                'label' => 'skip error',
+            ];
+        }
+
+        return $actions;
+    }
 
     /**
      * Returns syntax highlighted source code.
      *
-     * @param  string
-     * @param  int
-     * @param  int
+     * @param  string     $file
+     * @param  int        $line
+     * @param  int        $lines
+     * @param  array|null $vars
      *
      * @return string|NULL
      */
-    public static function highlightFile($file, $line, $lines = 15, array $vars = null)
+    public static function highlightFile(string $file, int $line, int $lines = 15, array $vars = null): ?string
     {
         $source = @\file_get_contents($file); // @ file may not exist
         if ($source) {
@@ -184,19 +255,22 @@ class BlueScreen
 
             return $source;
         }
+
+        return null;
     }
 
 
     /**
      * Returns syntax highlighted source code.
      *
-     * @param  string
-     * @param  int
-     * @param  int
+     * @param  string     $source
+     * @param  int        $line
+     * @param  int        $lines
+     * @param  array|null $vars
      *
      * @return string
      */
-    public static function highlightPhp($source, $line, $lines = 15, array $vars = null)
+    public static function highlightPhp(string $source, int $line, int $lines = 15, array $vars = null): string
     {
         if (\function_exists('\ini_set')) {
             \ini_set('highlight.comment', '#998; font-style: italic');
@@ -213,10 +287,11 @@ class BlueScreen
         $out .= static::highlightLine($source, $line, $lines);
 
         if ($vars) {
-            $out = \preg_replace_callback('#">\$(\w+)(&nbsp;)?</span>#', function ($m) use ($vars) {
+            $out = \preg_replace_callback('#">\$(\w+)(&nbsp;)?</span>#', function ($m) use ($vars): string {
                 return \array_key_exists($m[1], $vars)
                     ? '" title="'
-                    . \str_replace('"', '&quot;', \trim(\strip_tags(Dumper::toHtml($vars[$m[1]], [Dumper::DEPTH => 1]))))
+                    . \str_replace('"', '&quot;',
+                        \trim(\strip_tags(Dumper::toHtml($vars[$m[1]], [Dumper::DEPTH => 1]))))
                     . $m[0]
                     : $m[0];
             }, $out);
@@ -224,16 +299,20 @@ class BlueScreen
 
         $out = \str_replace('&nbsp;', ' ', $out);
 
-        return "<pre class='code'><div>$out</div></pre>";
+        return "<pre class=\"code\"><div>$out</div></pre>";
     }
 
 
     /**
      * Returns highlighted line in HTML code.
      *
+     * @param string $html
+     * @param int    $line
+     * @param int    $lines
+     *
      * @return string
      */
-    public static function highlightLine($html, $line, $lines = 15)
+    public static function highlightLine(string $html, int $line, int $lines = 15): string
     {
         $source = \explode("\n", "\n" . \str_replace("\r\n", "\n", $html));
         $out = '';
@@ -259,13 +338,13 @@ class BlueScreen
             \preg_match_all('#<[^>]+>#', $s, $tags);
             if ($n == $line) {
                 $out .= \sprintf(
-                    "<span class='highlight'>%{$numWidth}s:    %s\n</span>%s",
+                    "<span class=\"highlight\">%{$numWidth}s:    %s\n</span>%s",
                     $n,
                     \strip_tags($s),
                     \implode('', $tags[0])
                 );
             } else {
-                $out .= \sprintf("<span class='line'>%{$numWidth}s:</span>    %s\n", $n, $s);
+                $out .= \sprintf("<span class=\"line\">%{$numWidth}s:</span>    %s\n", $n, $s);
             }
         }
         $out .= \str_repeat('</span>', $spans) . '</code>';
@@ -277,11 +356,11 @@ class BlueScreen
     /**
      * Should a file be collapsed in stack trace?
      *
-     * @param  string
+     * @param  string $file
      *
      * @return bool
      */
-    public function isCollapsed($file)
+    public function isCollapsed(string $file): bool
     {
         $file = \str_replace('\\', '/', $file) . '/';
         foreach ($this->collapsePaths as $path) {

@@ -39,7 +39,7 @@ class Logger implements LoggerInterface
     /** @var string|array email or emails to which send error notifications */
     public $email;
 
-    /** @var string sender of email notifications */
+    /** @var string|null sender of email notifications */
     public $fromEmail;
 
     /** @var mixed interval for sending email is 2 days */
@@ -48,13 +48,13 @@ class Logger implements LoggerInterface
     /** @var callable handler for sending emails */
     public $mailer;
 
-    /** @var BlueScreen */
+    /** @var BlueScreen|null */
     private $blueScreen;
 
     private $exceptionFile;
 
 
-    public function __construct($directory, $email = null, BlueScreen $blueScreen = null)
+    public function __construct(?string $directory, string $email = null, BlueScreen $blueScreen = null)
     {
         if (!$directory) {
             throw new \LogicException('Logging directory is not specified.');
@@ -96,7 +96,7 @@ class Logger implements LoggerInterface
      *
      * @return void
      */
-    public function log($level, $message, array $context = [])
+    public function log($level, $message, array $context = []): void
     {
         if (!isset($this->logLevels[$level])) {
             $level = LogLevel::DEBUG;
@@ -120,7 +120,7 @@ class Logger implements LoggerInterface
         } else {
             $message = Dumper::interpolate($message, $context);
 
-            $line = $this->formatLogLine($message, $exceptionFile);
+            $line = static::formatLogLine($message, $exceptionFile);
             $file = $this->directory . '/' . $level . '.log';
 
             if (!@\file_put_contents($file, $line . PHP_EOL, FILE_APPEND | LOCK_EX)) { // @ is escalated to exception
@@ -139,7 +139,7 @@ class Logger implements LoggerInterface
         $this->exceptionFile = $exceptionFile;
     }
 
-    public function getLastExceptionFile()
+    public function getLastExceptionFile(): ?string
     {
         return $this->exceptionFile;
     }
@@ -150,7 +150,7 @@ class Logger implements LoggerInterface
      *
      * @return string
      */
-    protected function formatLogLine($message, $exceptionFile = null)
+    protected static function formatLogLine($message, string $exceptionFile = null): string
     {
         return \implode(' ', [
             \date('[Y-m-d H-i-s]'),
@@ -166,7 +166,7 @@ class Logger implements LoggerInterface
      *
      * @return string
      */
-    public function getExceptionFile(\Throwable $exception)
+    public function getExceptionFile(\Throwable $exception): string
     {
         $data = [];
         while ($exception) {
@@ -205,7 +205,7 @@ class Logger implements LoggerInterface
      *
      * @return string logged error filename
      */
-    protected function logException(\Throwable $exception, $file = null)
+    protected function logException(\Throwable $exception, string $file = null): string
     {
         $file = $file ?: $this->getExceptionFile($exception);
         $bs = $this->blueScreen ?: new BlueScreen;
@@ -216,11 +216,11 @@ class Logger implements LoggerInterface
 
 
     /**
-     * @param  string|\Exception|\Throwable
+     * @param  mixed $message
      *
      * @return void
      */
-    protected function sendEmail($message)
+    protected function sendEmail($message): void
     {
         $snooze = \is_numeric($this->emailSnooze)
             ? $this->emailSnooze
@@ -238,13 +238,13 @@ class Logger implements LoggerInterface
     /**
      * Default mailer.
      *
-     * @param  string|\Exception|\Throwable
+     * @param  mixed
      * @param  string
      *
      * @return void
      * @internal
      */
-    public function defaultMailer($message, $email)
+    public function defaultMailer($message, string $email): void
     {
         $host = \preg_replace('#[^\w.-]+#', '', $_SERVER['HTTP_HOST'] ?? php_uname('n'));
         $parts = \str_replace(

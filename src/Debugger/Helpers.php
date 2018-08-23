@@ -21,9 +21,12 @@ class Helpers
     /**
      * Returns HTML link to editor.
      *
+     * @param string   $file
+     * @param int|null $line
+     *
      * @return string
      */
-    public static function editorLink($file, $line = null)
+    public static function editorLink(string $file, int $line = null): string
     {
         $file = \strtr($origFile = $file, Debugger::$editorMapping);
         if ($editor = self::editorUri($origFile, $line)) {
@@ -49,17 +52,24 @@ class Helpers
     /**
      * Returns link to editor.
      *
-     * @return string
+     * @return string|null
      */
-    public static function editorUri($file, $line = null)
+    public static function editorUri(string $file, int $line = null, string $action = 'open', string $search = '', string $replace = ''): ?string
     {
-        if (Debugger::$editor && $file && \is_file($file)) {
+        if (Debugger::$editor && $file && ($action === 'create' || is_file($file))) {
+            $file = \str_replace('/', DIRECTORY_SEPARATOR, $file);
             $file = \strtr($file, Debugger::$editorMapping);
 
-            return \strtr(Debugger::$editor, ['%file' => \rawurlencode($file), '%line' => $line ? (int) $line : 1]);
+            return strtr(Debugger::$editor, [
+                '%action' => $action,
+                '%file' => rawurlencode($file),
+                '%line' => $line ?: 1,
+                '%search' => rawurlencode($search),
+                '%replace' => rawurlencode($replace),
+            ]);
         }
 
-        return '';
+        return null;
     }
 
 
@@ -67,7 +77,7 @@ class Helpers
     {
         $count = 0;
 
-        return preg_replace_callback('#%#', function () use (&$args, &$count) {
+        return preg_replace_callback('#%#', function () use (&$args, &$count): string {
             return Helpers::escapeHtml($args[$count++]);
         }, $mask);
     }
@@ -79,7 +89,7 @@ class Helpers
     }
 
 
-    public static function findTrace(array $trace, $method, &$index = null)
+    public static function findTrace(array $trace, string $method, int &$index = null): ?string
     {
         $m = \explode('::', $method);
         $function = \end($m);
@@ -94,18 +104,20 @@ class Helpers
                 return $item;
             }
         }
+
+        return null;
     }
 
 
     /**
      * @return string
      */
-    public static function getClass($obj)
+    public static function getClass($obj): string
     {
         return \explode("\x00", \get_class($obj))[0];
     }
 
-    public static function fixStack($exception)
+    public static function fixStack(\Throwable $exception): \Throwable
     {
         if (\function_exists('\xdebug_get_function_stack')) {
             $stack = [];
@@ -131,7 +143,7 @@ class Helpers
         return $exception;
     }
 
-    public static function errorTypeToString($type)
+    public static function errorTypeToString(int $type): string
     {
         static $types = [
             E_ERROR => 'Fatal Error',
@@ -155,7 +167,7 @@ class Helpers
     }
 
 
-    public static function getSource()
+    public static function getSource(): string
     {
         $request = Debugger::getRequest();
 
@@ -179,7 +191,7 @@ class Helpers
         );
     }
 
-    public static function improveException(\Throwable $e)
+    public static function improveException(\Throwable $e): void
     {
         $message = $e->getMessage();
         if (!$e instanceof \Error && !$e instanceof \ErrorException) {
@@ -188,14 +200,17 @@ class Helpers
             $funcs = \array_merge(\get_defined_functions()['internal'], \get_defined_functions()['user']);
             $hint = self::getSuggestion($funcs, $m[1] . $m[2]) ?: self::getSuggestion($funcs, $m[2]);
             $message = "Call to undefined function $m[2](), did you mean $hint()?";
+            $replace = ["$m[2](", "$hint("];
 
         } elseif (\preg_match('#^Call to undefined method ([\w\\\\]+)::(\w+)#', $message, $m)) {
             $hint = self::getSuggestion(\get_class_methods($m[1]), $m[2]);
             $message .= ", did you mean $hint()?";
+            $replace = ["$m[2](", "$hint("];
 
         } elseif (\preg_match('#^Undefined variable: (\w+)#', $message, $m) && !empty($e->context)) {
             $hint = self::getSuggestion(\array_keys($e->context), $m[1]);
             $message = "Undefined variable $$m[1], did you mean $$hint?";
+            $replace = ["$$m[1]", "$$hint"];
 
         } elseif (\preg_match('#^Undefined property: ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
             $rc = new \ReflectionClass($m[1]);
@@ -203,6 +218,7 @@ class Helpers
                 $rc->getProperties(\ReflectionProperty::IS_STATIC));
             $hint = self::getSuggestion($items, $m[2]);
             $message .= ", did you mean $$hint?";
+            $replace = ["->$m[2]", "->$hint"];
 
         } elseif (\preg_match('#^Access to undeclared static property: ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
             $rc = new \ReflectionClass($m[1]);
@@ -210,12 +226,17 @@ class Helpers
                 $rc->getProperties(\ReflectionProperty::IS_STATIC));
             $hint = self::getSuggestion($items, $m[2]);
             $message .= ", did you mean $$hint?";
+            $replace = ["::$$m[2]", "::$$hint"];
         }
 
         if (isset($hint)) {
             $ref = new \ReflectionProperty($e, 'message');
             $ref->setAccessible(true);
             $ref->setValue($e, $message);
+            $e->tracyAction = [
+                'link' => self::editorUri($e->getFile(), $e->getLine(), 'fix', $replace[0], $replace[1]),
+                'label' => 'fix it',
+            ];
         }
     }
 
@@ -225,7 +246,7 @@ class Helpers
      *
      * @return string|NULL
      */
-    public static function getSuggestion(array $items, $value)
+    public static function getSuggestion(array $items, string $value): ?string
     {
         $best = null;
         $min = (\strlen($value) / 4 + 1) * 10 + .1;
@@ -280,11 +301,15 @@ class Helpers
     }
 
     /** @internal */
-    public static function getNonce()
+    public static function getNonce(): ?string
     {
         $value = Response::getHeaderLine('Content-Security-Policy');
         if ($value === '') {
-            return null;
+            $value = Response::getHeaderLine('Content-Security-Policy-Report-Only');
+
+            if ($value === '') {
+                return null;
+            }
         }
 
         return \preg_match('#script-src\s+(?:[^;]+\s)?\'nonce-([\w+/]+=*)\'#m', $value, $m) ? $m[1] : null;

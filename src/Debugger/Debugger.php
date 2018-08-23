@@ -21,7 +21,7 @@ use Psr\Log\LogLevel;
  */
 class Debugger
 {
-    public const VERSION = '2.4.11';
+    public const VERSION = '3.0-dev';
 
     /** server modes for Debugger::enable() */
     public const
@@ -29,7 +29,7 @@ class Debugger
         PRODUCTION = true,
         DETECT = null;
 
-    private const COOKIE_SECRET = 'tracy-debug';
+    public const COOKIE_SECRET = 'tracy-debug';
 
     /** @var bool|string|array|null mode defined by environment setting */
     private static $mode = self::DETECT;
@@ -42,6 +42,9 @@ class Debugger
     /** @var bool in production mode is suppressed any debugging output */
     public static $productionMode = self::DETECT;
 
+    /** @var bool whether to send data to ChromeLogger in development mode */
+    public static $showChromeLogger = true;
+
     /** @var bool */
     private static $enabled = 0;
     private static $enabledTime;
@@ -49,7 +52,7 @@ class Debugger
     /** @var bool */
     private static $started = false;
 
-    /** @var string reserved memory; also prevents double rendering */
+    /** @var string|null reserved memory; also prevents double rendering */
     private static $reserved;
 
     /** @var int initial output buffer level */
@@ -76,7 +79,7 @@ class Debugger
 
     /********************* logging ****************d*g**/
 
-    /** @var string name of the directory where errors should be logged */
+    /** @var string|null name of the directory where errors should be logged */
     private static $logDirectory;
 
     /** @var int  log bluescreen in production mode for this error severity */
@@ -154,7 +157,7 @@ class Debugger
     public static $time;
 
     /** @var string URI pattern mask to open editor */
-    public static $editor = 'editor://open/?file=%file&line=%line';
+    public static $editor = 'editor://%action/?file=%file&line=%line&search=%search&replace=%replace';
 
     /** @var array replacements in path */
     public static $editorMapping = [];
@@ -162,7 +165,7 @@ class Debugger
     /** @var string command to open browser (use 'start ""' in Windows) */
     public static $browser;
 
-    /** @var array */
+    /** @var array|null */
     private static $cpuUsage;
 
     /********************* services ****************d*g**/
@@ -204,7 +207,7 @@ class Debugger
      *
      * @return void
      */
-    public static function enable($mode = null, $logDirectory = null, $email = null)
+    public static function enable($mode = null, string $logDirectory = null, string $email = null): void
     {
         if ($mode !== null || self::$productionMode === null) {
             self::$mode = $mode;
@@ -322,7 +325,7 @@ class Debugger
      *
      * @return void
      */
-    public static function renderLoader()
+    public static function renderLoader(): void
     {
         if (!self::isProductionMode()) {
             self::getBar()->renderLoader();
@@ -366,7 +369,7 @@ class Debugger
      * @return void
      * @internal
      */
-    public static function shutdownHandler()
+    public static function shutdownHandler(): void
     {
         if (!self::$reserved) {
             return;
@@ -494,13 +497,13 @@ class Debugger
     /**
      * Handler to catch uncaught exception.
      *
-     * @param \Exception|\Throwable $exception
-     * @param bool                  $exit
+     * @param \Throwable $exception
+     * @param bool       $exit
      *
      * @return void
      * @internal
      */
-    public static function exceptionHandler($exception, $exit = true)
+    public static function exceptionHandler(\Throwable $exception, bool $exit = true): void
     {
         if (!self::$reserved && $exit) {
             return;
@@ -528,13 +531,10 @@ class Debugger
             $level = self::getExceptionLevel($exception);
             self::chromeLog($exception, $level);
 
-            $s = Helpers::getClass($exception) . ($exception->getMessage() === '' ? '' : ': ' . $exception->getMessage())
-                . ' in ' . $exception->getFile() . ':' . $exception->getLine()
-                . "\nStack trace:\n" . $exception->getTraceAsString();
             try {
                 $file = self::log($exception, $level);
 
-                echo "$s\n" . ($file ? "(stored in $file)\n" : '');
+                echo "$exception\n" . ($file ? "(stored in $file)\n" : '');
                 if ($file && PHP_SAPI === 'cli') {
                     if (self::$browser) {
                         \exec(self::$browser . ' ' . \escapeshellarg($file));
@@ -545,7 +545,7 @@ class Debugger
                     }
                 }
             } catch (\Throwable $e) {
-                echo "$s\nUnable to log error: {$e->getMessage()}\n";
+                echo "$exception\nUnable to log error: {$e->getMessage()}\n";
             }
         }
 
@@ -554,7 +554,7 @@ class Debugger
         }
     }
 
-    public static function getErrorLevel($code)
+    public static function getErrorLevel(string $code)
     {
         return self::$errorMap[$code] ?? LogLevel::CRITICAL;
     }
@@ -562,11 +562,17 @@ class Debugger
     /**
      * Handler to catch warnings and notices.
      *
-     * @return bool   FALSE to call normal error handler, NULL otherwise
+     * @param int    $severity
+     * @param string $message
+     * @param string $file
+     * @param int    $line
+     * @param array  $context
+     *
+     * @return bool|null FALSE to call normal error handler, NULL otherwise
      * @throws \ErrorException
      * @internal
      */
-    public static function errorHandler($severity, $message, $file, $line, $context = [])
+    public static function errorHandler(int $severity, string $message, string $file, int $line, array $context = []): ?bool
     {
         if (self::$scream) {
             \error_reporting(E_ALL);
@@ -639,7 +645,7 @@ class Debugger
     }
 
 
-    public static function removeOutputBuffers($errorOccurred)
+    public static function removeOutputBuffers(bool $errorOccurred): void
     {
         while (\ob_get_level() > self::$obLevel) {
             $status = \ob_get_status();
@@ -732,7 +738,7 @@ class Debugger
      *
      * @return mixed  variable itself or dump
      */
-    public static function dump($var, $return = false)
+    public static function dump($var, bool $return = false)
     {
         if ($return) {
             \ob_start();
@@ -762,7 +768,7 @@ class Debugger
      *
      * @return float   elapsed seconds
      */
-    public static function timer($name = null)
+    public static function timer(string $name = null): float
     {
         static $time = [];
         $now = \microtime(true);
@@ -783,7 +789,7 @@ class Debugger
      *
      * @return mixed  variable itself
      */
-    public static function barDump($var, $title = null, array $options = null)
+    public static function barDump($var, string $title = null, array $options = null)
     {
         if (!self::isProductionMode()) {
             static $panel;
@@ -807,12 +813,12 @@ class Debugger
     /**
      * Logs message or exception.
      *
-     * @param string|\Throwable $message
-     * @param string            $priority
+     * @param mixed  $message
+     * @param string $priority
      *
      * @return string|null
      */
-    public static function log($message, $priority = self::INFO): ?string
+    public static function log($message, string $priority = self::INFO): ?string
     {
         $logger = self::sendToLogger(self::getLogger(), $priority, $message);
 
@@ -823,7 +829,7 @@ class Debugger
         return null;
     }
 
-    protected static function sendToLogger(LoggerInterface $logger, $level, $message): LoggerInterface
+    protected static function sendToLogger(LoggerInterface $logger, $level, string $message): LoggerInterface
     {
         if ($message instanceof \Throwable) {
             $logger->log($level, '{exception}', [
@@ -844,9 +850,9 @@ class Debugger
      *
      * @return bool    was successful?
      */
-    public static function chromeLog($message, $priority = self::DEBUG)
+    public static function chromeLog($message, string $priority = self::DEBUG): bool
     {
-        if (!self::isProductionMode()) {
+        if (self::$showChromeLogger && !self::isProductionMode()) {
             self::sendToLogger(self::getChromeLogger(), $priority, $message);
 
             return true;

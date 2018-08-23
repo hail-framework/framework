@@ -10,45 +10,50 @@ namespace Hail\Debugger\Bar;
 
 /**
  * IBarPanel implementation helper.
+ *
  * @internal
  */
 class DefaultPanel implements PanelInterface
 {
-	private $id;
-	public $data;
+    private $id;
+    public $data;
 
 
-	public function __construct($id)
-	{
-		$this->id = $id;
-	}
+    public function __construct(string $id)
+    {
+        $this->id = $id;
+    }
 
 
     /**
-	 * Renders HTML code for custom tab.
-	 * @return string
-	 */
-	public function getTab()
-	{
-		\ob_start();
-		$data = $this->data;
-		require __DIR__ . "/templates/{$this->id}.tab.phtml";
-		return \ob_get_clean();
-	}
+     * Renders HTML code for custom tab.
+     *
+     * @return string
+     */
+    public function getTab(): string
+    {
+        \ob_start();
+        $data = $this->data;
+        require __DIR__ . "/templates/{$this->id}.tab.phtml";
+
+        return \ob_get_clean();
+    }
 
 
-	/**
-	 * Renders HTML code for custom panel.
-	 * @return string
-	 */
-	public function getPanel()
-	{
-		\ob_start();
-		if (\is_file(__DIR__ . "/templates/{$this->id}.panel.phtml")) {
+    /**
+     * Renders HTML code for custom panel.
+     *
+     * @return string
+     */
+    public function getPanel(): string
+    {
+        \ob_start();
+        if (\is_file(__DIR__ . "/templates/{$this->id}.panel.phtml")) {
             $data = $this->data;
-			require __DIR__ . "/templates/{$this->id}.panel.phtml";
-		}
-		return \ob_get_clean();
-	}
+            require __DIR__ . "/templates/{$this->id}.panel.phtml";
+        }
+
+        return \ob_get_clean();
+    }
 
 }
