@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hail\Http;
 
+use Hail\Application;
+use Hail\Exception\ActionError;
 use Hail\Util\{
     Arrays, Strings
 };
@@ -20,6 +22,11 @@ use Psr\Http\Message\{
  */
 class Request
 {
+    /**
+     * @var Application
+     */
+    protected $app;
+
     /**
      * @var ServerRequestInterface
      */
@@ -42,8 +49,10 @@ class Request
      */
     protected $all = false;
 
-    public function __construct(ServerRequestInterface $serverRequest = null)
+    public function __construct(Application $app, ServerRequestInterface $serverRequest = null)
     {
+        $this->app = $app;
+
         if ($serverRequest !== null) {
             $this->serverRequest = $serverRequest;
         }
@@ -307,5 +316,32 @@ class Request
         $acceptable = $this->serverRequest->getHeaderLine('Accept');
 
         return $acceptable !== null && Strings::contains($acceptable, ['/json', '+json']);
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param int                    $code
+     * @param string|null            $msg
+     * @param mixed                  ...$args
+     *
+     * @return ServerRequestInterface
+     */
+    public function error(ServerRequestInterface $request, int $code = 0, string $msg = null, ...$args): ServerRequestInterface
+    {
+        $routing = $request->getAttribute('routing');
+
+        if (empty($routing)) {
+            return $request;
+        }
+
+        if ($msg !== null && $args !== []) {
+            $msg = \sprintf($msg, ...$args);
+        }
+
+        $error = new ActionError($msg, $code);
+        $forwardTo = $error->getForwardTo();
+        $forwardTo['handler'] += $this->app->getRealHandler($routing['handler']);;
+
+        return $request->withAttribute('routing', $forwardTo);
     }
 }
