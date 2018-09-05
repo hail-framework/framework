@@ -142,7 +142,7 @@ class Env
      *
      * @return array
      */
-    public static function processFilters(string $name, string $value): array
+    public static function processFilters(string $name, ?string $value): array
     {
         [$name, $value] = static::splitCompoundStringIntoParts($name, $value);
 
