@@ -120,6 +120,9 @@ class Container implements ContainerInterface, \ArrayAccess
                 }
                 break;
 
+            case \class_exists($name):
+                return $this->build($name);
+
             default:
                 throw new NotFoundException($name);
         }
