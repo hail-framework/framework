@@ -3,13 +3,30 @@
 namespace Hail\Http;
 
 use Psr\Http\Message\{
-    RequestInterface, ResponseInterface, ServerRequestInterface, StreamInterface, UploadedFileInterface, UriInterface
+    RequestInterface,
+    ResponseInterface,
+    ServerRequestInterface,
+    StreamInterface,
+    UploadedFileInterface,
+    UriInterface,
+    RequestFactoryInterface,
+    ResponseFactoryInterface,
+    ServerRequestFactoryInterface,
+    StreamFactoryInterface,
+    UploadedFileFactoryInterface,
+    UriFactoryInterface
 };
 use Hail\Http\Message\{
     Uri, Request, ServerRequest, Response, Stream, UploadedFile
 };
 
-final class Factory
+final class Factory implements
+    RequestFactoryInterface,
+    ResponseFactoryInterface,
+    ServerRequestFactoryInterface,
+    StreamFactoryInterface,
+    UploadedFileFactoryInterface,
+    UriFactoryInterface
 {
     /**
      * @param UriInterface|string $uri
@@ -79,9 +96,8 @@ final class Factory
      *
      * @return StreamInterface
      */
-    public static function stream(
-        $body = null
-    ): StreamInterface {
+    public static function stream($body = null): StreamInterface
+    {
         if ($body instanceof StreamInterface) {
             return $body;
         }
@@ -99,15 +115,20 @@ final class Factory
         return $stream;
     }
 
-    public static function streamFromFile(
-        $file,
-        $mode = 'r'
-    ): StreamInterface {
-        $resource = \fopen($file, $mode);
-
-        return new Stream($resource);
+    public static function streamFromFile(string $file, string $mode = 'r'): StreamInterface
+    {
+        return new Stream(\fopen($file, $mode));
     }
 
+    /**
+     * @param StreamInterface|string|resource $file
+     * @param int|null                        $size
+     * @param int                             $error
+     * @param string|null                     $clientFilename
+     * @param string|null                     $clientMediaType
+     *
+     * @return UploadedFileInterface
+     */
     public static function uploadedFile(
         $file,
         int $size = null,
@@ -116,14 +137,61 @@ final class Factory
         string $clientMediaType = null
     ): UploadedFileInterface {
         if ($size === null) {
-            if (\is_string($file)) {
-                $size = \filesize($file);
-            } else {
+            if ($file instanceof StreamInterface) {
+                $size = $file->getSize();
+            } elseif (\is_resource($file)) {
                 $stats = \fstat($file);
                 $size = $stats['size'];
+            } else {
+                $size = \filesize($file);
             }
         }
 
         return new UploadedFile($file, $size, $error, $clientFilename, $clientMediaType);
+    }
+
+    public function createRequest(string $method, $uri): RequestInterface
+    {
+        return self::request($method, $uri);
+    }
+
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
+    {
+        return self::response($code, null, [], '1.1', $reasonPhrase);
+    }
+
+    public function createServerRequest(string $method, $uri, array $serverParams = []): ServerRequestInterface
+    {
+        return self::serverRequest($method, $uri, [], $body = 'php://input', '1.1', $serverParams);
+    }
+
+    public function createStream(string $content = ''): StreamInterface
+    {
+        return self::stream($content);
+    }
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+    {
+        return self::streamFromFile($filename, $mode);
+    }
+
+    public function createStreamFromResource($resource): StreamInterface
+    {
+        return new Stream($resource);
+    }
+
+    public function createUploadedFile(
+        StreamInterface $stream,
+        int $size = null,
+        int $error = \UPLOAD_ERR_OK,
+        string $clientFilename = null,
+        string $clientMediaType = null
+    ): UploadedFileInterface {
+        return self::uploadedFile($stream, $size, $error, $clientFilename, $clientMediaType);
+    }
+
+    public function createUri(string $uri = ''): UriInterface
+    {
+        return self::uri($uri);
     }
 }
