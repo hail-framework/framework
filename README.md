@@ -52,6 +52,7 @@ composer require "hail/framework:dev-master"
 - [PSR-14 Event Manager](https://www.php-fig.org/psr/psr-14)
 - [PSR-15 HTTP Handlers](https://www.php-fig.org/psr/psr-15)
 - [PSR-16 Simple Cache](https://www.php-fig.org/psr/psr-16)
+- [PSR-17 HTTP Factories](https://www.php-fig.org/psr/psr-17/)
 - [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/tree/master/proposed/http-client/)
 
 ## Features
