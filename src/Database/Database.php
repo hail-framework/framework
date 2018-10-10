@@ -2,7 +2,7 @@
 /*!
  * Medoo database framework
  * http://medoo.in
- * Version 1.5.2
+ * Version 1.6
  *
  * Copyright 2017, Angel Lai
  * Released under the MIT license
@@ -10,6 +10,7 @@
 
 namespace Hail\Database;
 
+use Hail\Database\Sql\Builder;
 use Hail\Util\SafeStorageTrait;
 
 /**
@@ -37,7 +38,7 @@ class Database
     protected $statement;
 
     /**
-     * @var Sql\Builder
+     * @var Builder
      */
     protected $sql;
 
@@ -98,7 +99,7 @@ class Database
 
                 $this->type = \strtolower($attr['driver']);
             } else {
-                throw new \LogicException('DSN can not build');
+                throw new \InvalidArgumentException('Invalid DSN option supplied');
             }
         } else {
             $attr = [
@@ -118,7 +119,14 @@ class Database
                     }
 
                     if (isset($options['charset'])) {
-                        $attr['charset'] = $options['charset'];
+                        if (isset($options['collation'])) {
+                            $commands[] = "SET NAMES '{$options[ 'charset' ]}'" . (
+                                isset($options['collation']) ?
+                                    " COLLATE '{$options[ 'collation' ]}'" : ''
+                                );
+                        } else {
+                            $attr['charset'] = $options['charset'];
+                        }
                     }
 
                     break;
@@ -157,9 +165,63 @@ class Database
                     // Make ANSI_NULLS is ON for NULL value
                     $commands[] = 'SET ANSI_NULLS ON';
 
-                    if (isset($options['charset'])) {
-                        $commands[] = "SET NAMES '{$options['charset']}'";
+
+                    if ($attr['driver'] === 'dblib') {
+                        if (isset($options['appname'])) {
+                            $attr['appname'] = $options['appname'];
+                        }
+
+                        if (isset($options['charset'])) {
+                            $attr['charset'] = $options['charset'];
+                        }
+                    } else {
+                        if (isset($options['appname'])) {
+                            $attr['APP'] = $options['appname'];
+                        }
+
+                        $config = [
+                            'ApplicationIntent',
+                            'AttachDBFileName',
+                            'Authentication',
+                            'ColumnEncryption',
+                            'ConnectionPooling',
+                            'Encrypt',
+                            'Failover_Partner',
+                            'KeyStoreAuthentication',
+                            'KeyStorePrincipalId',
+                            'KeyStoreSecret',
+                            'LoginTimeout',
+                            'MultipleActiveResultSets',
+                            'MultiSubnetFailover',
+                            'Scrollable',
+                            'TraceFile',
+                            'TraceOn',
+                            'TransactionIsolation',
+                            'TransparentNetworkIPResolution',
+                            'TrustServerCertificate',
+                            'WSID',
+                        ];
+
+                        foreach ($config as $value) {
+                            $keyname = \strtolower(
+                                \preg_replace(
+                                    [
+                                        '/([a-z\d])([A-Z])/',
+                                        '/([^_])([A-Z][a-z])/'
+                                    ], '$1_$2', $value
+                                )
+                            );
+
+                            if (isset($options[$keyname])) {
+                                $attr[$value] = $options[$keyname];
+                            }
+                        }
+
+                        if (isset($options['charset'])) {
+                            $commands[] = "SET NAMES '{$options['charset']}'";
+                        }
                     }
+
                     break;
 
                 case 'sqlite':
@@ -178,6 +240,10 @@ class Database
         $driver = $attr['driver'];
         unset($attr['driver']);
 
+        if (!\in_array($driver, \PDO::getAvailableDrivers(), true)) {
+            throw new \InvalidArgumentException("Unsupported PDO driver: {$driver}");
+        }
+
         $stack = [];
         foreach ($attr as $key => $value) {
             if ($value === null) {
@@ -194,7 +260,7 @@ class Database
 
         $this->setPassword($options['password']);
         $this->dsn = [$dsn, $options['username'], $pdoOptions, $commands];
-        $this->sql = new Sql\Builder($this, $options['prefix'] ?? '');
+        $this->sql = new Builder($this, $options['prefix'] ?? '');
 
         return $this;
     }
@@ -563,6 +629,13 @@ class Database
         return $return === '1';
     }
 
+    public function rand($struct)
+    {
+        return $this->select(
+            $this->sql->rand($struct)
+        );
+    }
+
     private function aggregate($type, array $struct)
     {
         $struct['FUN'] = \strtoupper($type);
@@ -586,7 +659,7 @@ class Database
      */
     public function count(array $struct)
     {
-        return $this->aggregate(__FUNCTION__, $struct);
+        return $this->aggregate('count', $struct);
     }
 
     /**
@@ -596,7 +669,7 @@ class Database
      */
     public function max(array $struct)
     {
-        return $this->aggregate(__FUNCTION__, $struct);
+        return $this->aggregate('max', $struct);
     }
 
     /**
@@ -606,7 +679,7 @@ class Database
      */
     public function min(array $struct)
     {
-        return $this->aggregate(__FUNCTION__, $struct);
+        return $this->aggregate('min', $struct);
     }
 
     /**
@@ -616,7 +689,7 @@ class Database
      */
     public function avg(array $struct)
     {
-        return $this->aggregate(__FUNCTION__, $struct);
+        return $this->aggregate('avg', $struct);
     }
 
     /**
@@ -626,7 +699,7 @@ class Database
      */
     public function sum(array $struct)
     {
-        return $this->aggregate(__FUNCTION__, $struct);
+        return $this->aggregate('sum', $struct);
     }
 
     /**
@@ -688,6 +761,8 @@ class Database
         foreach ($output as $key => $value) {
             $output[$key] = @$pdo->getAttribute(\constant('\PDO::ATTR_' . $value));
         }
+
+        $output['dsn'] = $this->dsn[0];
 
         return $output;
     }

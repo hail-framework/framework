@@ -2,7 +2,7 @@
 /*!
  * Medoo database framework
  * http://medoo.in
- * Version 1.5.7
+ * Version 1.6
  *
  * Copyright 2018, Angel Lai
  * Released under the MIT license
@@ -467,7 +467,7 @@ class Builder
                 $clause = ' WHERE ' . $this->dataImplode($conditions, $map, ' AND');
             }
 
-            if (isset($where[SQL::MATCH])) {
+            if (isset($where[SQL::MATCH]) && $this->type === 'mysql') {
                 $MATCH = $where[SQL::MATCH];
 
                 if (\is_array($MATCH) && isset($MATCH['columns'], $MATCH['keyword'])) {
@@ -606,17 +606,29 @@ class Builder
     }
 
     /**
-     * @param string|array $struct
+     * @param array|string $struct
      *
      * @return array
      */
-    public function select($struct): array
+    private function struct($struct): array
     {
         if (\is_string($struct)) {
             $struct = [
                 SQL::TABLE => $struct,
             ];
         }
+
+        return $struct;
+    }
+
+    /**
+     * @param string|array $struct
+     *
+     * @return array
+     */
+    public function select($struct): array
+    {
+        $struct = $this->struct($struct);
 
         $map = [];
         $table = $this->getTable($struct);
@@ -688,7 +700,7 @@ class Builder
                 }
             }
 
-            $tableQuery .= ' ' . \implode(' ', $join);
+            $tableQuery .= ' ' . \implode(' ', $tableJoin);
         }
 
         $columns = $this->getColumns($struct);
@@ -945,5 +957,22 @@ class Builder
     public function __destruct()
     {
         $this->db = null;
+    }
+
+    public function rand($struct): array
+    {
+        $struct = $this->struct($struct);
+
+        $type = $this->type;
+        $order = 'RANDOM()';
+        if ($type === 'mysql') {
+            $order = 'RAND()';
+        } elseif ($type === 'mssql') {
+            $order = 'NEWID()';
+        }
+
+        $struct[SQL::ORDER] = $this->raw($order);
+
+        return $struct;
     }
 }
