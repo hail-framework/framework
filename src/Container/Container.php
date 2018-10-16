@@ -221,7 +221,7 @@ class Container implements ContainerInterface, \ArrayAccess
     public function create(string $class, array $map = [])
     {
         if (!\class_exists($class)) {
-            throw new InvalidArgumentException("unable to create component: {$class}");
+            throw new InvalidArgumentException("unable to create component: {$class} (autoloading failed)");
         }
 
         if (\method_exists($class, 'getInstance')) {

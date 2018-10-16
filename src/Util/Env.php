@@ -244,14 +244,14 @@ class Env
             $parts = \explode(' #', $value, 2);
             $value = \trim($parts[0]);
 
-            // Check if value is a comment (usually triggered when empty value with comment)
-            if (\preg_match('/^#/', $value) > 0) {
-                $value = '';
-            }
-
             // Unquoted values cannot contain whitespace
             if (\preg_match('/\s+/', $value) > 0) {
-                throw new \RuntimeException('Dotenv values containing spaces must be surrounded by quotes.');
+                // Check if value is a comment (usually triggered when empty value with comment)
+                if (\preg_match('/^#/', $value) > 0) {
+                    $value = '';
+                } else {
+                    throw new \RuntimeException('Dotenv values containing spaces must be surrounded by quotes.');
+                }
             }
         }
 
@@ -382,7 +382,7 @@ class Env
 
         // If PHP is running as an Apache module and an existing
         // Apache environment variable exists, overwrite it
-        if (\function_exists('\\apache_getenv') && \function_exists('\\apache_setenv') && \apache_getenv($name)) {
+        if (\function_exists('\\apache_getenv') && \function_exists('\\apache_setenv') && \apache_getenv($name) !== false) {
             \apache_setenv($name, $value);
         }
 

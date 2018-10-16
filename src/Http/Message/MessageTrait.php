@@ -6,6 +6,7 @@ namespace Hail\Http\Message;
 
 use Hail\Http\Helpers;
 use Hail\Http\Factory;
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -13,169 +14,203 @@ use Psr\Http\Message\StreamInterface;
  *
  * @author Michael Dowling and contributors to guzzlehttp/psr7
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ * @author Feng Hao <flyinghail@msn.com>
  */
 trait MessageTrait
 {
-	/** @var array Map of all registered headers, as original name => array of values */
-	private $headers = [];
+    /** @var array Map of all registered headers, as original name => array of values */
+    private $headers = [];
 
-	/** @var array Map of lowercase header name => original name at registration */
-	private $headerNames = [];
+    /** @var array Map of lowercase header name => original name at registration */
+    private $headerNames = [];
 
-	/** @var string */
-	private $protocol = '1.1';
+    /** @var string */
+    private $protocol = '1.1';
 
-	/** @var StreamInterface */
-	private $stream;
+    /** @var StreamInterface */
+    private $stream;
 
-	public function getProtocolVersion()
-	{
-		return $this->protocol;
-	}
+    public function getProtocolVersion(): string
+    {
+        return $this->protocol;
+    }
 
-	public function withProtocolVersion($version)
-	{
-		if ($this->protocol === $version) {
-			return $this;
-		}
+    public function withProtocolVersion($version): MessageInterface
+    {
+        if ($this->protocol === $version) {
+            return $this;
+        }
 
-		$new = clone $this;
-		$new->protocol = $version;
+        $this->validateProtocolVersion($version);
 
-		return $new;
-	}
+        $new = clone $this;
+        $new->protocol = $version;
 
-	public function getHeaders(): array
-	{
-		return $this->headers;
-	}
+        return $new;
+    }
 
-	public function hasHeader($header): bool
-	{
-		return isset($this->headers[$header]) || isset($this->headerNames[\strtolower($header)]);
-	}
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
 
-	public function getHeader($header): array
-	{
-		if (isset($this->headers[$header])) {
-			return $this->headers[$header];
-		}
+    public function hasHeader($header): bool
+    {
+        return isset($this->headers[$header]) || isset($this->headerNames[\strtolower($header)]);
+    }
 
-		$header = \strtolower($header);
+    public function getHeader($header): array
+    {
+        if (isset($this->headers[$header])) {
+            return $this->headers[$header];
+        }
 
-		if (!isset($this->headerNames[$header])) {
-			return [];
-		}
+        $header = \strtolower($header);
 
-		$header = $this->headerNames[$header];
+        if (!isset($this->headerNames[$header])) {
+            return [];
+        }
 
-		return $this->headers[$header];
-	}
+        $header = $this->headerNames[$header];
 
-	public function getHeaderLine($header): string
-	{
-		return \implode(', ', $this->getHeader($header));
-	}
+        return $this->headers[$header];
+    }
 
-	public function withHeader($header, $value): self
-	{
-		if (!\is_array($value)) {
-			$value = [$value];
-		}
+    public function getHeaderLine($header): string
+    {
+        return \implode(', ', $this->getHeader($header));
+    }
 
-        $header = Helpers::normalizeHeaderName($header);
-		$value = Helpers::trimHeaderValues($value);
-		$normalized = \strtolower($header);
-
-		$new = clone $this;
-		if (isset($new->headerNames[$normalized])) {
-			unset($new->headers[$new->headerNames[$normalized]]);
-		}
-		$new->headerNames[$normalized] = $header;
-		$new->headers[$header] = $value;
-
-		return $new;
-	}
-
-	public function withAddedHeader($header, $value): self
-	{
-		if (!\is_array($value)) {
-			$value = [$value];
-		}
+    public function withHeader($header, $value): self
+    {
+        if (!\is_array($value)) {
+            $value = [$value];
+        }
 
         $header = Helpers::normalizeHeaderName($header);
-		$value = Helpers::trimHeaderValues($value);
-		$normalized = \strtolower($header);
+        $value = Helpers::trimHeaderValues($value);
+        $normalized = \strtolower($header);
 
-		$new = clone $this;
-		if (isset($new->headerNames[$normalized])) {
-			$header = $this->headerNames[$normalized];
-			$new->headers[$header] = array_merge($this->headers[$header], $value);
-		} else {
-			$new->headerNames[$normalized] = $header;
-			$new->headers[$header] = $value;
-		}
+        $new = clone $this;
+        if (isset($new->headerNames[$normalized])) {
+            unset($new->headers[$new->headerNames[$normalized]]);
+        }
+        $new->headerNames[$normalized] = $header;
+        $new->headers[$header] = $value;
 
-		return $new;
-	}
+        return $new;
+    }
 
-	public function withoutHeader($header): self
-	{
-		$normalized = \strtolower($header);
+    public function withAddedHeader($header, $value): self
+    {
+        if (!\is_array($value)) {
+            $value = [$value];
+        }
 
-		if (!isset($this->headerNames[$normalized])) {
-			return $this;
-		}
+        $header = Helpers::normalizeHeaderName($header);
+        $value = Helpers::trimHeaderValues($value);
+        $normalized = \strtolower($header);
 
-		$header = $this->headerNames[$normalized];
+        $new = clone $this;
+        if (isset($new->headerNames[$normalized])) {
+            $header = $this->headerNames[$normalized];
+            $new->headers[$header] = array_merge($this->headers[$header], $value);
+        } else {
+            $new->headerNames[$normalized] = $header;
+            $new->headers[$header] = $value;
+        }
 
-		$new = clone $this;
-		unset($new->headers[$header], $new->headerNames[$normalized]);
+        return $new;
+    }
 
-		return $new;
-	}
+    public function withoutHeader($header): MessageInterface
+    {
+        $normalized = \strtolower($header);
 
-	public function getBody(): StreamInterface
-	{
-		if (!$this->stream) {
-			$this->stream = Factory::stream('');
-		}
+        if (!isset($this->headerNames[$normalized])) {
+            return $this;
+        }
 
-		return $this->stream;
-	}
+        $header = $this->headerNames[$normalized];
 
-	public function withBody(StreamInterface $body): self
-	{
-		if ($body === $this->stream) {
-			return $this;
-		}
+        $new = clone $this;
+        unset($new->headers[$header], $new->headerNames[$normalized]);
 
-		$new = clone $this;
-		$new->stream = $body;
+        return $new;
+    }
 
-		return $new;
-	}
+    public function getBody(): StreamInterface
+    {
+        if (!$this->stream) {
+            $this->stream = Factory::stream('');
+        }
 
-	private function setHeaders(array $headers)
-	{
-		$this->headerNames = $this->headers = [];
+        return $this->stream;
+    }
 
-		foreach ($headers as $header => $value) {
-			if (!\is_array($value)) {
-				$value = [$value];
-			}
+    public function withBody(StreamInterface $body): MessageInterface
+    {
+        if ($body === $this->stream) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->stream = $body;
+
+        return $new;
+    }
+
+    private function setHeaders(array $headers)
+    {
+        $this->headerNames = $this->headers = [];
+
+        foreach ($headers as $header => $value) {
+            if (!\is_array($value)) {
+                $value = [$value];
+            }
 
             $header = Helpers::normalizeHeaderName($header);
-			$value = Helpers::trimHeaderValues($value);
+            $value = Helpers::trimHeaderValues($value);
 
-			$normalized = \strtolower($header);
-			if (isset($this->headerNames[$normalized])) {
-				$header = $this->headerNames[$normalized];
-				$this->headers[$header] = \array_merge($this->headers[$header], $value);
-			} else {
-				$this->headerNames[$normalized] = $header;
-				$this->headers[$header] = $value;
-			}
-		}
-	}
+            $normalized = \strtolower($header);
+            if (isset($this->headerNames[$normalized])) {
+                $header = $this->headerNames[$normalized];
+                $this->headers[$header] = \array_merge($this->headers[$header], $value);
+            } else {
+                $this->headerNames[$normalized] = $header;
+                $this->headers[$header] = $value;
+            }
+        }
+    }
+
+    /**
+     * Validate the HTTP protocol version
+     *
+     * @param string $version
+     *
+     * @throws \InvalidArgumentException on invalid HTTP protocol version
+     */
+    private function validateProtocolVersion($version): void
+    {
+        if (empty($version)) {
+            throw new \InvalidArgumentException(
+                'HTTP protocol version can not be empty'
+            );
+        }
+        if (!\is_string($version)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Unsupported HTTP protocol version; must be a string, received %s',
+                (\is_object($version) ? \get_class($version) : \gettype($version))
+            ));
+        }
+
+        // HTTP/1 uses a "<major>.<minor>" numbering scheme to indicate
+        // versions of the protocol, while HTTP/2 does not.
+        if (!\preg_match('#^(1\.[01]|2)$#', $version)) {
+            throw new \InvalidArgumentException(\sprintf(
+                'Unsupported HTTP protocol version "%s" provided',
+                $version
+            ));
+        }
+    }
 }

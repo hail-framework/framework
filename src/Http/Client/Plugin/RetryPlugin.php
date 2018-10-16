@@ -72,28 +72,19 @@ final class RetryPlugin implements PluginInterface
     {
         $chainIdentifier = \spl_object_hash($handler);
 
-        $promise = $handler->handle($request);
-        $deferred = new Promise(function () use ($promise) {
-            $promise->wait(false);
-        });
-
-        $onFulfilled = function (ResponseInterface $response) use ($chainIdentifier, $deferred) {
+        return $handler->handle($request)->then(function (ResponseInterface $response) use ($chainIdentifier) {
             if (isset($this->retryStorage[$chainIdentifier])) {
                 unset($this->retryStorage[$chainIdentifier]);
             }
 
-            $deferred->resolve($response);
             return $response;
-        };
-
-        $onRejected = function (ClientException $exception) use ($request, $handler, $onFulfilled, &$onRejected, $chainIdentifier, $deferred) {
+        }, function (ClientException $exception) use ($request, $handler, $chainIdentifier) {
             if (!isset($this->retryStorage[$chainIdentifier])) {
                 $this->retryStorage[$chainIdentifier] = 0;
             }
 
             if ($this->retryStorage[$chainIdentifier] >= $this->retry) {
                 unset($this->retryStorage[$chainIdentifier]);
-                $deferred->reject($exception);
                 throw $exception;
             }
 
@@ -108,14 +99,10 @@ final class RetryPlugin implements PluginInterface
 
             // Retry in synchrone
             ++$this->retryStorage[$chainIdentifier];
-            $handler->handle($request)->then($onFulfilled, $onRejected);
+            $promise = $this->process($request, $handler);
 
-            throw $exception;
-        };
-
-        $promise->then($onFulfilled, $onRejected);
-
-        return $deferred;
+            return $promise->wait();
+        });
     }
 
     /**
@@ -130,7 +117,7 @@ final class RetryPlugin implements PluginInterface
         return (2 ** $retries) * 500000;
     }
 
-    public static function defaultecider(RequestInterface $request, ClientException $e)
+    public static function defaultDecider(RequestInterface $request, ClientException $e)
     {
         return true;
     }

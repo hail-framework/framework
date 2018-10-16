@@ -443,7 +443,7 @@ class Validator
      * Validate a field contains a given string
      *
      * @param  string $field
-     * @param  mixed  $value
+     * @param  string $value
      * @param  array  $params
      *
      * @return bool
@@ -470,6 +470,48 @@ class Validator
     }
 
     /**
+     * Validate that all field values contains a given array
+     *
+     * @param  string $field
+     * @param  array  $value
+     * @param  array  $params
+     *
+     * @return bool
+     */
+    protected function validateSubset($field, $value, $params)
+    {
+        if (!isset($params[0])) {
+            return false;
+        }
+        if (!\is_array($params[0])) {
+            $params[0] = [$params[0]];
+        }
+        if (\is_scalar($value)) {
+            return $this->validateIn($field, $value, $params);
+        }
+        $intersect = \array_intersect($value, $params[0]);
+
+        return \array_diff($value, $intersect) === \array_diff($intersect, $value);
+    }
+
+    /**
+     * Validate that field array has only unique values
+     *
+     * @param  string $field
+     * @param  array  $value
+     *
+     * @return bool
+     */
+    protected function validateContainsUnique($field, $value)
+    {
+        if (!\is_array($value)) {
+            return false;
+        }
+
+        return $value === \array_unique($value, SORT_REGULAR);
+    }
+
+    /**
      * Validate that a field is a valid IP address
      *
      * @param  string $field
@@ -483,6 +525,32 @@ class Validator
     }
 
     /**
+     * Validate that a field is a valid IP v4 address
+     *
+     * @param  string $field
+     * @param  mixed  $value
+     *
+     * @return bool
+     */
+    protected function validateIpv4($field, $value)
+    {
+        return \filter_var($value, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4) !== false;
+    }
+
+    /**
+     * Validate that a field is a valid IP v6 address
+     *
+     * @param  string $field
+     * @param  mixed  $value
+     *
+     * @return bool
+     */
+    protected function validateIpv6($field, $value)
+    {
+        return \filter_var($value, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6) !== false;
+    }
+
+    /**
      * Validate that a field is a valid e-mail address
      *
      * @param  string $field
@@ -493,6 +561,25 @@ class Validator
     protected function validateEmail($field, $value)
     {
         return \filter_var($value, \FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Validate that a field contains only ASCII characters
+     *
+     * @param $field
+     * @param $value
+     *
+     * @return bool|false|string
+     */
+    protected function validateAscii($field, $value)
+    {
+        // multibyte extension needed
+        if (\function_exists('\\mb_detect_encoding')) {
+            return \mb_detect_encoding($value, 'ASCII', true);
+        }
+
+        // fallback with regex
+        return 0 === \preg_match('/[^\x00-\x7F]/', $value);
     }
 
     /**
@@ -823,7 +910,15 @@ class Validator
         return \is_string($value) && \is_string($params[0]) && \get_class($value) === $params[0];
     }
 
-    //Validate optional field
+    /**
+     * Validate optional field
+     *
+     * @param $field
+     * @param $value
+     * @param $params
+     *
+     * @return bool
+     */
     protected function validateOptional($field, $value, $params)
     {
         //Always return true
@@ -877,12 +972,12 @@ class Validator
      * Add an error to error messages array
      *
      * @param string $field
-     * @param string $msg
+     * @param string $message
      * @param array  $params
      */
-    public function error(string $field, string $msg, array $params = [])
+    public function error(string $field, string $message, array $params = [])
     {
-        $msg = $this->checkAndSetLabel($field, $msg, $params);
+        $message = $this->checkAndSetLabel($field, $message, $params);
 
         $values = [];
         // Printed values need to be in string format
@@ -902,19 +997,19 @@ class Validator
             $values[] = $param;
         }
 
-        $this->_errors[$field][] = \vsprintf($msg, $values);
+        $this->_errors[$field][] = \vsprintf($message, $values);
     }
 
     /**
      * Specify validation message to use for error for the last validation rule
      *
-     * @param  string $msg
+     * @param  string $message
      *
      * @return $this
      */
-    public function message(string $msg)
+    public function message(string $message)
     {
-        $this->_validations[\count($this->_validations) - 1]['message'] = $msg;
+        $this->_validations[\count($this->_validations) - 1]['message'] = $message;
 
         return $this;
     }
@@ -1168,9 +1263,9 @@ class Validator
     /**
      * Register new validation rule callback
      *
-     * @param  string $name
-     * @param  mixed  $callback
-     * @param  string $message
+     * @param  string   $name
+     * @param  callable $callback
+     * @param  string   $message
      *
      * @return $this
      * @throws \InvalidArgumentException
@@ -1241,8 +1336,8 @@ class Validator
             && !(\is_string($rule) && $this->hasValidator($rule))
         ) {
             $name = $this->getUniqueRuleName($fields);
-            $msg = $params[0] ?? null;
-            $this->addInstanceRule($name, $rule, $msg);
+            $message = $params[0] ?? null;
+            $this->addInstanceRule($name, $rule, $message);
             $rule = $name;
         }
 
@@ -1255,8 +1350,8 @@ class Validator
         }
 
         // Ensure rule has an accompanying message
-        $msgs = $this->getRuleMessages();
-        $message = $msgs[$rule] ?? self::ERROR_DEFAULT;
+        $messages = $this->getRuleMessages();
+        $message = $messages[$rule] ?? self::ERROR_DEFAULT;
 
         // Ensure message contains field label
         if (\strpos($message, '{field}') === false) {
@@ -1306,15 +1401,15 @@ class Validator
 
     /**
      * @param  string $field
-     * @param  string $msg
+     * @param  string $message
      * @param  array  $params
      *
      * @return string
      */
-    protected function checkAndSetLabel($field, $msg, $params)
+    protected function checkAndSetLabel($field, $message, $params)
     {
         if (isset($this->_labels[$field])) {
-            $msg = \str_replace('{field}', $this->_labels[$field], $msg);
+            $message = \str_replace('{field}', $this->_labels[$field], $message);
 
             if (\is_array($params)) {
                 $i = 1;
@@ -1324,15 +1419,15 @@ class Validator
                     (\is_numeric($params[$k]) || \is_string($params[$k])) &&
                     isset($this->_labels[$params[$k]]) ?
                         $this->_labels[$params[$k]] : $tag;
-                    $msg = \str_replace($tag, $label, $msg);
+                    $message = \str_replace($tag, $label, $message);
                     $i++;
                 }
             }
         } else {
-            $msg = \str_replace('{field}', \ucwords(\str_replace('_', ' ', $field)), $msg);
+            $message = \str_replace('{field}', \ucwords(\str_replace('_', ' ', $field)), $message);
         }
 
-        return $msg;
+        return $message;
     }
 
     /**

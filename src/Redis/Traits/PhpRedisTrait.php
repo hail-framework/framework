@@ -100,6 +100,7 @@ trait PhpRedisTrait
                     }
                     $args = Helpers::flattenArguments($args);
                     break;
+                case 'zinterstore':
                 case 'zunionstore':
                     $cArgs = [
                         $args[0], // destination

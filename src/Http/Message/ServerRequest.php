@@ -96,8 +96,9 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $this->uploadedFiles;
     }
 
-    public function withUploadedFiles(array $uploadedFiles)
+    public function withUploadedFiles(array $uploadedFiles) : ServerRequest
     {
+        $this->validateUploadedFiles($uploadedFiles);
         $new = clone $this;
         $new->uploadedFiles = $uploadedFiles;
 
@@ -109,7 +110,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $this->cookieParams;
     }
 
-    public function withCookieParams(array $cookies)
+    public function withCookieParams(array $cookies) : ServerRequest
     {
         $new = clone $this;
         $new->cookieParams = $cookies;
@@ -122,7 +123,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $this->queryParams;
     }
 
-    public function withQueryParams(array $query)
+    public function withQueryParams(array $query) : ServerRequest
     {
         $new = clone $this;
         $new->queryParams = $query;
@@ -135,8 +136,16 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $this->parsedBody;
     }
 
-    public function withParsedBody($data)
+    public function withParsedBody($data) : ServerRequest
     {
+        if (!\is_array($data) && !\is_object($data) && null !== $data) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s expects a null, array, or object argument; received %s',
+                __METHOD__,
+                \gettype($data)
+            ));
+        }
+
         $new = clone $this;
         $new->parsedBody = $data;
 
@@ -157,7 +166,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $default;
     }
 
-    public function withAttribute($attribute, $value)
+    public function withAttribute($attribute, $value) : ServerRequest
     {
         $new = clone $this;
         $new->attributes[$attribute] = $value;
@@ -165,7 +174,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         return $new;
     }
 
-    public function withoutAttribute($attribute)
+    public function withoutAttribute($attribute) : ServerRequest
     {
         if (!\array_key_exists($attribute, $this->attributes)) {
             return $this;
@@ -175,5 +184,24 @@ class ServerRequest extends Request implements ServerRequestInterface
         unset($new->attributes[$attribute]);
 
         return $new;
+    }
+
+    /**
+     * Recursively validate the structure in an uploaded files array.
+     *
+     * @throws InvalidArgumentException if any leaf is not an UploadedFileInterface instance.
+     */
+    private function validateUploadedFiles(array $uploadedFiles) : void
+    {
+        foreach ($uploadedFiles as $file) {
+            if (\is_array($file)) {
+                $this->validateUploadedFiles($file);
+                continue;
+            }
+
+            if (! $file instanceof UploadedFileInterface) {
+                throw new InvalidArgumentException('Invalid leaf in uploaded files structure');
+            }
+        }
     }
 }

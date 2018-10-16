@@ -31,8 +31,8 @@ use Hail\Redis\Exception\RedisException;
  * static, a lightweight Redis PHP standalone client and phpredis wrapper
  *
  * Server/Connection:
- * @method $this        pipeline()
- * @method $this        multi()
+ * @method $this         pipeline()
+ * @method $this         multi()
  * @method array         exec()
  * @method string        flushAll()
  * @method string        flushDb()
@@ -40,6 +40,7 @@ use Hail\Redis\Exception\RedisException;
  * @method bool|array    config(string $setGet, string $key, string $value = null)
  * @method array         role()
  * @method array         time()
+ * @method array         ping()
  *
  * Keys:
  * @method int           del(string $key)

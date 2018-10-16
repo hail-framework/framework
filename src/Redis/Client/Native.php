@@ -224,6 +224,7 @@ class Native extends AbstractClient
                 $eArgs = (array) ($args[2] ?? []);
                 $args = [$script, \count($keys), $keys, $eArgs];
                 break;
+            case 'zinterstore':
             case 'zunionstore':
                 $dest = $args[0];
                 $keys = (array) ($args[1] ?? []);

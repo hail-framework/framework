@@ -16,7 +16,7 @@ use Hail\Mail\Exception\{
 
 class FallbackMailer
 {
-    /** @var callable[]  function (FallbackMailer $sender, SendException $e, Mailer $mailer, Message $mail) */
+    /** @var callable[]  function (FallbackMailer $sender, SendException $e, Mailer $mailer, Message $mail): void */
     public $onFailure;
 
     /** @var Mailer[] */

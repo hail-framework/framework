@@ -99,7 +99,7 @@ class Stream implements StreamInterface
 		}
 	}
 
-	public function close()
+	public function close() : void
 	{
 		if (null !== $this->stream) {
 			if (\is_resource($this->stream)) {
@@ -123,7 +123,7 @@ class Stream implements StreamInterface
 		return $result;
 	}
 
-	public function getSize()
+	public function getSize() : ?int
 	{
 		if ($this->size !== null) {
 			return $this->size;
@@ -169,7 +169,7 @@ class Stream implements StreamInterface
 		return $this->seekable;
 	}
 
-	public function seek($offset, $whence = SEEK_SET)
+	public function seek($offset, $whence = SEEK_SET) : void
 	{
 		if (!$this->seekable) {
 			throw new \RuntimeException('Stream is not seekable');
@@ -180,7 +180,7 @@ class Stream implements StreamInterface
 		}
 	}
 
-	public function rewind()
+	public function rewind() : void
 	{
 		$this->seek(0);
 	}

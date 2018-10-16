@@ -269,14 +269,14 @@ class Message extends MimePart
         }
 
         if ($this->getSubject() == null) { // intentionally ==
-            $html = Strings::replace($html, '#<title>(.+?)</title>#is', function ($m) {
+            $html = Strings::replace($html, '#<title>(.+?)</title>#is', function (array $m): void {
                 $this->setSubject(\html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));
             });
         }
 
         $this->htmlBody = \ltrim(\str_replace("\r", '', $html), "\n");
 
-        if ($this->getBody() === '' && $html !== '') {
+        if ($html !== '' && $this->getBody() === '') {
             $this->setBody($this->buildText($html));
         }
 
@@ -380,6 +380,8 @@ class Message extends MimePart
 
         if (!\strcasecmp($contentType, 'message/rfc822')) { // not allowed for attached files
             $contentType = 'application/octet-stream';
+        } elseif (!\strcasecmp($contentType, 'image/svg')) { // Troublesome for some mailers...
+            $contentType = 'image/svg+xml';
         }
 
         $part->setBody($content);

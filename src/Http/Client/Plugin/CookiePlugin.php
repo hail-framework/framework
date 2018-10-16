@@ -38,6 +38,7 @@ final class CookiePlugin implements PluginInterface
      */
     public function process(RequestInterface $request, RequestHandlerInterface $handler): PromiseInterface
     {
+        $cookies = [];
         foreach ($this->cookieJar->getCookies() as $cookie) {
             if ($cookie->isExpired()) {
                 continue;
@@ -55,8 +56,13 @@ final class CookiePlugin implements PluginInterface
                 continue;
             }
 
-            $request = $request->withAddedHeader('Cookie', (string) $cookie);
+            $cookies[] = \sprintf('%s=%s', $cookie->getName(), $cookie->getValue());
         }
+
+        if (!empty($cookies)) {
+            $request = $request->withAddedHeader('Cookie', \implode('; ', \array_unique($cookies)));
+        }
+
 
         return $handler->handle($request)->then(function (ResponseInterface $response) use ($request) {
             if ($response->hasHeader('Set-Cookie')) {
@@ -71,7 +77,7 @@ final class CookiePlugin implements PluginInterface
                     }
 
                     // Restrict setting cookie from another domain
-                    if (!preg_match("/\.{$cookie->getDomain()}$/", '.'.$request->getUri()->getHost())) {
+                    if (!\preg_match("/\.{$cookie->getDomain()}$/", '.'.$request->getUri()->getHost())) {
                         continue;
                     }
 
