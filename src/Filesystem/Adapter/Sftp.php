@@ -253,12 +253,8 @@ class Sftp extends AbstractFtpAdapter
 		$this->ensureDirectory(Util::dirname($path));
 
 		$stream = \fopen('ssh2.sftp://' . $this->sftp . $path, 'w+b');
-		if (!$stream) {
-			return false;
-		}
 
-		\stream_copy_to_stream($resource, $stream);
-		if (!\fclose($stream)) {
+		if (!$stream || \stream_copy_to_stream($resource, $stream) === false || !\fclose($stream)) {
 			return false;
 		}
 

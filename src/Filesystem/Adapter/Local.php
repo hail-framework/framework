@@ -154,13 +154,7 @@ class Local extends AbstractAdapter
 		$this->ensureDirectory(\dirname($location));
 		$stream = \fopen($location, 'w+b');
 
-		if (!$stream) {
-			return false;
-		}
-
-		\stream_copy_to_stream($resource, $stream);
-
-		if (!\fclose($stream)) {
+		if (!$stream || \stream_copy_to_stream($resource, $stream) === false|| !\fclose($stream)) {
 			return false;
 		}
 
