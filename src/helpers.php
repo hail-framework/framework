@@ -223,7 +223,9 @@ function dumpe(...$args)
 {
     array_map('Hail\Debugger\Debugger::dump', $args);
 
-    exit;
+    if (!\Hail\Debugger\Debugger::isProductionMode()) {
+        exit;
+    }
 }
 
 /**

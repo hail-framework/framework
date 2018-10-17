@@ -30,6 +30,7 @@
                         this.toFloat();
                     }
                     this.focus();
+                    this.peekPosition = false;
                 }
             });
 
@@ -55,7 +56,7 @@
                 this.reposition();
             });
 
-            forEach(elem.querySelectorAll('.tracy-icons a'), link => {
+            elem.querySelectorAll('.tracy-icons a').forEach(link => {
                 link.addEventListener('click', e => {
                     clearTimeout(elem.Tracy.displayTimeout);
                     if (link.rel === 'close') {
@@ -82,9 +83,12 @@
             var elem = this.elem;
             if (this.is(Panel.WINDOW)) {
                 elem.Tracy.window.focus();
-            } else {
+            } else if (!this.is(Panel.FOCUSED)) {
                 clearTimeout(elem.Tracy.displayTimeout);
                 elem.Tracy.displayTimeout = setTimeout(() => {
+                    for (var id in Debug.panels) {
+                        Debug.panels[id].elem.classList.remove(Panel.FOCUSED);
+                    }
                     elem.classList.add(Panel.FOCUSED);
                     elem.style.zIndex = Tracy.panelZIndex + Panel.zIndexCounter++;
                     if (callback) {
@@ -252,7 +256,7 @@
 
 
         initTabs(elem) {
-            forEach(elem.getElementsByTagName('a'), link => {
+            elem.getElementsByTagName('a').forEach(link => {
                 link.addEventListener('click', e => {
                     if (link.rel === 'close') {
                         this.close();
@@ -270,7 +274,10 @@
 
                         } else {
                             panel.toFloat();
-                            panel.reposition(-Math.round(Math.random() * 100) - 20, (Math.round(Math.random() * 100) + 20) * (this.isAtTop() ? 1 : -1));
+                            if (panel.peekPosition) {
+                                panel.reposition(-Math.round(Math.random() * 100) - 20, (Math.round(Math.random() * 100) + 20) * (this.isAtTop() ? 1 : -1));
+                                panel.peekPosition = false;
+                            }
                         }
                     }
                     e.preventDefault();
@@ -290,6 +297,7 @@
                                         ? getOffset(this.elem).top + getPosition(this.elem).height + 4
                                         : getOffset(this.elem).top - pos.height - 4
                                 });
+                                panel.peekPosition = true;
                             }
                         });
                     }
@@ -307,7 +315,7 @@
 
         autoHideLabels() {
             var width = getWindowSize().width;
-            forEach(this.elem.children, function (ul) {
+            Array.from(this.elem.children).forEach(ul => {
                 var labels = ul.querySelectorAll('.tracy-label');
                 for (var i = labels.length - 1; i >= 0 && ul.clientWidth >= width; i--) {
                     labels.item(i).hidden = true;
@@ -367,7 +375,7 @@
             Debug.layer.style.display = 'block';
             Debug.bar.init();
 
-            forEach(document.querySelectorAll('.tracy-panel'), panel => {
+            document.querySelectorAll('.tracy-panel').forEach(panel => {
                 Debug.panels[panel.id] = new Panel(panel.id);
                 Debug.panels[panel.id].dumps = dumps;
                 Debug.panels[panel.id].restorePosition();
@@ -379,7 +387,7 @@
 
 
         static loadAjax(content, dumps) {
-            forEach(Debug.layer.querySelectorAll('.tracy-panel.tracy-ajax'), panel => {
+            Debug.layer.querySelectorAll('.tracy-panel.tracy-ajax').forEach(panel => {
                 Debug.panels[panel.id].savePosition();
                 delete Debug.panels[panel.id];
                 panel.parentNode.removeChild(panel);
@@ -395,7 +403,7 @@
             ajaxBar = document.getElementById('tracy-ajax-bar');
             Debug.bar.elem.appendChild(ajaxBar);
 
-            forEach(document.querySelectorAll('.tracy-panel'), panel => {
+            document.querySelectorAll('.tracy-panel').forEach(panel => {
                 if (!Debug.panels[panel.id]) {
                     Debug.panels[panel.id] = new Panel(panel.id);
                     Debug.panels[panel.id].dumps = dumps;
@@ -439,7 +447,7 @@
 
             XMLHttpRequest.prototype.open = function() {
                 oldOpen.apply(this, arguments);
-                if (window.TracyAutoRefresh !== false && arguments[1].indexOf('//') <= 0 || arguments[1].indexOf(location.origin + '/') === 0) {
+                if (window.TracyAutoRefresh !== false && new URL(arguments[1], location.origin).host === location.host) {
                     this.setRequestHeader('X-Tracy-Ajax', header);
                     this.addEventListener('load', function() {
                         if (this.getAllResponseHeaders().match(/^X-Tracy-Ajax: 1/mi)) {
@@ -456,7 +464,7 @@
                     options.headers = new Headers(options.headers || {});
                     var url = request instanceof Request ? request.url : request;
 
-                    if (window.TracyAutoRefresh !== false && url.indexOf('//') <= 0 || url.indexOf(location.origin + '/') === 0) {
+                    if (window.TracyAutoRefresh !== false && new URL(url, location.origin).host === location.host) {
                         options.headers.set('X-Tracy-Ajax', header);
                         options.credentials = (request instanceof Request && request.credentials) || options.credentials || 'same-origin';
 
@@ -490,7 +498,7 @@
 
 
     function evalScripts(elem) {
-        forEach(elem.getElementsByTagName('script'), script => {
+        elem.querySelectorAll('script').forEach(script => {
             if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
                 var dolly = script.ownerDocument.createElement('script');
                 dolly.textContent = script.textContent;
@@ -578,7 +586,7 @@
             }
         };
 
-        forEach(options.handles, function (handle) {
+        options.handles.forEach(handle => {
             handle.addEventListener('mousedown', onStart);
             handle.addEventListener('touchstart', onStart);
 
@@ -635,12 +643,6 @@
             height: elem.offsetHeight
         };
     }
-
-
-    function forEach(arr, cb) {
-        Array.prototype.forEach.call(arr, cb);
-    }
-
 
     if (document.currentScript) {
         var nonce = document.currentScript.getAttribute('nonce') || document.currentScript.nonce;

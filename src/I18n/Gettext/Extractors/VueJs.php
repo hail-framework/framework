@@ -37,23 +37,25 @@ class VueJs extends JsCode
         // And normalize newlines
         $string = \str_replace([
             '<template>', '</template>',
-            "\r\n", "\n\r", "\r"
+            "\r\n", "\n\r", "\r",
         ], [
             '<template>.', '</template>.',
-            "\n", "\n", "\n"
+            "\n", "\n", "\n",
         ], $string);
 
         // VueJS files are valid HTML files, we will operate with the DOM here
         $dom = self::convertHtmlToDom($string);
 
+        $script = self::extractScriptTag($string);
+
         // Parse the script part as a regular JS code
-        $script = $dom->getElementsByTagName('script')->item(0);
         if ($script) {
+            $scriptLineNumber = $dom->getElementsByTagName('script')->item(0)->getLineNo();
             self::getScriptTranslationsFromString(
-                $script->textContent,
+                $script,
                 $translations,
                 $options,
-                $script->getLineNo() - 1
+                $scriptLineNumber - 1
             );
         }
 
@@ -71,7 +73,25 @@ class VueJs extends JsCode
     }
 
     /**
+     * Extracts script tag contents using regex instead of DOM operations.
+     * If we parse using DOM, some contents may change, for example, tags within strings will be stripped
+     *
+     * @param $string
+     *
+     * @return bool|string
+     */
+    private static function extractScriptTag($string)
+    {
+        if (\preg_match('#<\s*?script\b[^>]*>(.*?)</script\b[^>]*>#s', $string, $matches)) {
+            return $matches[1];
+        }
+
+        return '';
+    }
+
+    /**
      * @param string $html
+     *
      * @return DOMDocument
      */
     private static function convertHtmlToDom($html)
@@ -89,10 +109,11 @@ class VueJs extends JsCode
     /**
      * Extract translations from script part
      *
-     * @param string $scriptContents Only script tag contents, not the whole template
+     * @param string       $scriptContents Only script tag contents, not the whole template
      * @param Translations $translations
-     * @param array $options
-     * @param int $lineOffset Number of lines the script is offset in the vue template file
+     * @param array        $options
+     * @param int          $lineOffset     Number of lines the script is offset in the vue template file
+     *
      * @throws \Exception
      */
     private static function getScriptTranslationsFromString(
@@ -109,10 +130,11 @@ class VueJs extends JsCode
     /**
      * Parse template to extract all translations (element content and dynamic element attributes)
      *
-     * @param DOMElement $dom
+     * @param DOMElement   $dom
      * @param Translations $translations
-     * @param array $options
-     * @param int $lineOffset Line number where the template part starts in the vue file
+     * @param array        $options
+     * @param int          $lineOffset Line number where the template part starts in the vue file
+     *
      * @throws \Exception
      */
     private static function getTemplateTranslations(
@@ -136,8 +158,9 @@ class VueJs extends JsCode
      * Extract JS expressions from element attribute bindings (excluding text within elements)
      * For example: <span :title="__('extract this')"> skip element content </span>
      *
-     * @param array $options
+     * @param array      $options
      * @param DOMElement $dom
+     *
      * @return string JS code
      */
     private static function getTemplateAttributeFakeJs(array $options, DOMElement $dom)
@@ -164,9 +187,10 @@ class VueJs extends JsCode
     /**
      * Loop DOM element recursively and parse out all dynamic vue attributes which are basically JS expressions
      *
-     * @param array $attributePrefixes List of attribute prefixes we parse as JS (may contain translations)
+     * @param array      $attributePrefixes List of attribute prefixes we parse as JS (may contain translations)
      * @param DOMElement $dom
-     * @param array $expressionByLine [lineNumber => [jsExpression, ..], ..]
+     * @param array      $expressionByLine  [lineNumber => [jsExpression, ..], ..]
+     *
      * @return array [lineNumber => [jsExpression, ..], ..]
      */
     private static function getVueAttributeExpressions(
@@ -208,8 +232,9 @@ class VueJs extends JsCode
     /**
      * Check if this attribute name should be parsed for translations
      *
-     * @param string $attributeName
+     * @param string   $attributeName
      * @param string[] $attributePrefixes
+     *
      * @return bool
      */
     private static function isAttributeMatching($attributeName, $attributePrefixes)
@@ -219,6 +244,7 @@ class VueJs extends JsCode
                 return true;
             }
         }
+
         return false;
     }
 
@@ -227,6 +253,7 @@ class VueJs extends JsCode
      * For example: <span :title="skip attributes"> {{__("extract element content")}} </span>
      *
      * @param DOMElement $dom
+     *
      * @return string JS code
      */
     private static function getTemplateFakeJs(DOMElement $dom)
@@ -248,6 +275,7 @@ class VueJs extends JsCode
      * Match JS expressions in a template line
      *
      * @param string $line
+     *
      * @return string[]
      */
     private static function parseOneTemplateLine($line)

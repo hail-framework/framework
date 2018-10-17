@@ -188,7 +188,7 @@ class Bar
             $body = \ob_get_clean();
 
             return Factory::response(200, $body, [
-                'Content-Type' => 'text/javascript',
+                'Content-Type' => 'application/javascript',
                 'Cache-Control' => 'max-age=864000',
             ]);
         }
@@ -202,7 +202,7 @@ class Bar
 
         if ($this->useSession && $asset && \preg_match('#^content(-ajax)?\.(\w+)$#', $asset, $m)) {
             $session = &$_SESSION['_tracy']['bar'][$m[2] . $m[1]];
-            $headers['Content-Type'] = 'text/javascript';
+            $headers['Content-Type'] = 'application/javascript';
             $headers['Cache-Control'] = 'max-age=60';
 
             \ob_start();

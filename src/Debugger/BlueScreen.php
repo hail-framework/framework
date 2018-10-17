@@ -42,7 +42,7 @@ class BlueScreen
 
 
     /**
-     * Add custom panel.
+     * Add custom panel as function (?\Throwable $e): ?array
      *
      * @param callable $panel
      *
@@ -103,9 +103,9 @@ class BlueScreen
      * @param  \Throwable $exception
      * @param  string     $file file path
      *
-     * @return void
+     * @return bool
      */
-    public function renderToFile(\Throwable $exception, string $file): void
+    public function renderToFile(\Throwable $exception, string $file): bool
     {
         if ($handle = @\fopen($file, 'xb')) {
             \ob_start(); // double buffer prevents sending HTTP headers in some PHP
@@ -116,7 +116,11 @@ class BlueScreen
             \ob_end_flush();
             \ob_end_clean();
             \fclose($handle);
+
+            return true;
         }
+
+        return false;
     }
 
 
