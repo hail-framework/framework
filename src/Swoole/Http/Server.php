@@ -32,8 +32,8 @@ class Server
 
         $server->set($this->app->config('swoole.http'));
 
-        $server->on('Start', [$this, 'onStart']);
-        $server->on('WorkerStart', [$this, 'onWorkerStart']);
+        $server->on('start', [$this, 'onStart']);
+        $server->on('workerStart', [$this, 'onWorkerStart']);
         $server->on('request', [$this, 'onReqeust']);
 
         $server->start();
