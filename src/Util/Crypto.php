@@ -2,7 +2,6 @@
 
 namespace Hail\Util;
 
-
 use InvalidArgumentException;
 use Hail\Util\Exception\CryptoException;
 
@@ -19,14 +18,16 @@ final class Crypto
 
     private const CURRENT_VERSION = "\xDE\xF5\x02\x00";
 
-    private const CIPHER_METHOD = 'aes-256-ctr';
-    private const BLOCK_BYTE_SIZE = 16;
+    private const CIPHER_METHOD = 'aes-256-gcm';
+    private const TAG_BYTE_SIZE = 16;
+    private const BLOCK_BYTE_SIZE = 12;
     private const KEY_BYTE_SIZE = 32;
     private const SALT_BYTE_SIZE = 32;
     private const MAC_BYTE_SIZE = 32;
     private const HASH_TYPE = 'sha256';
     private const ENCRYPTION_INFO_STRING = 'Hail|V1|KeyForEncryption';
     private const AUTHENTICATION_INFO_STRING = 'Hail|V1|KeyForAuthentication';
+    private const AD_STRING = 'hail.crypto';
 
     private const PBKDF2_ITERATIONS = 100000;
 
@@ -34,13 +35,13 @@ final class Crypto
      * @var array
      */
     public static $hashList = [
-//		'md5' => 16,
+        // 'md5' => 16,
         'sha1' => 20,
         'sha224' => 28,
         'sha256' => 32,
         'sha384' => 48,
         'sha512' => 64,
-//		'ripemd128' => 16,
+        // 'ripemd128' => 16,
         'ripemd160' => 20,
         'ripemd256' => 32,
         'ripemd320' => 40,
@@ -53,6 +54,19 @@ final class Crypto
     public const FORMAT_BASE64 = 'base64';
 
     private static $format = self::FORMAT_RAW;
+    private static $sodium = false;
+
+    public static function init(string $format = null): void
+    {
+        if (
+            \function_exists('\\sodium_crypto_aead_aes256gcm_is_available') &&
+            \sodium_crypto_aead_aes256gcm_is_available()
+        ) {
+            self::$sodium = true;
+        }
+
+        self::format($format);
+    }
 
     public static function format(string $format = null): void
     {
@@ -187,6 +201,7 @@ final class Crypto
      *
      * @param string $plaintext
      * @param string $key
+     * @param string $ad
      * @param string $format
      * @param bool   $password
      *
@@ -195,8 +210,13 @@ final class Crypto
      * @return string
      * @throws \Exception
      */
-    public static function encrypt(string $plaintext, string $key, string $format = null, bool $password = false): string
-    {
+    public static function encrypt(
+        string $plaintext,
+        string $key,
+        string $ad = '',
+        string $format = null,
+        bool $password = false
+    ): string {
         if (\mb_strlen($key, '8bit') !== self::KEY_BYTE_SIZE) {
             throw new CryptoException('Bad key length.');
         }
@@ -207,21 +227,26 @@ final class Crypto
 
         $iv = \random_bytes(self::BLOCK_BYTE_SIZE);
 
-        $cipherText = \openssl_encrypt(
-            $plaintext,
-            self::CIPHER_METHOD,
-            $encryptKey,
-            OPENSSL_RAW_DATA,
-            $iv
-        );
+        $ad = self::getAd($ad);
 
-        if ($cipherText === false) {
-            throw new CryptoException(
-                'openssl_encrypt() failed.'
+        $tag = '';
+        if (self::$sodium) {
+            $cipherText = \sodium_crypto_aead_aes256gcm_encrypt($plaintext, $ad, $iv, $encryptKey);
+        } else {
+            $cipherText = \openssl_encrypt(
+                $plaintext,
+                self::CIPHER_METHOD,
+                $encryptKey,
+                \OPENSSL_RAW_DATA,
+                $iv, $tag, $ad
             );
         }
 
-        $cipherText = self::CURRENT_VERSION . $salt . $iv . $cipherText;
+        if ($cipherText === false) {
+            throw new CryptoException('Encrypt failed.');
+        }
+
+        $cipherText = self::CURRENT_VERSION . $salt . $iv . $cipherText . $tag;
         $auth = \hash_hmac(self::HASH_TYPE, $cipherText, $authKey, true);
         $cipherText .= $auth;
 
@@ -234,15 +259,20 @@ final class Crypto
      *
      * @param string $plaintext
      * @param string $password
+     * @param string $ad
      * @param string $format
      *
      * @throws \Exception
      *
      * @return string
      */
-    public static function encryptWithPassword(string $plaintext, string $password, string $format = null): string
-    {
-        return self::encrypt($plaintext, $password, $format, true);
+    public static function encryptWithPassword(
+        string $plaintext,
+        string $password,
+        string $ad = '',
+        string $format = null
+    ): string {
+        return self::encrypt($plaintext, $password, $ad, $format, true);
     }
 
     /**
@@ -250,6 +280,7 @@ final class Crypto
      *
      * @param string $cipherText
      * @param string $key
+     * @param string $ad
      * @param string $format
      * @param bool   $password
      *
@@ -257,8 +288,13 @@ final class Crypto
      *
      * @return string
      */
-    public static function decrypt(string $cipherText, string $key, string $format = null, $password = false): string
-    {
+    public static function decrypt(
+        string $cipherText,
+        string $key,
+        string $ad = '',
+        string $format = null,
+        $password = false
+    ): string {
         $cipherText = self::toRaw($cipherText, $format);
         if ($cipherText === false) {
             throw new CryptoException('Ciphertext has invalid base64 encoding.');
@@ -321,7 +357,7 @@ final class Crypto
         }
         // Derive the separate encryption and authentication keys from the key
         // or password, whichever it is.
-        list($authKey, $encryptKey) = self::deriveKeys($key, $salt, $password);
+        [$authKey, $encryptKey] = self::deriveKeys($key, $salt, $password);
 
         if (false === \hash_equals($hmac,
                 \hash_hmac(self::HASH_TYPE, $header . $salt . $iv . $encrypted, $authKey, true))
@@ -329,16 +365,25 @@ final class Crypto
             throw new CryptoException('Integrity check failed.');
         }
 
-        $plaintext = \openssl_decrypt(
-            $encrypted,
-            self::CIPHER_METHOD,
-            $encryptKey,
-            OPENSSL_RAW_DATA,
-            $iv
-        );
+        $ad = self::getAd($ad);
+
+        if (self::$sodium) {
+            $plaintext = \sodium_crypto_aead_aes256gcm_decrypt($encrypted, $ad, $iv, $encryptKey);
+        } else {
+            $tag = \mb_substr($encrypted, -self::TAG_BYTE_SIZE, null, '8bit');
+            $encrypted = \mb_substr($encrypted, 0, -self::TAG_BYTE_SIZE, '8bit');
+
+            $plaintext = \openssl_decrypt(
+                $encrypted,
+                self::CIPHER_METHOD,
+                $encryptKey,
+                \OPENSSL_RAW_DATA,
+                $iv, $tag, $ad
+            );
+        }
 
         if ($plaintext === false) {
-            throw new CryptoException('openssl_decrypt() failed.');
+            throw new CryptoException('Decrypt failed.');
         }
 
         return $plaintext;
@@ -350,15 +395,28 @@ final class Crypto
      *
      * @param string $cipherText
      * @param string $password
+     * @param string $ad
      * @param string $format
      *
      * @throws CryptoException
      *
      * @return string
      */
-    public static function decryptWithPassword(string $cipherText, string $password, string $format = null): string
-    {
-        return self::decrypt($cipherText, $password, $format, true);
+    public static function decryptWithPassword(
+        string $cipherText,
+        string $password,
+        string $ad = '',
+        string $format = null
+    ): string {
+        return self::decrypt($cipherText, $password, $ad, $format, true);
+    }
+
+    private static function getAd(string $ad = '') {
+        if ($ad !== '') {
+            return self::AD_STRING . '.' . $ad;
+        }
+
+        return self::AD_STRING;
     }
 
     /**
@@ -469,10 +527,10 @@ final class Crypto
      * Computes the HKDF key derivation function specified in
      * http://tools.ietf.org/html/rfc5869.
      *
-     * @param string $hash   Hash Function
-     * @param string $ikm    Initial Keying Material
+     * @param string $hash Hash Function
+     * @param string $ikm Initial Keying Material
      * @param int    $length How many bytes?
-     * @param string $info   What sort of key are we deriving?
+     * @param string $info What sort of key are we deriving?
      * @param string $salt
      *
      * @throws CryptoException
@@ -682,7 +740,6 @@ final class Crypto
     }
 }
 
-
-Crypto::format(
+Crypto::init(
     \env('CRYPTO_FORMAT')
 );
