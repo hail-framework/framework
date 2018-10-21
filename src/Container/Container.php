@@ -211,14 +211,15 @@ class Container implements ContainerInterface, \ArrayAccess
      * The container will internally resolve and inject any constructor arguments
      * not explicitly provided in the (optional) second parameter.
      *
-     * @param string  $class fully-qualified class-name
-     * @param mixed[] $map   mixed list/map of parameter values (and/or boxed values)
+     * @param string                              $class fully-qualified class-name
+     * @param mixed[]                             $map   mixed list/map of parameter values (and/or boxed values)
+     * @param \ReflectionParameter[]|array[]|null $params
      *
      * @return mixed
      *
      * @throws InvalidArgumentException
      */
-    public function create(string $class, array $map = [])
+    public function create(string $class, array $map = [], array $params = null)
     {
         if (!\class_exists($class)) {
             throw new InvalidArgumentException("unable to create component: {$class} (autoloading failed)");
@@ -228,21 +229,29 @@ class Container implements ContainerInterface, \ArrayAccess
             return $class::getInstance();
         }
 
-        $reflection = new \ReflectionClass($class);
+        if ($params === null) {
+            $reflection = new \ReflectionClass($class);
 
-        if (!$reflection->isInstantiable()) {
-            throw new InvalidArgumentException("unable to create instance of abstract class: {$class}");
+            if (!$reflection->isInstantiable()) {
+                throw new InvalidArgumentException("unable to create instance of abstract class: {$class}");
+            }
+
+            $constructor = $reflection->getConstructor();
+
+            if ($constructor && ($params = $constructor->getParameters()) !== []) {
+                $params = $this->resolve($params, $map, false);
+            } else {
+                $params = [];
+            }
+
+            return $reflection->newInstanceArgs($params);
         }
 
-        $constructor = $reflection->getConstructor();
-
-        if ($constructor && ($params = $constructor->getParameters()) !== []) {
+        if ($params !== []) {
             $params = $this->resolve($params, $map, false);
-        } else {
-            $params = [];
         }
 
-        return $reflection->newInstanceArgs($params);
+        return new $class(...$params);
     }
 
     /**
