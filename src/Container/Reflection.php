@@ -22,19 +22,15 @@ abstract class Reflection
      */
     public static function createFromCallable(callable $callback): ReflectionFunctionAbstract
     {
-        switch (true) {
-            case \is_array($callback):
-                return new ReflectionMethod($callback[0], $callback[1]);
-
-            case $callback instanceof Closure:
-                return new ReflectionFunction($callback);
-
-            case \is_object($callback):
-                return new ReflectionMethod($callback, '__invoke');
-
-            default:
-                return new ReflectionFunction($callback);
+        if (\is_array($callback)) {
+            return new ReflectionMethod($callback[0], $callback[1]);
         }
+
+        if (\is_object($callback)) {
+            return new ReflectionMethod($callback, '__invoke');
+        }
+
+        return new ReflectionFunction($callback);
     }
 
     /**

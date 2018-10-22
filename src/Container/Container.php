@@ -86,6 +86,7 @@ class Container implements ContainerInterface, \ArrayAccess
      *
      * @throws NotFoundException
      * @throws InvalidArgumentException
+     * @throws \ReflectionException
      */
     public function get($name)
     {
@@ -107,16 +108,10 @@ class Container implements ContainerInterface, \ArrayAccess
             case isset($this->factory[$name]):
                 $factory = $this->factory[$name];
 
-                if (\is_string($factory)) {
+                if (\is_string($factory) && \class_exists($factory)) {
                     $this->values[$name] = $this->create($factory, $this->factoryMap[$name]);
                 } else {
-                    $reflection = new \ReflectionFunction($factory);
-
-                    if (($params = $reflection->getParameters()) !== []) {
-                        $params = $this->resolve($params, $this->factoryMap[$name]);
-                    }
-
-                    $this->values[$name] = $factory(...$params);
+                    $this->values[$name] = $this->call($factory, $this->factoryMap[$name]);
                 }
                 break;
 
@@ -132,15 +127,7 @@ class Container implements ContainerInterface, \ArrayAccess
 
         if (null !== $configures = $this->getConfigure($name)) {
             foreach ($configures as $index => $config) {
-                $map = $this->configMap[$name][$index];
-
-                $reflection = Reflection::createFromCallable($config);
-
-                if (($params = $reflection->getParameters()) !== []) {
-                    $params = $this->resolve($params, $map);
-                }
-
-                $value = $config(...$params);
+                $value = $this->call($config, $this->configMap[$name][$index]);
 
                 if ($value !== null) {
                     $this->values[$name] = $value;
@@ -192,6 +179,7 @@ class Container implements ContainerInterface, \ArrayAccess
      *
      * @throws InvalidArgumentException
      * @throws NotFoundException
+     * @throws \ReflectionException
      */
     public function call(callable $callback, array $map = [], array $params = null)
     {
@@ -218,6 +206,7 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return mixed
      *
      * @throws InvalidArgumentException
+     * @throws \ReflectionException
      */
     public function create(string $class, array $map = [], array $params = null)
     {
@@ -266,6 +255,7 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return array parameters
      *
      * @throws InvalidArgumentException
+     * @throws \ReflectionException
      */
     protected function resolve(array $params, array $map, bool $safe = true): array
     {
@@ -292,6 +282,7 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return mixed
      *
      * @throws InvalidArgumentException
+     * @throws \ReflectionException
      */
     protected function getParameterValue($param, int $index, array $map, bool $safe)
     {
@@ -588,6 +579,7 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return void
      *
      * @throws InvalidArgumentException
+     * @throws \ReflectionException
      */
     public function configure($name, $func = null, $map = []): void
     {
