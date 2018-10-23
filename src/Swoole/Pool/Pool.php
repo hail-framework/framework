@@ -196,7 +196,7 @@ class Pool
         $this->push($connection);
     }
 
-    public function destroy(): void 
+    public function destroy(): void
     {
         --$this->active;
     }
