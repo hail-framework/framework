@@ -47,6 +47,7 @@ class Pool
         $this->config = $config + [
                 'min' => 2,
                 'max' => 10,
+                'wait_time' => 0,
             ];
 
 
@@ -107,8 +108,7 @@ class Pool
 
         $instance
             ->setPool($this)
-            ->setPoolIndex(++$this->index)
-            ->setLastActive(time());
+            ->setPoolIndex(++$this->index);
 
         return $instance;
     }
@@ -162,7 +162,7 @@ class Pool
     {
         if ($this->channel) {
             $worker = $this->waiting->pop();
-        } elseif ($this->waiting->valid()) {
+        } elseif (!$this->waiting->isEmpty()) {
             $worker = $this->waiting->pop();
         } else {
             throw new \OutOfRangeException('No worker can use');
@@ -176,7 +176,7 @@ class Pool
         return $worker;
     }
 
-    public function get()
+    public function get(): WorkerInterface
     {
         if ($this->waiting() > 0) {
             return $this->pop();
@@ -191,9 +191,9 @@ class Pool
         return $this->createWorker();
     }
 
-    public function release($connection): void
+    public function release(WorkerInterface $worker): void
     {
-        $this->push($connection);
+        $this->push($worker->setLastActive(time()));
     }
 
     public function destroy(): void
