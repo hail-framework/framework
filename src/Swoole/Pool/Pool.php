@@ -191,12 +191,12 @@ class Pool
         return $this->createWorker();
     }
 
-    public function release($connection)
+    public function release($connection): void
     {
         $this->push($connection);
     }
 
-    public function destroy()
+    public function destroy(): void 
     {
         --$this->active;
     }
