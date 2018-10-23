@@ -10,16 +10,30 @@ use SplDoublyLinkedList;
 
 class Pool
 {
-    public const STRATEGY_LIFO = SplDoublyLinkedList::IT_MODE_LIFO;
-    public const STRATEGY_FIFO = SplDoublyLinkedList::IT_MODE_FIFO;
-
+    /**
+     * @var array
+     */
     protected $config;
+
+    /**
+     * @var int
+     */
     protected $active;
+
+
+    /**
+     * @var int
+     */
+    protected $index = 0;
 
     /**
      * @var \SplDoublyLinkedList|Channel
      */
     protected $waiting;
+
+    /**
+     * @var bool
+     */
     protected $channel = false;
 
     public function __construct($config)
@@ -31,16 +45,12 @@ class Pool
         $config['worker'] = $this->initWorker($config['worker']);
 
         $this->config = $config + [
-                'size' => 2,
+                'min' => 2,
                 'max' => 10,
-                'strategy' => static::STRATEGY_LIFO,
             ];
 
 
-        if (
-            $this->config['strategy'] === static::STRATEGY_FIFO &&
-            Coroutine::getuid() > 0
-        ) {
+        if (Coroutine::getuid() > 0) {
             $this->waiting = new Channel($this->config['max']);
             $this->channel = true;
         } else {
@@ -60,48 +70,59 @@ class Pool
         $args = $config[1] ?? [];
 
         if (\is_callable($worker)) {
-            $params = Reflection::createFromCallable($worker)->getParameters();
+            $reflection = Reflection::createFromCallable($worker);
+
+            $returnType = (string) $reflection->getReturnType();
+            if ($returnType !== WorkerInterface::class) {
+                throw new \InvalidArgumentException('Generated worker must be instance of WorkerInterface');
+            }
+
+            $params = $reflection->getParameters();
 
             return ['call', $worker, $args, $params];
         }
 
         if (\is_string($worker) && \class_exists($worker)) {
-            if (\method_exists($worker, 'getInstance')) {
-                return ['call', [$worker, 'getInstance'], [], []];
-            }
-
-            if (!\is_array($args)) {
-                throw new \InvalidArgumentException('Worker config arguments must be array');
+            if (!\is_a($worker, WorkerInterface::class, true)) {
+                throw new \InvalidArgumentException('Generated worker must be instance of WorkerInterface');
             }
 
             $reflection = new \ReflectionClass($worker);
             $params = $reflection->getConstructor()->getParameters();
 
-            return ['create', $worker, $args, $params];
+            return ['create', $worker, (array) $args, $params];
         }
 
         throw new \InvalidArgumentException('Worker must be class/callable');
     }
 
-    protected function createWorker()
+    protected function createWorker(): WorkerInterface
     {
         [$method, $worker, $args, $params] = $this->config['worker'];
 
-        return Container::$method($worker, $args, $params);
+        $instance = Container::$method($worker, $args, $params);
+        if (!$instance instanceof WorkerInterface) {
+            throw new \RuntimeException('Worker is not instance of WorkerInstance');
+        }
+
+        $instance
+            ->setPool($this)
+            ->setPoolIndex(++$this->index)
+            ->setLastActive(time());
+
+        return $instance;
     }
 
 
-    // 获取连接池的统计信息
     public function getStats()
     {
         return [
             'count' => $this->count(),
             'waiting' => $this->waiting(),
-            'active' => $this->active(),
+            'active' => $this->active,
         ];
     }
 
-    // 获取队列中的连接数
     public function waiting()
     {
         if ($this->channel) {
@@ -113,7 +134,6 @@ class Pool
         return $count < 0 ? 0 : $count;
     }
 
-    // 获取活跃的连接数
     public function active()
     {
         return $this->active;
@@ -122,19 +142,15 @@ class Pool
     // 获取当前总连接数
     public function count()
     {
-        return $this->waiting() + $this->active();
+        return $this->waiting() + $this->active;
     }
 
     // 放入连接
-    protected function push($connection)
+    protected function push(WorkerInterface $worker)
     {
         --$this->active;
-        if ($this->waiting() < $this->config['size']) {
-            if ($this->channel) {
-                return $this->waiting->push($connection);
-            }
-
-            $this->waiting->push($connection);
+        if ($this->waiting() < $this->config['max']) {
+            $this->waiting->push($worker);
 
             return true;
         }
@@ -142,24 +158,22 @@ class Pool
         return false;
     }
 
-    // 弹出连接
-    protected function pop()
+    protected function pop(): WorkerInterface
     {
         if ($this->channel) {
-            $connection = $this->waiting->pop();
+            $worker = $this->waiting->pop();
         } elseif ($this->waiting->valid()) {
-            if ($this->config['strategy'] === static::STRATEGY_LIFO) {
-                $connection = $this->waiting->pop();
-            } else {
-                $connection = $this->waiting->shift();
-            }
+            $worker = $this->waiting->pop();
         } else {
             throw new \OutOfRangeException('No worker can use');
         }
 
         ++$this->active;
 
-        return $connection;
+        /** @var WorkerInterface $worker */
+        $worker->setLastActive(time());
+
+        return $worker;
     }
 
     public function get()
