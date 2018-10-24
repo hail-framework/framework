@@ -37,7 +37,7 @@ class Pool
     protected $index = 0;
 
     /**
-     * @var \SplDoublyLinkedList|Channel
+     * @var \SplQueue|Channel
      */
     protected $channel;
 
@@ -78,7 +78,7 @@ class Pool
             $this->channel = new Channel($this->config['max']);
             $this->isChannel = true;
         } else {
-            $this->channel = new \SplDoublyLinkedList();
+            $this->channel = new \SplQueue();
         }
     }
 
@@ -174,26 +174,52 @@ class Pool
         return false;
     }
 
+    protected function findWorker(): ?WorkerInterface
+    {
+        if ($this->waiting > $this->config['min']) {
+            $now = time();
+            $count = $this->waiting - $this->config['min'];
+            for ($i = 0; $i < $count; ++$i) {
+                /** @var WorkerInterface $worker */
+                $worker = $this->pop();
+                if (($now - $worker->getLastActive()) < $this->config['max_wait']) {
+                    return $worker;
+                }
+
+                --$this->waiting;
+                $worker->destroy();
+                $worker = null;
+            }
+        }
+
+        return $this->pop();
+    }
+
     protected function pop(): ?WorkerInterface
     {
-        $worker = null;
         if ($this->isChannel) {
             $wait = $this->config['queue_wait'];
             if ($wait === 0) {
-                $worker = $this->channel->pop();
-            } elseif (false === ($worker = $this->channel->pop($wait))) {
+                return $this->channel->pop();
+            }
+
+            if (false === ($worker = $this->channel->pop($wait))) {
                 throw new TimeoutException('Pool queue waiting timeout: ' . $wait . 's');
             }
-        } elseif (!$this->channel->isEmpty()) {
-            $worker = $this->channel->pop();
+
+            return $worker;
         }
 
-        return $worker;
+        if ($this->waiting > 0) {
+            return $this->channel->shift();
+        }
+
+        return null;
     }
 
     public function get(): WorkerInterface
     {
-        $worker = $this->pop();
+        $worker = $this->findWorker();
 
         if ($worker === null) {
             if (
@@ -208,10 +234,6 @@ class Pool
 
         --$this->waiting;
         ++$this->active;
-
-        if ($this->waiting > $this->config['min']) {
-
-        }
 
         return $worker;
     }

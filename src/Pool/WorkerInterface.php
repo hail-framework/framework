@@ -16,4 +16,6 @@ interface WorkerInterface
     public function getLastActive(): int;
 
     public function release(): void;
+
+    public function destroy(): void;
 }
