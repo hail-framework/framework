@@ -12,6 +12,7 @@ use Hail\Exception\{
     ActionForward, BadRequestException
 };
 use Hail\Optimize\OptimizeTrait;
+use Hail\Util\Builder;
 use Psr\Http\Message\{
     ResponseInterface,
     ServerRequestInterface
@@ -179,7 +180,7 @@ class Application
 
             $parameters = self::optimizeGet($key);
             if ($parameters === false) {
-                $parameters = Reflection::getParameters($handler);
+                $parameters = Builder::getCallableParameters($handler, true);
                 self::optimizeSet($key, $parameters);
             }
         }

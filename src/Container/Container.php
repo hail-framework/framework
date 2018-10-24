@@ -7,7 +7,9 @@
 
 namespace Hail\Container;
 
-use Hail\Util\ArrayTrait;
+use Hail\Util\{
+    ArrayTrait, Builder
+};
 use Psr\Container\ContainerInterface;
 use Hail\Container\Exception\{
     InvalidArgumentException,
@@ -86,7 +88,6 @@ class Container implements ContainerInterface, \ArrayAccess
      *
      * @throws NotFoundException
      * @throws InvalidArgumentException
-     * @throws \ReflectionException
      */
     public function get($name)
     {
@@ -178,19 +179,14 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return mixed return value from the given callable
      *
      * @throws InvalidArgumentException
-     * @throws NotFoundException
-     * @throws \ReflectionException
      */
     public function call(callable $callback, array $map = [], array $params = null)
     {
-        $params = $params ?? Reflection::createFromCallable($callback)->getParameters();
-        if ($params !== []) {
-            $params = $this->resolve($params, $map);
-
-            return $callback(...$params);
+        try {
+            return Builder::call($this, $callback, $map, $params);
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException($e->getMessage());
         }
-
-        return $callback();
     }
 
     /**
@@ -206,141 +202,14 @@ class Container implements ContainerInterface, \ArrayAccess
      * @return mixed
      *
      * @throws InvalidArgumentException
-     * @throws \ReflectionException
      */
     public function create(string $class, array $map = [], array $params = null)
     {
-        if (!\class_exists($class)) {
-            throw new InvalidArgumentException("unable to create component: {$class} (autoloading failed)");
+        try {
+            return Builder::create($this, $class, $map, $params);
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException($e->getMessage());
         }
-
-        if (\method_exists($class, 'getInstance')) {
-            return $class::getInstance();
-        }
-
-        if ($params === null) {
-            $reflection = new \ReflectionClass($class);
-
-            if (!$reflection->isInstantiable()) {
-                throw new InvalidArgumentException("unable to create instance of abstract class: {$class}");
-            }
-
-            $constructor = $reflection->getConstructor();
-
-            if ($constructor && ($params = $constructor->getParameters()) !== []) {
-                $params = $this->resolve($params, $map, false);
-            } else {
-                $params = [];
-            }
-
-            return $reflection->newInstanceArgs($params);
-        }
-
-        if ($params !== []) {
-            $params = $this->resolve($params, $map, false);
-        }
-
-        return new $class(...$params);
-    }
-
-    /**
-     * Internally resolves parameters to functions or constructors.
-     *
-     * This is the heart of the beast.
-     *
-     * @param \ReflectionParameter[]|array[] $params parameter reflections
-     * @param array                          $map    mixed list/map of parameter values (and/or boxed values)
-     * @param bool                           $safe   if TRUE, it's considered safe to resolve against parameter names
-     *
-     * @return array parameters
-     *
-     * @throws InvalidArgumentException
-     * @throws \ReflectionException
-     */
-    protected function resolve(array $params, array $map, bool $safe = true): array
-    {
-        $args = [];
-        foreach ($params as $index => $param) {
-            $value = $this->getParameterValue($param, $index, $map, $safe);
-
-            if ($value instanceof \Closure) {
-                $value = $value($this); // unbox a boxed value
-            }
-
-            $args[] = $value; // argument resolved!
-        }
-
-        return $args;
-    }
-
-    /**
-     * @param \ReflectionParameter|array $param
-     * @param int                        $index
-     * @param array                      $map
-     * @param bool                       $safe
-     *
-     * @return mixed
-     *
-     * @throws InvalidArgumentException
-     * @throws \ReflectionException
-     */
-    protected function getParameterValue($param, int $index, array $map, bool $safe)
-    {
-        if ($isReflection = ($param instanceof \ReflectionParameter)) {
-            $name = $param->name;
-        } elseif (\is_array($param)) {
-            $name = $param['name'];
-        } else {
-            throw new InvalidArgumentException('Parameter must be the instance of \ReflectionParameter or array');
-        }
-
-        if (\array_key_exists($name, $map)) {
-            return $map[$name]; // // resolve as user-provided named argument
-        }
-
-        if (\array_key_exists($index, $map)) {
-            return $map[$index]; // resolve as user-provided positional argument
-        }
-
-        $type = $isReflection ? Reflection::getParameterType($param) : $param['type'];
-
-        if ($type) {
-            if (\array_key_exists($type, $map)) {
-                return $map[$type]; // resolve as user-provided type-hinted argument
-            }
-
-            if ($this->has($type)) {
-                return $this->get($type); // resolve as component registered by class/interface name
-            }
-        }
-
-        if ($safe && $this->has($name)) {
-            return $this->get($name); // resolve as component with matching parameter name
-        }
-
-        if ($isReflection) {
-            if ($param->isOptional()) {
-                return $param->getDefaultValue(); // unresolved, optional: resolve using default value
-            }
-
-            if ($type && $param->allowsNull()) {
-                return null; // unresolved, type-hinted, nullable: resolve as NULL
-            }
-
-            $reflection = $param->getDeclaringFunction();
-            $file = $reflection->getFileName();
-            $line = $reflection->getStartLine();
-        } elseif (\array_key_exists('default', $param)) {
-            return $param['default'];
-        } else {
-            ['file' => $file, 'line' => $line] = $param;
-        }
-
-        // unresolved - throw a container exception:
-        throw new InvalidArgumentException(
-            "Unable to resolve parameter: \${$name} " . ($type ? "({$type}) " : '') .
-            'in file: ' . $file . ', line ' . $line
-        );
     }
 
     /**
@@ -592,10 +461,10 @@ class Container implements ContainerInterface, \ArrayAccess
             if ($func instanceof \Closure) {
                 $param = new \ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
             } else {
-                $param = Reflection::createFromCallable($func)->getParameters()[0];
+                $param = Builder::getCallableParameters($func)[0];
             }
 
-            $name = Reflection::getParameterType($param); // infer component name from type-hint
+            $name = Builder::getParameterType($param); // infer component name from type-hint
 
             if ($name === null) {
                 throw new InvalidArgumentException('No component-name or type-hint specified');

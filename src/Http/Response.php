@@ -529,8 +529,9 @@ class Response
         throw $forward;
     }
 
-    /* @noinspection PhpDocMissingThrowsInspection */
     /**
+     * @noinspection PhpDocMissingThrowsInspection
+     *
      * @param int    $code
      * @param string $msg
      * @param array  ...$args

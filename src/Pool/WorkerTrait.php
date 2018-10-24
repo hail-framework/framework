@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Swoole\Pool;
+namespace Hail\Pool;
 
 
 trait WorkerTrait
