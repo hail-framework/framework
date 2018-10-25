@@ -20,7 +20,7 @@ final class SafeStorage
         self::$storage[$this->hash] = [];
     }
 
-    public function set($key, $value)
+    public function set($key, $value): void
     {
         self::$storage[$this->hash][$key] = $value;
     }

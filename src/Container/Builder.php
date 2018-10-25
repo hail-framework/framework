@@ -1,6 +1,6 @@
 <?php
 
-namespace Hail\Util;
+namespace Hail\Container;
 
 use Psr\Container\ContainerInterface;
 
@@ -15,15 +15,15 @@ class Builder
      *
      * This will work for any callable:
      *
-     *     Builder::call('foo');               // function foo()
-     *     Builder::call($foo, 'baz');         // instance method $foo->baz()
-     *     Builder::call([Foo::class, 'bar']); // static method Foo::bar()
-     *     Builder::call($foo);                // closure (or class implementing __invoke)
+     *     Builder::call($container, 'foo');               // function foo()
+     *     Builder::call($container, $foo, 'baz');         // instance method $foo->baz()
+     *     Builder::call($container, [Foo::class, 'bar']); // static method Foo::bar()
+     *     Builder::call($container, $foo);                // closure (or class implementing __invoke)
      *
      * In any of those examples, you can also supply custom arguments, either named or
      * positional, or mixed, as per the `$map` argument in `register()`, `configure()`, etc.
      *
-     * See also {@see create()} which lets you invoke any constructor.
+     * @see create() which lets you invoke any constructor.
      *
      * @param ContainerInterface                  $container
      * @param callable                            $callback any arbitrary closure or callable, or object implementing __invoke()

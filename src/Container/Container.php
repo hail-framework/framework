@@ -7,9 +7,7 @@
 
 namespace Hail\Container;
 
-use Hail\Util\{
-    ArrayTrait, Builder
-};
+use Hail\Util\ArrayTrait;
 use Psr\Container\ContainerInterface;
 use Hail\Container\Exception\{
     InvalidArgumentException,
@@ -157,23 +155,10 @@ class Container implements ContainerInterface, \ArrayAccess
 
 
     /**
-     * Call any given callable, using dependency injection to satisfy it's arguments, and/or
-     * manually specifying some of those arguments - then return the value from the call.
+     * @see Builder::call()
      *
-     * This will work for any callable:
-     *
-     *     $container->call('foo');               // function foo()
-     *     $container->call($foo, 'baz');         // instance method $foo->baz()
-     *     $container->call([Foo::class, 'bar']); // static method Foo::bar()
-     *     $container->call($foo);                // closure (or class implementing __invoke)
-     *
-     * In any of those examples, you can also supply custom arguments, either named or
-     * positional, or mixed, as per the `$map` argument in `register()`, `configure()`, etc.
-     *
-     * See also {@see create()} which lets you invoke any constructor.
-     *
-     * @param callable                            $callback any arbitrary closure or callable, or object implementing __invoke()
-     * @param mixed|mixed[]                       $map      mixed list/map of parameter values (and/or boxed values)
+     * @param callable                            $callback
+     * @param mixed|mixed[]                       $map
      * @param \ReflectionParameter[]|array[]|null $params
      *
      * @return mixed return value from the given callable
@@ -190,13 +175,10 @@ class Container implements ContainerInterface, \ArrayAccess
     }
 
     /**
-     * Create an instance of a given class.
+     * @see Builder::create()
      *
-     * The container will internally resolve and inject any constructor arguments
-     * not explicitly provided in the (optional) second parameter.
-     *
-     * @param string                              $class fully-qualified class-name
-     * @param mixed[]                             $map   mixed list/map of parameter values (and/or boxed values)
+     * @param string                              $class
+     * @param mixed[]                             $map
      * @param \ReflectionParameter[]|array[]|null $params
      *
      * @return mixed

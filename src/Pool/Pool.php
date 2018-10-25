@@ -4,7 +4,7 @@ namespace Hail\Pool;
 
 use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
-use Hail\Util\Builder;
+use Hail\Container\Builder;
 use Psr\Container\ContainerInterface;
 use Hail\Pool\Exception\{
     OverflowException, TimeoutException
@@ -25,16 +25,6 @@ class Pool
      */
     protected $config;
 
-    /**
-     * @var int
-     */
-    protected $active;
-
-
-    /**
-     * @var int
-     */
-    protected $index = 0;
 
     /**
      * @var \SplQueue|Channel
@@ -44,7 +34,12 @@ class Pool
     /**
      * @var int
      */
-    protected $waiting;
+    protected $active = 0;
+
+    /**
+     * @var int
+     */
+    protected $waiting = 0;
 
     /**
      * @var array
@@ -63,7 +58,7 @@ class Pool
         }
 
         $this->container = $container;
-        $config['worker'] = $this->workerBuilder($config['worker']);
+        $config['worker'] = $this->builder($config['worker']);
 
         $this->config = $config + [
                 'min' => 2,
@@ -82,7 +77,7 @@ class Pool
         }
     }
 
-    protected function workerBuilder($config): array
+    protected function builder($config): array
     {
         if (\is_string($config)) {
             $config = [$config, []];
@@ -124,7 +119,7 @@ class Pool
         throw new \InvalidArgumentException('Worker must be class/callable');
     }
 
-    protected function createWorker(): WorkerInterface
+    protected function create(): WorkerInterface
     {
         [$method, $builder, $args, $params] = $this->config['worker'];
 
@@ -137,9 +132,7 @@ class Pool
         }
 
         /** @var WorkerInterface $worker */
-        $worker
-            ->setPool($this)
-            ->setPoolIndex(++$this->index);
+        $worker->setPool($this);
 
         return $worker;
     }
@@ -174,7 +167,7 @@ class Pool
         return false;
     }
 
-    protected function findWorker(): ?WorkerInterface
+    protected function worker(): ?WorkerInterface
     {
         if ($this->waiting > $this->config['min']) {
             $now = time();
@@ -188,7 +181,6 @@ class Pool
 
                 --$this->waiting;
                 $worker->destroy();
-                $worker = null;
             }
         }
 
@@ -219,20 +211,21 @@ class Pool
 
     public function get(): WorkerInterface
     {
-        $worker = $this->findWorker();
+        $worker = $this->worker();
 
         if ($worker === null) {
             if (
                 $this->config['overflow'] === static::OVERFLOW_CREATE_NEW ||
                 $this->count() < $this->config['max']
             ) {
-                $worker = $this->createWorker();
+                $worker = $this->create();
             } else {
                 throw new OverflowException('Workers in the pool are all used');
             }
+        } else {
+            --$this->waiting;
         }
 
-        --$this->waiting;
         ++$this->active;
 
         return $worker;
