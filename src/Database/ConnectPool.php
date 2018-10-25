@@ -2,27 +2,12 @@
 
 namespace Hail\Database;
 
-class ConnectPool extends Database
+use Hail\Pool\WorkerInterface;
+use Hail\Pool\WorkerTrait;
+
+class ConnectPool extends Database implements WorkerInterface
 {
-    protected function connect()
-    {
-        [$dsn, $username, $options, $commands] = $this->dsn;
-        $password = $this->getPassword();
-
-        $this->pdo = new \pdoProxy(
-            $dsn,
-            $username,
-            $password,
-            $options
-        );
-
-        foreach ($commands as $value) {
-            $this->pdo->exec($value);
-            $this->pdo->release();
-        }
-
-        return $this;
-    }
+    use WorkerTrait;
 
     /**
      * @param mixed $result
@@ -31,9 +16,7 @@ class ConnectPool extends Database
      */
     protected function done($result = null)
     {
-        if ($this->pdo !== null) {
-            $this->pdo->release();
-        }
+        $this->release();
 
         return $result;
     }

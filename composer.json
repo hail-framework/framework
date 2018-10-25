@@ -41,16 +41,16 @@
   },
   "suggest": {
     "ext-psr": "Providing the accepted PSR interfaces",
-    "ext-intl": "to use Utf8String::compare, Utf8String::transliterate, Strings::toAscii, Strings::normalize, Strings::compare, NumberFormatCell, DateFormatCell, ",
-    "ext-iconv": "to use Strings::reverse, Strings::chr, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
-    "ext-openssl": "to use for Crypto and RS signature for JWT",
+    "ext-intl": "use for Utf8String::compare, Utf8String::transliterate, Strings::toAscii, Strings::normalize, Strings::compare, NumberFormatCell, DateFormatCell, ",
+    "ext-iconv": "use for Strings::reverse, Strings::chr, Strings::toAscii, MimePart::encodeHeader, EncodingHelper::attemptConversion",
     "ext-seaslog": "improve the performance for logger",
-    "ext-fileinfo": "to use for MemeType, image processing.",
-    "ext-curl": "to handle http client with curl support.",
-    "ext-imagick": "to use Imagick based image processing.",
-    "ext-gd": "to use GD library based image processing.",
-    "ext-ftp": "to handle filesystem with ftp support.",
-    "ext-gmp": "to use ES signature for JWT",
-    "ext-php-cp": "improve the performance for PDO/Redis"
+    "ext-fileinfo": "use for MemeType, image processing.",
+    "ext-curl": "handle http client with curl support.",
+    "ext-imagick": "use for Imagick based image processing.",
+    "ext-gd": "use for GD library based image processing.",
+    "ext-ftp": "handle filesystem with ftp support.",
+    "ext-openssl": "use for Crypto and RS signature in JWT",
+    "ext-gmp": "use for ES signature in JWT",
+    "ext-swoole": "improve performance"
   }
 }

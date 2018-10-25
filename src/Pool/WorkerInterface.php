@@ -5,9 +5,9 @@ namespace Hail\Pool;
 
 interface WorkerInterface
 {
-    public function setPool(Pool $pool): self;
+    public function setPool(Pool $pool): WorkerInterface;
 
-    public function setLastActive(int $time): self;
+    public function setLastActive(int $time): WorkerInterface;
 
     public function getLastActive(): int;
 

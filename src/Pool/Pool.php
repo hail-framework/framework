@@ -54,7 +54,15 @@ class Pool
     public function __construct(array $config, ContainerInterface $container = null)
     {
         if (!isset($config['worker'])) {
-            throw new \RuntimeException('Worker config not defined');
+            throw new \InvalidArgumentException('Worker config not defined');
+        }
+
+        if (isset($config['min']) && $config['min'] < 0) {
+            $config['min'] = 0;
+        }
+
+        if (isset($config['max']) && $config['max'] < $config['min']) {
+            throw new \InvalidArgumentException('The "max" config must be higher than "min" config');
         }
 
         $this->container = $container;

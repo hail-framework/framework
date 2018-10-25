@@ -33,9 +33,12 @@ class Serialize
     public const JSON = 'json';
     public const SERIALIZE = 'serialize';
 
+    private const CLASSNAME = 'class';
     private const EXTENSION = 'ext';
     private const ENCODER = 'encoder';
     private const DECODER = 'decoder';
+    private const FUNCTION = 'function';
+    private const ARGS = 'args';
 
     private static $set = [
         self::MSGPACK => [
@@ -44,14 +47,17 @@ class Serialize
             self::DECODER => '\msgpack_unpack',
         ],
         self::SWOOLE => [
-            self::EXTENSION => 'swoole_serialize',
-            self::ENCODER => '\swoole_pack',
-            self::DECODER => '\swoole_unpack',
+            self::CLASSNAME => \Swoole\Serialize::class,
+            self::ENCODER => '\Swoole\Serialize::pack',
+            self::DECODER => '\Swoole\Serialize::unpack',
         ],
         self::SWOOLE_FAST => [
-            self::EXTENSION => 'swoole_serialize',
-            self::ENCODER => '\swoole_fast_pack',
-            self::DECODER => '\swoole_unpack',
+            self::CLASSNAME => \Swoole\Serialize::class,
+            self::ENCODER => [
+                self::FUNCTION => '\Swoole\Serialize::pack',
+                self::ARGS => [\SWOOLE_FAST_PACK],
+            ],
+            self::DECODER => '\Swoole\Serialize::unpack',
         ],
         self::IGBINARY => [
             self::EXTENSION => 'igbinary',
@@ -92,32 +98,24 @@ class Serialize
             throw new \InvalidArgumentException('Serialize type not defined: ' . $type);
         }
 
-        $extension = self::$set[$type][self::EXTENSION];
-        if ($extension && !\extension_loaded($extension)) {
-            if (
-                \strpos($type, 'swoole') !== false &&
-                \class_exists('\swoole_serialize', false)
-            ) {
-                self::$set[$type][self::ENCODER] = '\swoole_serialize::pack';
-                self::$set[$type][self::DECODER] = '\swoole_serialize::unpack';
-
-                if ($type === self::SWOOLE_FAST) {
-                    self::$set[$type][self::ENCODER] = 'self::swooleSerializeFastPack';
-                }
-            } else {
+        if (isset(self::$set[$type][self::EXTENSION])) {
+            $extension = self::$set[$type][self::EXTENSION];
+            if (!\extension_loaded($extension)) {
                 throw new \LogicException('Extension not loaded: ' . $extension);
+            }
+        }
+
+        if (isset(self::$set[$type][self::CLASSNAME])) {
+            $class = self::$set[$type][self::CLASSNAME];
+            if (!\class_exists($class)) {
+                throw new \LogicException('Class not exists: ' . $class);
             }
         }
 
         return $type;
     }
 
-    private static function swooleSerializeFastPack(string $data)
-    {
-        return \swoole_serialize::pack($data, \SWOOLE_FAST_PACK);
-    }
-
-    private static function run(string $fn, $value, string $type = null)
+    private static function run(string $functionType, $value, string $type = null)
     {
         if ($type === null || $type === self::$default) {
             $type = self::$default;
@@ -125,7 +123,17 @@ class Serialize
             $type = self::check($type);
         }
 
-        $fn = self::$set[$type][$fn];
+        $fn = self::$set[$type][$functionType];
+        if (\is_array($fn)) {
+            [
+                self::FUNCTION => $fn,
+                self::ARGS => $args,
+            ] = $fn;
+
+            if ($args !== []) {
+                return $fn($value, ...$args);
+            }
+        }
 
         return $fn($value);
     }

@@ -89,25 +89,28 @@ composer require "hail/framework:dev-master"
 ### Database
 - 通过 PDO 支持 MySQL、PostgreSQL、Sybase、Oracle、SQL Server、Sqlite
 - 基于数组生成 SQL 语句，自动 prepare
-- 支持 [php-cp extension](https://github.com/swoole/php-cp) *[未测试]*
 - 提供简单 ORM 支持 *[未测试]*
 - 基于命令行提供 Migration 工具 *[未测试]*
+- 基于 [swoole][:swoole:] 的连接池 *[todo] [未测试]*
 
 ### Redis
 - 简单的 PHP Native Redis Client
 - 优先使用 [phpredis extension](http://pecl.php.net/package/redis/)
-- 支持 [php-cp extension](https://github.com/swoole/php-cp) *[未测试]*
 - 支持 Redis Cluster *[未测试]*
-- 支持 Redis Sentinel *[未测试]* 
+- 支持 Redis Sentinel *[未测试]*
+- 基于 [swoole][:swoole:] 的连接池 *[todo] [未测试]* 
 
 ### Template
 - 直接使用原生 PHP 作为模板语言
 - 使用 VUE.js 作为默认的 JS 动态处理库
 - 支持编译 VUE.js 模板语法为 PHP 语句 (使用 v-php 标注） *[未测试]*
-- h:* HTML属性模板语法, 灵感来自 [Latte](https://github.com/nette/latte) *[未测试]* 
+- h:* HTML属性模板语法, 灵感来自 [Latte](https://github.com/nette/latte) *[todo] [未测试]* 
 
 ### Swoole
 - 基于命令行的 Http Server *[未测试]*
+
+### Pool
+- 单进程内连接池，，非 swoole 协程环境下没有意义
 
 ### Console
 - 基于命令行工具进行项目优化、Migration、服务管理等
@@ -138,4 +141,6 @@ composer require "hail/framework:dev-master"
 ### Performance
 - [psr](http://pecl.php.net/package/psr) 提供 PSR Interface
 - [seaslog](http://pecl.php.net/package/SeasLog) 提高 Logger 性能
-- [php-cp](https://github.com/swoole/php-cp) PDO/Redis 连接池
+- [swoole][:swoole:] 基于 swoole 的服务器，连接池
+
+[:swoole:]: https://github.com/swoole/swoole-src

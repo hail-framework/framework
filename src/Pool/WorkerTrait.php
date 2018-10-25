@@ -8,51 +8,39 @@ trait WorkerTrait
     /**
      * @var Pool
      */
-    protected $__pool;
+    protected $pool;
 
     /**
      * @var int
      */
-    protected $__index;
+    protected $lastActiveTime;
 
-    /**
-     * @var int
-     */
-    protected $__time;
-
-    public function setPool(Pool $pool): self
+    public function setPool(Pool $pool): WorkerInterface
     {
-        $this->__pool = $pool;
+        $this->pool = $pool;
 
         return $this;
     }
 
-    public function setPoolIndex(int $index): self
+    public function setLastActive(int $time): WorkerInterface
     {
-        $this->__index = $index;
-
-        return $this;
-    }
-
-    public function getPoolIndex(): int
-    {
-        return $this->__index;
-    }
-
-    public function setLastActive(int $time): self
-    {
-        $this->__time = $time;
+        $this->lastActiveTime = $time;
 
         return $this;
     }
 
     public function getLastActive(): int
     {
-        return $this->__time;
+        return $this->lastActiveTime;
     }
 
     public function release(): void
     {
-        $this->__pool->release($this);
+        $this->pool->release($this);
+    }
+
+    public function destroy(): void
+    {
+        $this->pool = null;
     }
 }
