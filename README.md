@@ -91,14 +91,14 @@ composer require "hail/framework:dev-master"
 - 基于数组生成 SQL 语句，自动 prepare
 - 提供简单 ORM 支持 *[未测试]*
 - 基于命令行提供 Migration 工具 *[未测试]*
-- 基于 [swoole][:swoole:] 的连接池 *[todo] [未测试]*
+- 基于 [swoole][:swoole:] 的连接池 *[未测试]*
 
 ### Redis
 - 简单的 PHP Native Redis Client
 - 优先使用 [phpredis extension](http://pecl.php.net/package/redis/)
 - 支持 Redis Cluster *[未测试]*
 - 支持 Redis Sentinel *[未测试]*
-- 基于 [swoole][:swoole:] 的连接池 *[todo] [未测试]* 
+- 基于 [swoole][:swoole:] 的连接池 *[未测试]* 
 
 ### Template
 - 直接使用原生 PHP 作为模板语言

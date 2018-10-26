@@ -98,25 +98,14 @@ class Pool
         $params = [];
 
         if (\is_callable($worker)) {
-            $reflection = Builder::createFromCallable($worker);
-
-            $returnType = (string) $reflection->getReturnType();
-            if ($returnType !== WorkerInterface::class) {
-                throw new \InvalidArgumentException('Generated worker must be instance of WorkerInterface');
-            }
-
             if ($this->container) {
-                $params = $reflection->getParameters();
+                $params = Builder::getCallableParameters($worker);
             }
 
             return ['call', $worker, (array) $args, $params];
         }
 
         if (\is_string($worker) && \class_exists($worker)) {
-            if (!\is_a($worker, WorkerInterface::class, true)) {
-                throw new \InvalidArgumentException('Generated worker must be instance of WorkerInterface');
-            }
-
             if ($this->container) {
                 $params = Builder::getClassParameters($worker);
             }
@@ -127,7 +116,7 @@ class Pool
         throw new \InvalidArgumentException('Worker must be class/callable');
     }
 
-    protected function create(): WorkerInterface
+    protected function create()
     {
         [$method, $builder, $args, $params] = $this->config['worker'];
 
@@ -157,7 +146,7 @@ class Pool
         return $this->waiting + $this->active;
     }
 
-    protected function push(WorkerInterface $worker): bool
+    protected function push($worker): bool
     {
         --$this->active;
         if ($this->waiting() < $this->config['max']) {
@@ -170,7 +159,7 @@ class Pool
         return false;
     }
 
-    protected function worker(): ?WorkerInterface
+    protected function worker()
     {
         if ($this->waiting > $this->config['min']) {
             $now = time();
@@ -213,7 +202,7 @@ class Pool
         return null;
     }
 
-    public function get(): WorkerInterface
+    public function get()
     {
         $worker = $this->worker();
 
@@ -235,7 +224,7 @@ class Pool
         return $worker;
     }
 
-    public function release(WorkerInterface $worker): void
+    public function release($worker): void
     {
         $this->push($worker);
     }

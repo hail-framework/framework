@@ -40,7 +40,7 @@ namespace Hail\Redis;
  * @method array         mGet(array $keys)
  * @method bool          mSet(array $keysValues)
  * @method int           mSetNx(array $keysValues)
- * @method bool          set(string $key, string $value, int|array $options = null)
+ * @method bool          set(string $key, string $value, int | array $options = null)
  * @method int           setBit(string $key, int $offset, int $value)
  * @method bool          setEx(string $key, int $seconds, string $value)
  * @method int           setNx(string $key, string $value)
@@ -117,8 +117,8 @@ namespace Hail\Redis;
  * Pub/Sub
  * @method int           publish(string $channel, string $message)
  * @method int|array     pubsub(string $subCommand, $arg = null)
- * @method void          subscribe(string|array $channels, callable $callback)
- * @method void          pSubscribe(string|array $patterns, callable $callback)
+ * @method void          subscribe(string | array $channels, callable $callback)
+ * @method void          pSubscribe(string | array $patterns, callable $callback)
  *
  * Scripting:
  * @method string|int    script(string $command, string $arg1 = null)
@@ -144,7 +144,7 @@ interface RedisInterface
     /**
      * @param int    $Iterator
      * @param string $pattern
-     * @param int    $Iterator
+     * @param int    $count
      *
      * @return bool | array
      */
@@ -164,7 +164,7 @@ interface RedisInterface
      * @param int    $Iterator
      * @param string $field
      * @param string $pattern
-     * @param int    $Iterator
+     * @param int    $count
      *
      * @return bool | array
      */
@@ -174,7 +174,7 @@ interface RedisInterface
      * @param int    $Iterator
      * @param string $field
      * @param string $pattern
-     * @param int    $Iterator
+     * @param int    $count
      *
      * @return bool | array
      */
