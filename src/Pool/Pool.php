@@ -132,17 +132,14 @@ class Pool
         [$method, $builder, $args, $params] = $this->config['worker'];
 
         if ($this->container) {
-            $worker = Builder::$method($this->container, $builder, $args, $params);
-        } elseif ($method === 'create') {
-            $worker = new $builder(...$args);
-        } else {
-            $worker = $builder(...$args);
+            return Builder::$method($this->container, $builder, $args, $params);
         }
 
-        /** @var WorkerInterface $worker */
-        $worker->setPool($this);
+        if ($method === 'create') {
+            return new $builder(...$args);
+        }
 
-        return $worker;
+        return $builder(...$args);
     }
 
     public function waiting(): int
@@ -164,9 +161,7 @@ class Pool
     {
         --$this->active;
         if ($this->waiting() < $this->config['max']) {
-            $this->channel->push(
-                $worker->setLastActive(time())
-            );
+            $this->channel->push([$worker, time()]);
             ++$this->waiting;
 
             return true;
@@ -181,21 +176,22 @@ class Pool
             $now = time();
             $count = $this->waiting - $this->config['min'];
             for ($i = 0; $i < $count; ++$i) {
-                /** @var WorkerInterface $worker */
-                $worker = $this->pop();
-                if (($now - $worker->getLastActive()) < $this->config['max_wait']) {
+                [$worker, $lastActive] = $this->pop();
+                if (($now - $lastActive) < $this->config['max_wait']) {
                     return $worker;
                 }
 
+                $worker = null;
                 --$this->waiting;
-                $worker->destroy();
             }
         }
 
-        return $this->pop();
+        [$worker] = $this->pop();
+
+        return $worker;
     }
 
-    protected function pop(): ?WorkerInterface
+    protected function pop(): ?array
     {
         if ($this->isChannel) {
             $wait = $this->config['queue_wait'];

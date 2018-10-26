@@ -4,7 +4,7 @@ namespace Hail\Pool;
 
 use Psr\Container\ContainerInterface;
 
-class WorkerProxy
+trait PoolTrait
 {
     protected $pool;
     protected $worker;
@@ -39,10 +39,22 @@ class WorkerProxy
         $this->autoRelease = $auto;
     }
 
-    public function release()
+    public function release(): bool
     {
         if ($this->worker) {
             $this->pool->release($this->worker);
+            $this->worker = null;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function destroy()
+    {
+        if ($this->worker) {
+            $this->pool->destroy();
             $this->worker = null;
 
             return true;
