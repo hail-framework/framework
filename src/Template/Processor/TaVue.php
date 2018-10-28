@@ -9,7 +9,7 @@ use Hail\Template\Processor\Vue\{
     TextExpression
 };
 
-final class VuePhp extends Processor
+final class TaVue extends Processor
 {
     /**
      * @var Processor[]
@@ -30,7 +30,7 @@ final class VuePhp extends Processor
             return false;
         }
 
-        if (!$element->hasAttribute('v-php')) {
+        if (!$element->hasAttribute('h:vue')) {
             return $element->getName() === 'template';
         }
 

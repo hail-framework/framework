@@ -4,7 +4,7 @@ namespace Hail\Template;
 
 use Hail\Template\Extension\ExtensionInterface;
 use Hail\Template\Processor\Processor;
-use Hail\Template\Processor\VuePhp;
+use Hail\Template\Processor\TaVue;
 
 class Engine
 {
@@ -12,7 +12,7 @@ class Engine
      * @var Processor[]
      */
     protected $processors = [
-        VuePhp::class,
+        TaVue::class,
     ];
 
     /**
