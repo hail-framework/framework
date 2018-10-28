@@ -26,7 +26,7 @@ class TaAttr extends Processor
             $key = \trim($key);
             $value = \trim($value);
 
-            $element->setAttribute($key, '<?=' . $value . '?>');
+            $element->setAttribute('php:' . $key, "<?=(\$_tmp = $value) ? '{$key}=\"' . \$_tmp . '\"' : ''?>");
         }
 
         $element->removeAttribute('h:attr');
