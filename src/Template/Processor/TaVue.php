@@ -67,16 +67,40 @@ final class TaVue extends Processor
         return true;
     }
 
-    private static function insertAfter(Element $ref, Element $new)
+    private static function insertAfter(Element $ref, Element $new): void
     {
-        $new->removeAttribute('v-php');
+        $new->removeAttribute('h:vue');
 
         foreach ($new->getChildren() as $child) {
             if ($child instanceof Element) {
-                $child->removeAttribute('v-php');
+                $child->removeAttribute('h:vue');
             }
         }
 
         $ref->insertAfterSelf($new);
+    }
+
+    /**
+     * @param Element $element
+     *
+     * @return Element[]
+     */
+    private static function findVueIfBlocks(Element $element): array
+    {
+        $next = $element->getNextSibling();
+
+        if (
+            $next !== null && (
+                $next->hasAttribute('v-else') ||
+                $next->hasAttribute('v-else-if')
+            )
+        ) {
+            $elements = self::findVueIfBlocks($next);
+            \array_unshift($elements, $element);
+
+            return $elements;
+        }
+
+        return [$element];
     }
 }

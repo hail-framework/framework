@@ -307,7 +307,10 @@ abstract class AbstractToken implements TokenInterface
      */
     public function insertAfter(TokenInterface $new, TokenInterface $ref): void
     {
-        $index = $this->findChild($ref) ?? 0;
+        $index = $this->findChild($ref);
+        if ($index === null) {
+            throw new \InvalidArgumentException('"ref" is not this element\'s child');
+        }
         ++$index;
 
         $new->setParent($this);
@@ -321,15 +324,29 @@ abstract class AbstractToken implements TokenInterface
 
     /**
      * @param TokenInterface $new
-     * @param TokenInterface $ref
+     * @param TokenInterface|null $ref
      */
     public function insertBefore(TokenInterface $new, TokenInterface $ref): void
     {
-        $index = $this->findChild($ref) ?? 0;
+        $index = $this->findChild($ref);
+        if ($index === null) {
+            throw new \InvalidArgumentException('"ref" is not this element\'s child');
+        }
 
         $new->setParent($this);
 
-        \array_splice($this->children, $index, 0, $new);
+        if ($index === 0) {
+            \array_unshift($this->children, $new);
+        } else {
+            \array_splice($this->children, $index, 0, $new);
+        }
+    }
+
+    public function prependChild(TokenInterface $new): void
+    {
+        $new->setParent($this);
+
+        \array_unshift($this->children, $new);
     }
 
     public function appendChild(TokenInterface $new): void

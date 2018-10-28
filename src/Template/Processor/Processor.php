@@ -64,30 +64,6 @@ abstract class Processor
     }
 
     /**
-     * @param Element $element
-     *
-     * @return Element[]
-     */
-    protected static function findVueIfBlocks(Element $element): array
-    {
-        $next = $element->getNextSibling();
-
-        if (
-            $next !== null && (
-                $next->hasAttribute('v-else') ||
-                $next->hasAttribute('v-else-if')
-            )
-        ) {
-            $elements = self::findVueIfBlocks($next);
-            \array_unshift($elements, $element);
-
-            return $elements;
-        }
-
-        return [$element];
-    }
-
-    /**
      * @param TokenInterface       $token
      * @param Processor[] $processors
      */
