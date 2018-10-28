@@ -21,8 +21,6 @@ class TaAttr extends Processor
 
         $expressions = \explode(',', $expression);
         foreach ($expressions as $v) {
-            $v = \trim($v);
-
             [$key, $value] = \explode('=>', $v);
 
             $key = \trim($key);
