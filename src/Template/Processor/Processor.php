@@ -9,51 +9,65 @@ use Hail\Template\Tokenizer\Token\{
 abstract class Processor
 {
     /**
-     * insert a php code before an element.
+     * @param string $phpExpression
      *
-     * @param Element     $element
-     * @param             $phpExpression
+     * @return Php
      */
-    protected static function before(Element $element, $phpExpression): void
+    protected static function toPhp(string $phpExpression): Php
     {
         $exp = new Php();
         $exp->setValue($phpExpression);
 
-        $element->insertBeforeSelf($exp);
+        return $exp;
+    }
+
+    /**
+     * insert a php code before an element.
+     *
+     * @param Element $element
+     * @param string  $phpExpression
+     */
+    protected static function before(Element $element, string $phpExpression): void
+    {
+        $element->insertBeforeSelf(
+            static::toPhp($phpExpression)
+        );
     }
 
     /**
      * insert a php code after an element.
      *
-     * @param Element     $element
-     * @param             $phpExpression
+     * @param Element $element
+     * @param string  $phpExpression
      */
-    protected static function after(Element $element, $phpExpression): void
+    protected static function after(Element $element, string $phpExpression): void
     {
-        $exp = new Php();
-        $exp->setValue($phpExpression);
-
-        $element->insertAfterSelf($exp);
+        $element->insertAfterSelf(
+            static::toPhp($phpExpression)
+        );
     }
 
     /**
      * set inner text of the an element.
      *
-     * @param Element     $element
-     * @param             $phpExpression
+     * @param Element $element
+     * @param string  $phpExpression
      */
-    protected static function text(Element $element, $phpExpression): void
+    protected static function text(Element $element, string $phpExpression): void
     {
         $element->removeChildren();
 
         if ($phpExpression) {
-            $exp = new Php();
-            $exp->setValue($phpExpression);
-
-            $element->appendChild($exp);
+            $element->appendChild(
+                static::toPhp($phpExpression)
+            );
         }
     }
 
+    /**
+     * @param Element $element
+     * @param string  $expression
+     */
     protected static function addStyle(Element $element, string $expression): void
     {
         $expression = \trim($expression);
@@ -64,8 +78,8 @@ abstract class Processor
     }
 
     /**
-     * @param TokenInterface       $token
-     * @param Processor[] $processors
+     * @param TokenInterface $token
+     * @param Processor[]    $processors
      */
     public static function parseToken(
         TokenInterface $token,
