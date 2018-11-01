@@ -23,7 +23,7 @@ class DecompressStream extends FilteredStream
             throw new \RuntimeException('The zlib extension must be enabled to use this stream');
         }
 
-        parent::__construct($stream, ['window' => 15]);
+        parent::__construct($stream, ['window' => -15]);
     }
 
     /**

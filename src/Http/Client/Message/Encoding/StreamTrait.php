@@ -69,23 +69,21 @@ trait StreamTrait
      */
     public function isSeekable()
     {
-        return $this->stream->isSeekable();
+        return false;
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function seek($offset, $whence = SEEK_SET)
-    {
-        $this->stream->seek($offset, $whence);
-    }
-
     /**
      * {@inheritdoc}
      */
     public function rewind()
     {
-        $this->stream->rewind();
+        throw new \RuntimeException('Cannot rewind a filtered stream');
+    }
+    /**
+     * {@inheritdoc}
+     */
+    public function seek($offset, $whence = SEEK_SET)
+    {
+        throw new \RuntimeException('Cannot seek a filtered stream');
     }
 
     /**
