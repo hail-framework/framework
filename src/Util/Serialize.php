@@ -2,6 +2,8 @@
 
 namespace Hail\Util;
 
+!defined('SWOOLE_FAST_PACK') || define('SWOOLE_FAST_PACK', 1);
+
 /**
  * 小数组
  * 尺寸:     msgpack < swoole = swoole(fast) < igbinary < json < hprose < serialize
