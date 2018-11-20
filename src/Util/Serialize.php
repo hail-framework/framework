@@ -2,7 +2,7 @@
 
 namespace Hail\Util;
 
-!defined('SWOOLE_FAST_PACK') || define('SWOOLE_FAST_PACK', 1);
+\defined('SWOOLE_FAST_PACK') || \define('SWOOLE_FAST_PACK', 1);
 
 /**
  * 小数组
