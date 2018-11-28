@@ -56,7 +56,7 @@ if (\class_exists(\Composer\Autoload\ClassLoader::class, false)) {
         @include \dirname((new \ReflectionClass('Composer\Autoload\ClassLoader'))->getFileName()) . '/autoload_psr4.php'; // @ may not exist
         return $baseDir;
     })();
-    $composer = @\json_decode((string) \file_get_contents($baseDir . '/composer.lock')); // @ may not exist or be valid
+    $composer = @\json_decode((string) \file_get_contents($baseDir . '/composer.lock'), true); // @ may not exist or be valid
     [$packages, $devPackages] = [$composer['packages'] ?? [], $composer['packages-dev'] ?? []]; // @ keys may not exist
     foreach ([&$packages, &$devPackages] as &$items) {
         array_walk($items, function($package) {
