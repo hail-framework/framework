@@ -43,17 +43,17 @@ composer require "hail/framework:dev-master"
 - 如果您追求极致的性能，可以先试试： [Phalcon](http://phalconphp.com/) ([github](https://github.com/phalcon/cphalcon)) 或者 [Ice](http://www.iceframework.org/) ([github](https://github.com/ice/framework))
 
 ### Implements PSR
-- [PSR-2 Coding Style Guide](https://www.php-fig.org/psr/psr-2)
-- [PSR-3 Logger Interface](https://www.php-fig.org/psr/psr-3)
-- [PSR-4 Autoloading Standard](https://www.php-fig.org/psr/psr-4)
-- [PSR-6 Caching Interface](https://www.php-fig.org/psr/psr-6)
-- [PSR-7 HTTP message interfaces](https://www.php-fig.org/psr/psr-7)
-- [PSR-11 Container Interface](https://www.php-fig.org/psr/psr-11)
-- [PSR-14 Event Manager](https://www.php-fig.org/psr/psr-14)
-- [PSR-15 HTTP Handlers](https://www.php-fig.org/psr/psr-15)
-- [PSR-16 Simple Cache](https://www.php-fig.org/psr/psr-16)
+- [PSR-2 Coding Style Guide](https://www.php-fig.org/psr/psr-2/)
+- [PSR-3 Logger Interface](https://www.php-fig.org/psr/psr-3/)
+- [PSR-4 Autoloading Standard](https://www.php-fig.org/psr/psr-4/)
+- [PSR-6 Caching Interface](https://www.php-fig.org/psr/psr-6/)
+- [PSR-7 HTTP message interfaces](https://www.php-fig.org/psr/psr-7/)
+- [PSR-11 Container Interface](https://www.php-fig.org/psr/psr-11/)
+- [PSR-14 Event Manager](https://www.php-fig.org/psr/psr-14/)
+- [PSR-15 HTTP Handlers](https://www.php-fig.org/psr/psr-15/)
+- [PSR-16 Simple Cache](https://www.php-fig.org/psr/psr-16/)
 - [PSR-17 HTTP Factories](https://www.php-fig.org/psr/psr-17/)
-- [PSR-18 HTTP Client](https://github.com/php-fig/fig-standards/tree/master/proposed/http-client/)
+- [PSR-18 HTTP Client](https://www.php-fig.org/psr/psr-18/)
 
 ## Features
 

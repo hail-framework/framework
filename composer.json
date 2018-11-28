@@ -32,12 +32,14 @@
   "require": {
     "php": ">=7.1.0",
     "ext-mbstring": "*",
+    "ext-json": "*",
     "psr/log": "^1.0",
     "psr/container": "^1.0",
     "psr/cache": "^1.0",
     "psr/simple-cache": "^1.0",
     "psr/http-server-middleware": "^1.0",
-    "psr/http-factory": "^1.0"
+    "psr/http-factory": "^1.0",
+    "psr/http-client": "^1.0"
   },
   "suggest": {
     "ext-psr": "Providing the accepted PSR interfaces",

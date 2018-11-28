@@ -17,7 +17,7 @@
             var elem = this.elem;
 
             this.init = function() {};
-            elem.innerHTML = elem.dataset.tracyContent;
+            elem.innerHTML = addNonces(elem.dataset.tracyContent);
             Tracy.Dumper.init(this.dumps, elem);
             delete elem.dataset.tracyContent;
             delete this.dumps;
@@ -58,7 +58,6 @@
 
             elem.querySelectorAll('.tracy-icons a').forEach(link => {
                 link.addEventListener('click', e => {
-                    clearTimeout(elem.Tracy.displayTimeout);
                     if (link.rel === 'close') {
                         this.toPeek();
                     } else if (link.rel === 'window') {
@@ -79,22 +78,16 @@
         }
 
 
-        focus(callback) {
+        focus() {
             var elem = this.elem;
             if (this.is(Panel.WINDOW)) {
                 elem.Tracy.window.focus();
             } else if (!this.is(Panel.FOCUSED)) {
-                clearTimeout(elem.Tracy.displayTimeout);
-                elem.Tracy.displayTimeout = setTimeout(() => {
-                    for (var id in Debug.panels) {
-                        Debug.panels[id].elem.classList.remove(Panel.FOCUSED);
-                    }
-                    elem.classList.add(Panel.FOCUSED);
-                    elem.style.zIndex = Tracy.panelZIndex + Panel.zIndexCounter++;
-                    if (callback) {
-                        callback();
-                    }
-                }, 50);
+                for (var id in Debug.panels) {
+                    Debug.panels[id].elem.classList.remove(Panel.FOCUSED);
+                }
+                elem.classList.add(Panel.FOCUSED);
+                elem.style.zIndex = Tracy.panelZIndex + Panel.zIndexCounter++;
             }
         }
 
@@ -256,7 +249,7 @@
 
 
         initTabs(elem) {
-            elem.getElementsByTagName('a').forEach(link => {
+            elem.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', e => {
                     if (link.rel === 'close') {
                         this.close();
@@ -284,26 +277,30 @@
                 });
 
                 link.addEventListener('mouseenter', e => {
-                    if (!e.buttons && link.rel && link.rel !== 'close' && !elem.classList.contains('tracy-dragged')) {
-                        var panel = Debug.panels[link.rel];
-                        panel.focus(() => {
-                            if (panel.is(Panel.PEEK)) {
-                                panel.init();
-
-                                var pos = getPosition(panel.elem);
-                                setPosition(panel.elem, {
-                                    left: getOffset(link).left + getPosition(link).width + 4 - pos.width,
-                                    top: this.isAtTop()
-                                        ? getOffset(this.elem).top + getPosition(this.elem).height + 4
-                                        : getOffset(this.elem).top - pos.height - 4
-                                });
-                                panel.peekPosition = true;
-                            }
-                        });
+                    if (e.buttons || !link.rel || link.rel === 'close' || elem.classList.contains('tracy-dragged')) {
+                        return;
                     }
+                    clearTimeout(this.displayTimeout);
+                    this.displayTimeout = setTimeout(() => {
+                        var panel = Debug.panels[link.rel];
+                        panel.focus();
+                        if (panel.is(Panel.PEEK)) {
+                            panel.init();
+                            var pos = getPosition(panel.elem);
+                            setPosition(panel.elem, {
+                                left: getOffset(link).left + getPosition(link).width + 4 - pos.width,
+                                top: this.isAtTop()
+                                    ? getOffset(this.elem).top + getPosition(this.elem).height + 4
+                                    : getOffset(this.elem).top - pos.height - 4
+                            });
+                            panel.peekPosition = true;
+                        }
+                    }, 50);
                 });
 
                 link.addEventListener('mouseleave', () => {
+                    clearTimeout(this.displayTimeout);
+
                     if (link.rel && link.rel !== 'close' && !elem.classList.contains('tracy-dragged')) {
                         Debug.panels[link.rel].blur();
                     }
@@ -368,8 +365,8 @@
 
             Debug.layer = document.createElement('div');
             Debug.layer.setAttribute('id', 'tracy-debug');
-            Debug.layer.innerHTML = content;
-            document.documentElement.appendChild(Debug.layer);
+            Debug.layer.innerHTML = addNonces(content);
+            (document.body || document.documentElement).appendChild(Debug.layer);
             evalScripts(Debug.layer);
             Tracy.Dumper.init();
             Debug.layer.style.display = 'block';
@@ -489,10 +486,8 @@
             }
             Debug.scriptElem = document.createElement('script');
             Debug.scriptElem.src = url;
-            if (nonce) {
-                Debug.scriptElem.setAttribute('nonce', nonce);
-            }
-            document.documentElement.appendChild(Debug.scriptElem);
+            Debug.scriptElem.setAttribute('nonce', nonce);
+            (document.body || document.documentElement).appendChild(Debug.scriptElem);
         }
     }
 
@@ -500,12 +495,11 @@
     function evalScripts(elem) {
         elem.querySelectorAll('script').forEach(script => {
             if ((!script.hasAttribute('type') || script.type === 'text/javascript' || script.type === 'application/javascript') && !script.tracyEvaluated) {
-                var dolly = script.ownerDocument.createElement('script');
+                var document = script.ownerDocument;
+                var dolly = document.createElement('script');
                 dolly.textContent = script.textContent;
-                if (nonce) {
-                    dolly.setAttribute('nonce', nonce);
-                }
-                script.ownerDocument.documentElement.appendChild(dolly);
+                dolly.setAttribute('nonce', nonce);
+                (document.body || document.documentElement).appendChild(dolly);
                 script.tracyEvaluated = true;
             }
         });
@@ -642,6 +636,15 @@
             width: elem.offsetWidth,
             height: elem.offsetHeight
         };
+    }
+
+    function addNonces(html) {
+        var el = document.createElement('div');
+        el.innerHTML = html;
+        el.querySelectorAll('style').forEach(style => {
+            style.setAttribute('nonce', nonce);
+        });
+        return el.innerHTML;
     }
 
     if (document.currentScript) {

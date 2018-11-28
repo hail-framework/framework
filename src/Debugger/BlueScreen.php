@@ -28,6 +28,9 @@ class BlueScreen
     /** @var int */
     public $maxLength = 150;
 
+    /** @var string[] */
+    public $keysToHide = ['password', 'passwd', 'pass', 'pwd', 'creditcard', 'credit card', 'cc', 'pin'];
+
     /** @var callable[] functions that returns action for exceptions */
     private $actions = [];
 
@@ -85,7 +88,9 @@ class BlueScreen
             $this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/content.phtml');
             $contentId = $_SERVER['HTTP_X_TRACY_AJAX'];
             $_SESSION['_tracy']['bluescreen'][$contentId] = [
-                'content' => \ob_get_clean(), 'dumps' => Dumper::fetchLiveData(), 'time' => \time(),
+                'content' => \ob_get_clean(),
+                'dumps' => Dumper::fetchLiveData(),
+                'time' => \time(),
             ];
 
             return '';
@@ -112,7 +117,7 @@ class BlueScreen
             \ob_start(function ($buffer) use ($handle) {
                 \fwrite($handle, $buffer);
             }, 4096);
-            $this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml');
+            $this->renderTemplate($exception, __DIR__ . '/assets/BlueScreen/page.phtml', false);
             \ob_end_flush();
             \ob_end_clean();
             \fclose($handle);
@@ -124,12 +129,12 @@ class BlueScreen
     }
 
 
-    private function renderTemplate(\Throwable $exception, string $template): void
+    private function renderTemplate(\Throwable $exception, string $template, bool $toScreen = true): void
     {
         $messageHtml = \preg_replace(
             '#\'\S[^\']*\S\'|"\S[^"]*\S"#U',
             '<i>$0</i>',
-            \htmlspecialchars((string) $exception->getMessage(), \ENT_SUBSTITUTE, 'UTF-8')
+            \htmlspecialchars((string)$exception->getMessage(), \ENT_SUBSTITUTE, 'UTF-8')
         );
         $info = \array_filter($this->info);
         $source = Helpers::getSource();
@@ -138,18 +143,24 @@ class BlueScreen
             ? Helpers::errorTypeToString($exception->getSeverity())
             : Helpers::getClass($exception);
         $lastError = $exception instanceof \ErrorException || $exception instanceof \Error ? null : \error_get_last();
-        $dump = function ($v) {
+        $keysToHide = array_flip(array_map('strtolower', $this->keysToHide));
+        $dump = function ($v, $k = null) use ($keysToHide) {
+            if (\is_string($k) && isset($keysToHide[\strtolower($k)])) {
+                $v = Dumper::HIDDEN_VALUE;
+            }
             return Dumper::toHtml($v, [
                 Dumper::DEPTH => $this->maxDepth,
                 Dumper::TRUNCATE => $this->maxLength,
                 Dumper::LIVE => true,
                 Dumper::LOCATION => Dumper::LOCATION_CLASS,
+                Dumper::KEYS_TO_HIDE => $this->keysToHide,
             ]);
         };
-        $nonce = Helpers::getNonce();
         $css = \file_get_contents(__DIR__ . '/assets/BlueScreen/bluescreen.css');
         $css = \preg_replace('#\s+#u', ' ', $css);
-        $actions = $this->renderActions($exception);
+
+        $nonce = $toScreen ? Helpers::getNonce() : null;
+        $actions = $toScreen ? $this->renderActions($exception) : [];
 
         require $template;
     }
@@ -170,7 +181,7 @@ class BlueScreen
                 if (empty($panel['tab']) || empty($panel['panel'])) {
                     continue;
                 }
-                $res[] = (object) $panel;
+                $res[] = (object)$panel;
                 continue;
             } catch (\Throwable $e) {
             }
@@ -180,7 +191,7 @@ class BlueScreen
             }
 
             \is_callable($callback, true, $name);
-            $res[] = (object) [
+            $res[] = (object)[
                 'tab' => "Error in panel $name",
                 'panel' => \nl2br(Helpers::escapeHtml($e)),
             ];
@@ -209,10 +220,24 @@ class BlueScreen
             $actions[] = $ex->tracyAction;
         }
 
+        if (\preg_match('# ([\'"])(\w{3,}(?:\\\\\w{3,})+)\\1#i', $ex->getMessage(), $m)) {
+            $class = $m[2];
+            if (
+                !\class_exists($class) && !\interface_exists($class) && !\trait_exists($class)
+                && ($file = Helpers::guessClassFile($class)) && !\is_file($file)
+            ) {
+                $actions[] = [
+                    'link' => Helpers::editorUri($file, 1, 'create'),
+                    'label' => 'create class',
+                ];
+            }
+        }
+
         if (\preg_match('# ([\'"])((?:/|[a-z]:[/\\\\])\w[^\'"]+\.\w{2,5})\\1#i', $ex->getMessage(), $m)) {
+            $file = $m[2];
             $actions[] = [
-                'link' => Helpers::editorUri($m[2], 1, $tmp = is_file($m[2]) ? 'open' : 'create'),
-                'label' => $tmp . ' file',
+                'link' => Helpers::editorUri($file, 1, $label = \is_file($file) ? 'open' : 'create'),
+                'label' => $label . ' file',
             ];
         }
 
@@ -321,7 +346,7 @@ class BlueScreen
         $source = \explode("\n", "\n" . \str_replace("\r\n", "\n", $html));
         $out = '';
         $spans = 1;
-        $start = $i = \max(1, \min($line, \count($source) - 1) - (int) \floor($lines * 2 / 3));
+        $start = $i = \max(1, \min($line, \count($source) - 1) - (int)\floor($lines * 2 / 3));
         while (--$i >= 1) { // find last highlighted block
             if (\preg_match('#.*(</?span[^>]*>)#', $source[$i], $m)) {
                 if ($m[1] !== '</span>') {
@@ -334,7 +359,7 @@ class BlueScreen
 
         $source = \array_slice($source, $start, $lines, true);
         \end($source);
-        $numWidth = \strlen((string) \key($source));
+        $numWidth = \strlen((string)\key($source));
 
         foreach ($source as $n => $s) {
             $spans += \substr_count($s, '<span') - \substr_count($s, '</span');

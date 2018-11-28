@@ -3,7 +3,7 @@
 namespace Hail\Http\Client\Exception;
 
 use Psr\Http\Message\RequestInterface;
-use Hail\Http\Client\Psr\Exception\RequestException as PsrRequestException;
+use Psr\Http\Client\RequestExceptionInterface;
 
 /**
  * Exception for when a request failed, providing access to the failed request.
@@ -13,7 +13,7 @@ use Hail\Http\Client\Psr\Exception\RequestException as PsrRequestException;
  *
  * @author Márk Sági-Kazár <mark.sagikazar@gmail.com>
  */
-class RequestException extends TransferException implements PsrRequestException
+class RequestException extends TransferException implements RequestExceptionInterface
 {
     /**
      * @var RequestInterface

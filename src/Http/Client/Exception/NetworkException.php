@@ -2,7 +2,7 @@
 
 namespace Hail\Http\Client\Exception;
 
-use Hail\Http\Client\Psr\Exception\NetworkException as PsrNetworkException;
+use Psr\Http\Client\NetworkExceptionInterface;
 
 /**
  * Thrown when the request cannot be completed because of network issues.
@@ -11,6 +11,6 @@ use Hail\Http\Client\Psr\Exception\NetworkException as PsrNetworkException;
  *
  * @author Márk Sági-Kazár <mark.sagikazar@gmail.com>
  */
-class NetworkException extends RequestException implements PsrNetworkException
+class NetworkException extends RequestException implements NetworkExceptionInterface
 {
 }

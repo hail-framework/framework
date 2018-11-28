@@ -4,7 +4,7 @@ namespace Hail\Http\Client\Exception;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Hail\Http\Client\Psr\Exception\HttpException as PsrHttpException;
+use Psr\Http\Client\ClientExceptionInterface;
 
 /**
  * Thrown when a response was received but the request itself failed.
@@ -13,7 +13,7 @@ use Hail\Http\Client\Psr\Exception\HttpException as PsrHttpException;
  *
  * @author Márk Sági-Kazár <mark.sagikazar@gmail.com>
  */
-class HttpException extends RequestException implements PsrHttpException
+class HttpException extends RequestException implements ClientExceptionInterface
 {
     /**
      * @var ResponseInterface

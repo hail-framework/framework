@@ -21,7 +21,7 @@ use Psr\Log\LogLevel;
  */
 class Debugger
 {
-    public const VERSION = '3.0-dev';
+    public const VERSION = '2.5.4';
 
     /** server modes for Debugger::enable() */
     public const
@@ -622,7 +622,7 @@ class Debugger
             self::exceptionHandler($e);
         }
 
-        $message = 'PHP ' . Helpers::errorTypeToString($severity) . ": $message";
+        $message = 'PHP ' . Helpers::errorTypeToString($severity) . ': ' . Helpers::improveError($message, $context);
         $count = &self::getBar()->getPanel('Tracy:errors')->data["$file|$line|$message"];
 
         if ($count++) { // repeated error

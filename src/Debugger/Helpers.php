@@ -54,8 +54,13 @@ class Helpers
      *
      * @return string|null
      */
-    public static function editorUri(string $file, int $line = null, string $action = 'open', string $search = '', string $replace = ''): ?string
-    {
+    public static function editorUri(
+        string $file,
+        int $line = null,
+        string $action = 'open',
+        string $search = '',
+        string $replace = ''
+    ): ?string {
         if (Debugger::$editor && $file && ($action === 'create' || is_file($file))) {
             $file = \str_replace('/', DIRECTORY_SEPARATOR, $file);
             $file = \strtr($file, Debugger::$editorMapping);
@@ -85,7 +90,7 @@ class Helpers
 
     public static function escapeHtml($s): string
     {
-        return \htmlspecialchars((string) $s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return \htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
 
@@ -240,6 +245,44 @@ class Helpers
         }
     }
 
+    public static function improveError($message, array $context = [])
+    {
+        if (\preg_match('#^Undefined variable: (\w+)#', $message, $m) && $context) {
+            $hint = self::getSuggestion(\array_keys($context), $m[1]);
+            return $hint ? "Undefined variable $$m[1], did you mean $$hint?" : $message;
+        }
+
+        if (\preg_match('#^Undefined property: ([\w\\\\]+)::\$(\w+)#', $message, $m)) {
+            $rc = new \ReflectionClass($m[1]);
+            $items = \array_diff($rc->getProperties(\ReflectionProperty::IS_PUBLIC),
+                $rc->getProperties(\ReflectionProperty::IS_STATIC));
+            $hint = self::getSuggestion($items, $m[2]);
+            return $hint ? $message . ", did you mean $$hint?" : $message;
+        }
+        return $message;
+    }
+
+    public static function guessClassFile($class)
+    {
+        $segments = \explode(DIRECTORY_SEPARATOR, $class);
+        $res = null;
+        $max = 0;
+        foreach (\get_declared_classes() as $class) {
+            $parts = \explode(DIRECTORY_SEPARATOR, $class);
+            foreach ($parts as $i => $part) {
+                if (!isset($segments[$i]) || $part !== $segments[$i]) {
+                    break;
+                }
+            }
+            if ($i > $max && ($file = (new \ReflectionClass($class))->getFileName())) {
+                $max = $i;
+                $res = \array_merge(\array_slice(\explode(DIRECTORY_SEPARATOR, $file), 0, $i - \count($parts)),
+                    \array_slice($segments, $i));
+                $res = \implode(DIRECTORY_SEPARATOR, $res) . '.php';
+            }
+        }
+        return $res;
+    }
 
     /**
      * Finds the best suggestion.
@@ -297,7 +340,7 @@ class Helpers
 
         $value = $request->getHeaderLine('X-Tracy-Ajax');
 
-        return (bool) \preg_match('#^\w{10}\z#', $value);
+        return (bool)\preg_match('#^\w{10}\z#', $value);
     }
 
     /** @internal */

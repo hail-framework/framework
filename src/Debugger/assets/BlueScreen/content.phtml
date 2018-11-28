@@ -130,7 +130,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 						}
 						foreach ($row['args'] as $k => $v) {
 							echo '<tr><th>', Helpers::escapeHtml(isset($params[$k]) ? '$' . $params[$k]->name : "#$k"), '</th><td>';
-							echo $dump($v);
+                            echo $dump($v, isset($params[$k]) ? $params[$k]->name : null);
 							echo "</td></tr>\n";
 						}
 						?>
@@ -153,7 +153,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<table>
 			<?php
 			foreach ($ex->context as $k => $v) {
-				echo '<tr><th>$', Helpers::escapeHtml($k), '</th><td>', $dump($v), "</td></tr>\n";
+                echo '<tr><th>$', Helpers::escapeHtml($k), '</th><td>', $dump($v, $k), "</td></tr>\n";
 			}
 			?>
 			</table>
@@ -212,7 +212,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<div class="outer">
 			<table>
 			<?php
-			foreach ($_SERVER as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v), "</td></tr>\n";
+            foreach ($_SERVER as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v, $k), "</td></tr>\n";
 			?>
 			</table>
 			</div>
@@ -225,7 +225,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<?php else: ?>
 			<table>
 			<?php
-			foreach ($_SESSION as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $k === '__HF' ? '<i>Nette Session</i>' : $dump($v), "</td></tr>\n";
+			foreach ($_SESSION as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $k === '__HF' ? '<i>Nette Session</i>' : $dump($v, $K), "</td></tr>\n";
 			?>
 			</table>
 			<?php endif ?>
@@ -237,7 +237,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<div class="outer">
 			<table>
 			<?php
-			foreach ($_SESSION['__HF']['DATA'] as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v), "</td></tr>\n";
+			foreach ($_SESSION['__HF']['DATA'] as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v. $K), "</td></tr>\n";
 			?>
 			</table>
 			</div>
@@ -253,7 +253,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<?php
 			foreach ($list['user'] as $k => $v) {
 				echo '<tr><th>', Helpers::escapeHtml($k), '</th>';
-				echo '<td>', $dump($v), "</td></tr>\n";
+				echo '<td>', $dump($v, $K), "</td></tr>\n";
 			}
 			?>
 			</table>
@@ -292,7 +292,7 @@ $code = $exception->getCode() ? ' #' . $exception->getCode() : '';
 			<div class="outer">
 			<table>
 			<?php
-			foreach ($GLOBALS[$name] as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v), "</td></tr>\n";
+			foreach ($GLOBALS[$name] as $k => $v) echo '<tr><th>', Helpers::escapeHtml($k), '</th><td>', $dump($v, $K), "</td></tr>\n";
 			?>
 			</table>
 			</div>
