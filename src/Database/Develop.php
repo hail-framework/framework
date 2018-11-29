@@ -51,7 +51,7 @@ class Develop extends Database
     {
         if (
             ($error = $this->error()) &&
-            isset($error[0]) && $error[0] !== '000000'
+            isset($error[0]) && $error[0] !== '00000'
         ) {
             $this->event('error', $error);
         }
