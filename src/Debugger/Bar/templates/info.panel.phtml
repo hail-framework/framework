@@ -114,7 +114,7 @@ if (\class_exists(\Composer\Autoload\ClassLoader::class, false)) {
                             <tr>
                                 <td><?=Helpers::escapeHtml($package['name'])?></td>
                                 <td><?=Helpers::escapeHtml($package['version'] . (\strpos($package['version'],
-                                            'dev') !== false && $package['hash'] ? ' #' . \substr($package['hash'], 0,
+                                            'dev') !== false && !empty($package['hash']) ? ' #' . \substr($package['hash'], 0,
                                                 4) : ''))?></td>
                             </tr>
                         <?php endforeach ?>
@@ -127,7 +127,7 @@ if (\class_exists(\Composer\Autoload\ClassLoader::class, false)) {
                             <tr>
                                 <td><?=Helpers::escapeHtml($package['name'])?></td>
                                 <td><?=Helpers::escapeHtml($package['version'] . (\strpos($package['version'],
-                                            'dev') !== false && $package['hash'] ? ' #' . \substr($package['hash'], 0,
+                                            'dev') !== false && !empty($package['hash']) ? ' #' . \substr($package['hash'], 0,
                                                 4) : ''))?></td>
                             </tr>
                         <?php endforeach ?>
