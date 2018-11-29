@@ -133,8 +133,7 @@ class Event
 		}
 
 		return Dumper::toHtml($result, [
-			Dumper::COLLAPSE => true,
-			Dumper::TRUNCATE => 50,
+			Dumper::COLLAPSE => true
 		]);
 	}
 
