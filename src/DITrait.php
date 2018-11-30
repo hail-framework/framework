@@ -21,7 +21,7 @@ use Hail\Facade\DI;
  * @property-read Session\Session                  $session
  * @property-read Cache\Simple\CacheInterface      $cache
  * @property-read Database\Cache\CachedDBInterface $cdb
- * @property-read Client                           $browser
+ * @property-read Http\Browser                     $browser
  * @property-read Util\Arrays                      $arrays
  * @property-read Util\Crypto                      $crypto
  * @property-read Util\Generators                  $generators
