@@ -1,16 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Hail\Http\Client\Exception;
 
-use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\NetworkExceptionInterface as PsrNetworkException;
+use Psr\Http\Message\RequestInterface;
 
 /**
- * Thrown when the request cannot be completed because of network issues.
- *
- * There is no response object as this exception is thrown when no response has been received.
- *
- * @author Márk Sági-Kazár <mark.sagikazar@gmail.com>
+ * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-class NetworkException extends RequestException implements NetworkExceptionInterface
+class NetworkException extends ClientException implements PsrNetworkException
 {
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
+    public function __construct(RequestInterface $request, string $message = '', int $code = 0, \Throwable $previous = null)
+    {
+        $this->request = $request;
+        parent::__construct($message, $code, $previous);
+    }
+
+    public function getRequest(): RequestInterface
+    {
+        return $this->request;
+    }
 }

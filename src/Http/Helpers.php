@@ -66,7 +66,7 @@ class Helpers
         return static::$realHeaderNames;
     }
 
-    public static function normalizeHeaderName($header)
+    public static function normalizeHeaderName(string $header): string
     {
         if (\strpos($header, '_') !== false) {
             $header = \str_replace('_', '-', $header);

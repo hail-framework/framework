@@ -1,42 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Hail\Http\Client\Exception;
 
+use Psr\Http\Client\RequestExceptionInterface as PsrRequestException;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Client\RequestExceptionInterface;
 
 /**
- * Exception for when a request failed, providing access to the failed request.
- *
- * This could be due to an invalid request, or one of the extending exceptions
- * for network errors or HTTP error responses.
- *
- * @author Márk Sági-Kazár <mark.sagikazar@gmail.com>
+ * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-class RequestException extends TransferException implements RequestExceptionInterface
+class RequestException extends ClientException implements PsrRequestException
 {
     /**
      * @var RequestInterface
      */
     private $request;
 
-    /**
-     * @param string           $message
-     * @param RequestInterface $request
-     * @param \Exception|null  $previous
-     */
-    public function __construct($message, RequestInterface $request, \Exception $previous = null)
+    public function __construct(RequestInterface $request, string $message = '', int $code = 0, \Throwable $previous = null)
     {
         $this->request = $request;
-
-        parent::__construct($message, 0, $previous);
+        parent::__construct($message, $code, $previous);
     }
 
-    /**
-     * Returns the request.
-     *
-     * @return RequestInterface
-     */
     public function getRequest(): RequestInterface
     {
         return $this->request;
