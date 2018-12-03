@@ -469,8 +469,8 @@ final class Element extends AbstractToken
         $result = "<{$this->name}";
 
         foreach ($this->attributes as $name => $value) {
-            if (\strrpos($name, 'php:') === 0) {
-                $result .= $value;
+            if ($value instanceof Php) {
+                $result .= $value->__toString();
             } else {
                 $result .= " $name=\"$value\"";
             }
