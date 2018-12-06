@@ -207,7 +207,7 @@ class Database
                                 \preg_replace(
                                     [
                                         '/([a-z\d])([A-Z])/',
-                                        '/([^_])([A-Z][a-z])/'
+                                        '/([^_])([A-Z][a-z])/',
                                     ], '$1_$2', $value
                                 )
                             );
@@ -350,32 +350,37 @@ class Database
 
         RETRY_QUERY:
         {
-            $statement = $pdo->prepare($query);
+            try {
+                $statement = $pdo->prepare($query);
 
-            if ($statement) {
-                foreach ($map as $key => $value) {
-                    $statement->bindValue($key, $value[0], $value[1]);
+                if ($statement) {
+                    foreach ($map as $key => $value) {
+                        $statement->bindValue($key, $value[0], $value[1]);
+                    }
+
+                    if (!empty($fetchArgs)) {
+                        $statement->setFetchMode(...$fetchArgs);
+                    }
+
+                    if ($statement->execute()) {
+                        $this->statement = $statement;
+
+                        return $statement;
+                    }
                 }
+            } catch (\PDOException $e) {
+                if ($retries === 0) {
+                    $error = $e->getMessage();
+                    if (
+                        \strpos($error, '2006 MySQL server has gone away') !== false ||
+                        \strpos($error, '2013 Lost connection') !== false
+                    ) {
+                        $this->pdo = $pdo = null;
+                        $pdo = $this->getPdo();
 
-                if (!empty($fetchArgs)) {
-                    $statement->setFetchMode(...$fetchArgs);
-                }
-
-                $statement->execute();
-
-                $this->statement = $statement;
-
-                return $statement;
-            }
-
-            if ($retries === 0) {
-                $error = $statement->errorCode();
-                if ($error === 2006 || $error === 2013) {
-                    $this->pdo = $pdo = null;
-                    $pdo = $this->getPdo();
-
-                    ++$retries;
-                    goto RETRY_QUERY;
+                        ++$retries;
+                        goto RETRY_QUERY;
+                    }
                 }
             }
         }

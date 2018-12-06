@@ -49,11 +49,8 @@ class Develop extends Database
      */
     protected function done($result = null)
     {
-        if (
-            ($error = $this->error()) &&
-            isset($error[0]) && $error[0] !== '00000'
-        ) {
-            $this->event('error', $error);
+        if ($result === null) {
+            $this->event('error', $this->error());
         }
 
         $this->event('done', $result);
