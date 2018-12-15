@@ -21,6 +21,8 @@ class BasePath implements MiddlewareInterface
      */
     private $fixLocation = false;
 
+    private $attribute = 'base-path';
+
     /**
      * Configure the base path of the request.
      *
@@ -63,7 +65,7 @@ class BasePath implements MiddlewareInterface
         $uri = $request->getUri();
         $request = $request->withUri($uri->withPath($this->removeBasePath($uri->getPath())));
 
-        $response = $handler->handle($request);
+        $response = $handler->handle($request->withAttribute($this->attribute, $this->basePath));
 
         if ($this->fixLocation && $response->hasHeader('Location')) {
             $location = Factory::uri($response->getHeaderLine('Location'));
