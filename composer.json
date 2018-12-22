@@ -5,8 +5,8 @@
   "keywords": ["hail", "framework", "mvc"],
   "homepage": "http://framework.flyinghail.com/",
   "support": {
-    "issues": "https://github.com/Hail-Team/framework/issues",
-    "source": "https://github.com/Hail-Team/framework"
+    "issues": "https://github.com/hail-framework/framework/issues",
+    "source": "https://github.com/hail-framework/framework"
   },
   "authors": [
     {
@@ -26,7 +26,7 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/Hail-Team/framework.git"
+      "url": "https://github.com/hail-framework/framework.git"
     }
   ],
   "require": {
