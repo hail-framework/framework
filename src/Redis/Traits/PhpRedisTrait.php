@@ -143,7 +143,7 @@ trait PhpRedisTrait
                     }
                     $args = [$args[0], \array_merge($cKeys, $cArgs), \count($cKeys)];
                     break;
-                case 'pipline':
+                case 'pipeline':
                 case 'multi':
                     if ($this->redisMulti !== null) {
                         return $this;
