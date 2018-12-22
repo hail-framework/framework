@@ -87,15 +87,6 @@ final class Crypto
         self::$format = $format;
     }
 
-    private static function passwordAlgo()
-    {
-        if (PHP_VERSION_ID >= 70200) {
-            return \PASSWORD_ARGON2I;
-        }
-
-        return \PASSWORD_DEFAULT;
-    }
-
     /**
      * @param string $password
      *
@@ -103,7 +94,7 @@ final class Crypto
      */
     public static function password(string $password)
     {
-        return \password_hash($password, self::passwordAlgo());
+        return \password_hash($password, \PASSWORD_DEFAULT);
     }
 
     /**
