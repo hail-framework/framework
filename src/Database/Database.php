@@ -308,9 +308,18 @@ class Database
         }
     }
 
-    public function use(string $db): int
+    public function use(string $db): bool
     {
-        return $this->pdo->exec('USE `' . $db . '`');
+        if ($this->database === $db) {
+            return true;
+        }
+
+        if ($this->pdo->exec('USE `' . $db . '`') !== false) {
+            $this->database = $db;
+            return true;
+        }
+
+        return false;
     }
 
     public function raw(string $string, array $map = []): Sql\Raw
@@ -320,7 +329,7 @@ class Database
 
     /**
      * @param string $query
-     * @param array  $map
+     * @param array $map
      *
      * @return \PDOStatement|null
      */
@@ -334,8 +343,8 @@ class Database
 
     /**
      * @param string $query
-     * @param array  $map
-     * @param array  $fetchArgs
+     * @param array $map
+     * @param array $fetchArgs
      *
      * @return \PDOStatement|null
      */
@@ -429,8 +438,8 @@ class Database
 
     /**
      * @param array|string $struct
-     * @param int          $fetch
-     * @param mixed        $fetchArgs
+     * @param int $fetch
+     * @param mixed $fetchArgs
      *
      * @return array|null
      */
@@ -469,8 +478,8 @@ class Database
      *      }
      *
      * @param array|string $struct
-     * @param int          $fetch
-     * @param mixed        $fetchArgs
+     * @param int $fetch
+     * @param mixed $fetchArgs
      *
      * @return \Generator
      */
@@ -499,8 +508,8 @@ class Database
 
     /**
      * @param string|array $table
-     * @param array        $data
-     * @param string       $INSERT
+     * @param array $data
+     * @param string $INSERT
      *
      * @return \PDOStatement|null
      */
@@ -533,8 +542,8 @@ class Database
 
     /**
      * @param string|array $table
-     * @param array        $data
-     * @param null         $where
+     * @param array $data
+     * @param null $where
      *
      * @return \PDOStatement|null
      */
@@ -547,7 +556,7 @@ class Database
 
     /**
      * @param string|array $table
-     * @param null         $where
+     * @param null $where
      *
      * @return \PDOStatement|null
      */
@@ -560,8 +569,8 @@ class Database
 
     /**
      * @param string|array $table
-     * @param array|null   $columns
-     * @param array|null   $where
+     * @param array|null $columns
+     * @param array|null $where
      *
      * @return \PDOStatement|null
      */
@@ -579,8 +588,8 @@ class Database
 
     /**
      * @param array|string $struct
-     * @param int          $fetch
-     * @param mixed        $fetchArgs
+     * @param int $fetch
+     * @param mixed $fetchArgs
      *
      * @return array|string|null
      */
