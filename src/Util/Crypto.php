@@ -106,7 +106,7 @@ final class Crypto
     public static function verifyPassword(string $password, string $hash)
     {
         if (\password_verify($password, $hash)) {
-            if (\password_needs_rehash($hash, self::passwordAlgo())) {
+            if (\password_needs_rehash($hash, \PASSWORD_DEFAULT)) {
                 return self::password($password);
             }
 
