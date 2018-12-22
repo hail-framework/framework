@@ -308,6 +308,11 @@ class Database
         }
     }
 
+    public function use(string $db): int
+    {
+        return $this->pdo->exec('USE `' . $db . '`');
+    }
+
     public function raw(string $string, array $map = []): Sql\Raw
     {
         return $this->sql->raw($string, $map);
