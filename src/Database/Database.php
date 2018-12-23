@@ -322,6 +322,11 @@ class Database
         return false;
     }
 
+    public function sql(): Builder
+    {
+        return $this->sql;
+    }
+
     public function raw(string $string, array $map = []): Sql\Raw
     {
         return $this->sql->raw($string, $map);
