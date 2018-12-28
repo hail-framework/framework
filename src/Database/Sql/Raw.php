@@ -16,7 +16,7 @@ class Raw
 
     public function __construct(string $value, array $map = [])
     {
-        $this->value = $value;
+        $this->value = \trim($value);
         $this->map = $map;
     }
 }

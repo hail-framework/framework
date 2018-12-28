@@ -343,7 +343,11 @@ class Builder
 
                             case 'object':
                                 if ($raw = $this->buildRaw($value, $map)) {
-                                    $stack[] = $column . ' != ' . $raw;
+                                    if (\strpos($raw, 'SELECT') === 0) {
+                                        $stack[] = $column . ' NOT IN (' . $raw . ')';
+                                    } else {
+                                        $stack[] = $column . ' != ' . $raw;
+                                    }
                                 }
                                 break;
 
@@ -420,7 +424,11 @@ class Builder
 
                         case 'object':
                             if ($raw = $this->buildRaw($value, $map)) {
-                                $stack[] = $column . ' = ' . $raw;
+                                if (\strpos($raw, 'SELECT') === 0) {
+                                    $stack[] = $column . ' IN (' . $raw . ')';
+                                } else {
+                                    $stack[] = $column . ' != ' . $raw;
+                                }
                             }
                             break;
 
