@@ -104,6 +104,9 @@ function absolute_path(string $root, string ...$paths): string
         }
 
         $absolutePath = implode(DIRECTORY_SEPARATOR, $absolutes);
+        if ($absoluteRoot[0] === '/' && $absolutePath[0] !== '/') {
+            $absolutePath = '/' . $absolutePath;
+        }
 
         if (strpos($absolutePath, $absoluteRoot) !== 0) {
             throw new InvalidArgumentException('Path can not higher than ROOT.');
