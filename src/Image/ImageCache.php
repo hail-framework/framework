@@ -2,7 +2,6 @@
 
 namespace Hail\Image;
 
-use Hail\Util\Serialize;
 use Psr\SimpleCache\CacheInterface;
 
 class ImageCache
@@ -127,8 +126,8 @@ class ImageCache
      */
     public function checksum()
     {
-        $properties = \Serialize::encode($this->properties);
-        $calls = \Serialize::encode($this->getSanitizedCalls());
+        $properties = \Serializer::encode($this->properties);
+        $calls = \Serializer::encode($this->getSanitizedCalls());
 
         return \md5($properties . $calls);
     }

@@ -26,7 +26,7 @@ use Hail\Facade\DI;
  * @property-read Util\Crypto                      $crypto
  * @property-read Util\Generators                  $generators
  * @property-read Util\Json                        $json
- * @property-read Util\Serialize                   $serialize
+ * @property-read Serialize\Serializer             $serialize
  * @property-read Util\Strings                     $strings
  * @property-read Filesystem\MountManager          $filesystem
  * @property-read \ServiceFactory                  $service

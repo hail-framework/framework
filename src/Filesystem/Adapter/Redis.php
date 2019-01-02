@@ -6,7 +6,6 @@ use Hail\Filesystem\Adapter\Polyfill\StreamedTrait as StreamPolyfill;
 use Hail\Filesystem\Exception\FileNotFoundException;
 use Hail\Filesystem\Util;
 use Hail\Factory\Redis as RedisFactory;
-use Hail\Util\Serialize;
 
 class Redis extends AbstractAdapter
 {
@@ -34,7 +33,7 @@ class Redis extends AbstractAdapter
         $this->setPathPrefix($config['prefix'] ?? 'HailFS:');
         $this->redis->hSetNx(
             $this->applyPathPrefix('/'), '.',
-            \Serialize::encode([
+            \Serializer::encode([
                 'path' => '',
                 'type' => 'dir',
                 'visibility' => 'public',
@@ -62,7 +61,7 @@ class Redis extends AbstractAdapter
             if (\in_array($this->redis->hSet(
                 $this->applyPathPrefix($info['dirname']),
                 $info['basename'],
-                \Serialize::encode($fileData)),
+                \Serializer::encode($fileData)),
                 [0, 1], true
             )) {
                 $fileData['contents'] = $contents;
@@ -108,7 +107,7 @@ class Redis extends AbstractAdapter
             throw new FileNotFoundException("File not found at path: {$info['path']}");
         }
 
-        $data = \Serialize::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
+        $data = \Serializer::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
 
         if ($data['type'] === 'file') {
             $data['contents'] = \base64_decode($data['contents']);
@@ -131,7 +130,7 @@ class Redis extends AbstractAdapter
             throw new FileNotFoundException("File not found at path: {$info['path']}");
         }
 
-        $metadata = \Serialize::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
+        $metadata = \Serializer::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
 
         if ($metadata['type'] === 'file') {
             $metadata['contents'] = \base64_decode($metadata['contents']);
@@ -234,9 +233,9 @@ class Redis extends AbstractAdapter
 
         if (!$this->has($info['path'])) {
             if (!$this->ensurePathExists($info['dirname'], $config)
-                || !($this->redis->hSetNx($this->applyPathPrefix($info['path']), '.', \Serialize::encode($status))
+                || !($this->redis->hSetNx($this->applyPathPrefix($info['path']), '.', \Serializer::encode($status))
                     && $this->redis->hSetNx($this->applyPathPrefix($info['dirname']), $info['basename'],
-                        \Serialize::encode($status)))
+                        \Serializer::encode($status)))
             ) {
                 $status = false;
             }
@@ -266,7 +265,7 @@ class Redis extends AbstractAdapter
                     continue;
                 }
 
-                $data = \Serialize::decode($data);
+                $data = \Serializer::decode($data);
 
                 $result[0][] = Util::map($data, ['type' => 'type', 'path' => 'path', 'timestamp' => 'timestamp', 'size' => 'size']);
 
@@ -318,11 +317,11 @@ class Redis extends AbstractAdapter
         $info = $this->getPathInfo($path);
 
         if ($this->has($info['path'])) {
-            $data = \Serialize::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
+            $data = \Serializer::decode($this->redis->hGet($this->applyPathPrefix($info['dirname']), $info['basename']));
             $data['visibility'] = $visibility;
 
             if (\in_array($this->redis->hSet($this->applyPathPrefix($info['dirname']), $info['basename'],
-                \Serialize::encode($data)), [0, 1], true)) {
+                \Serializer::encode($data)), [0, 1], true)) {
                 return $data;
             }
         }

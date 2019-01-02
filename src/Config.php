@@ -4,7 +4,7 @@ namespace Hail;
 
 use Hail\Optimize\OptimizeTrait;
 use Hail\Util\{
-    Arrays, ArrayTrait, Yaml
+    Arrays, ArrayTrait
 };
 
 /**
@@ -154,7 +154,7 @@ class Config implements \ArrayAccess
         $cache = $dir . DIRECTORY_SEPARATOR . substr($filename, 0, -\strlen($ext)) . '.php';
 
         if (@\filemtime($cache) < \filemtime($file)) {
-            $content = Yaml::parseFile($file);
+            $content = \Seralizer::yaml()->decodeFile($file);
 
             if (!\is_dir($dir) && !@\mkdir($dir, 0755) && !\is_dir($dir)) {
                 throw new \RuntimeException('Temp directory permission denied');

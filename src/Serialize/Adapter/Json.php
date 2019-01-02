@@ -1,11 +1,17 @@
 <?php
 
-namespace Hail\Util;
+namespace Hail\Serialize\Adapter;
 
-use Hail\Util\Exception\JsonException;
+use Hail\Serialize\AdapterInterface;
+use Hail\Serialize\Exception\JsonException;
 
-class Json
+class Json implements AdapterInterface
 {
+    public static function getInstance(): AdapterInterface
+    {
+        return new static();
+    }
+
     /**
      * Encodes the given value into a JSON string.
      *

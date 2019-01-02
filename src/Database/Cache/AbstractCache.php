@@ -3,7 +3,6 @@
 namespace Hail\Database\Cache;
 
 use Hail\Database\Database;
-use Hail\Util\Serialize;
 
 abstract class AbstractCache implements CachedDBInterface
 {
@@ -62,7 +61,7 @@ abstract class AbstractCache implements CachedDBInterface
             return $this->name = $name;
         }
 
-        return $this->name = \sha1(\Serialize::encode([$name, $arguments]));
+        return $this->name = \sha1(\Serializer::encode([$name, $arguments]));
     }
 
     /**

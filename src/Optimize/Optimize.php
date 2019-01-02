@@ -3,7 +3,7 @@
 namespace Hail\Optimize;
 
 use Hail\Optimize\Adapter\{
-    Apcu, PCache, Redis, WinCache, Yac
+    Apcu, Redis, WinCache, Yac
 };
 
 /**
@@ -16,7 +16,6 @@ class Optimize
     private const ADAPTERS = [
         'yac' => Yac::class,
         'apcu' => Apcu::class,
-        'pcache' => PCache::class,
         'wincache' => WinCache::class,
         'redis' => Redis::class,
     ];

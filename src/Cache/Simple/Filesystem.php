@@ -3,7 +3,6 @@
 namespace Hail\Cache\Simple;
 
 use Hail\Factory\Storage;
-use Hail\Util\Serialize;
 use Hail\Filesystem\{
     FilesystemInterface,
     MountManager
@@ -106,7 +105,7 @@ class Filesystem extends AbstractAdapter
             }
 
             $content = \substr($content, 9, -3);
-            $data = \Serialize::decode($content);
+            $data = \Serializer::decode($content);
         } catch (\Exception $e) {
             return null;
         }
@@ -142,7 +141,7 @@ class Filesystem extends AbstractAdapter
         }
 
         $filename = $this->getFilename($key);
-        $content = '<?php /* ' . \Serialize::encode([
+        $content = '<?php /* ' . \Serializer::encode([
                 'value' => $value,
                 'expire' => $ttl,
             ]) . ' */';

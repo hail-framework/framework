@@ -2,7 +2,6 @@
 namespace Hail\Factory;
 
 use Hail\Facade\Config;
-use Hail\Util\Serialize;
 
 abstract class AbstractFactory
 {
@@ -22,6 +21,6 @@ abstract class AbstractFactory
             return [$prefix . 'default', $defaultConfig];
         }
 
-        return [$prefix . \Serialize::encode($config), $config + $defaultConfig];
+        return [$prefix . \Serializer::encode($config), $config + $defaultConfig];
     }
 }

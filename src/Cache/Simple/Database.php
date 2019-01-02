@@ -3,7 +3,6 @@
 namespace Hail\Cache\Simple;
 
 use Hail\Factory\Database as DatabaseFactory;
-use Hail\Util\Serialize;
 
 /**
  * Database cache provider.
@@ -85,7 +84,7 @@ class Database extends AbstractAdapter
 			return null;
 		}
 
-		return \Serialize::decode($data[$valueField]);
+		return \Serializer::decode($data[$valueField]);
 	}
 
 	/**
@@ -106,7 +105,7 @@ class Database extends AbstractAdapter
 		foreach ($values as $k => $v) {
 			$data[] = [
 				$keyField => $k,
-				$valueField => \Serialize::encode($v),
+				$valueField => \Serializer::encode($v),
 				$expireField => $expire,
 			];
 		}
@@ -140,7 +139,7 @@ class Database extends AbstractAdapter
 				continue;
 			}
 
-			$foundItems[$v[$keyField]] = \Serialize::decode($v[$valueField]);
+			$foundItems[$v[$keyField]] = \Serializer::decode($v[$valueField]);
 		}
 
 		return $foundItems;
@@ -188,7 +187,7 @@ class Database extends AbstractAdapter
 
 		$data = [
 			$keyField => $key,
-			$valueField => \Serialize::encode($value),
+			$valueField => \Serializer::encode($value),
 			$expireField => $expire,
 		];
 

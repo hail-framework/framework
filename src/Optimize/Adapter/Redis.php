@@ -5,7 +5,6 @@ namespace Hail\Optimize\Adapter;
 \defined('PHP_REDIS_EXTENSION') || \define('PHP_REDIS_EXTENSION', \extension_loaded('redis'));
 
 use Hail\Optimize\AdapterInterface;
-use Hail\Util\Serialize;
 
 class Redis implements AdapterInterface
 {
@@ -79,7 +78,7 @@ class Redis implements AdapterInterface
             return false;
         }
 
-        return \Serialize::decode($value);
+        return \unserialize($value, ['allowed_classes' => false]);
     }
 
     public function setMultiple(array $values, int $ttl = 0)
@@ -100,6 +99,6 @@ class Redis implements AdapterInterface
 
     public function set(string $key, $value, int $ttl = 0)
     {
-        return $this->redis->set($key, \Serialize::encode($value), $ttl);
+        return $this->redis->set($key, \serialize($value), $ttl);
     }
 }

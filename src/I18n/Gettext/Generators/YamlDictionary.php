@@ -4,7 +4,6 @@ namespace Hail\I18n\Gettext\Generators;
 
 use Hail\I18n\Gettext\Translations;
 use Hail\I18n\Gettext\Utils\DictionaryTrait;
-use Hail\Util\Yaml as YamlDumper;
 
 class YamlDictionary extends Generator
 {
@@ -23,7 +22,7 @@ class YamlDictionary extends Generator
     {
         $options += static::$options;
 
-        return YamlDumper::dump(
+        return \Seralizer::yaml()->encode(
             self::toArray($translations, $options['includeHeaders']),
             $options['inline'],
             $options['indent']
