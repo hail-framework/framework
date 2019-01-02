@@ -39,7 +39,7 @@ class Framework
 
         Env::load($basePath);
 
-        $config = new Config($basePath);
+        $config = new Config();
 
         if (!\class_exists('\Container', false)) {
             require self::compileContainer($config);
