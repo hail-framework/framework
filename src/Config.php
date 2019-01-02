@@ -34,9 +34,9 @@ class Config implements \ArrayAccess
      */
     protected $folder;
 
-    public function __construct(string $folder)
+    public function __construct(string $folder = null)
     {
-        $this->folder = $folder;
+        $this->folder = $folder ?? \base_path('config') ;
     }
 
     /**
@@ -276,7 +276,7 @@ class Config implements \ArrayAccess
     protected function getFile(string $space): ?string
     {
         foreach (['.php', '.yml', '.yaml'] as $ext) {
-            $real = \absolute_path($this->folder, 'config', $space . $ext);
+            $real = \absolute_path($this->folder, $space . $ext);
             if (\file_exists($real)) {
                 return $real;
             }
