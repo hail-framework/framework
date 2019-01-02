@@ -17,8 +17,6 @@ namespace Hail\Util;
  *
  */
 
-use Hail\Util\Closure\Serializer;
-
 /**
  * Class Serialize
  *
@@ -42,7 +40,7 @@ class Serialize
     private const FUNCTION = 'function';
     private const ARGS = 'args';
 
-    private static $set = [
+    private const SET = [
         self::MSGPACK => [
             self::EXTENSION => 'msgpack',
             self::ENCODER => '\msgpack_pack',
@@ -83,32 +81,54 @@ class Serialize
         ],
     ];
 
-    private static $default = self::SERIALIZE;
+    /**
+     * @var string
+     */
+    private $default;
 
-    public static function default(?string $type): void
+    /**
+     * @var string
+     */
+    private $type;
+
+    private $once = false;
+
+    public function __construct(?string $type)
     {
-        if ($type === null) {
-            return;
-        }
-
-        self::$default = self::check($type);
+        $this->type($type ?? \env('SERIALIZE_TYPE'));
     }
 
-    private static function check(string $type): string
+    public function type(string $type): self
     {
-        if (!isset(self::$set[$type])) {
+        $this->type = $this->check($type);
+
+        return $this;
+    }
+
+    public function once(string $type): self
+    {
+        $this->default = $this->type;
+        $this->type = $this->check($type);
+        $this->once = true;
+
+        return $this;
+    }
+
+    private function check(string $type): string
+    {
+        if (!isset(self::SET[$type])) {
             throw new \InvalidArgumentException('Serialize type not defined: ' . $type);
         }
 
-        if (isset(self::$set[$type][self::EXTENSION])) {
-            $extension = self::$set[$type][self::EXTENSION];
+        if (isset(self::SET[$type][self::EXTENSION])) {
+            $extension = self::SET[$type][self::EXTENSION];
             if (!\extension_loaded($extension)) {
                 throw new \LogicException('Extension not loaded: ' . $extension);
             }
         }
 
-        if (isset(self::$set[$type][self::CLASSNAME])) {
-            $class = self::$set[$type][self::CLASSNAME];
+        if (isset(self::SET[$type][self::CLASSNAME])) {
+            $class = self::SET[$type][self::CLASSNAME];
             if (!\class_exists($class)) {
                 throw new \LogicException('Class not exists: ' . $class);
             }
@@ -117,85 +137,89 @@ class Serialize
         return $type;
     }
 
-    private static function run(string $functionType, $value, string $type = null)
+    /**
+     * @param string $functionType
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    private function run(string $functionType, $value)
     {
-        if ($type === null || $type === self::$default) {
-            $type = self::$default;
-        } else {
-            $type = self::check($type);
-        }
-
-        $fn = self::$set[$type][$functionType];
+        $fn = self::SET[$this->type][$functionType];
+        $args = [];
         if (\is_array($fn)) {
             [
                 self::FUNCTION => $fn,
                 self::ARGS => $args,
             ] = $fn;
-
-            if ($args !== []) {
-                return $fn($value, ...$args);
-            }
         }
 
-        return $fn($value);
+        if ($args !== []) {
+            $return = $fn($value, ...$args);
+        } else {
+            $return = $fn($value);
+        }
+
+        if ($this->once) {
+            $this->type = $this->default;
+            $this->once = false;
+            $this->default = null;
+        }
+
+        return $return;
     }
 
     /**
-     * @param mixed       $value
-     * @param string|null $type
+     * @param mixed $value
      *
      * @return string
      */
-    public static function encode($value, string $type = null): string
+    public function encode($value): string
     {
-        return self::run(self::ENCODER, $value, $type);
+        return $this->run(self::ENCODER, $value);
     }
 
     /**
      * @param string      $value
-     * @param string|null $type
      *
      * @return mixed
      */
-    public static function decode(string $value, string $type = null)
+    public function decode(string $value)
     {
-        return self::run(self::DECODER, $value, $type);
+        return $this->run(self::DECODER, $value);
     }
 
     /**
-     * @param string      $value
-     * @param string|null $type
+     * @param string $value
      *
      * @return string
      */
-    public static function encodeToBase64($value, string $type = null): string
+    public function encodeToBase64($value): string
     {
         return \base64_encode(
-            self::run(self::ENCODER, $value, $type)
+            $this->run(self::ENCODER, $value)
         );
     }
 
     /**
-     * @param string      $value
-     * @param string|null $type
+     * @param string $value
      *
      * @return mixed
      */
-    public static function decodeFromBase64(string $value, string $type = null)
+    public function decodeFromBase64(string $value)
     {
-        return self::run(self::DECODER, \base64_decode($value), $type);
+        return $this->run(self::DECODER, \base64_decode($value));
     }
 
     /**
-     * @param array       $array
-     * @param string|null $type
+     * @param array $array
      *
      * @return array
      */
-    public static function encodeArray(array $array, string $type = null): array
+    public function encodeArray(array $array): array
     {
         foreach ($array as &$v) {
-            $v = self::run(self::ENCODER, $v, $type);
+            $v = $this->run(self::ENCODER, $v);
         }
 
         return $array;
@@ -207,10 +231,10 @@ class Serialize
      *
      * @return array
      */
-    public static function decodeArray(array $array, string $type = null): array
+    public function decodeArray(array $array): array
     {
         foreach ($array as &$v) {
-            $v = self::run(self::DECODER, $v, $type);
+            $v = $this->run(self::DECODER, $v);
         }
 
         return $array;
@@ -218,14 +242,13 @@ class Serialize
 
     /**
      * @param array       $array
-     * @param string|null $type
      *
      * @return array
      */
-    public static function encodeArrayToBase64(array $array, string $type = null): array
+    public function encodeArrayToBase64(array $array): array
     {
         foreach ($array as &$v) {
-            $v = \base64_encode(self::run(self::ENCODER, $v, $type));
+            $v = \base64_encode($this->run(self::ENCODER, $v));
         }
 
         return $array;
@@ -233,40 +256,16 @@ class Serialize
 
     /**
      * @param array       $array
-     * @param string|null $type
      *
      * @return array
      */
-    public static function decodeArrayFromBase64(array $array, string $type = null): array
+    public function decodeArrayFromBase64(array $array): array
     {
         foreach ($array as &$v) {
-            $v = self::run(self::DECODER, \base64_decode($v), $type);
+            $v = $this->run(self::DECODER, \base64_decode($v));
         }
 
         return $array;
-    }
-
-    /**
-     * @param \Closure    $data
-     * @param string|null $type
-     *
-     * @return string
-     */
-    public static function encodeClosure(\Closure $data, string $type = null): string
-    {
-        return Serializer::serialize($data, $type);
-    }
-
-    /**
-     * @param string      $data
-     * @param string|null $type
-     *
-     * @return \Closure
-     */
-    public static function decodeClosure(string $data, string $type = null): \Closure
-    {
-        return Serializer::unserialize($data, $type);
     }
 }
 
-Serialize::default(\env('SERIALIZE_TYPE'));

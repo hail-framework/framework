@@ -98,7 +98,7 @@ class MongoDB extends AbstractAdapter
 			return null;
 		}
 
-		return Serialize::decode($document[self::DATA_FIELD]->bin);
+		return \Serialize::decode($document[self::DATA_FIELD]->bin);
 	}
 
 	/**
@@ -133,7 +133,7 @@ class MongoDB extends AbstractAdapter
 					'$set' => [
 						self::EXPIRATION_FIELD => $ttl > 0 ? new MongoDate(\time() + $ttl) : null,
 						self::DATA_FIELD => new MongoBinData(
-							Serialize::encode($value), MongoBinData::BYTE_ARRAY
+							\Serialize::encode($value), MongoBinData::BYTE_ARRAY
 						),
 					],
 				],

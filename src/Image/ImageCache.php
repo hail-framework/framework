@@ -127,8 +127,8 @@ class ImageCache
      */
     public function checksum()
     {
-        $properties = Serialize::encode($this->properties);
-        $calls = Serialize::encode($this->getSanitizedCalls());
+        $properties = \Serialize::encode($this->properties);
+        $calls = \Serialize::encode($this->getSanitizedCalls());
 
         return \md5($properties . $calls);
     }
@@ -188,12 +188,53 @@ class ImageCache
         foreach ($calls as &$call) {
             foreach ($call['arguments'] as &$argument) {
                 if ($argument instanceof \Closure) {
-                    $argument = Serialize::encodeClosure($argument);
+                    $argument = $this->clousureSign($argument);
                 }
             }
         }
 
         return $calls;
+    }
+
+    protected function clousureSign(\Closure $closure): string
+    {
+        $reflection = new \ReflectionClosure($closure);
+        $scope = $reflection->getClosureScopeClass();
+
+        $data = [
+            'reflection' => $reflection,
+            'code' => $reflection->getCode(),
+            'hasThis' => $reflection->isBindingRequired(),
+            'context' => $reflection->getUseVariables(),
+            'hasRefs' => false,
+            'binding' => $reflection->getClosureThis(),
+            'scope' => $scope ? $scope->getName() : null,
+            'isStatic' => $reflection->isStatic(),
+        ];
+
+        if (!$data['hasThis']) {
+            $data['binding'] = null;
+        }
+
+        // Remove data about the closure that does not get serialized.
+        $data = \array_intersect_key($data, [
+            'code' => true,
+            'context' => true,
+            'binding' => true,
+            'scope' => true,
+            'isStatic' => true,
+        ]);
+
+        // Wrap any other closures within the context.
+        foreach ($data['context'] as &$value) {
+            if ($value instanceof \Closure) {
+                $value = ($value === $closure)
+                    ? '{{RECURSION}}'
+                    : $this->clousureSign($value);
+            }
+        }
+
+        return serialize($data);
     }
 
     /**

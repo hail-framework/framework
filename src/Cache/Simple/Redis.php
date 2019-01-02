@@ -44,7 +44,7 @@ class Redis extends AbstractAdapter
             return null;
         }
 
-        return Serialize::decode($value);
+        return \Serialize::decode($value);
     }
 
     /**
@@ -57,14 +57,14 @@ class Redis extends AbstractAdapter
         if ($ttl > 0) {
             // Keys have lifetime, use SETEX for each of them
             foreach ($values as $key => $value) {
-                if (!$this->redis->setEx($key, $ttl, Serialize::encode($value))) {
+                if (!$this->redis->setEx($key, $ttl, \Serialize::encode($value))) {
                     $success = false;
                 }
             }
         } else {
             // No lifetime, use MSET
             $success = $this->redis->mSet(
-                Serialize::encodeArray($values)
+                \Serialize::encodeArray($values)
             );
         }
 
@@ -82,7 +82,7 @@ class Redis extends AbstractAdapter
         $foundItems = [];
         foreach ($fetchedItems as $key => $value) {
             if (false !== $value || $this->redis->exists($key)) {
-                $foundItems[$key] = Serialize::decode($value);
+                $foundItems[$key] = \Serialize::decode($value);
             }
         }
 
@@ -102,7 +102,7 @@ class Redis extends AbstractAdapter
      */
     protected function doSet(string $key, $value, int $ttl = 0)
     {
-        $data = Serialize::encode($value);
+        $data = \Serialize::encode($value);
         if ($ttl > 0) {
             return $this->redis->setEx($key, $ttl, $data);
         }

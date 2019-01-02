@@ -79,7 +79,7 @@ class Riak extends AbstractAdapter
 				return null;
 			}
 
-			return Serialize::decode($object->getContent());
+			return \Serialize::decode($object->getContent());
 		} catch (Exception\RiakException $e) {
 			// Covers:
 			// - Riak\ConnectionException
@@ -134,7 +134,7 @@ class Riak extends AbstractAdapter
 		try {
 			$object = new Object($key);
 
-			$object->setContent(Serialize::encode($value));
+			$object->setContent(\Serialize::encode($value));
 
 			if ($ttl > 0) {
 				$object->addMetadata(self::EXPIRES_HEADER, (string) (\time() + $ttl));

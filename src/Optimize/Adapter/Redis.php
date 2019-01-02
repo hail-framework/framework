@@ -79,7 +79,7 @@ class Redis implements AdapterInterface
             return false;
         }
 
-        return Serialize::decode($value);
+        return \Serialize::decode($value);
     }
 
     public function setMultiple(array $values, int $ttl = 0)
@@ -100,6 +100,6 @@ class Redis implements AdapterInterface
 
     public function set(string $key, $value, int $ttl = 0)
     {
-        return $this->redis->set($key, Serialize::encode($value), $ttl);
+        return $this->redis->set($key, \Serialize::encode($value), $ttl);
     }
 }

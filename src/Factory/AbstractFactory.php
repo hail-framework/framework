@@ -22,6 +22,6 @@ abstract class AbstractFactory
             return [$prefix . 'default', $defaultConfig];
         }
 
-        return [$prefix . Serialize::encode($config), $config + $defaultConfig];
+        return [$prefix . \Serialize::encode($config), $config + $defaultConfig];
     }
 }
