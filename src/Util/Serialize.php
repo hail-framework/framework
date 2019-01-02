@@ -23,7 +23,7 @@ namespace Hail\Util;
  * @package Hail\Util
  * @author  Feng Hao <flyinghail@msn.com>
  */
-class Serialize
+final class Serialize
 {
     public const SWOOLE = 'swoole';
     public const SWOOLE_FAST = 'swoole_fast';
@@ -180,7 +180,7 @@ class Serialize
     }
 
     /**
-     * @param string      $value
+     * @param string $value
      *
      * @return mixed
      */
@@ -241,7 +241,7 @@ class Serialize
     }
 
     /**
-     * @param array       $array
+     * @param array $array
      *
      * @return array
      */
@@ -255,7 +255,7 @@ class Serialize
     }
 
     /**
-     * @param array       $array
+     * @param array $array
      *
      * @return array
      */
@@ -268,4 +268,3 @@ class Serialize
         return $array;
     }
 }
-

@@ -15,10 +15,10 @@ class Json
      * @return string
      * @throws JsonException if there is any encoding error
      */
-    public static function encode(
+    public function encode(
         $value,
-        $options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION
-    ) {
+        int $options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION
+    ): string {
         $json = \json_encode($value, $options);
         if (JSON_ERROR_NONE !== ($error = \json_last_error())) {
             throw new JsonException(\json_last_error_msg(), $error);
@@ -36,7 +36,7 @@ class Json
      * @return mixed the PHP data
      * @throws JsonException if there is any decoding error
      */
-    public static function decode(string $json, $asArray = true)
+    public function decode(string $json, bool $asArray = true)
     {
         $decode = \json_decode($json, $asArray, 512, JSON_BIGINT_AS_STRING);
         if (JSON_ERROR_NONE !== ($error = \json_last_error())) {
