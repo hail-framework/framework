@@ -23,7 +23,7 @@ class Yaml implements AdapterInterface
         return new static();
     }
 
-    protected static function constant(string $const)
+    public static function constant(string $const)
     {
         if (\defined($const)) {
             return \constant($const);
