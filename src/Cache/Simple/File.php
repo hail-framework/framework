@@ -19,6 +19,8 @@
 
 namespace Hail\Cache\Simple;
 
+\defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
+
 /**
  * Base file cache driver.
  *
@@ -190,7 +192,7 @@ class File extends AbstractAdapter
 		// so some changes will not be caught.
 		// This fix immediately invalidates that opcode cache after a file is written,
 		// so that future includes are not using the stale opcode cached file.
-		if (\function_exists('\opcache_invalidate')) {
+		if (OPCACHE_INVALIDATE) {
 			\opcache_invalidate($filename, true);
 		}
 

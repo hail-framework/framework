@@ -6,6 +6,8 @@
 
 namespace Hail;
 
+\defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
+
 /**
  * Class AliasLoader
  *
@@ -98,7 +100,7 @@ class AliasLoader
 
         \file_put_contents($path, $this->formatFacadeCode($alias));
 
-        if (\function_exists('\opcache_invalidate')) {
+        if (OPCACHE_INVALIDATE) {
             \opcache_invalidate($path, true);
         }
 

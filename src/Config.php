@@ -2,6 +2,8 @@
 
 namespace Hail;
 
+\defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
+
 use Hail\Optimize\OptimizeTrait;
 use Hail\Util\{
     Arrays, ArrayTrait
@@ -33,10 +35,12 @@ class Config implements \ArrayAccess
      * @var string
      */
     protected $folder;
+    protected $cacheFolder;
 
-    public function __construct(string $folder = null)
+    public function __construct(string $folder = null, string $cacheFolder = null)
     {
-        $this->folder = $folder ?? \base_path('config') ;
+        $this->folder = $folder ?? \base_path('config');
+        $this->cacheFolder = $cacheFolder ?? \runtime_path('config');
     }
 
     /**
@@ -113,7 +117,7 @@ class Config implements \ArrayAccess
             return (array) $config;
         }
 
-        $config = static::loadFromFile($file);
+        $config = $this->loadFile($file);
 
         static::optimizeSet($space, $config, $file);
 
@@ -121,11 +125,11 @@ class Config implements \ArrayAccess
     }
 
     /**
-     * @param string $file from static::foundFile, already make sure file is exists
+     * @param string $file
      *
      * @return array|mixed
      */
-    protected static function loadFromFile(?string $file)
+    protected function loadFile(?string $file)
     {
         if ($file === null) {
             return [];
@@ -133,7 +137,7 @@ class Config implements \ArrayAccess
 
         $ext = \strrchr($file, '.');
         if ($ext === '.yml' || $ext === '.yaml') {
-            return static::loadYaml($file, $ext);
+            return $this->loadYaml($file, $ext);
         }
 
         return require $file;
@@ -146,23 +150,23 @@ class Config implements \ArrayAccess
      *
      * @return array|mixed
      */
-    protected static function loadYaml($file, $ext)
+    protected function loadYaml($file, $ext)
     {
         $filename = \basename($file);
-        $dir = \runtime_path('yaml');
+        $dir = $this->cacheFolder;
 
         $cache = $dir . DIRECTORY_SEPARATOR . substr($filename, 0, -\strlen($ext)) . '.php';
 
         if (@\filemtime($cache) < \filemtime($file)) {
-            $content = \Seralizer::yaml()->decodeFile($file);
+            $content = \Yaml::decodeFile($file);
 
             if (!\is_dir($dir) && !@\mkdir($dir, 0755) && !\is_dir($dir)) {
                 throw new \RuntimeException('Temp directory permission denied');
             }
 
-            \file_put_contents($cache, '<?php return ' . static::parseArrayToCode($content) . ';');
+            \file_put_contents($cache, '<?php return ' . $this->parseArrayToCode($content) . ';');
 
-            if (\function_exists('\opcache_invalidate')) {
+            if (OPCACHE_INVALIDATE) {
                 \opcache_invalidate($cache, true);
             }
         }
@@ -170,7 +174,7 @@ class Config implements \ArrayAccess
         return include $cache;
     }
 
-    protected static function parseArrayToCode(array $array, $level = 0): string
+    protected function parseArrayToCode(array $array, $level = 0): string
     {
         $pad = '';
         if ($level > 0) {
@@ -187,9 +191,9 @@ class Config implements \ArrayAccess
             }
 
             if (\is_array($v)) {
-                $ret .= static::parseArrayToCode($v, $level + 1);
+                $ret .= $this->parseArrayToCode($v, $level + 1);
             } else {
-                $ret .= static::parseValue($v);
+                $ret .= $this->parseValue($v);
             }
 
             $ret .= ',' . "\n";
@@ -205,7 +209,7 @@ class Config implements \ArrayAccess
      *
      * @return mixed
      */
-    protected static function parseValue($value)
+    protected function parseValue($value)
     {
         if ($value instanceof \DateTime) {
             return 'new \\DateTime(' . \var_export($value->format('c'), true) . ')';
@@ -228,16 +232,16 @@ class Config implements \ArrayAccess
 
             $args = \explode(',', $matches[2]);
             foreach ($args as &$a) {
-                $a = static::parseConstant(\trim($a));
+                $a = $this->parseConstant(\trim($a));
             }
 
             return $function . '(' . \implode(', ', $args) . ')';
         }
 
-        return static::parseConstant($value);
+        return $this->parseConstant($value);
     }
 
-    protected static function parseConstant(string $value)
+    protected function parseConstant(string $value)
     {
         $value = \var_export($value, true);
 

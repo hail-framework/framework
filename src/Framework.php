@@ -2,6 +2,8 @@
 
 namespace Hail;
 
+\defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
+
 use Hail\{
     Facade\Facade,
     Container\Compiler,
@@ -77,7 +79,7 @@ class Framework
 
             \file_put_contents($file, $compiler->compile());
 
-            if (\function_exists('\opcache_invalidate')) {
+            if (OPCACHE_INVALIDATE) {
                 \opcache_invalidate($file, true);
             }
         }

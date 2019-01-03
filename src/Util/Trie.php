@@ -4,6 +4,8 @@ namespace Hail\Util;
 
 use Hail\Optimize\OptimizeTrait;
 
+\defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
+
 /**
  * Class Trie
  *
@@ -64,7 +66,7 @@ class Trie
                 '<?php return ' . \var_export($this->tree, true)
             );
 
-            if (\function_exists('\opcache_invalidate')) {
+            if (OPCACHE_INVALIDATE) {
                 \opcache_invalidate($this->cache, true);
             }
 
