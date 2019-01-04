@@ -105,11 +105,6 @@ class Compiler
                 continue;
             }
 
-            if (isset($v['alias'])) {
-                $alias[$k] = $v['alias'];
-                continue;
-            }
-
             $to = (array) ($v['to'] ?? []);
             if (isset($v['class|to']) && $v['class|to'] !== $k) {
                 $to[] = $v['class|to'];
@@ -117,6 +112,15 @@ class Compiler
 
             foreach ($to as $ref) {
                 $alias[$ref] = $k;
+            }
+
+            if (isset($v['alias'])) {
+                if (\strpos($v['alias'], '->') > 0) {
+                    $this->toMethod($k, $this->parseStr('@' . $v['alias']));
+                } else {
+                    $alias[$k] = $v['alias'];
+                }
+                continue;
             }
 
             $arguments = '';
