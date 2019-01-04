@@ -11,6 +11,8 @@ use Psr\Http\Message\UriInterface;
  * Class Response
  *
  * @package Hail\Facade
+ * @see \Hail\Http\Response
+ *
  * @method static int|null getStatus()
  * @method static Http\Response setStatus(int $code, string $reason = null)
  * @method static string|null getReason()

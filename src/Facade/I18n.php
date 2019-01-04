@@ -5,6 +5,7 @@ namespace Hail\Facade;
  * Class I18n
  *
  * @package Hail\Facade
+ * @see \Hail\I18n\I18n
  *
  * @method static void init(string $directory, string $domain, string $locale)
  * @method static string gettext(string $msg)

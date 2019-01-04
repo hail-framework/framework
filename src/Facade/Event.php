@@ -1,16 +1,17 @@
 <?php
 namespace Hail\Facade;
 
-use Psr\EventManager\EventInterface;
 use Hail\Event\{
 	EventManager,
-	EventSubscriberInterface
+	EventSubscriberInterface,
+    Psr\EventInterface
 };
 
 /**
  * Class Event
  *
  * @package Hail\Facade
+ * @see \Hail\Event\EventManager
  *
  * @method static bool attach(string $event, callable $callback, $priority = 0)
  * @method static bool detach(string $event, callable $callback)

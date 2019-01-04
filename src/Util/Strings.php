@@ -685,7 +685,7 @@ class Strings
      * @return array|null
      * @throws RegexpException
      */
-    public function match(string $subject, string $pattern, int $flags = 0, int $offset = 0)
+    public function match(string $subject, string $pattern, int $flags = 0, int $offset = 0): ?array
     {
         if ($offset > \strlen($subject)) {
             return null;

@@ -12,6 +12,7 @@ use Hail\Filesystem\{
  * Class Filesystem
  *
  * @package Hail\Facade
+ * @see \Hail\Filesystem\MountManager
  *
  * @method static AdapterInterface getAdapter($prefix)
  * @method static array getConfig($prefix)

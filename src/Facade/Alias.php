@@ -5,6 +5,7 @@ namespace Hail\Facade;
  * Class Alias
  *
  * @package Hail\Facade
+ * @see \Hail\AliasLoader
  *
  * @method static void alias(string $class, string $alias)
  * @method static array getAliases()

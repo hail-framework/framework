@@ -14,6 +14,7 @@ use Psr\Http\Message\{
  * Class Browser
  *
  * @package Hail\Facade
+ * @see \Hail\Http\Browser
  *
  * @method static ResponseInterface get(string $url, array $headers = [])
  * @method static ResponseInterface post(string $url, string $body = '', array $headers = [])

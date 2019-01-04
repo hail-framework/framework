@@ -1,10 +1,12 @@
 <?php
+
 namespace Hail\Facade;
 
 /**
  * Class Validator
  *
  * @package Hail\Facade
+ * @see     \Hail\Util\Validator
  *
  * @method static \Hail\Util\Validator withData(array $data, array $fields = [])
  * @method static \Hail\Util\Validator data(array $data, array $fields = [])

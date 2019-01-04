@@ -6,6 +6,7 @@ namespace Hail\Facade;
  * Class DB
  *
  * @package Hail\Facade
+ * @see \Hail\Database\Database
  *
  * @method static bool|\PDOStatement query(string $sql)
  * @method static bool|int exec(string $sql)

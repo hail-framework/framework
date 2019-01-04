@@ -5,6 +5,7 @@ namespace Hail\Facade;
  * Class Cache
  *
  * @package Hail\Facade
+ * @see \Hail\Cache\Simple\Chain
  *
  * @method static void setNamespace(string $namespace)
  * @method static string getNamespace()

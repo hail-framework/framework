@@ -9,6 +9,7 @@ use Hail\Session\Segment;
  * Class Session
  *
  * @package Hail\Facade
+ * @see \Hail\Session\Session
  *
  * @method static void setHandler(array $config)
  * @method static Segment getSegment($name)

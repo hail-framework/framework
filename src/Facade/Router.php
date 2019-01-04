@@ -5,6 +5,7 @@ namespace Hail\Facade;
  * Class Router
  *
  * @package Hail\Facade
+ * @see \Hail\Router
  *
  * @method static void addRoute(array $methods, string $route, array $handler)
  * @method static array|null getOptions(string $url)

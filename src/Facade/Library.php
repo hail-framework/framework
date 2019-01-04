@@ -6,6 +6,7 @@ namespace Hail\Facade;
  *
  * @package Hail\Facade
  * @author  Feng Hao <flyinghail@msn.com>
+ * @see \Hail\Util\ObjectFactory
  *
  * @method static Object get(string $key)
  * @method static bool has(string $key)

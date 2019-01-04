@@ -14,6 +14,7 @@ use Hail\Serialize\Adapter\{
  * Class Serialize
  *
  * @package Hail\Facade
+ * @see \Hail\Serialize\Serializer
  *
  * @method static string encode(mixed $value)
  * @method static mixed decode(string $value)

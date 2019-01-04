@@ -25,8 +25,6 @@ use Hail\Facade\DI;
  * @property-read Util\Arrays                      $arrays
  * @property-read Util\Crypto                      $crypto
  * @property-read Util\Generators                  $generators
- * @property-read Util\Json                        $json
- * @property-read Serialize\Serializer             $serialize
  * @property-read Util\Strings                     $strings
  * @property-read Filesystem\MountManager          $filesystem
  * @property-read \ServiceFactory                  $service
@@ -37,6 +35,9 @@ use Hail\Facade\DI;
  * @property-read Http\Request                     $request
  * @property-read Http\Response                    $response
  * @property-read Swoole\Http\Server               $httpServer
+ * @property-read Serialize\Serializer             $serializer
+ * @property-read Serialize\Adapter\Json           $json
+ * @property-read Serialize\Adapter\Yaml           $yaml
  */
 Trait DITrait
 {

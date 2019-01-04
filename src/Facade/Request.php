@@ -11,6 +11,7 @@ use Psr\Http\Message\{
  * Class Request
  *
  * @package Hail\Facade
+ * @see \Hail\Http\Request
  *
  * @method static array inputs(array $value = null)
  * @method static mixed input(string $name, $value = null)
