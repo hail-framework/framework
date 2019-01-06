@@ -314,7 +314,8 @@ class Database
             return true;
         }
 
-        if ($this->pdo->exec('USE `' . $db . '`') !== false) {
+        $pdo = $this->pdo ?? $this->getPdo();
+        if ($pdo->exec('USE `' . $db . '`') !== false) {
             $this->database = $db;
             return true;
         }
