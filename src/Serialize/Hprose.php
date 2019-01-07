@@ -4,15 +4,13 @@ namespace Hail\Serialize;
 
 \defined('HPROSE_EXTENSION') || \define('HPROSE_EXTENSION', \extension_loaded('hprose'));
 
-class Hprose implements AdapterInterface
+class Hprose
 {
-    public static function getInstance(): AdapterInterface
+    public function __construct()
     {
         if (!HPROSE_EXTENSION) {
             throw new \LogicException('Hprose extension not loaded');
         }
-
-        return new static();
     }
 
     public function encode($value): string

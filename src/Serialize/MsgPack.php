@@ -4,15 +4,13 @@ namespace Hail\Serialize;
 
 \defined('MSGPACK_EXTENSION') || \define('MSGPACK_EXTENSION', \extension_loaded('msgpack'));
 
-class MsgPack implements AdapterInterface
+class MsgPack
 {
-    public static function getInstance(): AdapterInterface
+    public function __construct()
     {
         if (!MSGPACK_EXTENSION) {
             throw new \LogicException('MsgPack extension not loaded');
         }
-
-        return new static();
     }
 
     public function encode($value): string

@@ -4,12 +4,8 @@ namespace Hail\Serialize;
 
 use Hail\Serialize\Exception\JsonException;
 
-class Json implements AdapterInterface
+class Json
 {
-    public static function getInstance(): AdapterInterface
-    {
-        return new static();
-    }
 
     /**
      * Encodes the given value into a JSON string.

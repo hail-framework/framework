@@ -2,13 +2,8 @@
 
 namespace Hail\Serialize;
 
-class Serialize implements AdapterInterface
+class Serialize
 {
-    public static function getInstance(): AdapterInterface
-    {
-        return new static();
-    }
-
     public function encode($value): string
     {
         return \serialize($value);

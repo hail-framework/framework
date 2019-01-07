@@ -37,7 +37,7 @@ namespace Hail\Serialize;
  */
 final class Serializer
 {
-    public const ADAPTERS = [
+    public const MAP = [
         'msgpack' => MsgPack::class,
         'igbinary' => Igbinary::class,
         'hprose' => Hprose::class,
@@ -47,7 +47,7 @@ final class Serializer
     ];
 
     /**
-     * @var AdapterInterface
+     * @var string
      */
     private $default;
 
@@ -56,26 +56,29 @@ final class Serializer
     {
         $type = $type ?? \env('SERIALIZE_TYPE') ?? 'php';
 
-        $this->default = $this->$type;
+        if (!isset(self::MAP[$type])) {
+            throw new \InvalidArgumentException('Serialize type not defined: ' . $type);
+        }
+
+        $this->default = $type;
     }
 
     public function __get($name)
     {
-        if (!isset(self::ADAPTERS[$name])) {
-            throw new \InvalidArgumentException('Serialize type not defined: ' . $type);
+        if (!isset(self::MAP[$name])) {
+            throw new \InvalidArgumentException('Serialize type not defined: ' . $name);
         }
 
-        $object = new (self::ADAPTERS[$name])();
-        if ($object === null) {
-            throw new \LogicException('Extension not loaded for ' . $name);
-        }
-
-        return $this->$name = $object;
+        return $this->$name = new (self::MAP[$name])();
     }
 
     public function __call($name, $arguments)
     {
-        return $this->$name;
+        if (isset(static::MAP[$name])) {
+            return $this->$name;
+        }
+
+        throw new \BadMethodCallException('Method not defined: ' . $name);
     }
 
     /**
@@ -85,7 +88,9 @@ final class Serializer
      */
     public function encode($value): string
     {
-        return $this->default->encode($value);
+        $name = $this->default;
+
+        return $this->$name->encode($value);
     }
 
     /**
@@ -95,6 +100,8 @@ final class Serializer
      */
     public function decode(string $value)
     {
-        return $this->default->decode($value);
+        $name = $this->default;
+
+        return $this->$name->decode($value);
     }
 }

@@ -10,16 +10,14 @@ if (YAML_EXTENSION && \ini_get('yaml.decode_php')) {
     \ini_set('yaml.decode_php', 0);
 }
 
-class Yaml implements AdapterInterface
+class Yaml
 {
 
-    public static function getInstance(): AdapterInterface
+    public function __construct()
     {
         if (!YAML_EXTENSION && !class_exists(SymfonyYaml::class)) {
             throw new \LogicException('Yaml parser not loaded');
         }
-
-        return new static();
     }
 
     public static function constant(string $const)

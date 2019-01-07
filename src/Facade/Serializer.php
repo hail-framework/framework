@@ -2,7 +2,7 @@
 
 namespace Hail\Facade;
 
-use Hail\Serialize\Adapter\{
+use Hail\Serialize\{
     Hprose,
     Igbinary,
     Json,
