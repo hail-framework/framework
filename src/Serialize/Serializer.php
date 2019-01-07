@@ -2,8 +2,6 @@
 
 namespace Hail\Serialize;
 
-use Hail\Serialize\Adapter\{Hprose, Igbinary, Json, MsgPack, Serialize as PhpSerialize, Yaml};
-
 /**
  * 小数组
  * 尺寸:     msgpack < swoole = swoole(fast) < igbinary < json < hprose < serialize
@@ -24,17 +22,17 @@ use Hail\Serialize\Adapter\{Hprose, Igbinary, Json, MsgPack, Serialize as PhpSer
  * @package Hail\Util
  * @author  Feng Hao <flyinghail@msn.com>
  *
- * @property-read MsgPack      $msgpak
- * @property-read Igbinary     $igbinary
- * @property-read Hprose       $hprose
- * @property-read Json         $json
- * @property-read PhpSerialize $php
- * @property-read Yaml         $yaml
+ * @property-read MsgPack   $msgpak
+ * @property-read Igbinary  $igbinary
+ * @property-read Hprose    $hprose
+ * @property-read Json      $json
+ * @property-read Serialize $php
+ * @property-read Yaml      $yaml
  * @method MsgPack msgpak()
  * @method Igbinary igbinary()
  * @method Hprose hprose()
  * @method Json json()
- * @method PhpSerialize php()
+ * @method Serialize php()
  * @method Yaml yaml()
  */
 final class Serializer
@@ -44,7 +42,7 @@ final class Serializer
         'igbinary' => Igbinary::class,
         'hprose' => Hprose::class,
         'json' => Json::class,
-        'php' => PhpSerialize::class,
+        'php' => Serialize::class,
         'yaml' => Yaml::class,
     ];
 

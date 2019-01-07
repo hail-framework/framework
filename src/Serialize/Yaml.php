@@ -1,8 +1,7 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
+namespace Hail\Serialize;
 
-use Hail\Serialize\AdapterInterface;
 use Symfony\Component\Yaml\Yaml as SymfonyYaml;
 
 \defined('YAML_EXTENSION') || \define('YAML_EXTENSION', \extension_loaded('yaml'));

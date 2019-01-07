@@ -1,8 +1,6 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
-
-use Hail\Serialize\AdapterInterface;
+namespace Hail\Serialize;
 
 \defined('HPROSE_EXTENSION') || \define('HPROSE_EXTENSION', \extension_loaded('hprose'));
 

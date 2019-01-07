@@ -1,8 +1,6 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
-
-use Hail\Serialize\AdapterInterface;
+namespace Hail\Serialize;
 
 \defined('IGBINARY_EXTENSION') || \define('IGBINARY_EXTENSION', \extension_loaded('igbinary'));
 

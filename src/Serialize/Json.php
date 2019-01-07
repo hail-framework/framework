@@ -1,8 +1,7 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
+namespace Hail\Serialize;
 
-use Hail\Serialize\AdapterInterface;
 use Hail\Serialize\Exception\JsonException;
 
 class Json implements AdapterInterface

@@ -1,8 +1,6 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
-
-use Hail\Serialize\AdapterInterface;
+namespace Hail\Serialize;
 
 \defined('MSGPACK_EXTENSION') || \define('MSGPACK_EXTENSION', \extension_loaded('msgpack'));
 

@@ -1,8 +1,6 @@
 <?php
 
-namespace Hail\Serialize\Adapter;
-
-use Hail\Serialize\AdapterInterface;
+namespace Hail\Serialize;
 
 class Serialize implements AdapterInterface
 {
