@@ -34,13 +34,23 @@ class Server
         $server->on('start', [$this, 'onStart']);
         $server->on('workerStart', [$this, 'onWorkerStart']);
         $server->on('request', [$this, 'onReqeust']);
+        $server->on('shutdown', [$this, 'onShutdown']);
 
         $server->start();
     }
 
-    public function onStart()
+    public function onStart(\Swoole\Server $serv)
     {
         \cli_set_process_title('hail-swoole-http: master');
+
+        \file_put_contents(\runtime_path('swoole_http_master.pid'), $serv->master_pid);
+        \file_put_contents(\runtime_path('swoole_http_manager.pid'), $serv->manager_pid);
+    }
+
+    public function onShutdown()
+    {
+        unlink(\runtime_path('swoole_http_master.pid'));
+        unlink(\runtime_path('swoole_http_manager.pid'));
     }
 
     public function onWorkerStart()
