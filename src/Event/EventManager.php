@@ -10,8 +10,6 @@
 
 namespace Hail\Event;
 
-use Hail\Event\Psr\EventInterface;
-use Hail\Event\Psr\EventManagerInterface;
 
 /**
  * Class EventManager

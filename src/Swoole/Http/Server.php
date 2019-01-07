@@ -8,7 +8,6 @@ use Hail\Http\Factory;
 use Hail\Http\Helpers;
 use Hail\Http\Message\ServerRequest;
 use Hail\Http\Message\Uri;
-use Hail\Promise\Util as Promise;
 use Psr\Http\Message\ServerRequestInterface;
 use Swoole\Http;
 
@@ -80,7 +79,6 @@ class Server
         } catch (\Throwable $e) {
             // do nothing
         } finally {
-            Promise::shutdown();
             $this->app->reset();
             static::$response = null;
 

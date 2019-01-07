@@ -1,5 +1,5 @@
 <?php
-namespace Hail\Event\Psr;
+namespace Hail\Event;
 
 /**
  * Representation of an event

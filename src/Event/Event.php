@@ -2,8 +2,6 @@
 
 namespace Hail\Event;
 
-use Hail\Event\Psr\EventInterface;
-
 /**
  * Event
  *
