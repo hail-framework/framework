@@ -40,8 +40,8 @@ class Crypto
     protected const MAC_BYTE_SIZE = 32;
     protected const KEY_BYTE_SIZE = 32;
     protected const HASH_TYPE = 'sha256';
-    protected const ENCRYPTION_INFO_STRING = 'Hail|V1|KeyForEncryption';
-    protected const AUTHENTICATION_INFO_STRING = 'Hail|V1|KeyForAuthentication';
+    protected const ENCRYPTION_INFO_STRING = 'HAIL|V1|KeyForEncryption';
+    protected const AUTHENTICATION_INFO_STRING = 'HAIL|V1|KeyForAuthentication';
 
     protected const PBKDF2_ITERATIONS = 100000;
 
@@ -60,6 +60,7 @@ class Crypto
     ];
 
     private $default;
+    private $encryption;
 
     public function __construct(array $config)
     {
@@ -67,7 +68,16 @@ class Crypto
             throw new \InvalidArgumentException('Encryption not defined: ' . $config['default']);
         }
 
-        $this->default = $config['default'];
+        $this->default = $config['default'] ?? 'aes256ctr';
+    }
+
+    private function encryption()
+    {
+        if ($this->encryption === null) {
+            $this->encryption = new ($this->default)();
+        }
+
+        return $this->encryption;
     }
 
     public function __get($name)
@@ -117,9 +127,7 @@ class Crypto
     {
         [$authKey, $encryptKey] = $this->deriveKeys($key, $salt);
 
-        $object = $this->{$this->default};
-
-        $cipherText = $object->encrypt($plaintext, $encryptKey, $ad);
+        $cipherText = $this->encryption()->encrypt($plaintext, $encryptKey, $ad);
 
         $cipherText = static::CURRENT_VERSION . $salt . $cipherText;
         $cipherText .= \hash_hmac(static::HASH_TYPE, $cipherText, $authKey, true);
@@ -142,7 +150,7 @@ class Crypto
             throw new CryptoException('Integrity check failed.');
         }
 
-        return $this->{$this->default}->decrypt($encrypted, $encryptKey, $ad);
+        return $this->encryption()->decrypt($encrypted, $encryptKey, $ad);
     }
 
     public function decryptWithPassword(
@@ -161,16 +169,14 @@ class Crypto
             throw new CryptoException('Integrity check failed.');
         }
 
-        return $this->{$this->default}->decrypt($encrypted, $encryptKey, $ad);
+        return $this->encryption()->decrypt($encrypted, $encryptKey, $ad);
     }
 
     private function decryptSplit(string $cipherText): array
     {
-        $object = $this->{$this->default};
-
         $size = \mb_strlen($cipherText, '8bit');
         // VERSION (4 bytes) || SALT (32 bytes) || IV (? bytes) || CIPHERTEXT (varies) || HMAC (32 bytes)
-        if ($size < 68 + $object->ivSize()) {
+        if ($size < 68 + $this->encryption()->ivSize()) {
             throw new CryptoException('Ciphertext is too short.');
         }
 
