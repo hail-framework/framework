@@ -11,9 +11,6 @@ use Hail\Crypto\Exception\CryptoException;
  */
 class AES256GCM
 {
-    //VERSION (4 bytes) || SALT (32 bytes) || IV (12 bytes) || CIPHERTEXT (varies) || HMAC (32 bytes)
-    private const MINIMUM_CIPHERTEXT_SIZE = 80;
-
     private const CIPHER_METHOD = 'aes-256-gcm';
     private const TAG_BYTE_SIZE = 16;
     private const BLOCK_BYTE_SIZE = 12;
@@ -31,9 +28,9 @@ class AES256GCM
         }
     }
 
-    public function minSize(): int
+    public function ivSize(): int
     {
-        return static::MINIMUM_CIPHERTEXT_SIZE;
+        return static::BLOCK_BYTE_SIZE;
     }
 
     public function encrypt(

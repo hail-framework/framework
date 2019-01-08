@@ -6,15 +6,12 @@ use Hail\Crypto\Exception\CryptoException;
 
 class AES256CTR
 {
-    //VERSION (4 bytes) || SALT (32 bytes) || IV (16 bytes) || CIPHERTEXT (varies) || HMAC (32 bytes)
-    private const MINIMUM_CIPHERTEXT_SIZE = 84;
-
     private const CIPHER_METHOD = 'aes-256-ctr';
     private const BLOCK_BYTE_SIZE = 16;
 
-    public function minSize(): int
+    public function ivSize(): int
     {
-        return static::MINIMUM_CIPHERTEXT_SIZE;
+        return static::BLOCK_BYTE_SIZE;
     }
 
     public function encrypt(

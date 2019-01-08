@@ -18,8 +18,6 @@ use Hail\Crypto\Encryption\{
  * @property-read Hash      $hash
  * @property-read Hmac      $hamc
  * @property-read Rsa       $rsa
- * @property-read AES256CTR $aes256ctr
- * @property-read AES256GCM $aes256gcm
  */
 class Crypto
 {
@@ -28,6 +26,9 @@ class Crypto
         'hash' => Hash::class,
         'hmac' => Hmac::class,
         'rsa' => RSA::class,
+    ];
+
+    private const ENCRYPTION = [
         'aes256ctr' => AES256CTR::class,
         'aes256gcm' => AES256GCM::class,
     ];
@@ -62,6 +63,10 @@ class Crypto
 
     public function __construct(array $config)
     {
+        if (!isset(static::ENCRYPTION[$config['default']])) {
+            throw new \InvalidArgumentException('Encryption not defined: ' . $config['default']);
+        }
+
         $this->default = $config['default'];
     }
 
@@ -164,7 +169,8 @@ class Crypto
         $object = $this->{$this->default};
 
         $size = \mb_strlen($cipherText, '8bit');
-        if ($size < $object->minSize()) {
+        // VERSION (4 bytes) || SALT (32 bytes) || IV (? bytes) || CIPHERTEXT (varies) || HMAC (32 bytes)
+        if ($size < 68 + $object->ivSize()) {
             throw new CryptoException('Ciphertext is too short.');
         }
 
