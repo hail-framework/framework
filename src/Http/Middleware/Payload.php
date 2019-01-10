@@ -19,10 +19,10 @@ class Payload implements MiddlewareInterface
 	 * @var callable[]
 	 */
 	protected $parsers = [
-		'application/json' => ['self', 'jsonParser'],
-		'application/x-www-form-urlencoded' => ['self', 'urlEncodeParser'],
-		'multipart/form-data' => ['self', 'multipartParser'],
-		'text/csv' => ['self', 'csvParser'],
+		'application/json' => [self::class, 'jsonParser'],
+		'application/x-www-form-urlencoded' => [self::class, 'urlEncodeParser'],
+		'multipart/form-data' => [self::class, 'multipartParser'],
+		'text/csv' => [self::class, 'csvParser'],
 	];
 
 	/**
