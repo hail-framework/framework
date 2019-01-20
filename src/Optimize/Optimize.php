@@ -6,7 +6,6 @@ use Hail\Optimize\Adapter\{
     Apcu, Redis, WinCache, Yac
 };
 
-\defined('OPTIMIZE_PREFIX') || \define('OPTIMIZE_PREFIX', '');
 
 /**
  * 缓存运算结果，用于性能最大化
@@ -98,7 +97,7 @@ class Optimize
     {
         $list = [];
         foreach ($array as $k => $v) {
-            $list[OPTIMIZE_PREFIX . "{$prefix}|{$k}"] = $v;
+            $list["{$prefix}|{$k}"] = $v;
         }
 
         return $this->adapter->setMultiple($list, $this->expire);
@@ -149,7 +148,7 @@ class Optimize
         }
 
         if ($this->delay > 0 && $file !== null) {
-            $time = OPTIMIZE_PREFIX . "{$prefix}|{$key}|time";
+            $time = "{$prefix}|{$key}|time";
             $check = $this->adapter->get($time);
             $now = \time();
             if ($check !== false && $now >= ($check[0] + $this->delay)) {
@@ -162,7 +161,7 @@ class Optimize
             }
         }
 
-        return $this->adapter->get(OPTIMIZE_PREFIX . "{$prefix}|{$key}");
+        return $this->adapter->get("{$prefix}|{$key}");
     }
 
     public function set(string $prefix, $key, $value, $file = null)
@@ -183,6 +182,6 @@ class Optimize
             );
         }
 
-        return $this->adapter->set(OPTIMIZE_PREFIX . "{$prefix}|{$key}", $value, $this->expire);
+        return $this->adapter->set("{$prefix}|{$key}", $value, $this->expire);
     }
 }
