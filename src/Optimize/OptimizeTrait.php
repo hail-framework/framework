@@ -9,6 +9,8 @@ trait OptimizeTrait
      */
     private static $__optimizeInstance;
 
+    protected static $__prefix = '';
+
     protected static function optimizeInstance(Optimize $object = null): Optimize
     {
         return self::$__optimizeInstance = $object ?? Optimize::getInstance();
@@ -23,8 +25,9 @@ trait OptimizeTrait
     protected static function optimizeGet(string $key, $file = null)
     {
         $object = self::$__optimizeInstance ?? self::optimizeInstance();
+        $prefix = static::$__prefix ? static::$__prefix . '|' . static::class : static::class;
 
-        return $object->get(static::class, $key, $file);
+        return $object->get($prefix, $key, $file);
     }
 
     /**
@@ -37,7 +40,8 @@ trait OptimizeTrait
     protected static function optimizeSet($key, $value = null, $file = null)
     {
         $object = self::$__optimizeInstance ?? self::optimizeInstance();
+        $prefix = static::$__prefix ? static::$__prefix . '|' . static::class : static::class;
 
-        return $object->set(static::class, $key, $value, $file);
+        return $object->set($prefix, $key, $value, $file);
     }
 }

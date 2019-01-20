@@ -9,6 +9,7 @@ namespace Hail;
 use Hail\Http\RequestMethod;
 use Hail\Optimize\OptimizeTrait;
 
+\defined('ROUTE_OPTIMIZE_PREFIX') || \define('ROUTE_OPTIMIZE_PREFIX', '');
 
 /**
  * Class Router
@@ -52,6 +53,8 @@ class Router
     {
         $this->refreshPrefix();
         $this->addRoutes($config);
+
+        static::$__prefix = \ROUTE_OPTIMIZE_PREFIX;
     }
 
     private function refreshPrefix(): void
