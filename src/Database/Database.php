@@ -374,6 +374,8 @@ class Database
                 $statement = $pdo->prepare($query);
 
                 if ($statement) {
+                    $this->statement = $statement;
+
                     foreach ($map as $key => $value) {
                         $statement->bindValue($key, $value[0], $value[1]);
                     }
@@ -383,8 +385,6 @@ class Database
                     }
 
                     if ($statement->execute()) {
-                        $this->statement = $statement;
-
                         return $statement;
                     }
                 }
