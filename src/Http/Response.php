@@ -444,7 +444,7 @@ class Response
         }
 
         // Check if we need to send extra expire info headers
-        if ('1.0' === $this->version && false !== strpos($this->getHeaderLine('Cache-Control'), 'no-cache')) {
+        if ('1.0' === $this->version && false !== strpos($this->getHeaderLine('Cache-Control') ?? '', 'no-cache')) {
             $this->header->set('Pragma', 'no-cache');
             $this->header->set('Expires', -1);
         }
@@ -452,7 +452,7 @@ class Response
         // Checks if we need to remove Cache-Control for SSL encrypted downloads when using IE < 9.
         if (
             true === $this->request->secure() &&
-            false !== \stripos($this->getHeaderLine('Content-Disposition'), 'attachment') &&
+            false !== \stripos($this->getHeaderLine('Content-Disposition') ?? '', 'attachment') &&
             \preg_match('/MSIE (.*?);/i', $this->request->header('User-Agent'), $match) === 1
         ) {
             if ((int) \preg_replace('/(MSIE )(.*?);/', '$2', $match[0]) < 9) {
@@ -972,7 +972,7 @@ class Response
      */
     public function getEtag(): ?string
     {
-        $etag = $this->getHeaderLine('ETag');
+        $etag = $this->getHeader('ETag');
 
         if ($etag === []) {
             return null;
