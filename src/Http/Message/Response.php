@@ -114,7 +114,7 @@ class Response implements ResponseInterface
         string $version = '1.1',
         $reason = null
     ) {
-        $this->statusCode = (int) $status;
+        $this->statusCode = $status;
 
         if ($body !== '' && $body !== null) {
             $this->stream = Factory::stream($body);
