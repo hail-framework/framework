@@ -76,7 +76,7 @@ class Response
      * Response constructor.
      *
      * @param Application $app
-     * @param Request     $request
+     * @param Request $request
      *
      * @throws \InvalidArgumentException
      */
@@ -112,7 +112,7 @@ class Response
     }
 
     /**
-     * @param int         $code
+     * @param int $code
      * @param string|null $reason
      *
      * @return self
@@ -205,18 +205,17 @@ class Response
      */
     public function empty(int $status = 204)
     {
-        return $this->setStatus($status)->response(
-            Factory::streamFromFile('php://temp', 'r')
-        );
+        return $this->setStatus($status)->response();
     }
 
     /**
      * @param string|UriInterface $uri
+     * @param int                 $status
      *
      * @return ResponseInterface
      * @throws \InvalidArgumentException
      */
-    public function redirect($uri): ResponseInterface
+    public function redirect($uri, int $status = 301): ResponseInterface
     {
         if (!\is_string($uri) && !$uri instanceof UriInterface) {
             throw new \InvalidArgumentException('Uri MUST be a string or Psr\Http\Message\UriInterface instance; received "' .
@@ -225,7 +224,7 @@ class Response
 
         $this->header->set('Location', (string) $uri);
 
-        return $this->empty();
+        return $this->empty($status);
     }
 
     /**
@@ -255,7 +254,7 @@ class Response
      * Get or set template name
      *
      * @param string|array|null $name
-     * @param array             $params
+     * @param array $params
      *
      * @return ResponseInterface
      *
@@ -313,7 +312,7 @@ class Response
 
     /**
      * @param string $text
-     * @param bool   $strict
+     * @param bool $strict
      *
      * @return ResponseInterface
      */
@@ -324,7 +323,7 @@ class Response
 
     /**
      * @param string $html
-     * @param bool   $strict
+     * @param bool $strict
      *
      * @return ResponseInterface
      */
@@ -342,7 +341,8 @@ class Response
     public function print(
         string $str,
         string $contentType = null
-    ): ResponseInterface {
+    ): ResponseInterface
+    {
         $body = Factory::streamFromFile('php://temp', 'wb+');
         $body->write($str);
         $body->rewind();
@@ -356,8 +356,8 @@ class Response
 
     /**
      * @param string $file
-     * @param null   $name
-     * @param bool   $download
+     * @param null $name
+     * @param bool $download
      *
      * @return ResponseInterface
      * @throws \LogicException
@@ -507,7 +507,7 @@ class Response
 
     /**
      * @param array $to
-     * @param bool  $return
+     * @param bool $return
      *
      * @return \Psr\Http\Message\ResponseInterface
      * @throws BadRequestException
@@ -532,9 +532,9 @@ class Response
     /**
      * @noinspection PhpDocMissingThrowsInspection
      *
-     * @param int    $code
+     * @param int $code
      * @param string $msg
-     * @param array  ...$args
+     * @param array ...$args
      */
     public function error(int $code = 0, string $msg = null, ...$args): void
     {
@@ -548,7 +548,7 @@ class Response
 
     /**
      * @param string $msg
-     * @param int    $code
+     * @param int $code
      *
      * @throws ActionError
      */
@@ -560,7 +560,7 @@ class Response
     /**
      * @param string $name
      * @param string $value
-     * @param int    $time
+     * @param int $time
      *
      * @return Response
      */
@@ -985,7 +985,7 @@ class Response
      * Sets the ETag value.
      *
      * @param string|null $etag The ETag unique identifier or null to remove the header
-     * @param bool        $weak Whether you want a weak ETag or not
+     * @param bool $weak Whether you want a weak ETag or not
      *
      * @return $this
      */
