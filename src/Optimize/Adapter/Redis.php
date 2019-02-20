@@ -56,8 +56,6 @@ class Redis implements AdapterInterface
             throw new \RuntimeException('Redis connect failed!');
         }
 
-        $this->redis->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_NONE);
-
         if (isset($arr[1])) {
             $params = [];
             \parse_str($arr[1], $params);
@@ -78,7 +76,7 @@ class Redis implements AdapterInterface
             return false;
         }
 
-        return \unserialize($value, ['allowed_classes' => false]);
+        return $value;
     }
 
     public function setMultiple(array $values, int $ttl = 0)
@@ -99,6 +97,6 @@ class Redis implements AdapterInterface
 
     public function set(string $key, $value, int $ttl = 0)
     {
-        return $this->redis->set($key, \serialize($value), $ttl);
+        return $this->redis->set($key, $value, $ttl);
     }
 }
