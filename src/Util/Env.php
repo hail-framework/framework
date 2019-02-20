@@ -14,6 +14,7 @@ use Hail\Optimize\OptimizeTrait;
 class Env
 {
     use OptimizeTrait;
+    use SingletonTrait;
 
     protected const FILE = '.env';
 
@@ -32,7 +33,7 @@ class Env
     protected static $names = [];
 
 
-    public static function init()
+    protected function init(): void
     {
         static::optimizeInstance(
             new Optimize([
@@ -179,5 +180,3 @@ class Env
         unset($_ENV[$name], $_SERVER[$name]);
     }
 }
-
-Env::init();

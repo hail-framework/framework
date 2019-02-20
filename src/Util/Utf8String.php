@@ -161,14 +161,19 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @var string
      */
-    protected $_string = null;
+    protected $_string;
 
     /**
      * Direction. Please see self::LTR and self::RTL constants.
      *
      * @var int
      */
-    protected $_direction = null;
+    protected $_direction;
+
+    /**
+     * @var Strings
+     */
+    private $strings;
 
     /**
      * Construct a UTF-8 string.
@@ -180,6 +185,8 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
         if (null !== $string) {
             $this->append($string);
         }
+
+        $this->strings = Strings::getInstance();
     }
 
     /**
@@ -232,14 +239,14 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             $left = (int) ($length / 2);
             $right = $length - $left;
 
-            $this->_string = \Strings::padRight(
-                \Strings::padLeft($this->_string, $left, $piece),
+            $this->_string = $this->strings->padRight(
+                $this->strings->padLeft($this->_string, $left, $piece),
                 $right, $piece
             );
         } elseif (STR_PAD_LEFT === $side) {
-            $this->_string = \Strings::padLeft($this->_string, $length, $piece);
+            $this->_string = $this->strings->padLeft($this->_string, $length, $piece);
         } else {
-            $this->_string = \Strings::padRight($this->_string, $length, $piece);
+            $this->_string = $this->strings->padRight($this->_string, $length, $piece);
         }
 
         return $this;
@@ -276,7 +283,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @return  string
      */
-    public static function safePattern($pattern)
+    public function safePattern(string $pattern): string
     {
         $delimiter = \mb_substr($pattern, 0, 1);
         $options = \mb_substr(
@@ -308,13 +315,13 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
         $flags = 0,
         $offset = 0
     ) {
-        $pattern = static::safePattern($pattern);
+        $pattern = $this->safePattern($pattern);
 
         if (0 !== $flags) {
             $flags &= ~PREG_SPLIT_OFFSET_CAPTURE;
         }
 
-        return \Strings::match($this->_string, $pattern, $flags, $offset);
+        return $this->strings->match($this->_string, $pattern, $flags, $offset);
     }
 
     /**
@@ -335,13 +342,13 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
         $flags = 0,
         $offset = 0
     ) {
-        $pattern = static::safePattern($pattern);
+        $pattern = $this->safePattern($pattern);
 
         if (0 === $flags) {
             $flags = static::GROUP_BY_PATTERN;
         }
 
-        return \Strings::matchAll($this->_string, $pattern, $flags, $offset);
+        return $this->strings->matchAll($this->_string, $pattern, $flags, $offset);
     }
 
     /**
@@ -357,8 +364,8 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      */
     public function replace($pattern, $replacement, $limit = -1)
     {
-        $pattern = static::safePattern($pattern);
-        $this->_string = \Strings::replace($this->_string, $pattern, $replacement, $limit);
+        $pattern = $this->safePattern($pattern);
+        $this->_string = $this->strings->replace($this->_string, $pattern, $replacement, $limit);
 
         return $this;
     }
@@ -377,9 +384,9 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
         $pattern,
         $flags = self::WITHOUT_EMPTY
     ): array {
-        $pattern = static::safePattern($pattern);
+        $pattern = $this->safePattern($pattern);
 
-        return \Strings::split($this->_string, $pattern, $flags);
+        return $this->strings->split($this->_string, $pattern, $flags);
     }
 
     /**
@@ -428,7 +435,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             return $this;
         }
 
-        $this->_string = \Strings::toAscii($this->_string);
+        $this->_string = $this->strings->toAscii($this->_string);
 
         return $this;
     }
@@ -465,7 +472,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      */
     public function trim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = \Strings::trim($this->_string, $regex);
+        $this->_string = $this->strings->trim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -473,7 +480,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
 
     public function ltrim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = \Strings::ltrim($this->_string, $regex);
+        $this->_string = $this->strings->ltrim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -481,7 +488,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
 
     public function rtrim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = \Strings::rtrim($this->_string, $regex);
+        $this->_string = $this->strings->rtrim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -659,7 +666,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             if (null === $this->_string) {
                 $this->_direction = static::LTR;
             } else {
-                $this->_direction = static::getCharDirection(
+                $this->_direction = $this->getCharDirection(
                     \mb_substr($this->_string, 0, 1)
                 );
             }
@@ -676,9 +683,9 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @return  int
      */
-    public static function getCharDirection($char)
+    public function getCharDirection(string $char): int
     {
-        $c = \Strings::ord($char);
+        $c = $this->strings->ord($char);
 
         if (!(0x5be <= $c && 0x10b7f >= $c)) {
             return static::LTR;

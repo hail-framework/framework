@@ -2,6 +2,8 @@
 
 namespace Hail\Container;
 
+use Hail\Util\SingletonTrait;
+
 class Compiler
 {
     protected $config;
@@ -96,7 +98,7 @@ class Compiler
 
             if ($v === []) {
                 if ($this->isClassname($k)) {
-                    $this->toMethod($k, "new {$k}()");
+                    $this->toMethod($k, $this->classInstance($k));
                 }
                 continue;
             }
@@ -218,27 +220,28 @@ class Compiler
             $parts = \explode($method, ':', 2);
             $method = $parts[0];
 
-            if (isset($parts[1])) {
-                $method .= $this->parseArgs($parts[1]);
-            }
+            $method .= $this->parseArgs($parts[1] ?? '');
 
             return "{$class}::{$method}";
         }
 
+        return $this->classInstance($str);
+    }
+
+    protected function classInstance(string $str): string
+    {
         $parts = \explode($str, ':', 2);
         $class = $parts[0];
 
-        if ($this->isClassname($class)) {
-            $class = "new $str";
-        } else {
+        if (!$this->isClassname($class)) {
             throw new \RuntimeException("Given value can not convert to build function : $str");
         }
 
-        if (isset($parts[1])) {
-            $class .= $this->parseArgs($parts[1]);
+        if (isset(\class_uses($class)[SingletonTrait::class])) {
+            return "{$class}::getInstance()";
         }
 
-        return $class;
+        return "new $class" . $this->parseArgs($parts[1] ?? '');
     }
 
     protected function parseStr(string $str): string

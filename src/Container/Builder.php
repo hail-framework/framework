@@ -2,6 +2,7 @@
 
 namespace Hail\Container;
 
+use Hail\Util\SingletonTrait;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -70,7 +71,7 @@ class Builder
             throw new \InvalidArgumentException("unable to create component: {$class} (autoloading failed)");
         }
 
-        if (\method_exists($class, 'getInstance')) {
+        if (isset(\class_uses($class)[SingletonTrait::class])) {
             return $class::getInstance();
         }
 

@@ -12,6 +12,8 @@ use Hail\Util\Exception\RegexpException;
  */
 class Arrays
 {
+    use SingletonTrait;
+
     /**
      * Flatten a multi-dimensional associative array with dots.
      *
