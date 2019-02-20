@@ -13,6 +13,8 @@ use InvalidArgumentException;
  */
 class Generators
 {
+    use SingletonTrait;
+
     /**
      * When this namespace is specified, the name string is a fully-qualified domain name.
      *
@@ -44,20 +46,16 @@ class Generators
      */
     public const NIL = '00000000-0000-0000-0000-000000000000';
 
-    /**
-     * Generate random string.
-     *
-     * @param  int
-     * @param  string
-     *
-     * @return string
-     * @throws InvalidArgumentException
-     */
-    public static function random(int $length = 10, string $charList = '0-9a-zA-Z'): string
+    public function random(int $length = 10, string $charList = '0-9a-zA-Z'): string
     {
-        $charList = \count_chars(\preg_replace_callback('#.-.#', function (array $m) {
-            return \implode('', \range($m[0][0], $m[0][2]));
-        }, $charList), 3);
+        static $fun = null;
+        if ($fun === null) {
+            $fun = static function (array $m) {
+                return \implode('', \range($m[0][0], $m[0][2]));
+            };
+        }
+
+        $charList = \count_chars(\preg_replace_callback('#.-.#', $fun, $charList), 3);
         $chLen = \strlen($charList);
 
         if ($length < 1) {
@@ -80,18 +78,15 @@ class Generators
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function unique(): string
+    public function unique(): string
     {
         return \uniqid(
-            static::random(),
+            $this->random(),
             true
         );
     }
 
-    /**
-     * @return string
-     */
-    public static function guid(): string
+    public function guid(): string
     {
         if (\function_exists('\com_create_guid')) {
             return \trim(\com_create_guid(), '{}');
@@ -111,24 +106,21 @@ class Generators
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function uuid3(string $namespace, string $name): string
+    public function uuid3(string $namespace, string $name): string
     {
-        $bytes = static::getBytes($namespace);
+        $bytes = $this->getBytes($namespace);
 
         $hash = \md5($bytes . $name);
 
-        return static::uuidFromHash($hash, 3);
+        return $this->uuidFromHash($hash, 3);
     }
 
-    /**
-     * @return string
-     */
-    public static function uuid4(): string
+    public function uuid4(): string
     {
         $bytes = \random_bytes(16);
         $hash = \bin2hex($bytes);
 
-        return static::uuidFromHash($hash, 4);
+        return $this->uuidFromHash($hash, 4);
     }
 
     /**
@@ -138,13 +130,13 @@ class Generators
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function uuid5(string $namespace, string $name): string
+    public function uuid5(string $namespace, string $name): string
     {
-        $bytes = static::getBytes($namespace);
+        $bytes = $this->getBytes($namespace);
 
         $hash = \sha1($bytes . $name);
 
-        return static::uuidFromHash($hash, 5);
+        return $this->uuidFromHash($hash, 5);
     }
 
     /**
@@ -152,7 +144,7 @@ class Generators
      *
      * @return bool
      */
-    public static function isUUID(string $uuid): bool
+    public function isUUID(string $uuid): bool
     {
         return \preg_match('/^(urn:)?(uuid:)?(\{)?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}(?(3)\}|)$/i',
                 $uuid) === 1;
@@ -164,9 +156,9 @@ class Generators
      * @return string
      * @throws InvalidArgumentException
      */
-    private static function getBytes(string $uuid): string
+    private function getBytes(string $uuid): string
     {
-        if (!static::isUUID($uuid)) {
+        if (!$this->isUUID($uuid)) {
             throw new InvalidArgumentException('Invalid UUID string: ' . $uuid);
         }
 
@@ -189,7 +181,7 @@ class Generators
         return $str;
     }
 
-    private static function uuidFromHash($hash, $version)
+    private function uuidFromHash(string $hash, string $version): string
     {
         return \sprintf('%08s-%04s-%04x-%04x-%12s',
             // 32 bits for "time_low"

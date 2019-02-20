@@ -238,7 +238,7 @@ class MimePart
     public function getEncodedMessage(): string
     {
         $output = '';
-        $boundary = '--------' . Generators::random();
+        $boundary = '--------' . \Generators::random();
 
         foreach ($this->headers as $name => $value) {
             $output .= $name . ': ' . $this->getEncodedHeader($name);

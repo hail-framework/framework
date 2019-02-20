@@ -482,7 +482,7 @@ class Message extends MimePart
 
     private function getRandomId(): string
     {
-        return '<' . Generators::random() . '@'
+        return '<' . \Generators::random() . '@'
             . \preg_replace('#[^\w.-]+#', '', $_SERVER['HTTP_HOST'] ?? \php_uname('n'))
             . '>';
     }
