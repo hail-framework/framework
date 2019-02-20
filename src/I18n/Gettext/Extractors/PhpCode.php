@@ -4,7 +4,6 @@ namespace Hail\I18n\Gettext\Extractors;
 
 use Hail\I18n\Gettext\Translations;
 use Hail\I18n\Gettext\Utils\PhpFunctionsScanner;
-use Hail\Util\Strings;
 
 /**
  * Class to get gettext strings from php files returning arrays.
@@ -103,7 +102,7 @@ class PhpCode extends Extractor
                     case 'x':
                         return \chr(\hexdec(\substr($match[0], 1)));
                     case 'u':
-                        return Strings::chr(\hexdec(\substr($match[0], 1)));
+                        return \Strings::chr(\hexdec(\substr($match[0], 1)));
                     default:
                         return \chr(\octdec($match[0]));
                 }

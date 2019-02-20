@@ -7,7 +7,6 @@
 namespace Hail\Debugger;
 
 use Hail\Http\Factory;
-use Hail\Util\Strings;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -137,7 +136,7 @@ class Bar
         require __DIR__ . '/assets/Bar/panels.phtml';
         require __DIR__ . '/assets/Bar/bar.phtml';
 
-        return Strings::fixEncoding(\ob_get_clean());
+        return \Strings::fixEncoding(\ob_get_clean());
     }
 
     private function renderPanels($suffix = null): array

@@ -2,7 +2,6 @@
 
 namespace Hail\Console\Command;
 
-use Hail\Util\Arrays;
 use Hail\Console\Command;
 use Hail\Console\Option\OptionResult;
 use Hail\Console\Exception\{
@@ -165,7 +164,7 @@ class Meta extends Command
         }
 
         // for assoc array in indexed array
-        if (\is_array($values) && !Arrays::isAssoc($values)) {
+        if (\is_array($values) && !\Arrays::isAssoc($values)) {
             if (\is_array(\end($values))) {
                 $this->logger->writeln('#descriptions');
                 if ($opts->zsh) {
@@ -206,7 +205,7 @@ class Meta extends Command
      */
     protected static function encodeArray($array)
     {
-        if (Arrays::isAssoc($array)) {
+        if (\Arrays::isAssoc($array)) {
             $output = [];
             foreach ($array as $key => $val) {
                 $output[] = $key . ':' . \addcslashes($val, ': ');

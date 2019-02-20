@@ -58,7 +58,7 @@ class Shell
                 }
                 unset($arguments[$k]);
             } elseif (\is_array($argument)) {
-                if (Arrays::isAssoc($argument)) {
+                if (\Arrays::isAssoc($argument)) {
                     // Ok, so we're passing in arguments
                     $output = '';
                     foreach ($argument as $key => $val) {

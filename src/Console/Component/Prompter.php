@@ -6,7 +6,6 @@ use Hail\Console\Formatter;
 use Hail\Console\IO\Console;
 use Hail\Console\IO\Factory;
 use Hail\Console\IO\ReadlineConsole;
-use Hail\Util\Arrays;
 
 /**
  * Prompter class
@@ -162,7 +161,7 @@ class Prompter
         $choicesMap = [];
 
         $i = 0;
-        if (Arrays::isAssoc($choices)) {
+        if (\Arrays::isAssoc($choices)) {
             foreach ($choices as $choice => $value) {
                 $choicesMap[++$i] = $value;
                 echo "\t$i: " . $choice . ' => ' . $value . "\n";

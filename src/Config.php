@@ -5,9 +5,7 @@ namespace Hail;
 \defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
 
 use Hail\Optimize\OptimizeTrait;
-use Hail\Util\{
-    Arrays, ArrayTrait
-};
+use Hail\Util\ArrayTrait;
 
 /**
  * Class Php
@@ -49,7 +47,7 @@ class Config implements \ArrayAccess
      */
     public function set($key, $value)
     {
-        Arrays::set($this->items, $key, $value);
+        \Arrays::set($this->items, $key, $value);
         $this->cache = [];
     }
 
@@ -81,11 +79,11 @@ class Config implements \ArrayAccess
                 $this->items[$space] = $found;
 
                 if (isset($split[1])) {
-                    $found = Arrays::get($found, $split[1]);
+                    $found = \Arrays::get($found, $split[1]);
                 }
             }
         } else {
-            $found = Arrays::get($this->items, $key);
+            $found = \Arrays::get($this->items, $key);
         }
 
         return $this->cache[$key] = $found;
@@ -93,7 +91,7 @@ class Config implements \ArrayAccess
 
     public function delete($key)
     {
-        Arrays::delete($this->items, $key);
+        \Arrays::delete($this->items, $key);
         $this->cache = [];
     }
 
@@ -181,7 +179,7 @@ class Config implements \ArrayAccess
             $pad = \str_repeat("\t", $level);
         }
 
-        $isAssoc = Arrays::isAssoc($array);
+        $isAssoc = \Arrays::isAssoc($array);
 
         $ret = '[' . "\n";
         foreach ($array as $k => $v) {

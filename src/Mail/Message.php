@@ -9,7 +9,7 @@ namespace Hail\Mail;
 
 use Hail\Exception\FileNotFoundException;
 use Hail\Util\{
-    Exception\RegexpException, MimeType, Strings, Generators
+    Exception\RegexpException, MimeType, Generators
 };
 
 
@@ -244,7 +244,7 @@ class Message extends MimePart
     {
         if ($basePath) {
             $cids = [];
-            $matches = Strings::matchAll(
+            $matches = \Strings::matchAll(
                 $html,
                 '#
 					(<img[^<>]*\s src\s*=\s*
@@ -269,7 +269,7 @@ class Message extends MimePart
         }
 
         if ($this->getSubject() == null) { // intentionally ==
-            $html = Strings::replace($html, '#<title>(.+?)</title>#is', function (array $m): void {
+            $html = \Strings::replace($html, '#<title>(.+?)</title>#is', function (array $m): void {
                 $this->setSubject(\html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));
             });
         }
@@ -389,7 +389,7 @@ class Message extends MimePart
         $part->setEncoding(\preg_match('#(multipart|message)/#A', $contentType) ?
             self::ENCODING_8BIT : self::ENCODING_BASE64);
         $part->setHeader('Content-Disposition',
-            $disposition . '; filename="' . Strings::fixEncoding(\basename($file)) . '"');
+            $disposition . '; filename="' . \Strings::fixEncoding(\basename($file)) . '"');
 
         return $part;
     }
@@ -466,7 +466,7 @@ class Message extends MimePart
      */
     protected function buildText(string $html): string
     {
-        $text = Strings::replace($html, [
+        $text = \Strings::replace($html, [
             '#<(style|script|head).*</\\1>#Uis' => '',
             '#<t[dh][ >]#i' => ' $0',
             '#<a\s[^>]*href=(?|"([^"]+)"|\'([^\']+)\')[^>]*>(.*?)</a>#is' => '$2 &lt;$1&gt;',
@@ -474,7 +474,7 @@ class Message extends MimePart
             '#<(/?p|/?h\d|li|br|/tr)[ >/]#i' => "\n$0",
         ]);
         $text = \html_entity_decode(\strip_tags($text), ENT_QUOTES, 'UTF-8');
-        $text = Strings::replace($text, '#[ \t]+#', ' ');
+        $text = \Strings::replace($text, '#[ \t]+#', ' ');
 
         return \trim($text);
     }

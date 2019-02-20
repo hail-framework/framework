@@ -2,8 +2,6 @@
 
 namespace Hail\I18n\Gettext\Languages;
 
-use Hail\Util\Strings;
-
 
 /**
  * Main class to convert the plural rules of a language from CLDR to gettext.
@@ -365,12 +363,12 @@ class Language
     public function getUSAsciiClone()
     {
         $clone = clone $this;
-        $clone->name = Strings::toAscii($clone->name);
-        $clone->formula = Strings::toAscii($clone->formula);
+        $clone->name = \Strings::toAscii($clone->name);
+        $clone->formula = \Strings::toAscii($clone->formula);
         $clone->categories = [];
         foreach ($this->categories as $category) {
             $categoryClone = clone $category;
-            $categoryClone->examples = Strings::toAscii($categoryClone->examples);
+            $categoryClone->examples = \Strings::toAscii($categoryClone->examples);
             $clone->categories[] = $categoryClone;
         }
 

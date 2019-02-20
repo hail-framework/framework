@@ -10,8 +10,7 @@ namespace Hail\Mail;
 use InvalidArgumentException;
 use RuntimeException;
 use Hail\Util\{
-    Generators,
-    Strings
+    Generators
 };
 
 
@@ -70,7 +69,7 @@ class MimePart
             foreach ($value as $email => $recipient) {
                 if ($recipient === null) {
                     // continue
-                } elseif (!Strings::checkEncoding($recipient)) {
+                } elseif (!\Strings::checkEncoding($recipient)) {
                     if (!\preg_match('##u', $recipient)) {
                         throw new InvalidArgumentException('Name is not valid unicode string.');
                     }
@@ -87,7 +86,7 @@ class MimePart
 
         } else {
             $value = (string) $value;
-            if (!Strings::checkEncoding($value)) {
+            if (!\Strings::checkEncoding($value)) {
                 throw new InvalidArgumentException('Header is not valid UTF-8 string.');
             }
             $this->headers[$name] = \preg_replace('#[\r\n]+#', ' ', $value);

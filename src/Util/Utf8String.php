@@ -232,14 +232,14 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             $left = (int) ($length / 2);
             $right = $length - $left;
 
-            $this->_string = Strings::padRight(
-                Strings::padLeft($this->_string, $left, $piece),
+            $this->_string = \Strings::padRight(
+                \Strings::padLeft($this->_string, $left, $piece),
                 $right, $piece
             );
         } elseif (STR_PAD_LEFT === $side) {
-            $this->_string = Strings::padLeft($this->_string, $length, $piece);
+            $this->_string = \Strings::padLeft($this->_string, $length, $piece);
         } else {
-            $this->_string = Strings::padRight($this->_string, $length, $piece);
+            $this->_string = \Strings::padRight($this->_string, $length, $piece);
         }
 
         return $this;
@@ -314,7 +314,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             $flags &= ~PREG_SPLIT_OFFSET_CAPTURE;
         }
 
-        return Strings::match($this->_string, $pattern, $flags, $offset);
+        return \Strings::match($this->_string, $pattern, $flags, $offset);
     }
 
     /**
@@ -341,7 +341,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             $flags = static::GROUP_BY_PATTERN;
         }
 
-        return Strings::matchAll($this->_string, $pattern, $flags, $offset);
+        return \Strings::matchAll($this->_string, $pattern, $flags, $offset);
     }
 
     /**
@@ -358,7 +358,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
     public function replace($pattern, $replacement, $limit = -1)
     {
         $pattern = static::safePattern($pattern);
-        $this->_string = Strings::replace($this->_string, $pattern, $replacement, $limit);
+        $this->_string = \Strings::replace($this->_string, $pattern, $replacement, $limit);
 
         return $this;
     }
@@ -379,7 +379,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
     ): array {
         $pattern = static::safePattern($pattern);
 
-        return Strings::split($this->_string, $pattern, $flags);
+        return \Strings::split($this->_string, $pattern, $flags);
     }
 
     /**
@@ -428,7 +428,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
             return $this;
         }
 
-        $this->_string = Strings::toAscii($this->_string);
+        $this->_string = \Strings::toAscii($this->_string);
 
         return $this;
     }
@@ -465,7 +465,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      */
     public function trim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = Strings::trim($this->_string, $regex);
+        $this->_string = \Strings::trim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -473,7 +473,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
 
     public function ltrim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = Strings::ltrim($this->_string, $regex);
+        $this->_string = \Strings::ltrim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -481,7 +481,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
 
     public function rtrim($regex = Strings::TRIM_CHARACTERS)
     {
-        $this->_string = Strings::rtrim($this->_string, $regex);
+        $this->_string = \Strings::rtrim($this->_string, $regex);
         $this->_direction = null;
 
         return $this;
@@ -678,7 +678,7 @@ class Utf8String implements \ArrayAccess, \Countable, \IteratorAggregate
      */
     public static function getCharDirection($char)
     {
-        $c = Strings::ord($char);
+        $c = \Strings::ord($char);
 
         if (!(0x5be <= $c && 0x10b7f >= $c)) {
             return static::LTR;

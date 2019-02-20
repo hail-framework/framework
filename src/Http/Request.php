@@ -6,9 +6,6 @@ namespace Hail\Http;
 
 use Hail\Application;
 use Hail\Exception\ActionError;
-use Hail\Util\{
-    Arrays, Strings
-};
 use Psr\Http\Message\{
     ServerRequestInterface, UploadedFileInterface, UriInterface
 };
@@ -142,7 +139,7 @@ class Request
         if ($value !== null) {
             !$this->all && $this->inputs();
 
-            Arrays::set($this->input, $name, $value);
+            \Arrays::set($this->input, $name, $value);
             $this->cache = [];
 
             return $value;
@@ -157,7 +154,7 @@ class Request
         }
 
         if ($this->all) {
-            $found = Arrays::get($this->input, $name);
+            $found = \Arrays::get($this->input, $name);
         } else {
             if ($this->serverRequest->getMethod() !== 'GET') {
                 $found = $this->request($name);
@@ -178,7 +175,7 @@ class Request
     {
         !$this->all && $this->inputs();
 
-        Arrays::delete($this->input, $name);
+        \Arrays::delete($this->input, $name);
         $this->cache = [];
     }
 
@@ -186,14 +183,14 @@ class Request
     {
         $array = $this->serverRequest->getParsedBody();
 
-        return $array[$name] ?? Arrays::get($array, $name);
+        return $array[$name] ?? \Arrays::get($array, $name);
     }
 
     public function query(string $name = null)
     {
         $array = $this->serverRequest->getQueryParams();
 
-        return $array[$name] ?? Arrays::get($array, $name);
+        return $array[$name] ?? \Arrays::get($array, $name);
     }
 
     /**
@@ -213,7 +210,7 @@ class Request
     {
         $array = $this->serverRequest->getUploadedFiles();
 
-        return $array[$name] ?? Arrays::get($array, $name);
+        return $array[$name] ?? \Arrays::get($array, $name);
     }
 
     /**
@@ -291,7 +288,7 @@ class Request
      */
     public function json(): bool
     {
-        return Strings::contains(
+        return \Strings::contains(
             $this->serverRequest->getHeaderLine('Content-Type') ?? '', ['/json', '+json']
         );
     }
@@ -315,7 +312,7 @@ class Request
     {
         $acceptable = $this->serverRequest->getHeaderLine('Accept');
 
-        return $acceptable !== null && Strings::contains($acceptable, ['/json', '+json']);
+        return $acceptable !== null && \Strings::contains($acceptable, ['/json', '+json']);
     }
 
     /**

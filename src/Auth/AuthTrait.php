@@ -3,7 +3,6 @@
 namespace Hail\Auth;
 
 use Hail\DITrait;
-use Hail\Util\Arrays;
 
 trait AuthTrait
 {
@@ -93,17 +92,17 @@ trait AuthTrait
 
     public function getAttribute(string $name)
     {
-        return Arrays::get($this->attributes, $name);
+        return \Arrays::get($this->attributes, $name);
     }
 
     public function setAttribute(string $name, $value)
     {
-        Arrays::set($this->attributes, $name, $value);
+        \Arrays::set($this->attributes, $name, $value);
     }
 
     public function delAttribute(string $name)
     {
-        Arrays::delete($this->attributes, $name);
+        \Arrays::delete($this->attributes, $name);
     }
 
     public function getAttributes(): array

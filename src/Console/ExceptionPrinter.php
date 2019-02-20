@@ -3,7 +3,6 @@
 namespace Hail\Console;
 
 use Exception;
-use Hail\Util\Arrays;
 
 class ExceptionPrinter
 {
@@ -122,7 +121,7 @@ class ExceptionPrinter
     protected static function output($a)
     {
         if (is_array($a)) {
-            if (!Arrays::isAssoc($a)) {
+            if (!\Arrays::isAssoc($a)) {
                 $out = [];
                 foreach ($a as $i) {
                     $out[] = self::output($i);

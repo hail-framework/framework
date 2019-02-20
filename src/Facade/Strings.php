@@ -3,7 +3,7 @@
 namespace Hail\Facade;
 
 /**
- * Class Serialize
+ * Class Strings
  *
  * @package Hail\Facade
  * @see \Hail\Util\Strings

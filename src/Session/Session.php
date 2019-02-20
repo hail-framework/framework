@@ -16,7 +16,6 @@ use Hail\Factory\{
 };
 use Hail\Http\Request;
 use Hail\Http\Response;
-use Hail\Util\Arrays;
 use Hail\Util\ArrayTrait;
 
 /**
@@ -495,21 +494,21 @@ class Session implements \ArrayAccess
 
     public function get($key)
     {
-        return Arrays::get($_SESSION, $key);
+        return \Arrays::get($_SESSION, $key);
     }
 
     public function has($key)
     {
-        return Arrays::has($_SESSION, $key);
+        return \Arrays::has($_SESSION, $key);
     }
 
     public function set($key, $value)
     {
-        Arrays::set($_SESSION, $key, $value);
+        \Arrays::set($_SESSION, $key, $value);
     }
 
     public function delete($key)
     {
-        Arrays::delete($_SESSION, $key);
+        \Arrays::delete($_SESSION, $key);
     }
 }
