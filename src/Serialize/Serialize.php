@@ -2,8 +2,12 @@
 
 namespace Hail\Serialize;
 
+use Hail\Util\SingletonTrait;
+
 class Serialize
 {
+    use SingletonTrait;
+
     public function encode($value): string
     {
         return \serialize($value);

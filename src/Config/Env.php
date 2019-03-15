@@ -1,9 +1,6 @@
 <?php
 
-namespace Hail\Util;
-
-use Hail\Optimize\Optimize;
-use Hail\Optimize\OptimizeTrait;
+namespace Hail\Config;
 
 /**
  * This is the dotenv class.
@@ -13,34 +10,27 @@ use Hail\Optimize\OptimizeTrait;
  */
 class Env
 {
-    use OptimizeTrait;
-    use SingletonTrait;
-
-    protected const FILE = '.env';
+    public const FILE = '.env';
 
     /**
      * Are we immutable?
      *
      * @var bool
      */
-    protected static $immutable = true;
+    protected $immutable = true;
 
     /**
      * The list of environment variables declared inside the 'env' file.
      *
      * @var array
      */
-    protected static $names = [];
+    protected $names = [];
 
-
-    protected function init(): void
+    public function __construct(array $files)
     {
-        static::optimizeInstance(
-            new Optimize([
-                'adapter' => 'auto',
-                'delay' => 5,
-            ])
-        );
+        foreach ($files as $v) {
+            $this->load($v);
+        }
     }
 
     /**
@@ -48,9 +38,9 @@ class Env
      *
      * @param bool $immutable
      */
-    public static function setImmutable(bool $immutable = false): void
+    public function setImmutable(bool $immutable = false): void
     {
-        static::$immutable = $immutable;
+        $this->immutable = $immutable;
     }
 
     /**
@@ -58,9 +48,9 @@ class Env
      *
      * @return bool
      */
-    public static function isImmutable(): bool
+    public function isImmutable(): bool
     {
-        return static::$immutable;
+        return $this->immutable;
     }
 
     /**
@@ -68,34 +58,27 @@ class Env
      *
      * @return array
      */
-    public static function getNames(): array
+    public function getNames(): array
     {
-        return static::$names;
+        return $this->names;
     }
 
     /**
-     * Load `.env` file in given directory.
+     * Load `.env` file
      *
-     * @param string $path
+     * @param string $file
      */
-    public static function load(string $path): void
+    public function load(string $file): void
     {
-        $filePath = \absolute_path($path, static::FILE);
-        if (!\is_readable($filePath) || !\is_file($filePath)) {
+        if (!\is_file($file) || !\is_readable($file)) {
             return;
         }
 
-        $array = self::optimizeGet($path, $filePath);
-
-        if ($array === false) {
-            $array = \parse_ini_file($filePath, false, INI_SCANNER_RAW);
-        }
+        $array = \parse_ini_file($file, false, INI_SCANNER_RAW);
 
         foreach ($array as $name => $value) {
-            static::set($name, $value);
+            $this->set($name, $value);
         }
-
-        self::optimizeSet($path, $array, $filePath);
     }
 
     /**
@@ -105,7 +88,7 @@ class Env
      *
      * @return string|null
      */
-    public static function get(string $name): ?string
+    public function get(string $name): ?string
     {
         if (isset($_ENV[$name])) {
             return $_ENV[$name];
@@ -128,18 +111,18 @@ class Env
      *
      * @return void
      */
-    protected static function set(string $name, string $value): void
+    protected function set(string $name, string $value): void
     {
         $name = \trim($name);
 
         if (
             (isset($name[0]) && $name[0] === '#') ||
-            (static::$immutable && static::get($name) !== null)
+            ($this->immutable && $this->get($name) !== null)
         ) {
             return;
         }
 
-        static::$names[] = $name;
+        $this->names[] = $name;
         $value = \trim($value);
 
         // If PHP is running as an Apache module and an existing
@@ -167,9 +150,9 @@ class Env
      *
      * @return void
      */
-    public static function clear($name): void
+    public function clear($name): void
     {
-        if (static::$immutable) {
+        if ($this->immutable) {
             return;
         }
 

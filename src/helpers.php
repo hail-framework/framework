@@ -160,35 +160,11 @@ function root_path($key, string $path = null): string
  *
  * @param  string $key
  *
- * @return mixed
+ * @return bool|string|null
  */
 function env(string $key)
 {
-    $value = getenv($key);
-    if ($value === false) {
-        return null;
-    }
-
-    switch (strtolower($value)) {
-        case 'true':
-        case '(true)':
-            return true;
-        case 'false':
-        case '(false)':
-            return false;
-        case 'empty':
-        case '(empty)':
-            return '';
-        case 'null':
-        case '(null)':
-            return null;
-    }
-
-    if (($len = strlen($value)) > 1 && $value[0] === '"' && $value[$len - 1] === '"') {
-        return substr($value, 1, -1);
-    }
-
-    return $value;
+    return Hail::env($key);
 }
 
 /**
@@ -246,4 +222,16 @@ function bdump($var, $title = null, array $options = null)
     \Hail\Debugger\Debugger::barDump($var, $title, $options);
 
     return $var;
+}
+
+/**
+ * Change default timezone
+ *
+ * @param string $timezone
+ */
+function timezone(string $timezone): void
+{
+    if ($timezone !== \date_default_timezone_get()) {
+        \date_default_timezone_set($timezone);
+    }
 }

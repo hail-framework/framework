@@ -2,6 +2,9 @@
 
 namespace Hail;
 
+use Hail\Config\{
+    Path, Env, Config
+};
 use Hail\Container\{
     Container, Builder
 };
@@ -37,6 +40,16 @@ class Application
     protected $params = [];
 
     /**
+     * @var Path
+     */
+    public $path;
+
+    /**
+     * @var Env
+     */
+    public $env;
+
+    /**
      * @var array|\Closure
      */
     protected $handler;
@@ -47,6 +60,13 @@ class Application
         'action' => 'index',
     ];
 
+    protected static $defaultPaths = [
+        'root' => '%s',
+        'app' => '%s/app',
+        'storage' => '%s/storage',
+        'runtime' => '%s/storage/runtime',
+    ];
+
     /**
      * Application constructor.
      *
@@ -55,6 +75,69 @@ class Application
     public function __construct(Container $container)
     {
         $this->container = $container;
+
+        $this->path = new Path(['hail' => \dirname(__DIR__)]);
+        $this->setRootPath();
+
+        $this->env = new Env([
+            $this->path->root(Env::FILE)
+        ]);
+    }
+
+    public function setRootPath(string $root = null): bool
+    {
+        if ($root === null) {
+            $root = \substr(__DIR__, 0,
+                \strpos(__DIR__, DIRECTORY_SEPARATOR . 'vendor')
+            );
+        }
+
+        if ($root) {
+            foreach (self::$defaultPaths as $k => $v) {
+                $this->path->base($k, \sprintf($v, $root));
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string|null $key
+     *
+     * @return Env|string|bool|null
+     */
+    public function env(string $key = null)
+    {
+        if ($key === null) {
+            return $this->env;
+        }
+
+        $value = $this->env->get($key);
+        if ($value === false) {
+            return null;
+        }
+
+        switch (\strtolower($value)) {
+            case 'true':
+            case '(true)':
+                return true;
+            case 'false':
+            case '(false)':
+                return false;
+            case 'empty':
+            case '(empty)':
+                return '';
+            case 'null':
+            case '(null)':
+                return null;
+        }
+
+        if (($len = \strlen($value)) > 1 && $value[0] === '"' && $value[$len - 1] === '"') {
+            return \substr($value, 1, -1);
+        }
+
+        return $value;
     }
 
     public function reset()

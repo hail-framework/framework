@@ -3,9 +3,11 @@
 namespace Hail\Serialize;
 
 use Hail\Serialize\Exception\JsonException;
+use Hail\Util\SingletonTrait;
 
 class Json
 {
+    use SingletonTrait;
 
     /**
      * Encodes the given value into a JSON string.

@@ -1,10 +1,12 @@
 <?php
 
-namespace Hail;
+namespace Hail\Config;
 
 \defined('OPCACHE_INVALIDATE') || \define('OPCACHE_INVALIDATE', \function_exists('\opcache_invalidate'));
 
 use Hail\Optimize\OptimizeTrait;
+use Hail\Serialize\Yaml;
+use Hail\Util\Arrays;
 use Hail\Util\ArrayTrait;
 
 /**
@@ -22,32 +24,40 @@ class Config implements \ArrayAccess
      *
      * @var array
      */
-    protected $items = [];
+    private $items = [];
 
     /**
      * @var array
      */
-    protected $cache = [];
+    private $cache = [];
 
     /**
      * @var string
      */
-    protected $folder;
-    protected $cacheFolder;
+    private $folder;
+    private $cacheFolder;
+    private $arrays;
+    private $yaml;
 
-    public function __construct(string $folder = null, string $cacheFolder = null)
+    public function __construct(string $folder, string $cacheFolder)
     {
-        $this->folder = $folder ?? \base_path('config');
-        $this->cacheFolder = $cacheFolder ?? \runtime_path('config');
+        if (!\is_dir($err = $folder) || !\is_dir($err = $cacheFolder)) {
+            throw new \InvalidArgumentException("Folder not exists '$err'");
+        }
+
+        $this->folder = $folder;
+        $this->cacheFolder = $cacheFolder;
+
+        $this->arrays = Arrays::getInstance();
     }
 
     /**
      * @param string $key
      * @param mixed  $value
      */
-    public function set($key, $value)
+    public function set(string $key, $value): void
     {
-        \Arrays::set($this->items, $key, $value);
+        $this->arrays->set($this->items, $key, $value);
         $this->cache = [];
     }
 
@@ -79,19 +89,19 @@ class Config implements \ArrayAccess
                 $this->items[$space] = $found;
 
                 if (isset($split[1])) {
-                    $found = \Arrays::get($found, $split[1]);
+                    $found = $this->arrays->get($found, $split[1]);
                 }
             }
         } else {
-            $found = \Arrays::get($this->items, $key);
+            $found = $this->arrays->get($this->items, $key);
         }
 
         return $this->cache[$key] = $found;
     }
 
-    public function delete($key)
+    public function delete(string $key): void
     {
-        \Arrays::delete($this->items, $key);
+        $this->arrays->delete($this->items, $key);
         $this->cache = [];
     }
 
@@ -103,7 +113,7 @@ class Config implements \ArrayAccess
      *
      * @return array|null
      */
-    protected function load(string $space): ?array
+    private function load(string $space): ?array
     {
         $file = $this->getFile($space);
 
@@ -127,7 +137,7 @@ class Config implements \ArrayAccess
      *
      * @return array|mixed
      */
-    protected function loadFile(?string $file)
+    private function loadFile(?string $file)
     {
         if ($file === null) {
             return [];
@@ -144,11 +154,12 @@ class Config implements \ArrayAccess
     /**
      * Parse a YAML file or load it from the cache
      *
-     * @param $file
+     * @param string $file
+     * @param string $ext
      *
      * @return array|mixed
      */
-    protected function loadYaml($file, $ext)
+    private function loadYaml(string $file, string $ext)
     {
         $filename = \basename($file);
         $dir = $this->cacheFolder;
@@ -156,7 +167,11 @@ class Config implements \ArrayAccess
         $cache = $dir . DIRECTORY_SEPARATOR . substr($filename, 0, -\strlen($ext)) . '.php';
 
         if (@\filemtime($cache) < \filemtime($file)) {
-            $content = \Yaml::decodeFile($file);
+            if ($this->yaml === null) {
+                $this->yaml = Yaml::getInstance();
+            }
+
+            $content = $this->yaml->decodeFile($file);
 
             if (!\is_dir($dir) && !@\mkdir($dir, 0755) && !\is_dir($dir)) {
                 throw new \RuntimeException('Temp directory permission denied');
@@ -172,14 +187,14 @@ class Config implements \ArrayAccess
         return include $cache;
     }
 
-    protected function parseArrayToCode(array $array, $level = 0): string
+    private function parseArrayToCode(array $array, int $level = 0): string
     {
         $pad = '';
         if ($level > 0) {
             $pad = \str_repeat("\t", $level);
         }
 
-        $isAssoc = \Arrays::isAssoc($array);
+        $isAssoc = $this->arrays->isAssoc($array);
 
         $ret = '[' . "\n";
         foreach ($array as $k => $v) {
@@ -203,11 +218,11 @@ class Config implements \ArrayAccess
     /**
      * Parse
      *
-     * @param $value
+     * @param mixed $value
      *
      * @return mixed
      */
-    protected function parseValue($value)
+    private function parseValue($value)
     {
         if ($value instanceof \DateTime) {
             return 'new \\DateTime(' . \var_export($value->format('c'), true) . ')';
@@ -239,7 +254,7 @@ class Config implements \ArrayAccess
         return $this->parseConstant($value);
     }
 
-    protected function parseConstant(string $value)
+    private function parseConstant(string $value): string
     {
         $value = \var_export($value, true);
 
@@ -275,7 +290,7 @@ class Config implements \ArrayAccess
         return $value;
     }
 
-    protected function getFile(string $space): ?string
+    private function getFile(string $space): ?string
     {
         foreach (['.php', '.yml', '.yaml'] as $ext) {
             $real = \absolute_path($this->folder, $space . $ext);
@@ -287,7 +302,7 @@ class Config implements \ArrayAccess
         return null;
     }
 
-    public function getMTime(string $key): ?int
+    public function modifyTime(string $key): ?int
     {
         $file = $this->getFile(
             \explode('.', $key, 2)[0]

@@ -2,11 +2,15 @@
 
 namespace Hail\Serialize;
 
+use Hail\Util\SingletonTrait;
+
 \defined('IGBINARY_EXTENSION') || \define('IGBINARY_EXTENSION', \extension_loaded('igbinary'));
 
 class Igbinary
 {
-    public function __construct()
+    use SingletonTrait;
+
+    protected function init()
     {
         if (!IGBINARY_EXTENSION) {
             throw new \LogicException('Igbinary extension not loaded');

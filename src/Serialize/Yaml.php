@@ -2,6 +2,7 @@
 
 namespace Hail\Serialize;
 
+use Hail\Util\SingletonTrait;
 use Symfony\Component\Yaml\Yaml as SymfonyYaml;
 
 \defined('YAML_EXTENSION') || \define('YAML_EXTENSION', \extension_loaded('yaml'));
@@ -12,8 +13,9 @@ if (YAML_EXTENSION && \ini_get('yaml.decode_php')) {
 
 class Yaml
 {
+    use SingletonTrait;
 
-    public function __construct()
+    protected function init(): void
     {
         if (!YAML_EXTENSION && !class_exists(SymfonyYaml::class)) {
             throw new \LogicException('Yaml parser not loaded');

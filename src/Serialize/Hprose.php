@@ -2,11 +2,15 @@
 
 namespace Hail\Serialize;
 
+use Hail\Util\SingletonTrait;
+
 \defined('HPROSE_EXTENSION') || \define('HPROSE_EXTENSION', \extension_loaded('hprose'));
 
 class Hprose
 {
-    public function __construct()
+    use SingletonTrait;
+
+    protected function init()
     {
         if (!HPROSE_EXTENSION) {
             throw new \LogicException('Hprose extension not loaded');
