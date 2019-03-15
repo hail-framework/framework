@@ -12,6 +12,8 @@ class Env
 {
     public const FILE = '.env';
 
+    private $loaded = [];
+
     /**
      * Are we immutable?
      *
@@ -37,10 +39,13 @@ class Env
      * Set immutable value.
      *
      * @param bool $immutable
+     * @return self
      */
-    public function setImmutable(bool $immutable = false): void
+    public function setImmutable(bool $immutable = false): self
     {
         $this->immutable = $immutable;
+
+        return $this;
     }
 
     /**
@@ -67,11 +72,12 @@ class Env
      * Load `.env` file
      *
      * @param string $file
+     * @return self
      */
-    public function load(string $file): void
+    public function load(string $file): self
     {
         if (!\is_file($file) || !\is_readable($file)) {
-            return;
+            return $this;
         }
 
         $array = \parse_ini_file($file, false, INI_SCANNER_RAW);
@@ -79,6 +85,10 @@ class Env
         foreach ($array as $name => $value) {
             $this->set($name, $value);
         }
+
+        $this->loaded[] = $file;
+
+        return $this;
     }
 
     /**
@@ -148,12 +158,12 @@ class Env
      *
      * @param string $name
      *
-     * @return void
+     * @return self
      */
-    public function clear($name): void
+    public function clear($name): self
     {
         if ($this->immutable) {
-            return;
+            return $this;
         }
 
         if (\function_exists('\\putenv')) {
@@ -161,5 +171,28 @@ class Env
         }
 
         unset($_ENV[$name], $_SERVER[$name]);
+
+        return $this;
+    }
+
+    public function reset(): self
+    {
+        if ($this->immutable) {
+            return $this;
+        }
+
+        $old = $this->names;
+        $loaded = \array_unique($this->loaded);
+        $this->loaded = $this->names = [];
+        foreach ($loaded as $file) {
+            $this->load($file);
+        }
+
+        $diff = \array_diff($old, $this->names);
+        foreach ($diff as $v) {
+            $this->clear($v);
+        }
+
+        return $this;
     }
 }

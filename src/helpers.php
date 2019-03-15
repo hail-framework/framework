@@ -1,13 +1,23 @@
 <?php
 
+if (PHP_VERSION_ID < 70200 && (ini_get('mbstring.func_overload') & MB_OVERLOAD_STRING) !== 0) {
+    ini_set('mbstring.func_overload', '0');
+}
+
+if (mb_internal_encoding() !== 'UTF-8') {
+    mb_internal_encoding('UTF-8');
+}
+
+class_alias(Hail\Hail::class, Hail::class);
+
 /**
  * @param string ...$paths
  *
  * @return string
  */
-function base_path(string ...$paths): string
+function root_path(string ...$paths): string
 {
-    return absolute_path('@base', ...$paths);
+    return Hail::path('@root', ...$paths);
 }
 
 /**
@@ -17,7 +27,7 @@ function base_path(string ...$paths): string
  */
 function app_path(string ...$paths): string
 {
-    return absolute_path('@app', ...$paths);
+    return Hail::path('@app', ...$paths);
 }
 
 
@@ -28,7 +38,7 @@ function app_path(string ...$paths): string
  */
 function storage_path(string ...$paths): string
 {
-    return absolute_path('@storage', ...$paths);
+    return Hail::path('@storage', ...$paths);
 }
 
 /**
@@ -38,7 +48,7 @@ function storage_path(string ...$paths): string
  */
 function runtime_path(string ...$paths): string
 {
-    return absolute_path('@runtime', ...$paths);
+    return Hail::path('@runtime', ...$paths);
 }
 
 /**
@@ -48,7 +58,7 @@ function runtime_path(string ...$paths): string
  */
 function hail_path(string ...$paths): string
 {
-    return absolute_path('@hail', ...$paths);
+    return Hail::path('@hail', ...$paths);
 }
 
 /**
@@ -60,99 +70,7 @@ function hail_path(string ...$paths): string
  */
 function absolute_path(string $root, string ...$paths): string
 {
-    if ($root[0] === '@') {
-        $absoluteRoot = root_path($root);
-    } else {
-        $root = rtrim(
-            str_replace('\\', '/', $root),
-            '/'
-        );
-
-        if (($absoluteRoot = realpath($root)) === false) {
-            throw new InvalidArgumentException('ROOT path not exists: ' . $root);
-        }
-    }
-
-    if ($paths === []) {
-        return $absoluteRoot;
-    }
-
-    if (!isset($paths[1])) {
-        $path = $paths[0];
-    } else {
-        $path = implode('/', $paths);
-    }
-
-    $path = $absoluteRoot . '/' . \trim(
-            \str_replace('\\', '/', $path),
-            '/'
-        );
-
-    if (($absolutePath = realpath($path)) === false) {
-        $parts = explode('/', $path);
-        $absolutes = [];
-        foreach ($parts as $part) {
-            if ('.' === $part || '' === $part) {
-                continue;
-            }
-
-            if ('..' === $part) {
-                array_pop($absolutes);
-            } else {
-                $absolutes[] = $part;
-            }
-        }
-
-        $absolutePath = implode(DIRECTORY_SEPARATOR, $absolutes);
-        if ($absoluteRoot[0] === '/' && $absolutePath[0] !== '/') {
-            $absolutePath = '/' . $absolutePath;
-        }
-
-        if (strpos($absolutePath, $absoluteRoot) !== 0) {
-            throw new InvalidArgumentException('Path can not higher than ROOT.');
-        }
-    }
-
-    return $absolutePath;
-}
-
-/**
- * @param string|array $key
- * @param string|null $path
- *
- * @return string
- */
-function root_path($key, string $path = null): string
-{
-    static $paths = [];
-
-    if ($path === null && is_string($key)) {
-        if ($key[0] !== '@') {
-            $key = "@$key";
-        }
-
-        return $paths[$key] ?? '';
-    }
-
-    if (!is_array($key)) {
-        $array = [$key => $path];
-    } else {
-        $array = $key;
-    }
-
-    foreach ($array as $k => $v) {
-        if (($absolute = realpath($v)) === false) {
-            throw new InvalidArgumentException('Path not exists: ' . $path);
-        }
-
-        if ($k[0] !== '@') {
-            $k = "@$k";
-        }
-
-        $paths[$k] = $absolute;
-    }
-
-    return '';
+    return Hail::path($root, ...$paths);
 }
 
 /**
@@ -174,11 +92,7 @@ function env(string $key)
  */
 function config(string $key)
 {
-    if (class_exists('Config', false)) {
-        return Config::get($key);
-    }
-
-    return (new \Hail\Config(root_path('@base')))->get($key);
+    return Hail::config($key);
 }
 
 /**
@@ -229,9 +143,7 @@ function bdump($var, $title = null, array $options = null)
  *
  * @param string $timezone
  */
-function timezone(string $timezone): void
+function timezone(string $timezone = null): void
 {
-    if ($timezone !== \date_default_timezone_get()) {
-        \date_default_timezone_set($timezone);
-    }
+    Hail::timezone($timezone);
 }

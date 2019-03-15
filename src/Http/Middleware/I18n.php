@@ -67,7 +67,7 @@ class I18n implements MiddlewareInterface
             $this->container->get('i18n')->translator(
                 $locale,
                 $config->get('app.i18n.domain'),
-                \base_path('lang')
+                \root_path('lang')
             );
         }
 

@@ -22,11 +22,11 @@ class VendorPanel implements PanelInterface
 
 	public function __construct()
 	{
-		if (!\is_file(\base_path('composer.lock'))) {
+		if (!\is_file(\root_path('composer.lock'))) {
 			$this->error = 'Base directory does not contain the composer.lock file.';
 		}
 
-		$this->dir = \base_path();
+		$this->dir = \root_path();
 	}
 
 	/**

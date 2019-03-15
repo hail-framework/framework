@@ -67,7 +67,7 @@ EOD;
             [$namespace, $check] = $v;
 
             $comment = '/**' . "\n";
-            $dir = \base_path('app', \explode('\\', $namespace)[1]);
+            $dir = \root_path('app', \explode('\\', $namespace)[1]);
             foreach (\scandir($dir, SCANDIR_SORT_ASCENDING) as $file) {
                 if (\in_array($file, ['.', '..'], true) || \strrchr($file, '.') !== '.php') {
                     continue;

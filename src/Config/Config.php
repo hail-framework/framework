@@ -39,9 +39,9 @@ class Config implements \ArrayAccess
     private $arrays;
     private $yaml;
 
-    public function __construct(string $folder, string $cacheFolder)
+    public function __construct(string $folder, string $cacheFolder = null)
     {
-        if (!\is_dir($err = $folder) || !\is_dir($err = $cacheFolder)) {
+        if (!\is_dir($err = $folder) || ($cacheFolder && !\is_dir($err = $cacheFolder))) {
             throw new \InvalidArgumentException("Folder not exists '$err'");
         }
 
@@ -161,23 +161,24 @@ class Config implements \ArrayAccess
      */
     private function loadYaml(string $file, string $ext)
     {
-        $filename = \basename($file);
-        $dir = $this->cacheFolder;
+        if ($this->cacheFolder === null) {
+            $content = $this->decodeYaml($file);
 
+            return $this->parseArray($content);
+        }
+
+        $dir = $this->cacheFolder;
+        $filename = \basename($file);
         $cache = $dir . DIRECTORY_SEPARATOR . substr($filename, 0, -\strlen($ext)) . '.php';
 
         if (@\filemtime($cache) < \filemtime($file)) {
-            if ($this->yaml === null) {
-                $this->yaml = Yaml::getInstance();
-            }
-
-            $content = $this->yaml->decodeFile($file);
+            $content = $this->decodeYaml($file);
 
             if (!\is_dir($dir) && !@\mkdir($dir, 0755) && !\is_dir($dir)) {
                 throw new \RuntimeException('Temp directory permission denied');
             }
 
-            \file_put_contents($cache, '<?php return ' . $this->parseArrayToCode($content) . ';');
+            \file_put_contents($cache, '<?php return ' . $this->parseArrayCode($content) . ';');
 
             if (OPCACHE_INVALIDATE) {
                 \opcache_invalidate($cache, true);
@@ -187,7 +188,29 @@ class Config implements \ArrayAccess
         return include $cache;
     }
 
-    private function parseArrayToCode(array $array, int $level = 0): string
+    private function decodeYaml(string $file): array
+    {
+        if ($this->yaml === null) {
+            $this->yaml = Yaml::getInstance();
+        }
+
+        return $this->yaml->decodeFile($file);
+    }
+
+    private function parseArray(array $array): array
+    {
+        foreach ($array as &$v) {
+            if (\is_array($v)) {
+                $v = $this->parseArray($v);
+            } else {
+                $v = $this->parseValue($v);
+            }
+        }
+
+        return $array;
+    }
+
+    private function parseArrayCode(array $array, int $level = 0): string
     {
         $pad = '';
         if ($level > 0) {
@@ -204,9 +227,9 @@ class Config implements \ArrayAccess
             }
 
             if (\is_array($v)) {
-                $ret .= $this->parseArrayToCode($v, $level + 1);
+                $ret .= $this->parseArrayCode($v, $level + 1);
             } else {
-                $ret .= $this->parseValue($v);
+                $ret .= $this->parseValueCode($v);
             }
 
             $ret .= ',' . "\n";
@@ -215,14 +238,42 @@ class Config implements \ArrayAccess
         return $ret . $pad . ']';
     }
 
+    private function parseValue($value)
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        if (\preg_match('/%([a-zA-Z0-9_:\\\]+)(?::(.*))?%/', $value, $matches)) {
+            $function = $matches[1];
+
+            if (!\function_exists($function)) {
+                return $value;
+            }
+
+            if (!isset($matches[2])) {
+                return $function();
+            }
+
+            $args = \explode(',', $matches[2]);
+            foreach ($args as &$a) {
+                $a = $this->parseConstant(\trim($a));
+            }
+
+            return $function(...$args);
+        }
+
+        return $this->parseConstant($value);
+    }
+
     /**
      * Parse
      *
      * @param mixed $value
      *
-     * @return mixed
+     * @return string
      */
-    private function parseValue($value)
+    private function parseValueCode($value): string
     {
         if ($value instanceof \DateTime) {
             return 'new \\DateTime(' . \var_export($value->format('c'), true) . ')';
@@ -236,7 +287,7 @@ class Config implements \ArrayAccess
             $function = $matches[1];
 
             if (!\function_exists($function)) {
-                return $value;
+                return \var_export($value, true);
             }
 
             if (!isset($matches[2])) {
@@ -245,16 +296,23 @@ class Config implements \ArrayAccess
 
             $args = \explode(',', $matches[2]);
             foreach ($args as &$a) {
-                $a = $this->parseConstant(\trim($a));
+                $a = $this->parseConstantCode(\trim($a));
             }
 
             return $function . '(' . \implode(', ', $args) . ')';
         }
 
-        return $this->parseConstant($value);
+        return $this->parseConstantCode($value);
     }
 
     private function parseConstant(string $value): string
+    {
+        return \preg_replace_callback('/\${([a-zA-Z0-9_:\\\]+)}/', static function ($matches) {
+            return \defined($matches[1]) ? \constant($matches[1]) : $matches[0];
+        }, $value);
+    }
+
+    private function parseConstantCode(string $value): string
     {
         $value = \var_export($value, true);
 
