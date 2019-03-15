@@ -96,6 +96,10 @@ class Optimize
      */
     private function setMultiple(string $prefix, array $array)
     {
+        if ($this->adapter === null) {
+            return null;
+        }
+
         $list = [];
         foreach ($array as $k => $v) {
             $list["{$prefix}|{$k}"] = $v;
@@ -167,6 +171,10 @@ class Optimize
 
     public function set(string $prefix, $key, $value, $file = null)
     {
+        if ($this->adapter === null) {
+            return null;
+        }
+
         if ($file !== null) {
             $mtime = self::getMTime($file);
             if ($mtime !== []) {
