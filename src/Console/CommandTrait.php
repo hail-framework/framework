@@ -614,7 +614,7 @@ trait CommandTrait
 
         $argument = new Argument($name, $desc);
         $this->arguments[] = $argument;
-        $this->argumentNames[$name] = $argument;
+        $this->argumentNames[$argument->name] = $argument;
 
         return $argument;
     }
