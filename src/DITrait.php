@@ -2,8 +2,6 @@
 
 namespace Hail;
 
-use Hail\Facade\DI;
-
 /**
  * Class DITrait
  *
@@ -45,15 +43,6 @@ Trait DITrait
 {
     final public function __get(string $name)
     {
-        return $this->$name = DI::get($name);
-    }
-
-    final public static function di(string $name = null)
-    {
-        if ($name === null) {
-            return DI::getInstance();
-        }
-
-        return DI::get($name);
+        return $this->$name = Hail::get($name);
     }
 }

@@ -145,7 +145,7 @@ class Framework
         return false;
     }
 
-    public function path(string $name = null, string ...$paths)
+    public function path(string $name = null, string ...$paths): string
     {
         if ($name === null) {
             return $this->path;
