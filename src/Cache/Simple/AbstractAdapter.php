@@ -319,7 +319,7 @@ abstract class AbstractAdapter implements CacheInterface
 	public function deleteMultiple($keys)
 	{
 		\array_walk($keys, [$this, 'validateKey']);
-		$this->namespace && \array_walk($prefixed, [$this, 'prefixValue']);
+		$this->namespace && \array_walk($keys, [$this, 'prefixValue']);
 
 		return $this->doDeleteMultiple($keys);
 	}
