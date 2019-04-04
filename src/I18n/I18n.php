@@ -30,6 +30,8 @@ class I18n
      */
     public static $translator;
 
+    public $locale;
+
     /**
      * Initialize a new gettext class
      *
@@ -49,6 +51,8 @@ class I18n
         if ($previous === null) {
             require __DIR__ . DIRECTORY_SEPARATOR . 'helpers.php';
         }
+
+        $this->locale = $locale;
 
         return $previous;
     }
