@@ -74,15 +74,15 @@ abstract class AbstractClient
             $type = \gettype($options[$k]);
             $v = (array) $v;
 
-            $found = false;
+            $checked = false;
             foreach ($v as $t) {
                 if ($t === $type || ($t === 'callable' && \is_callable($options[$k]))) {
-                    $found = true;
+                    $checked = true;
                     break;
                 }
             }
 
-            if ($found) {
+            if (!$checked) {
                 $should = \implode(', ', $v);
                 throw new InvalidArgumentException("'$k' options should be '$should', but get '$type'");
             }
