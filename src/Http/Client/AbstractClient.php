@@ -28,7 +28,7 @@ abstract class AbstractClient
     /**
      * @var array
      */
-    private $options;
+    private $options = [];
 
     public function __construct(array $options = [])
     {
@@ -72,10 +72,19 @@ abstract class AbstractClient
 
         foreach (static::$types as $k => $v) {
             $type = \gettype($options[$k]);
-            foreach ((array)$v as $t) {
-                if (($t === 'callable' && !\is_callable($options[$k])) || $t !== $type) {
-                    throw new InvalidArgumentException("'$k' options should be '$t', but get '$type'");
+            $v = (array) $v;
+
+            $found = false;
+            foreach ($v as $t) {
+                if ($t === $type || ($t === 'callable' && \is_callable($options[$k]))) {
+                    $found = true;
+                    break;
                 }
+            }
+
+            if ($found) {
+                $should = \implode(', ', $v);
+                throw new InvalidArgumentException("'$k' options should be '$should', but get '$type'");
             }
         }
 
