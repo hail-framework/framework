@@ -201,9 +201,9 @@ class Debugger
     /**
      * Enables displaying or logging errors and exceptions.
      *
-     * @param  mixed  $mode         production, development mode, autodetection or IP address(es) whitelist.
-     * @param  string $logDirectory error log directory
-     * @param  string $email        administrator email; enables email sending in production mode
+     * @param mixed  $mode         production, development mode, autodetection or IP address(es) whitelist.
+     * @param string $logDirectory error log directory
+     * @param string $email        administrator email; enables email sending in production mode
      *
      * @return void
      */
@@ -562,18 +562,23 @@ class Debugger
     /**
      * Handler to catch warnings and notices.
      *
-     * @param int    $severity
-     * @param string $message
-     * @param string $file
-     * @param int    $line
-     * @param array  $context
+     * @param int        $severity
+     * @param string     $message
+     * @param string     $file
+     * @param int        $line
+     * @param array|null $context
      *
      * @return bool|null FALSE to call normal error handler, NULL otherwise
      * @throws \ErrorException
      * @internal
      */
-    public static function errorHandler(int $severity, string $message, string $file, int $line, array $context = []): ?bool
-    {
+    public static function errorHandler(
+        int $severity,
+        string $message,
+        string $file,
+        int $line,
+        array $context = null
+    ): ?bool {
         if (self::$scream) {
             \error_reporting(E_ALL);
         }
@@ -733,8 +738,8 @@ class Debugger
      *
      * @tracySkipLocation
      *
-     * @param  mixed $var    variable to dump
-     * @param  bool  $return return output instead of printing it? (bypasses $productionMode)
+     * @param mixed $var    variable to dump
+     * @param bool  $return return output instead of printing it? (bypasses $productionMode)
      *
      * @return mixed  variable itself or dump
      */
@@ -764,7 +769,7 @@ class Debugger
     /**
      * Starts/stops stopwatch.
      *
-     * @param  string $name name
+     * @param string $name name
      *
      * @return float   elapsed seconds
      */
@@ -783,9 +788,9 @@ class Debugger
      *
      * @tracySkipLocation
      *
-     * @param  mixed  $var     variable to dump
-     * @param  string $title   optional title
-     * @param  array  $options dumper options
+     * @param mixed  $var     variable to dump
+     * @param string $title   optional title
+     * @param array  $options dumper options
      *
      * @return mixed  variable itself
      */
@@ -876,7 +881,7 @@ class Debugger
     /**
      * Detects debug mode by IP address.
      *
-     * @param  ServerRequestInterface $request
+     * @param ServerRequestInterface $request
      *
      * @return bool
      */
