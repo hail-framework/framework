@@ -78,11 +78,11 @@ class Server
      */
     public function setEmitter(string $emitter): void
     {
-        if (\is_a($emitter, EmitterInterface::class, true)) {
-            $this->emitter = $emitter;
+        if (!\is_a($emitter, EmitterInterface::class, true)) {
+            throw new \RuntimeException($emitter . ' is not a Hail\Http\Emitter\EmitterInterface.');
         }
 
-        throw new \RuntimeException($emitter . ' is not a Hail\Http\Emitter\EmitterInterface.');
+        $this->emitter = $emitter;
     }
 
     /**
