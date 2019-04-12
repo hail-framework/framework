@@ -356,13 +356,13 @@ class Response
 
     /**
      * @param string $file
-     * @param null $name
+     * @param string|null $name
      * @param bool $download
      *
      * @return ResponseInterface
      * @throws \LogicException
      */
-    public function file(string $file, $name = null, $download = true): ResponseInterface
+    public function file(string $file, string $name = null, bool $download = true): ResponseInterface
     {
         if (!\is_file($file)) {
             throw new \LogicException("File '$file' doesn't exist.");
@@ -375,7 +375,7 @@ class Response
 
         $disposition = $download ? Header::DISPOSITION_ATTACHMENT : Header::DISPOSITION_INLINE;
         $this->header->set('Content-Disposition',
-            $this->header->makeDisposition($disposition, \basename($file), $name)
+            $this->header->makeDisposition($disposition, $name, \basename($file))
         );
 
         $size = $length = \filesize($file);
