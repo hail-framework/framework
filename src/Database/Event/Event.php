@@ -2,8 +2,6 @@
 namespace Hail\Database\Event;
 
 use Hail\Database\Database;
-use Hail\Debugger\Dumper;
-use Hail\Util\Json;
 
 class Event
 {
@@ -127,14 +125,7 @@ class Event
 	 */
 	public function getResult()
 	{
-		$result = $this->error ?? $this->result ?? null;
-		if ($result === null) {
-			return null;
-		}
-
-		return Dumper::toHtml($result, [
-			Dumper::COLLAPSE => true
-		]);
+		return $this->error ?? $this->result ?? null;
 	}
 
 	/**
@@ -225,12 +216,7 @@ class Event
 			$data = $query->fetch();
 		}
 
-		$data = Json::decode($data['EXPLAIN'] ?? '[]');
-
-		return Dumper::toHtml($data, [
-			Dumper::COLLAPSE => true,
-			Dumper::DEPTH => 6,
-		]);
+		return \json_decode($data['EXPLAIN'] ?? '[]', true);
 	}
 
 	/**

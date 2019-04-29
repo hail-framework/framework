@@ -97,6 +97,10 @@ class Dumper
      */
     public static function toHtml($var, array $options = null): string
     {
+        if ($var === null) {
+            return null;
+        }
+
         $options += [
             self::DEPTH => 4,
             self::TRUNCATE => 150,

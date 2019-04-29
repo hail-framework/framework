@@ -65,8 +65,13 @@ namespace Hail\Debugger;
                 <tbody>
                 <?php foreach ($queries as $query) { ?>
                 <?php
-                $result = $query->getResult();
-                $info = $query->getInfo();
+                $result = Dumper::toHtml($query->getResult(), [
+                    Dumper::COLLAPSE => true
+                ]);
+                $info = Dumper::toHtml($query->getInfo(), [
+                    Dumper::COLLAPSE => true,
+                    Dumper::DEPTH => 6,
+                ]);
                 $time = $query->getElapsedTime();
                 ?>
                 <tr data-storage-id="<?=$this->getStorageId($query)?>">
