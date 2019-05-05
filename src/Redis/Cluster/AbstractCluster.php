@@ -6,7 +6,7 @@ namespace Hail\Redis\Cluster;
 use Hail\Redis\RedisInterface;
 use Hail\Redis\Traits\RedisTrait;
 use Hail\Redis\Exception\RedisException;
-use Hail\Util\SafeStorage;
+use Hail\SafeStorage\SafeStorage;
 
 /**
  * Class AbstractCluster

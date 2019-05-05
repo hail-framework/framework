@@ -19,7 +19,7 @@ namespace Hail\Redis;
 
 use Hail\Redis\Client\Native as Client;
 use Hail\Redis\Exception\RedisException;
-use Hail\Util\SafeStorageTrait;
+use Hail\SafeStorage\SafeStorageTrait;
 
 class Sentinel
 {

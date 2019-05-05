@@ -2,7 +2,7 @@
 
 namespace Hail\Redis\Traits;
 
-use Hail\Util\SafeStorageTrait;
+use Hail\SafeStorage\SafeStorageTrait;
 
 trait RedisTrait
 {

@@ -11,7 +11,7 @@
 namespace Hail\Database;
 
 use Hail\Database\Sql\Builder;
-use Hail\Util\SafeStorageTrait;
+use Hail\SafeStorage\SafeStorageTrait;
 
 /**
  * Part of the code from Medoo

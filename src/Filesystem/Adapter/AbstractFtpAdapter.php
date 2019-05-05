@@ -5,7 +5,7 @@ namespace Hail\Filesystem\Adapter;
 use DateTime;
 use Hail\Filesystem\AdapterInterface;
 use Hail\Filesystem\Exception\NotSupportedException;
-use Hail\Util\SafeStorageTrait;
+use Hail\SafeStorage\SafeStorageTrait;
 use RuntimeException;
 
 abstract class AbstractFtpAdapter extends AbstractAdapter

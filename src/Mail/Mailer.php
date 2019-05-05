@@ -9,7 +9,7 @@ namespace Hail\Mail;
 
 use Hail\Facade\Request;
 use Hail\Mail\Exception\SmtpException;
-use Hail\Util\SafeStorageTrait;
+use Hail\SafeStorage\SafeStorageTrait;
 
 /**
  * Sends emails via the SMTP server.
