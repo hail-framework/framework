@@ -14,16 +14,7 @@ class MimeType
     protected static function mimes()
     {
         if (static::$mimes === null) {
-            $file = __DIR__ . '/Data/mimes.php';
-
-            $mimes = self::optimizeGet('mimes', $file);
-            if ($mimes === false) {
-                $mimes = require $file;
-
-                self::optimizeSet('mimes', $mimes, $file);
-            }
-
-            static::$mimes = $mimes;
+            static::$mimes = self::optimizeLoad(__DIR__ . '/Data/mimes.php');
         }
 
         return static::$mimes;
@@ -32,16 +23,7 @@ class MimeType
     protected static function extensions()
     {
         if (static::$extensions === null) {
-            $file = __DIR__ . '/Data/extensions.php';
-
-            $extensions = self::optimizeGet('extensions', $file);
-            if ($extensions === false) {
-                $extensions = require $file;
-
-                self::optimizeSet('extensions', $extensions, $file);
-            }
-
-            static::$extensions = $extensions;
+            static::$extensions = self::optimizeLoad(__DIR__ . '/Data/extensions.php');
         }
 
         return static::$extensions;

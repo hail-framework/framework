@@ -78,7 +78,7 @@ namespace Hail\Debugger;
                     <td class="tracy-queries-elapsed" style="color: <?=$this->getColorInRange($time)?>"><?=\number_format($time, 2)?></td>
                     <td><?=$query->getType()?></td>
                     <td class="tracy-queries-item">
-                        <code><?=$query->getQuery()?></code>
+                        <code><pre class="dump"><?=$query->getQuery()?></pre></code>
                         <?php if ($info) { ?>
                         <div>
                             <span class="tracy-queries-label-info">info</span>

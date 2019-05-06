@@ -41,7 +41,9 @@
     "psr/http-server-middleware": "^1.0",
     "psr/http-factory": "^1.0",
     "psr/http-client": "^1.0",
-    "symfony/yaml": "^4.2.1"
+    "symfony/yaml": "^4.2.1",
+    "hail/database": "^0.8.0",
+    "hail/optimize": "^0.8.0"
   },
   "suggest": {
     "ext-psr": "Providing the accepted PSR interfaces",

@@ -3,7 +3,7 @@
 namespace Hail;
 
 use Hail\Config\{
-    Path, Env, Config
+    Path, Env
 };
 use Hail\Container\{
     Container, Builder

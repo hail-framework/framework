@@ -32,15 +32,7 @@ class Trie
         $file = \absolute_path($path, self::FILE);
         if (\is_file($path)) {
             $this->cache = $file;
-
-            $tree = self::optimizeGet('cache', $file);
-
-            if ($tree === false) {
-                $tree = include $file;
-                self::optimizeSet('cache', $tree, $file);
-            }
-
-            $this->tree = $tree;
+            $this->tree = static::optimizeLoad($file);
         }
     }
 
