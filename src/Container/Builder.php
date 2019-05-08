@@ -1,4 +1,9 @@
 <?php
+/**
+ * Some code from https://github.com/mindplay-dk/unbox
+ *
+ * @copyright Rasmus Schultz <http://blog.mindplay.dk/>
+ */
 
 namespace Hail\Container;
 

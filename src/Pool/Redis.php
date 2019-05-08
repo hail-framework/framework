@@ -1,11 +1,10 @@
 <?php
 
-namespace Hail\Redis;
+namespace Hail\Pool;
 
-use Hail\Pool\PoolTrait;
 
 /**
- * Class ConnectPool
+ * Class Redis
  *
  * @package Hail\Redis\Client
  * @author  Feng Hao <flyinghail@msn.com>
@@ -131,7 +130,7 @@ use Hail\Pool\PoolTrait;
  * @method bool|array zscan(int &$Iterator, string $field, string $pattern = null, int $count = null)
  * @method array unsubscribe(...$pattern)
  */
-class ConnectPool
+class Redis
 {
     use PoolTrait;
 }
