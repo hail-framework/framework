@@ -428,7 +428,7 @@ abstract class AbstractAdapter implements CacheInterface
 	 *
 	 * @return array Array of values retrieved for the given keys.
 	 */
-	protected function doGetMultiple(iterable $keys)
+	protected function doGetMultiple(array $keys)
 	{
 		$return = [];
 
@@ -446,7 +446,7 @@ abstract class AbstractAdapter implements CacheInterface
 	 *
 	 * @return bool TRUE if the operation was successful, FALSE if it wasn't
 	 */
-	protected function doDeleteMultiple(iterable $keys)
+	protected function doDeleteMultiple(array $keys)
 	{
 		$success = true;
 
