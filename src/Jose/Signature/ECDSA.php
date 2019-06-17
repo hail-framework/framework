@@ -2,8 +2,6 @@
 
 namespace Hail\Jose\Signature;
 
-use Hail\Jose\Util\RSA as JoseRSA;
-
 final class ECDSA extends RSA
 {
     protected const KEY_TYPE = \OPENSSL_KEYTYPE_EC;
@@ -16,11 +14,23 @@ final class ECDSA extends RSA
         'curve_oid' => 'crv',
     ];
 
+    protected const HASH_LENGTH = [
+        'sha256' => 64,
+        'sha384' => 96,
+        'sha512' => 132,
+    ];
+
+    protected const CURVE = [
+        '1.2.840.10045.3.1.7' => 'P-256',
+        '1.3.132.0.34' => 'P-384',
+        '1.3.132.0.35' => 'P-521',
+    ];
+
     public static function sign(string $payload, $key, string $hash): string
     {
         return self::fromDER(
             parent::sign($payload, $key, $hash),
-            JoseRSA::getHashLength($hash)
+            self::getHashLength($hash)
         );
     }
 
@@ -74,9 +84,8 @@ final class ECDSA extends RSA
     public static function verify(string $signature, string $payload, $key, string $hash): bool
     {
         return parent::verify(
-            $hash,
-            self::toDER($signature, JoseRSA::getHashLength($hash)),
-            $payload, $key
+            self::toDER($signature, self::getHashLength($hash)),
+            $payload, $key, $hash
         );
     }
 
@@ -118,8 +127,26 @@ final class ECDSA extends RSA
     public static function getJWK($key): array
     {
         $jwk = parent::getJWK($key);
-        $jwk['crv'] = JoseRSA::getECKeyCurve($jwk['crv']);
+        $jwk['crv'] = self::getECKeyCurve($jwk['crv']);
 
         return $jwk;
+    }
+
+    private static function getHashLength(string $hash): int
+    {
+        if (!isset(self::HASH_LENGTH[$hash])) {
+            throw new \InvalidArgumentException('Unsupported Hash.');
+        }
+
+        return self::HASH_LENGTH[$hash];
+    }
+
+    private static function getECKeyCurve(string $oid): string
+    {
+        if (!isset(self::CURVE[$oid])) {
+            throw new \InvalidArgumentException('Unsupported OID.');
+        }
+
+        return self::CURVE[$oid];
     }
 }

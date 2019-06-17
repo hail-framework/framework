@@ -7,20 +7,14 @@ class RSA
 {
     public const HASH_LENGTH = [
         'sha256' => 32,
-        'sha384' => 48,
+        'sha384' => 46,
         'sha512' => 64,
-    ];
-
-    private const CURVE = [
-        '1.2.840.10045.3.1.7' => 'P-256',
-        '1.3.132.0.34' => 'P-384',
-        '1.3.132.0.35' => 'P-521',
     ];
 
     public static function getMGF1($mgfSeed, $maskLen, $hash)
     {
         $t = '';
-        $count = \ceil($maskLen / self::HASH_LENGTH[$hash]);
+        $count = \ceil($maskLen / self::getHashLength($hash));
         for ($i = 0; $i < $count; ++$i) {
             $c = \pack('N', $i);
             $t .= \hash($hash, $mgfSeed . $c, true);
@@ -125,14 +119,5 @@ class RSA
         $temp = \hex2bin($temp);
 
         return \ltrim($temp, \chr(0));
-    }
-
-    public static function getECKeyCurve(string $oid)
-    {
-        if (!isset(self::CURVE[$oid])) {
-            throw new \InvalidArgumentException('Unsupported OID.');
-        }
-
-        return self::CURVE[$oid];
     }
 }
