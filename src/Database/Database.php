@@ -509,7 +509,9 @@ class Database
             return;
         }
 
-        yield $query->fetch($fetch);
+        while ($row = $query->fetch($fetch)) {
+            yield $row;
+        }
     }
 
     /**
