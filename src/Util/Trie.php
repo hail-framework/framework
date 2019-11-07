@@ -25,13 +25,13 @@ class Trie
 
     public function __construct(string $path = null)
     {
-        if (!$path) {
+        if (!$path || !\is_dir($path)) {
             return;
         }
 
         $file = \absolute_path($path, self::FILE);
-        if (\is_file($path)) {
-            $this->cache = $file;
+        $this->cache = $file;
+        if (\is_file($file)) {
             $this->tree = static::optimizeLoad($file);
         }
     }
@@ -55,7 +55,7 @@ class Trie
     {
         if ($this->cache) {
             \file_put_contents($this->cache,
-                '<?php return ' . \var_export($this->tree, true)
+                '<?php return ' . \var_export($this->tree, true) . ';'
             );
 
             if (OPCACHE_INVALIDATE) {
