@@ -542,7 +542,7 @@ class Builder
                         }
                     }
 
-                    $clause .= ' ORDER BY ' . implode($stack, ',');
+                    $clause .= ' ORDER BY ' . implode(',', $stack);
                 } elseif ($raw = $this->buildRaw($ORDER, $map)) {
                     $clause .= ' ORDER BY ' . $raw;
                 } else {
