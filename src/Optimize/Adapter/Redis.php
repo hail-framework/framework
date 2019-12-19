@@ -16,7 +16,7 @@ class Redis implements AdapterInterface
 
     public static function getInstance(array $config): ?AdapterInterface
     {
-        if (!PHP_REDIS_EXTENSION || !empty($config['redis'])) {
+        if (!PHP_REDIS_EXTENSION || empty($config['redis'])) {
             return null;
         }
 
