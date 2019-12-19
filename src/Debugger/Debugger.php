@@ -376,7 +376,7 @@ class Debugger
         }
 
         $error = \error_get_last();
-        if (\in_array($error['type'],
+        if ($error !== null && \in_array($error['type'],
             [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE, E_RECOVERABLE_ERROR, E_USER_ERROR], true
         )) {
             self::exceptionHandler(
