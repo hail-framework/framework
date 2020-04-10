@@ -126,6 +126,10 @@ class PhpRedis extends AbstractClient
 			throw new RedisException($e->getMessage(), $code, $e);
 		}
 
+		if ($name === 'ping' && $response === true) {
+		    $response = $args[0] ?? 'PONG';
+        }
+
 		return $this->parseResponse($name, $response);
 	}
 }

@@ -211,6 +211,7 @@ trait PhpRedisTrait
     /**
      * @param $name
      * @param $response
+     * @param $args
      *
      * @return null
      * @throws RedisException
@@ -244,6 +245,11 @@ trait PhpRedisTrait
             case 'exists':
                 // smooth over phpredis-v4 vs earlier difference to match documented credis return results
                 $response = (int) $response;
+                break;
+            case 'ping':
+                if ($response && $response[0] === '+') {
+                    $response = \substr($response, 1);
+                }
                 break;
             default:
                 $error = $this->redis->getLastError();
