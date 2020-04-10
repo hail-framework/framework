@@ -15,7 +15,7 @@ class RedisException extends \Exception
     {
         if (
             $exception &&
-            $message === 'read error on connection' &&
+            \strpos($message,'read error on connection') === 0 &&
             $exception instanceof \RedisException
         ) {
             $code = self::CODE_DISCONNECTED;

@@ -187,5 +187,12 @@ interface RedisInterface
      */
     public function unsubscribe(...$pattern);
 
+    /**
+     * @param string|null $name
+     *
+     * @return string
+     */
+    public function ping(string $name = null);
+
     public function __call($name, $args);
 }

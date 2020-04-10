@@ -40,7 +40,6 @@ use Hail\Redis\Exception\RedisException;
  * @method bool|array    config(string $setGet, string $key, string $value = null)
  * @method array         role()
  * @method array         time()
- * @method array         ping()
  *
  * Keys:
  * @method int           del(string $key)
@@ -102,6 +101,7 @@ use Hail\Redis\Exception\RedisException;
  * @method array         hGetAll(string $key)
  * @method bool          hExists(string $key, string $field)
  * @method int           hIncrBy(string $key, string $field, int $value)
+ * @method float         hIncrByFloat(string $key, string $member, float $value)
  * @method bool          hMSet(string $key, array $keysValues)
  * @method array         hMGet(string $key, array $fields)
  *
@@ -162,6 +162,12 @@ abstract class AbstractClient implements RedisInterface
     protected $host;
 
     /**
+     * Scheme of the Redis server (tcp, tls, unix)
+     * @var string
+     */
+    protected $scheme;
+
+    /**
      * Port on which the Redis server is running
      *
      * @var int
@@ -211,6 +217,7 @@ abstract class AbstractClient implements RedisInterface
     {
         $this->host = (string) ($config['host'] ?? '127.0.0.1');
         $this->port = (int) ($config['port'] ?? 6379);
+        $this->scheme = null;
         $this->timeout = $config['timeout'] ?? null;
         $this->persistent = (string) ($config['persistent'] ?? '');
         $this->database = (int) ($config['database'] ?? 0);
@@ -218,10 +225,11 @@ abstract class AbstractClient implements RedisInterface
 
         $this->setPassword($config['password'] ?? null);
 
-        if (\preg_match('#^(tcp|unix)://(.*)$#', $this->host, $matches)) {
-            if ($matches[1] === 'tcp') {
+        if (\preg_match('#^(tcp|tls|unix)://(.*)$#', $this->host, $matches)) {
+            if ($matches[1] === 'tcp' || $matches[1] === 'tls') {
+                $this->scheme = $matches[1];
                 if (!\preg_match('#^([^:]+)(:(\d+))?(/(.+))?$#', $matches[2], $matches)) {
-                    throw new RedisException('Invalid host format; expected tcp://host[:port][/persistence_identifier]');
+                    throw new RedisException('Invalid host format; expected ' . $this->scheme . '://host[:port][/persistence_identifier]');
                 }
                 $this->host = $matches[1];
                 $this->port = (int) ($matches[3] ?? 6379);
@@ -229,14 +237,24 @@ abstract class AbstractClient implements RedisInterface
             } else {
                 $this->host = $matches[2];
                 $this->port = null;
+                $this->scheme = 'unix';
                 if ($this->host[0] !== '/') {
                     throw new RedisException('Invalid unix socket format; expected unix:///path/to/redis.sock');
                 }
             }
         }
 
+        if ($this->scheme === 'tls' && $this instanceof PhpRedis) {
+            throw new RedisException('Only native client support tls.');
+        }
+
         if ($this->port !== null && $this->host[0] === '/') {
             $this->port = null;
+            $this->scheme = 'unix';
+        }
+
+        if ($this->scheme === null) {
+            $this->scheme = 'tcp';
         }
 
         $this->connect();
@@ -353,5 +371,14 @@ abstract class AbstractClient implements RedisInterface
         $this->database = (int) $index;
 
         return $response;
+    }
+
+    /**
+     * @param string|null $name
+     * @return string
+     */
+    public function ping(string $name = null)
+    {
+        return $this->__call('ping', $name ? [$name] : []);
     }
 }

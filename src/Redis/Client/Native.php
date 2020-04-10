@@ -68,8 +68,8 @@ class Native extends AbstractClient
     {
         $flags = STREAM_CLIENT_CONNECT;
         $remote_socket = $this->port === null
-            ? 'unix://' . $this->host
-            : 'tcp://' . $this->host . ':' . $this->port;
+            ? $this->scheme .'://' . $this->host
+            : $this->scheme . '://' . $this->host . ':' . $this->port;
         // Persistent connections to UNIX sockets are not supported
         if ($this->persistent && $this->port !== null) {
             $remote_socket .= '/' . $this->persistent;
