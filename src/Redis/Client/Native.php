@@ -414,6 +414,8 @@ class Native extends AbstractClient
 
                 return $this;
             }
+        } elseif ($name === 'multi') {
+            return $this->pipeline()->multi();
         }
 
         // Start pipeline mode
