@@ -23,12 +23,6 @@
     }
   },
   "license": "MIT",
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/hail-framework/framework.git"
-    }
-  ],
   "require": {
     "php": ">=7.1.0",
     "ext-mbstring": "*",
