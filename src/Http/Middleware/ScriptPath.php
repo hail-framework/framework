@@ -33,7 +33,7 @@ class ScriptPath extends BasePath
 				}
 			}
 		} else {
-		    $path = '';
+		    $path = \dirname($path);
         }
 
 		$this->setBasePath($path);
