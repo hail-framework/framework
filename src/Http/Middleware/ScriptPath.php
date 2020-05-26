@@ -18,8 +18,8 @@ class ScriptPath extends BasePath
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
 		$path = $request->getUri()->getPath();
-
 		$script = $request->getServerParams()['SCRIPT_NAME'] ?? '';
+
 		if ($path !== $script) {
 			$parts = \explode('/', $path);
 			$script = \explode('/', $script);
@@ -32,11 +32,12 @@ class ScriptPath extends BasePath
 					break;
 				}
 			}
-		}
+		} else {
+		    $path = '';
+        }
 
 		$this->setBasePath($path);
 
 		return parent::process($request, $handler);
-
 	}
 }
