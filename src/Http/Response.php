@@ -439,8 +439,8 @@ class Response
             }
         }
 
-        if (!$this->version && 'HTTP/1.0' !== $this->request->server('SERVER_PROTOCOL')) {
-            $this->version = '1.1';
+        if (!$this->version) {
+            $this->version = 'HTTP/1.0' !== $this->request->server('SERVER_PROTOCOL') ? '1.1' : '1.0';
         }
 
         // Check if we need to send extra expire info headers
