@@ -237,29 +237,13 @@ class Database
         }
 
         $this->database = $options['database'] ?? $attr['dbname'];
-        $driver = $attr['driver'];
-        unset($attr['driver']);
 
-        if (!\in_array($driver, \PDO::getAvailableDrivers(), true)) {
-            throw new \InvalidArgumentException("Unsupported PDO driver: {$driver}");
+        if (!\in_array($attr['driver'], \PDO::getAvailableDrivers(), true)) {
+            throw new \InvalidArgumentException("Unsupported PDO driver: {$attr['driver']}");
         }
-
-        $stack = [];
-        foreach ($attr as $key => $value) {
-            if ($value === null) {
-                continue;
-            }
-
-            if (\is_int($key)) {
-                $stack[] = $value;
-            } else {
-                $stack[] = $key . '=' . $value;
-            }
-        }
-        $dsn = $driver . ':' . \implode(';', $stack);
 
         $this->setPassword($options['password']);
-        $this->dsn = [$dsn, $options['username'], $pdoOptions, $commands];
+        $this->dsn = [$attr, $options['username'], $pdoOptions, $commands];
         $this->sql = new Builder($this, $options['prefix'] ?? '');
 
         return $this;
@@ -293,7 +277,25 @@ class Database
 
     protected function connect()
     {
-        [$dsn, $username, $options, $commands] = $this->dsn;
+        [$attr, $username, $options, $commands] = $this->dsn;
+
+        $driver = $attr['driver'];
+        unset($attr['driver']);
+
+        $stack = [];
+        foreach ($attr as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (\is_int($key)) {
+                $stack[] = $value;
+            } else {
+                $stack[] = $key . '=' . $value;
+            }
+        }
+        $dsn = $driver . ':' . \implode(';', $stack);
+
         $password = $this->getPassword();
 
         $this->pdo = new \PDO(
@@ -314,8 +316,13 @@ class Database
             return true;
         }
 
-        $pdo = $this->pdo ?? $this->getPdo();
-        if ($pdo->exec('USE `' . $db . '`') !== false) {
+        if ($this->pdo === null) {
+            $this->dsn[0]['dbname'] = $db;
+            $this->database = $db;
+            return true;
+        }
+
+        if ($this->pdo->exec('USE `' . $db . '`') !== false) {
             $this->database = $db;
             return true;
         }
