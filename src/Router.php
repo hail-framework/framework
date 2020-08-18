@@ -54,7 +54,7 @@ class Router
         $this->refreshPrefix();
         $this->addRoutes($config);
 
-        static::optimizePrefix(\ROUTE_OPTIMIZE_PREFIX);
+        static::$__prefix = \ROUTE_OPTIMIZE_PREFIX;
     }
 
     private function refreshPrefix(): void
