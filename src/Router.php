@@ -54,7 +54,7 @@ class Router
         $this->refreshPrefix();
         $this->addRoutes($config);
 
-        static::$__prefix = \ROUTE_OPTIMIZE_PREFIX;
+        static::optimizePrefix(\ROUTE_OPTIMIZE_PREFIX);
     }
 
     private function refreshPrefix(): void
@@ -125,8 +125,8 @@ class Router
         }
 
         $result = [
-            'methods' => $current['methods'],
-            'route' => $current['route'],
+            'methods' => $current['methods'] ?? [],
+            'route' => $current['route'] ?? '',
             'params' => $params,
         ];
 
@@ -311,7 +311,7 @@ class Router
                 'error' => 405,
                 'route' => $route['route'],
                 'params' => $route['params'],
-                'allowed' => \array_keys($route['methods']),
+                'allowed' => isset($route['methods']) ? \array_keys($route['methods']) : [],
             ];
         }
 
