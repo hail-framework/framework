@@ -11,7 +11,7 @@ final class ECDSA extends RSA
         'x' => 'x',
         'y' => 'y',
         'd' => 'd',
-        'curve_oid' => 'crv',
+        'curve_name' => 'crv',
     ];
 
     protected const HASH_LENGTH = [
@@ -21,9 +21,10 @@ final class ECDSA extends RSA
     ];
 
     protected const CURVE = [
-        '1.2.840.10045.3.1.7' => 'P-256',
-        '1.3.132.0.34' => 'P-384',
-        '1.3.132.0.35' => 'P-521',
+        'prime256v1' => 'P-256',
+        'secp384r1' => 'P-384',
+        'secp521r1' => 'P-521',
+        'secp256k1' => 'secp256k1'
     ];
 
     public static function sign(string $payload, $key, string $hash): string
@@ -141,12 +142,12 @@ final class ECDSA extends RSA
         return self::HASH_LENGTH[$hash];
     }
 
-    private static function getECKeyCurve(string $oid): string
+    private static function getECKeyCurve(string $name): string
     {
-        if (!isset(self::CURVE[$oid])) {
-            throw new \InvalidArgumentException('Unsupported OID.');
+        if (!isset(self::CURVE[$name])) {
+            throw new \InvalidArgumentException('Unsupported Curve Name.');
         }
 
-        return self::CURVE[$oid];
+        return self::CURVE[$name];
     }
 }

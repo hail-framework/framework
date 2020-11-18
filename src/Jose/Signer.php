@@ -19,6 +19,7 @@ final class Signer
         ES256 = 'ES256',
         ES384 = 'ES384',
         ES512 = 'ES512',
+        ES256K = 'ES256K',
         PS256 = 'PS256',
         PS384 = 'PS384',
         PS512 = 'PS512';
@@ -34,6 +35,7 @@ final class Signer
         self::ES256 => ECDSA::class,
         self::ES384 => ECDSA::class,
         self::ES512 => ECDSA::class,
+        self::ES256K => ECDSA::class,
         self::PS256 => PSS::class,
         self::PS384 => PSS::class,
         self::PS512 => PSS::class,
@@ -49,6 +51,7 @@ final class Signer
         self::ES256 => 'sha256',
         self::ES384 => 'sha384',
         self::ES512 => 'sha512',
+        self::ES256K => 'sha256',
         self::PS256 => 'sha256',
         self::PS384 => 'sha384',
         self::PS512 => 'sha512',
