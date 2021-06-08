@@ -245,8 +245,12 @@ class Helpers
         }
     }
 
-    public static function improveError($message, array $context = [])
+    public static function improveError($message, array $context = null)
     {
+        if ($context === null) {
+            $context = [];
+        }
+
         if (\preg_match('#^Undefined variable: (\w+)#', $message, $m) && $context) {
             $hint = self::getSuggestion(\array_keys($context), $m[1]);
             return $hint ? "Undefined variable $$m[1], did you mean $$hint?" : $message;
