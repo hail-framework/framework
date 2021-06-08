@@ -9,7 +9,7 @@ namespace Hail\Util;
  */
 trait ArrayTrait
 {
-	public function __isset(string $name)
+	public function __isset($name)
 	{
 		return $this->has($name);
 	}
@@ -53,19 +53,28 @@ trait ArrayTrait
 	 * @param string $key
 	 * @param mixed $value
 	 */
-	abstract public function set($key, $value);
+	public function set($key, $value)
+    {
+        throw new \LogicException(__CLASS__ . '::set method not defined');
+    }
 
 	/**
 	 * @param  string $key
 	 *
 	 * @return mixed
 	 */
-	abstract public function get($key);
+	public function get($key)
+    {
+        throw new \LogicException(__CLASS__ . '::get method not defined');
+    }
 
 	/**
 	 * @param string $key
 	 */
-	abstract public function delete($key);
+	public function delete($key)
+    {
+        throw new \LogicException(__CLASS__ . '::delete method not defined');
+    }
 
 	/**
 	 * @param string $key
