@@ -56,7 +56,7 @@ class Config implements \ArrayAccess
      *
      * @return mixed
      */
-    public function get(string $key)
+    public function get($key)
     {
         if ($key === '' || $key === '.') {
             return null;
