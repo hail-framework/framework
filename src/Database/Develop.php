@@ -11,8 +11,25 @@ class Develop extends Database
 
     protected function connect()
     {
-        [$dsn, $username, $options, $commands] = $this->dsn;
+        [$attr, $username, $options, $commands] = $this->dsn;
         $password = $this->getPassword();
+
+        $driver = $attr['driver'];
+        unset($attr['driver']);
+
+        $stack = [];
+        foreach ($attr as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (\is_int($key)) {
+                $stack[] = $value;
+            } else {
+                $stack[] = $key . '=' . $value;
+            }
+        }
+        $dsn = $driver . ':' . \implode(';', $stack);
 
         $this->event('start', Event::CONNECT);
 

@@ -31,6 +31,7 @@ class Cache extends AbstractHandler
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function updateTimestamp($sessionId, $data)
     {
         $item = $this->cache->getItem($this->settings['prefix'] . $sessionId);

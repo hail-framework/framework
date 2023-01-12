@@ -20,6 +20,8 @@ class ObjectFactory implements \ArrayAccess
      */
 	private $container;
 
+    private $objects;
+
 	public function __construct($namespace, Container $container = null)
 	{
 		$this->namespace = '\\' . \trim($namespace, '\\') . '\\';
@@ -33,12 +35,12 @@ class ObjectFactory implements \ArrayAccess
 
 	public function has($key)
 	{
-		return isset($this->$key);
+		return isset($this->objects[$key]);
 	}
 
 	public function get($key)
 	{
-		if (!isset($this->$key)) {
+		if (!isset($this->objects[$key])) {
 			$class = $this->namespace . \ucfirst($key);
 
 			if ($this->container) {
@@ -51,7 +53,7 @@ class ObjectFactory implements \ArrayAccess
 
 		}
 
-		return $this->$key;
+		return $this->objects[$key];
 	}
 
 	public function set($key, $value)
@@ -61,13 +63,13 @@ class ObjectFactory implements \ArrayAccess
 			throw new \LogicException("Object Not Instance of $class");
 		}
 
-		return $this->$key = $value;
+		return $this->objects[$key] = $value;
 	}
 
 	public function delete($key)
 	{
-		if (isset($this->$key)) {
-			unset($this->$key);
+		if (isset($this->objects[$key])) {
+			unset($this->objects[$key]);
 		}
 	}
 }

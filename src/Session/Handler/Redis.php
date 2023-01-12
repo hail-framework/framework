@@ -34,6 +34,7 @@ class Redis extends AbstractHandler
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function updateTimestamp($sessionId, $data)
     {
         return $this->redis->expire($this->settings['prefix'] . $sessionId, $this->settings['lifetime']);
@@ -42,7 +43,8 @@ class Redis extends AbstractHandler
 	/**
 	 * {@inheritDoc}
 	 */
-	public function close()
+    #[\ReturnTypeWillChange]
+    public function close()
 	{
 		$this->redis = null;
 
@@ -62,7 +64,8 @@ class Redis extends AbstractHandler
 	/**
 	 * {@inheritDoc}
 	 */
-	public function open($path, $name)
+    #[\ReturnTypeWillChange]
+    public function open($path, $name)
 	{
 		return $this->redis->isConnected();
 	}

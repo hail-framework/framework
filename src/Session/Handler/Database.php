@@ -39,6 +39,7 @@ class Database extends AbstractHandler
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function updateTimestamp($sessionId, $data)
     {
         $this->db->update($this->settings['table'],
@@ -52,6 +53,7 @@ class Database extends AbstractHandler
     /**
      * {@inheritDoc}
      */
+    #[\ReturnTypeWillChange]
     public function close()
     {
         if ($this->gcCalled) {
@@ -85,6 +87,7 @@ class Database extends AbstractHandler
     /**
      * {@inheritDoc}
      */
+    #[\ReturnTypeWillChange]
     public function gc($lifetime)
     {
         $this->gcCalled = true;
@@ -95,6 +98,7 @@ class Database extends AbstractHandler
     /**
      * {@inheritDoc}
      */
+    #[\ReturnTypeWillChange]
     public function open($path, $name)
     {
         return $this->db ? true : false;
