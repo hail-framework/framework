@@ -31,6 +31,7 @@ class SimpleCache extends AbstractHandler
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function updateTimestamp($sessionId, $data)
     {
         $key = $this->settings['prefix'] . $sessionId;

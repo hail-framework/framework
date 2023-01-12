@@ -57,6 +57,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function open($savePath, $sessionName)
     {
         return true;
@@ -65,6 +66,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function close()
     {
         return true;
@@ -73,6 +75,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function gc($lifetime)
     {
         return true;
@@ -81,6 +84,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function validateId($sessionId)
     {
         $this->prefetchData = $this->read($sessionId);
@@ -92,6 +96,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function read($sessionId)
     {
         if (null !== $this->prefetchId) {
@@ -115,6 +120,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function write($sessionId, $data)
     {
         if (null === $this->igbinaryEmptyData) {
@@ -133,6 +139,7 @@ abstract class AbstractHandler implements \SessionHandlerInterface, \SessionUpda
     /**
      * {@inheritdoc}
      */
+    #[\ReturnTypeWillChange]
     public function destroy($sessionId)
     {
         return $this->newSessionId === $sessionId || $this->doDestroy($sessionId);

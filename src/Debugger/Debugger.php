@@ -225,7 +225,7 @@ class Debugger
         if ($logDirectory) {
             if (!preg_match('#([a-z]+:)?[/\\\\]#Ai', $logDirectory)) {
                 self::exceptionHandler(new \RuntimeException('Logging directory must be absolute path.'));
-            } elseif (!is_dir(self::$logDirectory)) {
+            } elseif (self::$logDirectory === null || !is_dir(self::$logDirectory)) {
                 self::exceptionHandler(new \RuntimeException("Logging directory '" . $logDirectory . "' is not found."));
             }
 
@@ -628,7 +628,12 @@ class Debugger
         }
 
         $message = 'PHP ' . Helpers::errorTypeToString($severity) . ': ' . Helpers::improveError($message, $context);
-        $count = &self::getBar()->getPanel('Tracy:errors')->data["$file|$line|$message"];
+        $panel = self::getBar()->getPanel('Tracy:errors');
+        if ($panel === null) {
+            return null;
+        }
+
+        $count = &$panel->data["$file|$line|$message"];
 
         if ($count++) { // repeated error
             return null;

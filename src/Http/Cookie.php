@@ -203,11 +203,13 @@ class Cookie implements \IteratorAggregate, \Countable
         return (int) (new \DateTime($time))->format('U');
     }
 
+    #[\ReturnTypeWillChange]
     public function count()
     {
         return \count($this->cookies);
     }
 
+    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         return new \ArrayIterator($this->cookies);

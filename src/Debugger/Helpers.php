@@ -351,10 +351,10 @@ class Helpers
     public static function getNonce(): ?string
     {
         $value = Response::getHeaderLine('Content-Security-Policy');
-        if ($value === '') {
+        if ($value === '' || $value === null) {
             $value = Response::getHeaderLine('Content-Security-Policy-Report-Only');
 
-            if ($value === '') {
+            if ($value === '' || $value === null) {
                 return null;
             }
         }

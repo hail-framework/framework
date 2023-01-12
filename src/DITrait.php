@@ -38,11 +38,13 @@ use Hail\Facade\DI;
  * @property-read Http\Response                    $response
  * @property-read Swoole\Http\Server               $httpServer
  */
-Trait DITrait
+trait DITrait
 {
+    protected array $_di;
+
     final public function __get(string $name)
     {
-        return $this->$name = DI::get($name);
+        return $this->_di[$name] ?? $this->_di[$name] = DI::get($name);
     }
 
     final public static function di(string $name = null)

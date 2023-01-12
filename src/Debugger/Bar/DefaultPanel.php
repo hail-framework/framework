@@ -17,6 +17,7 @@ class DefaultPanel implements PanelInterface
 {
     private $id;
     public $data;
+    public $cpuUsage;
 
 
     public function __construct(string $id)
