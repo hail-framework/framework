@@ -131,14 +131,14 @@ trait CommandTrait
      */
     public function name(): string
     {
-        static $name = null;
-        if ($name === null) {
+        static $name = [];
+        if (!isset($name[static::class])) {
             // Extract command name from the class name.
             $class = substr(strrchr(static::class, '\\'), 1);
-            $name = CommandLoader::inverseTranslate($class);
+            $name[static::class] = CommandLoader::inverseTranslate($class);
         }
 
-        return $name;
+        return $name[static::class];
     }
 
     public function getPrompter(): Prompter

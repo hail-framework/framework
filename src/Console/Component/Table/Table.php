@@ -117,6 +117,9 @@ class Table
 
         $columns = [\count($this->headers)];
         foreach ($this->rows as $row) {
+            if (!is_array($row)) {
+                $row = [];
+            }
             $columns[] = \count($row);
         }
 
