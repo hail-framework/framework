@@ -26,7 +26,7 @@ class ValueType
     {
         $fn = self::type($type) . 'Test';
 
-        if (!method_exists('self', $fn)) {
+        if (!method_exists(self::class, $fn)) {
             return null;
         }
 
